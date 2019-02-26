@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008-2018 the Urho3D project.
+# Copyright (c) 2008-2019 the Urho3D project.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -270,6 +270,8 @@ end
 desc 'Configure, build, and test Urho3D project'
 task :ci do
   next if timeup    # Measure the VM overhead
+  # Temporarily disable all build artifact uploads due to slow SF.net transfer rate
+  ENV['PACKAGE_UPLOAD'] = nil
   # Skip if only performing CI for selected branches and the current branch is not in the list
   unless ENV['RELEASE_TAG']
     next if ENV['TRAVIS'] && /\[skip travis\]/ =~ ENV['COMMIT_MESSAGE']   # For feature parity with AppVeyor's [skip appveyor]
@@ -369,8 +371,8 @@ task :ci do
     else
       test = ''
     end
-    # Skip scaffolding test when time up or packaging for iOS, tvOS, and Web platform or when the build config may run out of disk space
-    unless ENV['CI'] && ((ENV['IOS'] || ENV['TVOS'] || ENV['WEB']) && ENV['PACKAGE_UPLOAD'] || (ENV['CMAKE_BUILD_TYPE'] == 'Debug' && ENV['URHO3D_LIB_TYPE'] == 'STATIC')) || timeup
+    # Skip scaffolding test when time up or packaging for platform with slow build environment, or when the build config may run out of disk space
+    unless ENV['CI'] && ((ENV['IOS'] || ENV['TVOS'] || ENV['WEB'] || ENV['OS']) && ENV['PACKAGE_UPLOAD'] || (ENV['CMAKE_BUILD_TYPE'] == 'Debug' && ENV['URHO3D_LIB_TYPE'] == 'STATIC')) || timeup
       # Staged-install Urho3D SDK when on Travis-CI; normal install when on AppVeyor
       ENV['DESTDIR'] = ENV['HOME'] unless ENV['APPVEYOR']
       if !wait_for_block("Installing Urho3D SDK to #{ENV['DESTDIR'] ? "#{ENV['DESTDIR']}/usr/local" : 'default system-wide location'}...") { Thread.current[:subcommand_to_kill] = 'xcodebuild'; system "rake make target=install >#{ENV['OS'] ? 'nul' : '/dev/null'}" }
@@ -426,7 +428,7 @@ task :ci_site_update do
   # Update credits from README.md to about.yml
   system "ruby -lne 'BEGIN { credits = false }; puts $_ if credits; credits = true if /bugfixes by:/; credits = false if /^$/' README.md |ruby -i -le 'credits = STDIN.read; puts ARGF.read.gsub(/(?<=contributors:\n).*?\n\n/m, credits)' ~/urho3d.github.io/_data/about.yml" or abort 'Failed to update credits'
   # Setup doxygen to use minimal theme
-  system "ruby -i -pe 'BEGIN { a = {%q{HTML_HEADER} => %q{minimal-header.html}, %q{HTML_FOOTER} => %q{minimal-footer.html}, %q{HTML_STYLESHEET} => %q{minimal-doxygen.css}, %q{HTML_COLORSTYLE_HUE} => 200, %q{HTML_COLORSTYLE_SAT} => 0, %q{HTML_COLORSTYLE_GAMMA} => 20, %q{DOT_IMAGE_FORMAT} => %q{svg}, %q{INTERACTIVE_SVG} => %q{YES}, %q{COLS_IN_ALPHA_INDEX} => 3} }; a.each {|k, v| gsub(/\#{k}\s*?=.*?\n/, %Q{\#{k} = \#{v}\n}) }' #{build_tree}/Docs/generated/Doxyfile" or abort 'Failed to setup doxygen configuration file'
+  system "ruby -i -pe 'BEGIN { a = {%q{HTML_HEADER} => %q{minimal-header.html}, %q{HTML_FOOTER} => %q{minimal-footer.html}, %q{HTML_STYLESHEET} => %q{minimal-doxygen.css}, %q{HTML_COLORSTYLE_HUE} => 200, %q{HTML_COLORSTYLE_SAT} => 0, %q{HTML_COLORSTYLE_GAMMA} => 40, %q{DOT_IMAGE_FORMAT} => %q{svg}, %q{INTERACTIVE_SVG} => %q{YES}, %q{COLS_IN_ALPHA_INDEX} => 3} }; a.each {|k, v| gsub(/\#{k}\s*?=.*?\n/, %Q{\#{k} = \#{v}\n}) }' #{build_tree}/Docs/generated/Doxyfile" or abort 'Failed to setup doxygen configuration file'
   system "cp ~/urho3d.github.io/_includes/Doxygen/minimal-* #{build_tree}/Docs" or abort 'Failed to copy minimal-themed template'
   release = ENV['RELEASE_TAG'] || 'HEAD'
   unless release == 'HEAD'
@@ -436,6 +438,8 @@ task :ci_site_update do
   end
   # Generate and sync doxygen pages
   system "cd #{build_tree} && make -j$numjobs doc >/dev/null 2>&1 && ruby -i -pe 'gsub(/(<\\/?h)3([^>]*?>)/, %q{\\14\\2}); gsub(/(<\\/?h)2([^>]*?>)/, %q{\\13\\2}); gsub(/(<\\/?h)1([^>]*?>)/, %q{\\12\\2})' Docs/html/_*.html && rsync -a --delete Docs/html/ ~/urho3d.github.io/documentation/#{release}" or abort 'Failed to generate/rsync doxygen pages'
+  # TODO: remove below workaround after upgrading to 1.8.14 or greater
+  system "cp ~/urho3d.github.io/documentation/1.7/dynsections.js ~/urho3d.github.io/documentation/#{release}" or abort 'Failed to workaround Doxygen 1.8.13 bug'
   # Supply GIT credentials to push site documentation changes to urho3d/urho3d.github.io.git
   system "cd ~/urho3d.github.io && git config user.name $GIT_NAME && git config user.email $GIT_EMAIL && git remote set-url --push origin https://$GH_TOKEN@github.com/urho3d/urho3d.github.io.git && git add -A . && if git commit -qm \"Travis CI: site documentation update at #{Time.now.utc}.\n\nCommit: https://github.com/$TRAVIS_REPO_SLUG/commit/$TRAVIS_COMMIT\n\nMessage: $COMMIT_MESSAGE\"; then git push -q >/dev/null 2>&1 && echo Site updated successfully; fi" or abort 'Failed to update site'
   next if timeup
@@ -565,11 +569,11 @@ task :ci_package_upload do
     if ENV['URHO3D_USE_LIB64_RPM']
       system 'rake cmake' or abort 'Failed to reconfigure to generate 64-bit RPM package'
       system "rm #{ENV['build_tree']}/Urho3D-*" or abort 'Failed to remove previously generated artifacts'  # This task can be invoked more than one time
-     end
+    end
     system "#{!ENV['OS'] && (ENV['URHO3D_64BIT'] || ENV['RPI'] || ENV['ARM']) ? 'setarch i686' : ''} rake make target=package" or abort 'Failed to make binary package'
   end
   # Determine the upload location
-  puts "Uploading artifacts...\n\n"; $stdout.flush
+  puts "\nUploading artifacts...\n\n"; $stdout.flush
   setup_digital_keys
   repo = ENV[ENV['TRAVIS'] ? 'TRAVIS_REPO_SLUG' : 'APPVEYOR_REPO_NAME']
   unless ENV['RELEASE_TAG']
@@ -611,7 +615,7 @@ EOF'" } or abort 'Failed to create release directory remotely'
     File.open('.site_updated', 'w') {}
   end
   # Upload the binary package
-  retry_block { wait_for_block { system "bash -c 'scp #{ENV['build_tree']}/Urho3D-* urho-travis-ci@frs.sourceforge.net:#{upload_dir}'" } } or abort 'Failed to upload binary package'
+  retry_block { wait_for_block('', 55) { system "bash -c 'scp #{ENV['build_tree']}/Urho3D-* urho-travis-ci@frs.sourceforge.net:#{upload_dir}'" } } or abort 'Failed to upload binary package'
   if ENV['RELEASE_TAG'] && ENV['SF_DEFAULT']
     # Mark the corresponding binary package as default download for each Windows/Mac/Linux host systems
     retry_block { system "bash -c \"curl -H 'Accept: application/json' -X PUT -d 'default=%s' -d \"api_key=$SF_API\" https://sourceforge.net/projects/%s/files/%s/#{ENV['RELEASE_TAG']}/Urho3D-#{ENV['RELEASE_TAG']}-%s\"" % ENV['SF_DEFAULT'].split(':').insert(1, repo.split('/')).flatten } or abort 'Failed to set binary tarball/zip as default download'
@@ -627,7 +631,7 @@ end
 # Always call this function last in the multiple conditional check so that the checkpoint message does not being echoed unnecessarily
 def timeup quiet = false, cutoff_time = ENV['RELEASE_TAG'] ? 60.0 : 45.0
   unless File.exists?('start_time.log')
-    system 'touch start_time.log split_time.log'
+    system 'touch start_time.log split_time.log' if ENV['CI']
     return nil
   end
   current_time = Time.now
@@ -714,8 +718,8 @@ end
 
 # Usage: wait_for_block('This is a long function call...') { call_a_func } or abort
 #        wait_for_block('This is a long system call...') { system 'do_something' } or abort
-def wait_for_block comment = '', retries = -1, retry_interval = 60
-  return nil if timeup(true)
+def wait_for_block comment = '', cutoff_time = ENV['RELEASE_TAG'] ? 60.0 : 45.0, retries = -1, retry_interval = 60
+  return nil if timeup(true, cutoff_time)
 
   # Wait until the code block is completed or it is killed externally by user via Ctrl+C or when it exceeds the number of retries (if the retries parameter is provided)
   thread = Thread.new { rc = yield; Thread.main.wakeup; rc }
@@ -723,7 +727,7 @@ def wait_for_block comment = '', retries = -1, retry_interval = 60
   str = comment
   retries = retries * 60 / retry_interval unless retries == -1
   until thread.status == false
-    if retries == 0 || timeup(true)
+    if retries == 0 || timeup(true, cutoff_time)
       thread.kill
       # Also kill the child subproceses spawned by the worker thread if specified
       system "killall #{thread[:subcommand_to_kill]}" if thread[:subcommand_to_kill]
@@ -834,7 +838,7 @@ LL+vn21fWvELBWb8ekwZOCSmT7IpaboKn4h5aUmgl4udA/73iC2zVQkQxbWZb5zu
 vEdDk4aOwV5ZBDjecYX01hjjnEOdZHGJlF/H/Xs0hYX6WDG3/r9QCJJ0nfd1/Fk2
 zdbZRtAbyRz6ZHiYKnFQ441qRRaEbzunkvTBEwu9iqzlE0s/g49LJL0mKEp7rt/J
 4iS3LZTQbJNx5J0ti8ZJKHhvoWb5RJxNimwKvVHC0XBZKTiLMrhnADmcpjLz53F8
-$SF_KEY
+#{ENV['SF_KEY']}
 sx27yCaeBeKXV0tFOeZmgK664VM9EgesjIX4sVOJ5mA3xBJBOtz9n66LjoIlIM58
 dvsAnJt7MUBdclL/RBHEjbUxgGBDcazfWSuJe0sGczhnXMN94ox4MSECgYEAx5cv
 cs/2KurjtWPanDGSz71LyGNdL/xQrAud0gi49H0tyYr0XmzNoe2CbZ/T5xGSZB92

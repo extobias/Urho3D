@@ -6830,8 +6830,9 @@ String GetLanguage(int);
 int GetLanguageIndex(const String&);
 bool HasSubscribedToEvent(Object, const String&);
 bool HasSubscribedToEvent(const String&);
-void LoadJSON(const JSONValue&);
-void LoadJSONFile(const String&);
+void LoadJSONFile(const String&, const String = String ( "" ) const);
+void LoadMultipleLanguageJSON(const JSONValue&);
+void LoadSingleLanguageJSON(const JSONValue&, const String& = String ( "" ) const);
 void Reset();
 void SendEvent(const String&, VariantMap& = VariantMap ( ));
 void SetLanguage(const String&);
@@ -16179,6 +16180,9 @@ enum EmitterType
 {
 EMITTER_SPHERE,
 EMITTER_BOX,
+EMITTER_SPHEREVOLUME,
+EMITTER_CYLINDER,
+EMITTER_RING,
 };
 
 enum EmitterType2D

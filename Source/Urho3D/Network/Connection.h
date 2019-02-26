@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2018 the Urho3D project.
+// Copyright (c) 2008-2019 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -110,7 +110,7 @@ class URHO3D_API Connection : public Object
     URHO3D_OBJECT(Connection, Object);
 
 public:
-    /// Construct with context and kNet message connection pointers.
+    /// Construct with context, RakNet connection address and Raknet peer pointer.
     Connection(Context* context, bool isClient, const SLNet::AddressOrGUID& address, SLNet::RakPeerInterface* peer);
     /// Destruct.
     ~Connection() override;

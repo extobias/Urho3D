@@ -3425,8 +3425,10 @@ Methods:
 - void SetLanguage(int index)
 - String Get(const String id)
 - void Reset()
-- void LoadJSON(const JSONValue& source)
-- void LoadJSONFile(const String name)
+- void LoadMultipleLanguageJSON(const JSONValue& source)
+- void LoadSingleLanguageJSON(const JSONValue& source)
+- void LoadSingleLanguageJSON(const JSONValue& source, const String language)
+- void LoadJSONFile(const String name, const String language = String::EMPTY)
 
 Properties:
 
@@ -8352,6 +8354,9 @@ Properties:
 
 - int EMITTER_SPHERE
 - int EMITTER_BOX
+- int EMITTER_SPHEREVOLUME
+- int EMITTER_CYLINDER
+- int EMITTER_RING
 
 ### EmitterType2D
 
