@@ -1,0 +1,49 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity all
+			text RESULTADOS
+	TBLayout
+		axis x
+		size available
+		distribution gravity
+		gravity all
+		TBLayout
+			id position_col
+			distribution-position top
+			axis y
+		TBLayout
+			id name_col
+			distribution-position top
+			axis y
+		TBLayout
+			id bestlap_col
+			distribution-position top
+			axis y
+		TBLayout
+			id totaltime_col
+			distribution-position top
+			axis y
+	TBLayout
+		axis y
+		TBLayout
+			axis x
+			TBButton
+				id close_result
+				gravity all
+				text CERRAR
+				axis y
+				TBSkinImage
+					skin IconHome
+				lp
+					width 20mm
+			TBButton
+				id restart_race
+				text REINICIAR
+				axis y
+				TBSkinImage
+					skin IconRestart
+				lp
+					width 20mm

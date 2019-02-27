@@ -1,0 +1,43 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity top
+			text SPEEDKART
+			font
+				name Neon
+	TBLayout
+		axis y
+		spacing 40
+		distribution-position bottom
+		TBLayout
+			id buttons
+			axis x
+			spacing 20
+			TBButton
+				axis y
+				id singleplayer
+				text SINGLEPLAYER
+				TBSkinImage
+					skin IconSingleUser
+				lp
+					min-width 20mm
+			TBButton
+				axis y
+				id multiplayer
+				text MULTIPLAYER
+				TBSkinImage
+					skin IconGroup
+				lp
+					min-width 20mm
+			TBButton
+				axis y
+				id config
+				gravity all
+				text CONFIG
+				TBSkinImage
+					skin IconConfig
+				lp
+					min-width 20mm
+		TBLayout
