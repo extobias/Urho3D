@@ -1,0 +1,117 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity all
+			text SELECCIONA TU PISTA!
+	TBLayout
+		axis x
+		TBButton
+			id africa
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text Africa
+			TBSkinImage
+				skin Icon16
+		TBButton
+			id america
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text America
+			TBSkinImage
+				skin Icon16
+		TBButton
+			id europe
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text Europa
+			TBSkinImage
+				skin Icon16
+		TBButton
+			id asia
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text Asia
+			TBSkinImage
+				skin Icon16
+		TBButton
+			id oceania
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text Oceania
+			TBSkinImage
+				skin Icon16
+		TBButton
+			id racetrack-high
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text Antartida
+			TBSkinImage
+				skin Icon16
+		TBButton
+			id racetrack-plane
+			toggle-mode 1
+			axis y
+			lp
+				min-width 80px
+			text Test Track 
+			TBSkinImage
+				skin Icon16
+	TBLayout
+		axis y
+		TBTextField
+			text CANTIDAD DE VUELTAS
+		TBInlineSelect
+			id total_lap
+			min 1
+			max 5
+	TBLayout
+		axis y
+		TBTextField
+			text BOTS
+		TBInlineSelect
+			id total_bots
+			min 0
+			max 5
+	TBLayout
+		TBClickLabel
+			id split_screen_label
+			text SPLIT SCREEN
+			TBCheckBox
+				id split_screen
+				value 1
+	TBLayout
+		axis y
+		TBLayout
+			axis x
+			spacing 20
+			TBButton
+				id cancel_track
+				gravity all
+				text VOLVER
+				axis y
+				TBSkinImage
+					skin IconHome
+				lp
+					width 20mm
+			TBButton
+				id ok_track
+				text CORRER!
+				axis y
+				TBSkinImage
+					skin IconNext
+				lp
+					width 20mm

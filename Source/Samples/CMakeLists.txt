@@ -50,6 +50,9 @@ macro (add_sample_subdirectory SOURCE_DIR)
     endif ()
 endmacro ()
 
+# WORKAROUND for tb include dir
+list (APPEND INCLUDE_DIRS ${URHO3D_HOME}/include/Urho3D/ThirdParty/TurboBadger)
+
 # Add samples
 file (GLOB_RECURSE DIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} CMakeLists.txt)
 list (SORT DIRS)

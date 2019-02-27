@@ -1,0 +1,20 @@
+WindowInfo
+	title Text editing
+	position 280 50
+	size 450 630
+TBLayout: axis: y, distribution: available
+	TBLayout: distribution: gravity
+		TBButton: id: undo
+			TBSkinImage: skin: arrow.left
+		TBButton: id: redo
+			TBSkinImage: skin: arrow.right
+		TBButton: text: Clear, id: clear
+		TBLayout
+			gravity left right
+			distribution-position right bottom
+			TBTextField: id: info
+			TBButton: id: menu
+				TBSkinImage: skin: arrow.down
+				TBTextField: text: Menu
+				skin TBButton.flat
+		TBButton: text: config2
