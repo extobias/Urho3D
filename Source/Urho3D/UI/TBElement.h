@@ -109,8 +109,11 @@ public:
     void AddStateWidget(TBWidget* stateWidget, bool bottom = false, bool fullscreen = true);
 
     void LoadWidgets(TBWidget* stateWidget, String filename);
+
     void LoadResources();
+
     void SetBoxSize(int width, int height);
+
     void Clear();
 
     virtual void GetBatches(PODVector<UIBatch>& batches,
@@ -128,21 +131,26 @@ public:
                              Cursor* cursor, UIElement* beginElement);
    
     // other events
-    virtual void OnWheel(int delta, int buttons, int qualifiers);
+    // virtual void OnWheel(int delta, int buttons, int qualifiers);
+	virtual void OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
 
     // widget callback
     virtual void OnPositionSet(const IntVector2& newPosition);
 
     virtual void Update(float timeStep);
+
     virtual bool IsWithinScissor(const IntRect& currentScissor);
     
     void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
+
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleScreenMode(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
+
 	void HandleRawEvent(StringHash eventType, VariantMap& args);
 
     TBRootWidget* GetRoot() const { return root_; }

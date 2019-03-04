@@ -81,6 +81,8 @@ private:
     
     void HandleTBUIReleased(StringHash eventType, VariantMap& eventData);
 
+	void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+
     /// The Window.
     SharedPtr<Window> window_;
     /// The UI's root UIElement.
