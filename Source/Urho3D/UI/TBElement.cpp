@@ -428,8 +428,10 @@ void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& scre
     root_->InvokePointerUp(position.x_, position.y_, GetModifierKeys(), ShouldEmulateTouchEvent());
 }
 
-void TBUIElement::OnWheel(int delta, int buttons, int qualifiers)
+//void TBUIElement::OnWheel(int delta, int buttons, int qualifiers)
+void TBUIElement::OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers)
 {
+	// URHO3D_LOGERRORF("tbuielement.onwheel: mouse <%i, %i> delta <%i>", mouse_x, mouse_y, delta);
     root_->InvokeWheel(mouse_x, mouse_y, 0, -delta, GetModifierKeys());
 }
 
@@ -518,10 +520,15 @@ void TBUIElement::HandleKeyUp(StringHash eventType, VariantMap &eventData)
 void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 {
 	auto event = static_cast<SDL_Event*>(args[SDLRawInput::P_SDLEVENT].Get<void*>());
+
+	// intercept mouse event to move window and not forwarding to scene
 	if (event->type == SDL_MOUSEMOTION)
 	{
 		int x = event->motion.x;
 		int y = event->motion.y;
+
+		mouse_x = x;
+		mouse_y = y;
 		
 		TBWidget *widget;
 		if (widget = root_->GetWidgetAt(x, y, true))
@@ -592,7 +599,7 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 }
 
 TBRootWidget::TBRootWidget(Context* context)
- : Urho3D::Object(context)
+	: Urho3D::Object(context)
 {
 }
 

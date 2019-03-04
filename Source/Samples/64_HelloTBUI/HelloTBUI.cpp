@@ -65,8 +65,8 @@ void HelloTBUI::Start()
     uiRoot_->SetDefaultStyle(style);
     uiRoot_->SetSize(800, 600);
 
-    tbelement = new TBUIElement( context_ );
-    TBUIElement::RegisterObject( context_ );
+    tbelement = new TBUIElement(context_);
+    TBUIElement::RegisterObject(context_);
     tbelement->SetPosition(0, 0);
 
     Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
@@ -86,6 +86,8 @@ void HelloTBUI::Start()
      // 1 bindear el evento a una funcion
     uiRoot_->AddChild(tbelement);
 
+	SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
+
 //     Initialize Window
     //InitWindow();
 
@@ -97,6 +99,23 @@ void HelloTBUI::Start()
 
     // Set the mouse mode to use in the sample
     Sample::InitMouseMode(MM_FREE);
+}
+
+void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
+{
+	int key = eventData[KeyDown::P_KEY].GetInt();
+
+	if (key == KEY_F1)
+		GetSubsystem<Console>()->Toggle();
+
+	if (key == KEY_F4)
+	{
+#ifdef TB_RUNTIME_DEBUG_INFO
+		ShowDebugInfoSettingsWindow(tbelement->GetRoot());
+#else
+		URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
+#endif
+	}
 }
 
 void HelloTBUI::InitControls()
