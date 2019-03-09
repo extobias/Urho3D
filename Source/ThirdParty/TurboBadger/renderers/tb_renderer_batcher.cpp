@@ -216,7 +216,7 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
 	}
 	batch.fragment = fragment;
 
-#if defined(URHO3D_OPENGL) || defined(URHO3D_D3D11)
+#if defined(URHO3D_OPENGL) || defined(URHO3D_D3D11) || defined(__linux__)
 	float uvOffset = 0.0f;
 #else
 	float uvOffset = 0.5f;
