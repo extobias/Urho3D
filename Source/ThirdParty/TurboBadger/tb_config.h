@@ -79,17 +79,17 @@
 // #define TB_FILE_POSIX
 
 /** Defines for implementations of TBClipboard. */
-//#define TB_CLIPBOARD_DUMMY // Cross platform. Not integrating with the OS.
+#define TB_CLIPBOARD_DUMMY // Cross platform. Not integrating with the OS.
 //#define TB_CLIPBOARD_GLFW // Cross platform using glfw API.
-#define TB_CLIPBOARD_WINDOWS
+//#define TB_CLIPBOARD_WINDOWS
 
 /** Defines for implementations of TBSystem. */
 // #define TB_SYSTEM_LINUX
-#define TB_SYSTEM_WINDOWS
+//#define TB_SYSTEM_WINDOWS
 // #define TB_SYSTEM_ANDROID
 
 /** Defines for additional platform specific issues. */
-#define TB_TARGET_WINDOWS
+//#define TB_TARGET_WINDOWS
 //#define TB_TARGET_MACOSX
 //#define TB_TARGET_LINUX
 
