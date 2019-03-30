@@ -47,6 +47,7 @@
 #include <Urho3D/UI/UI.h>
 
 #include "Physics.h"
+#include "Raycastest.h"
 
 #include <Urho3D/DebugNew.h>
 
@@ -469,7 +470,7 @@ void Physics::UpdateRotation(float timeStep)
 
 	char buff[512];
 	sprintf(buff, "x <%.3f> timestep <%.3f> moi <%.2f>", (45.0f - rot.EulerAngles().y_), timeElapsed_, moi);
-	URHO3D_LOGERRORF("%s", buff);
+	// URHO3D_LOGERRORF("%s", buff);
 
 	Vector3 torqueDir = rot * Vector3::UP;
 	Vector3 impulse = torqueDir * steeringForce;// *timeStep;

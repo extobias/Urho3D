@@ -32,6 +32,7 @@
 #include <Urho3D/Graphics/StaticModel.h>
 #include <Urho3D/Graphics/Terrain.h>
 #include <Urho3D/Graphics/Zone.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/IO/FileSystem.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Physics/CollisionShape.h>
@@ -83,7 +84,10 @@ void RaycastVehicleDemo::CreateScene()
     scene_ = new Scene(context_);
     // Create scene subsystem components
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<PhysicsWorld>();
+	DebugRenderer* dr = scene_->CreateComponent<DebugRenderer>();
+	PhysicsWorld *pw = scene_->CreateComponent<PhysicsWorld>();
+	pw->SetDebugRenderer(dr);
+	
     // Create camera and define viewport. We will be doing load / save, so it's convenient to create the camera outside the scene,
     // so that it won't be destroyed and recreated, and we don't have to redefine the viewport on load
     cameraNode_ = new Node(context_);
@@ -181,10 +185,11 @@ void RaycastVehicleDemo::SubscribeToEvents()
                      URHO3D_HANDLER(RaycastVehicleDemo, HandleUpdate));
     // Subscribe to PostUpdate event for updating the camera position after physics simulation
     SubscribeToEvent(E_POSTUPDATE,
-                     URHO3D_HANDLER(RaycastVehicleDemo,
-                                    HandlePostUpdate));
+                     URHO3D_HANDLER(RaycastVehicleDemo, HandlePostUpdate));
     // Unsubscribe the SceneUpdate event from base class as the camera node is being controlled in HandlePostUpdate() in this sample
     UnsubscribeFromEvent(E_SCENEUPDATE);
+
+	SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(RaycastVehicleDemo, HandleRenderPostUpdate));
 }
 
 void RaycastVehicleDemo::HandleUpdate(StringHash eventType,
@@ -283,4 +288,11 @@ void RaycastVehicleDemo::HandlePostUpdate(StringHash eventType, VariantMap& even
     }
     cameraNode_->SetPosition(cameraTargetPos);
     cameraNode_->SetRotation(dir);
+}
+
+void RaycastVehicleDemo::HandleRenderPostUpdate(StringHash eventType, VariantMap& eventData)
+{
+	// URHO3D_LOGDEBUG("HandleRenderPostUpdate");
+	PhysicsWorld *pw = scene_->GetComponent<PhysicsWorld>();
+	pw->DrawDebugGeometry(true);
 }
