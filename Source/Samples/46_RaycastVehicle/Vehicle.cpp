@@ -58,7 +58,7 @@ Vehicle::Vehicle(Urho3D::Context* context)
     engineForce_ = 0.0f;
     brakingForce_ = 50.0f;
     vehicleSteering_ = 0.0f;
-    maxEngineForce_ = 2500.0f;
+    maxEngineForce_ = 13000.0f;
     wheelRadius_ = 0.5f;
     suspensionRestLength_ = 0.6f;
     wheelWidth_ = 0.4f;
@@ -77,7 +77,7 @@ void Vehicle::Init()
     auto* vehicle = node_->CreateComponent<RaycastVehicle>();
     vehicle->Init();
     auto* hullBody = node_->GetComponent<RigidBody>();
-    hullBody->SetMass(800.0f);
+    hullBody->SetMass(2800.0f);
     hullBody->SetLinearDamping(0.2f); // Some air resistance
     hullBody->SetAngularDamping(0.5f);
     hullBody->SetCollisionLayer(1);
@@ -92,6 +92,8 @@ void Vehicle::Init()
     hullObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     hullObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
     hullObject->SetCastShadows(true);
+	hullObject->SetEnabled(false);
+
     float connectionHeight = -0.4f;
     bool isFrontWheel = true;
     Vector3 wheelDirection(0, -1, 0);
@@ -130,6 +132,7 @@ void Vehicle::Init()
         pWheel->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
         pWheel->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
         pWheel->SetCastShadows(true);
+		pWheel->SetEnabled(false);
         CreateEmitter(connectionPoints_[id]);
     }
     emittersCreated = true;
@@ -240,9 +243,9 @@ void Vehicle::PostUpdate(float timeStep)
             {
                 particleEmitter->SetEmitting(true);
             }
-            URHO3D_LOGDEBUG("GetWheelSkidInfoCumulative() = " +
-                            String(vehicle->GetWheelSkidInfoCumulative(i)) + " " +
-                            String(vehicle->GetMaxSideSlipSpeed()));
+            //URHO3D_LOGDEBUG("GetWheelSkidInfoCumulative() = " +
+            //                String(vehicle->GetWheelSkidInfoCumulative(i)) + " " +
+            //                String(vehicle->GetMaxSideSlipSpeed()));
             /* TODO: Add skid marks here */
         }
         else if (particleEmitter->IsEmitting())

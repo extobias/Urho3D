@@ -422,7 +422,7 @@ int	btDiscreteDynamicsWorld::stepSimulation( btScalar timeStep,int maxSubSteps, 
 		//variable timestep
 		fixedTimeStep = timeStep;
 		m_localTime = m_latencyMotionStateInterpolation ? 0 : timeStep;
-		m_fixedTimeStep = 0;
+		m_fixedTimeStep = 0;	
 		if (btFuzzyZero(timeStep))
 		{
 			numSimulationSubSteps = 0;
