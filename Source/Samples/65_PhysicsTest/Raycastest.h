@@ -10,7 +10,13 @@ class Raycastest : public LogicComponent
 	URHO3D_OBJECT(Raycastest, LogicComponent)
 
 public:
-	Raycastest(Context* context);
+	explicit Raycastest(Context* context);
 	
+	static void RegisterObject(Context* context);
 
+	void OnNodeSet(Node* node) override;
+
+	virtual void FixedUpdate(float timeStep);
+
+	void RayCast();
 };

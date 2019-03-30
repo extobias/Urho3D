@@ -69,6 +69,7 @@ Physics::Physics(Context* context) :
 	maxImpulse_(0.0f),
 	timeElapsed_(0.0f)
 {
+	Raycastest::RegisterObject(context);
 }
 
 void Physics::Start()
@@ -181,6 +182,9 @@ void Physics::CreateScene()
         //    }
         //}
     }
+
+	Node* rtNode = scene_->CreateChild("RT");
+	Raycastest* rt = rtNode->CreateComponent<Raycastest>();
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
