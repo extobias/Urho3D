@@ -147,7 +147,8 @@ void Physics::CreateScene()
         // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
         // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
         // in the physics simulation
-        /*RigidBody* body = */floorNode->CreateComponent<RigidBody>();
+        RigidBody* body = floorNode->CreateComponent<RigidBody>();
+        body->SetCollisionLayer(1 << 0);
         CollisionShape* shape = floorNode->CreateComponent<CollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
@@ -181,10 +182,10 @@ void Physics::CreateScene()
         shape->SetBox(Vector3::ONE);
         //    }
         //}
-    }
 
-	Node* rtNode = scene_->CreateChild("RT");
-	Raycastest* rt = rtNode->CreateComponent<Raycastest>();
+        // Node* rtNode = scene_->CreateChild("RT");
+        Raycastest* rt = boxNode->CreateComponent<Raycastest>();
+    }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
@@ -361,17 +362,17 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 {
 	int key = eventData[KeyDown::P_KEY].GetInt();
 
-	if (key == KEY_L)
+    if (key == KEY_T)
 	{
 		updateLinSuspension_ = !updateLinSuspension_;
 	}
 
-	if (key == KEY_R)
+    if (key == KEY_Y)
 	{
 		updateRotSuspension_ = !updateRotSuspension_;
 	}
 
-	if (key == KEY_D)
+    if (key == KEY_R)
 	{
 		maxHeight_ = 0.0f;
 		k_ = 0.0f;
