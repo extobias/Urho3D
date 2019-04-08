@@ -113,4 +113,6 @@ private:
 	bool updateRotSuspension_;
 	float timeElapsed_;
 	Text* debugText_;
+
+	class Raycastest* convexCastTest_;
 };
