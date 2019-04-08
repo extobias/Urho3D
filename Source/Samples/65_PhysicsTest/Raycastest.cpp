@@ -19,13 +19,17 @@
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <Bullet/BulletCollision/CollisionDispatch/btCollisionWorld.h>
 
+static const btVector3 WHITE(1.0f, 1.0f, 1.0f);
+static const btVector3 GREEN(0.0f, 1.0f, 0.0f);
+
 struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
 {
-    AllConvexResultCallback(const btVector3&	convexFromWorld, const btVector3&	convexToWorld)
+    AllConvexResultCallback(const btVector3& convexFromWorld, const btVector3& convexToWorld)
         :m_convexFromWorld(convexFromWorld),
         m_convexToWorld(convexToWorld),
         m_hitCollisionObject(0)
     {
+		// URHO3D_LOGERRORF("AllConvexResultCallback ctor <%i>", m_hitPointWorld.size());
     }
 
     btVector3	m_convexFromWorld;//used to calculate hitPointWorld from hitFraction
@@ -38,6 +42,7 @@ struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
 
     btAlignedObjectArray<btVector3>	m_hitNormalWorld;
     btAlignedObjectArray<btVector3>	m_hitPointWorld;
+	btAlignedObjectArray<btVector3>	m_hitPointLocal;
     btAlignedObjectArray<btScalar> m_hitFractions;
 
     virtual	btScalar addSingleResult(btCollisionWorld::LocalConvexResult& convexResult, bool normalInWorldSpace)
@@ -59,7 +64,7 @@ struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
         //m_hitPointWorld = convexResult.m_hitPointLocal;
         //return convexResult.m_hitFraction;
 
-        // URHO3D_LOGERRORF("addSingleResult <%i>", m_hitPointWorld.size());
+        // URHO3D_LOGERRORF("addSingleResult fraction <%f>", convexResult.m_hitFraction);
 
         m_closestHitFraction = convexResult.m_hitFraction;
         m_hitCollisionObject = convexResult.m_hitCollisionObject;
@@ -76,9 +81,16 @@ struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
         }
         m_hitNormalWorld.push_back(hitNormalWorld);
         btVector3 hitPointWorld;
+		//URHO3D_LOGERRORF("from <%f, %f, %f> to <%f, %f, %f> local <%f, %f, %f> fraction <%f>", 
+		//	m_convexFromWorld.getX(), m_convexFromWorld.getY(), m_convexFromWorld.getZ(),
+		//	m_convexToWorld.getX(), m_convexToWorld.getY(), m_convexToWorld.getZ(), 
+		//	convexResult.m_hitPointLocal.getX(), convexResult.m_hitPointLocal.getY(), convexResult.m_hitPointLocal.getZ(),
+		//	convexResult.m_hitFraction);
+
         hitPointWorld.setInterpolate3(m_convexFromWorld, m_convexToWorld, convexResult.m_hitFraction);
         m_hitPointWorld.push_back(hitPointWorld);
         m_hitFractions.push_back(convexResult.m_hitFraction);
+		m_hitPointLocal.push_back(convexResult.m_hitPointLocal);
         // return m_closestHitFraction;
         return convexResult.m_hitFraction;
     }
@@ -87,9 +99,12 @@ struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
 Raycastest::Raycastest(Context* context)
     : LogicComponent(context),
     suspensionRest_(1.0f),
-    radius_(0.3f),
+    radius_(0.1f),
     hardPointWS_(Vector3::ZERO),
-    direction_(Vector3::DOWN)
+    direction_(Vector3::DOWN),
+	hitPoints_(0),
+	hasHit_(false),
+	hitBody_(nullptr)
 {
 	URHO3D_LOGERRORF("Raycastest::Raycastest");
     SetUpdateEventMask(USE_FIXEDUPDATE | USE_POSTUPDATE);
@@ -110,7 +125,7 @@ void Raycastest::OnNodeSet(Node* node)
     Vector3 pos(direction * suspensionRest_);
     //wheelNode->SetPosition(node_->LocalToWorld(pos));
     shapeNode_->SetPosition(node_->GetPosition());
-    shapeNode_->SetScale(1.0f);
+    // shapeNode_->SetScale(1.0f);
 
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     // auto* wheelObject = shapeNode_->CreateComponent<StaticModel>();
@@ -119,9 +134,10 @@ void Raycastest::OnNodeSet(Node* node)
     // auto* wheelBody = wheelNode->CreateComponent<RigidBody>();
     shape_ = shapeNode_->CreateComponent<CollisionShape>();
 
-    // Quaternion rot(90.0f, Vector3::FORWARD);
-    Quaternion rot = Quaternion::IDENTITY;
-    shape_->SetCylinder(radius_ * 4, 1.0f, Vector3::ZERO, rot);
+    Quaternion rot(90.0f, Vector3::FORWARD);
+    // Quaternion rot = Quaternion::IDENTITY;
+    shape_->SetCylinder(radius_ * 2, radius_, Vector3::ZERO, rot);
+	// shape_->SetSphere(radius_ * 2);
 }
 
 void Raycastest::FixedUpdate(float timeStep)
@@ -130,28 +146,100 @@ void Raycastest::FixedUpdate(float timeStep)
 
 void Raycastest::PostUpdate(float timeStep)
 {
-    DebugRenderer* debug = GetScene()->GetComponent<DebugRenderer>();
-    shape_->DrawDebugGeometry(debug, false);
-
     RayCast();
 
-    Ray ray(hardPointWS_, direction_);
-    Vector3 startPos = ray.origin_;
-    Vector3 endPos = ray.origin_ + suspensionRest_ * ray.direction_;
+	DebugDraw();
+}
 
-    Sphere startSphere(startPos, 0.1f);
-    debug->AddSphere(startSphere, Color::RED, false);
+void Raycastest::DebugDraw()
+{
+	DebugRenderer* debug = GetScene()->GetComponent<DebugRenderer>();
 
-    Sphere endSphere(endPos, 0.1f);
-    debug->AddSphere(endSphere, Color::GREEN, false);
+	PhysicsWorld* pw = GetScene()->GetComponent<PhysicsWorld>();
+	btCollisionWorld* world = pw->GetWorld();
+
+	// shape_->DrawDebugGeometry(debug, false);
+	
+	Ray ray(hardPointWS_, direction_);
+	Vector3 startPos = ray.origin_;
+	Vector3 endPos = ray.origin_ + suspensionRest_ * ray.direction_;
+	// Vector3 startPos = ray.origin_ + suspensionRest_ * ray.direction_;
+	// Vector3 endPos = ray.origin_;
+
+	Sphere startSphere(startPos, 0.1f);
+	debug->AddSphere(startSphere, Color::RED, false);
+
+	Sphere endSphere(endPos, 0.1f);
+	debug->AddSphere(endSphere, Color::GREEN, false);
+
+	// contact point
+	// Sphere sphere(hitPoint_ + (suspensionRest_ / 2.0f) * direction_, 0.5f);
+	Vector<Color> colors;
+	colors.Push(Color::WHITE);
+	colors.Push(Color::GRAY);
+	colors.Push(Color::BLACK);
+	colors.Push(Color::RED);
+	colors.Push(Color::GREEN);
+	colors.Push(Color::BLUE);
+	colors.Push(Color::CYAN);
+	colors.Push(Color::MAGENTA);
+	colors.Push(Color::YELLOW);
+	if (hasHit_)
+	{
+		for (int i = 0; i < hitPointWorld_.Size(); i++)
+		{
+			Vector3 local(hitPointLocal_.At(i));
+			Color color = colors.At(i % 9);
+			Sphere sphere(local, 0.01f);
+			debug->AddSphere(sphere, color, false);
+
+			// cylinder
+			Vector3 hit(hitPointWorld_.At(i));
+			//Sphere sphereHit(hit, radius_);
+			//debug->AddSphere(sphereHit, Color::BLUE, false);
+
+
+			// debug->AddCylinder(hit, radius_, radius_, Color::BLUE, false);
+			pw->SetDebugRenderer(debug);
+			pw->SetDebugDepthTest(false);
+
+			Matrix3x4 worldTransform = node_->GetTransform();
+			Quaternion rotation = shape_->GetRotation();
+
+			Vector3 worldPosition(hit);
+			Quaternion worldRotation(worldTransform.Rotation() * rotation);
+			world->debugDrawObject(btTransform(ToBtQuaternion(worldRotation), ToBtVector3(worldPosition)), shape_->GetCollisionShape(), btVector3(0.0f, 0.0f, 1.0f));
+
+			pw->SetDebugRenderer(nullptr);
+
+			// normal
+			Vector3 normal(hitNormalWorld_.At(i));
+			debug->AddLine(local, local + normal.Normalized(), Color::YELLOW, false);
+		}
+		
+		// cylinder
+		Matrix3x4 worldTransform = node_->GetTransform();
+		Vector3 position = hitPoint_;
+		Quaternion rotation = shape_->GetRotation();
+
+		Vector3 worldPosition(position);
+		Quaternion worldRotation(worldTransform.Rotation() * rotation);
+
+		bool bodyActive = false;
+
+		pw->SetDebugRenderer(debug);
+		pw->SetDebugDepthTest(false);
+
+		// world->debugDrawObject(btTransform(ToBtQuaternion(worldRotation), ToBtVector3(worldPosition)), shape_->GetCollisionShape(), bodyActive ? WHITE : GREEN);
+
+		pw->SetDebugRenderer(nullptr);
+	}
 }
 
 void Raycastest::Update()
 {
     hardPointWS_ = node_->GetPosition();
-    shapeNode_->SetPosition(hardPointWS_);
-
-    // URHO3D_LOGERRORF("raycastest: pos <%f, %f, %f>", pos.x_, pos.y_, pos.z_);
+    // shapeNode_->SetPosition(hardPointWS_);
 }
 
 void Raycastest::RayCast()
@@ -162,26 +250,49 @@ void Raycastest::RayCast()
     PhysicsWorld* pw = GetScene()->GetComponent<PhysicsWorld>();
     btCollisionWorld* world = pw->GetWorld();
 
-    Quaternion worldRotation = shape_->GetRotation();
+    Quaternion worldRotation = node_->GetRotation() * shape_->GetRotation();
 
     Ray ray(hardPointWS_, direction_);
     Vector3 startPos = ray.origin_;
     Vector3 endPos = ray.origin_ + suspensionRest_ * ray.direction_;
+	// Vector3 startPos = ray.origin_ + suspensionRest_ * ray.direction_;
+	// Vector3 endPos = ray.origin_;
     Quaternion startRot = worldRotation;
     Quaternion endRot = worldRotation;
 
     AllConvexResultCallback convexCallback(ToBtVector3(startPos), ToBtVector3(endPos));
     convexCallback.m_collisionFilterGroup = (short)0xffff;
-    convexCallback.m_collisionFilterMask = (short)0xffff;
+    convexCallback.m_collisionFilterMask = (short)mask;
 
-    // btCollisionShape* shape = shape_->GetCollisionShape();
-    world->convexSweepTest(reinterpret_cast<btConvexShape*>(shape_->GetCollisionShape()),
+    btCollisionShape* shape = shape_->GetCollisionShape();
+    world->convexSweepTest(reinterpret_cast<btConvexShape*>(shape),
         btTransform(ToBtQuaternion(startRot), convexCallback.m_convexFromWorld),
         btTransform(ToBtQuaternion(endRot), convexCallback.m_convexToWorld),
-        convexCallback);
+        convexCallback, 0.01f);
 
-    if (convexCallback.hasHit())
+	hasHit_ = false;
+	hitPoints_ = 0;
+	distance_.Clear();
+	hitFraction_.Clear();
+	hitPointWorld_.Clear();
+	hitNormalWorld_.Clear();
+	hitPointLocal_.Clear();
+
+	if (convexCallback.hasHit())
     {
-        URHO3D_LOGERRORF("hit point <%i>", convexCallback.m_hitPointWorld.size());
+		hasHit_ = true;
+		hitPoints_ = convexCallback.m_hitPointWorld.size();
+		for (int i = 0; i < convexCallback.m_hitPointWorld.size(); i++)
+		{
+			hitPoint_ = ToVector3(convexCallback.m_hitPointWorld.at(i));
+			hitPointWorld_.Push(hitPoint_);
+			hitPointLocal_.Push(ToVector3(convexCallback.m_hitPointLocal.at(i)));
+			hitNormal_ = ToVector3(convexCallback.m_hitNormalWorld.at(i));
+			hitNormalWorld_.Push(hitNormal_);
+			hitFraction_.Push(convexCallback.m_hitFractions.at(i));
+			
+			distance_.Push((hitPoint_ - startPos).Length());
+			hitBody_ = static_cast<RigidBody*>(convexCallback.m_collisionObjects[i]->getUserPointer());
+		}
     }
 }

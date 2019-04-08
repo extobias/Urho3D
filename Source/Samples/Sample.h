@@ -90,6 +90,8 @@ protected:
     /// Mouse mode option to use in the sample.
     MouseMode useMouseMode_;
 
+	void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+
 private:
     /// Create logo.
     void CreateLogo();
@@ -102,7 +104,7 @@ private:
     /// Handle request for mouse mode change on web platform.
     void HandleMouseModeChange(StringHash eventType, VariantMap& eventData);
     /// Handle key down event to process key controls common to all samples.
-    void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+    // void HandleKeyDown(StringHash eventType, VariantMap& eventData);
     /// Handle key up event to process key controls common to all samples.
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
     /// Handle scene update event to control camera's pitch and yaw for all samples.

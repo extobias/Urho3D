@@ -23,15 +23,31 @@ public:
 
 	void RayCast();
 
+	void DebugDraw();
+
+	unsigned hitPoints_;
+	Vector<float> distance_;
+	Vector<Vector3> hitPointWorld_;
+	Vector<Vector3> hitPointLocal_;
+	Vector<Vector3> hitNormalWorld_;
+	Vector<float> hitFraction_;
+
+	float suspensionRest_;
+	Vector3 hardPointWS_;
+	Vector3 direction_;
+	RigidBody* hitBody_;
+
 private:
     void Update();
 
-    float suspensionRest_;
+    
     float radius_;
 
-    Vector3 hardPointWS_;
-    Vector3 direction_;
 
-    CollisionShape* shape_;
+	Vector3 hitPoint_;
+	Vector3 hitNormal_;
+	bool hasHit_;
+
+	CollisionShape* shape_;
     Node* shapeNode_;
 };

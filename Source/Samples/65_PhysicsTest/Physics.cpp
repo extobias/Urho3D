@@ -32,6 +32,7 @@
 #include <Urho3D/Graphics/Renderer.h>
 #include <Urho3D/Graphics/Skybox.h>
 #include <Urho3D/Graphics/Zone.h>
+#include <Urho3D/Graphics/Terrain.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/Log.h>
@@ -53,6 +54,8 @@
 
 URHO3D_DEFINE_APPLICATION_MAIN(Physics)
 
+const float CAMERA_DISTANCE = 10.0f;
+
 Physics::Physics(Context* context) :
 	Sample(context),
 	drawDebug_(false),
@@ -63,7 +66,7 @@ Physics::Physics(Context* context) :
 	maxHeight_(0.0f),
 	updateLinSuspension_(false),
 	updateRotSuspension_(false),
-	floatHeight_(2.0f),
+	floatHeight_(0.5f),
 	k_(50.0f),
 	kFactor_(0),
 	maxImpulse_(0.0f),
@@ -111,10 +114,10 @@ void Physics::CreateScene()
     Node* zoneNode = scene_->CreateChild("Zone");
     Zone* zone = zoneNode->CreateComponent<Zone>();
     zone->SetBoundingBox(BoundingBox(-1000.0f, 1000.0f));
-    zone->SetAmbientColor(Color(0.15f, 0.15f, 0.15f));
-    zone->SetFogColor(Color(1.0f, 1.0f, 1.0f));
-    zone->SetFogStart(300.0f);
-    zone->SetFogEnd(500.0f);
+    //zone->SetAmbientColor(Color(0.15f, 0.15f, 0.15f));
+    //zone->SetFogColor(Color(1.0f, 1.0f, 1.0f));
+    //zone->SetFogStart(300.0f);
+    //zone->SetFogEnd(500.0f);
 
     // Create a directional light to the world. Enable cascaded shadows on it
     Node* lightNode = scene_->CreateChild("DirectionalLight");
@@ -129,17 +132,17 @@ void Physics::CreateScene()
     // Create skybox. The Skybox component is used like StaticModel, but it will be always located at the camera, giving the
     // illusion of the box planes being far away. Use just the ordinary Box model and a suitable material, whose shader will
     // generate the necessary 3D texture coordinates for cube mapping
-    Node* skyNode = scene_->CreateChild("Sky");
-    skyNode->SetScale(500.0f); // The scale actually does not matter
-    Skybox* skybox = skyNode->CreateComponent<Skybox>();
-    skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+    //Node* skyNode = scene_->CreateChild("Sky");
+    //skyNode->SetScale(500.0f); // The scale actually does not matter
+    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
+    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
     {
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
-        floorNode->SetPosition(Vector3(0.0f, -0.5f, 0.0f));
-        floorNode->SetScale(Vector3(1000.0f, 1.0f, 1000.0f));
+        floorNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+        floorNode->SetScale(Vector3(1000.0f, 0.1f, 1000.0f));
         StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
@@ -153,6 +156,23 @@ void Physics::CreateScene()
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
         shape->SetBox(Vector3::ONE);
+
+		//Node* terrainNode = scene_->CreateChild("Terrain");
+		//terrainNode->SetPosition(Vector3::ZERO);
+		//auto* terrain = terrainNode->CreateComponent<Terrain>();
+		//terrain->SetPatchSize(64);
+		//terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+		//terrain->SetSmoothing(true);
+		//terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+		//terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+		//// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+		//// terrain patches and other objects behind it
+		//terrain->SetOccluder(true);
+
+		//auto* body = terrainNode->CreateComponent<RigidBody>();
+		//body->SetCollisionLayer(1 << 0); // Use layer bitmask 2 for static geometry
+		//auto* shape = terrainNode->CreateComponent<CollisionShape>();
+		//shape->SetTerrain();
     }
 
     {
@@ -164,28 +184,51 @@ void Physics::CreateScene()
 		int x = 0, y = 0;
         Node* boxNode = scene_->CreateChild("Box");
 		boxNode->SetScale(Vector3(width_, 1.0f, length_));
-        boxNode->SetPosition(Vector3((float)x, -(float)y + 2.0f, 0.0f));
-        StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-        boxObject->SetCastShadows(true);
+        boxNode->SetPosition(Vector3((float)x, -(float)y + 0.5f, 0.0f));
+        //StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+        //boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        //boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        //boxObject->SetCastShadows(true);
 
         // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
         // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
         // objects are significant
-        body_ = boxNode->CreateComponent<RigidBody>();
-        body_->SetMass(mass_);
+  //      body_ = boxNode->CreateComponent<RigidBody>();
+		//body_->SetCollisionLayer(1 << 1);
+  //      body_->SetMass(mass_);
+		//body_->SetRestitution(1.0f);
         // body_->SetFriction(0.75f);
 		// body_->SetAngularFactor(Vector3::ZERO);
 		// body_->SetLinearFactor(Vector3::UP);
-        CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-        shape->SetBox(Vector3::ONE);
+        //CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+        //shape->SetBox(Vector3::ONE);
         //    }
         //}
 
         // Node* rtNode = scene_->CreateChild("RT");
-        Raycastest* rt = boxNode->CreateComponent<Raycastest>();
+        convexCastTest_ = boxNode->CreateComponent<Raycastest>();
     }
+
+	{
+		//for (int i = 1; i < 8; ++i)
+		//{
+		//	Node* boxNode = scene_->CreateChild("SmallBox");
+		//	boxNode->SetPosition(Vector3(0.0f, 1.0f, 5.0f * i));
+		//	boxNode->SetScale(0.25f);
+		//	StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+		//	boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+		//	boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+		//	boxObject->SetCastShadows(true);
+
+		//	// Create physics components, use a smaller mass also
+		//	RigidBody* body = boxNode->CreateComponent<RigidBody>();
+		//	body->SetMass(0.25f);
+		//	// body->SetFriction(0.75f);
+		//	body->SetCollisionLayer(1 << 0);
+		//	CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+		//	shape->SetBox(Vector3::ONE);
+		//}
+	}
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
@@ -194,7 +237,8 @@ void Physics::CreateScene()
     camera->SetFarClip(500.0f);
 
     // Set an initial position for the camera scene node above the floor
-    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, -20.0f));
+	cameraNode_->SetPosition(Vector3(5.0f, 0.5f, 0.0f));
+	//cameraNode_->SetRotation(Quaternion(90.0f, Vector3::UP));
 }
 
 void Physics::CreateInstructions()
@@ -270,7 +314,7 @@ void Physics::MoveCamera(float timeStep)
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
-    const float MOVE_SPEED = 20.0f;
+    const float MOVE_SPEED = 4.0f;
     // Mouse sensitivity as degrees per pixel
     const float MOUSE_SENSITIVITY = 0.1f;
 
@@ -297,6 +341,13 @@ void Physics::MoveCamera(float timeStep)
 	if (input->GetKeyDown(KEY_Q))
 		cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
 
+	if (input->GetKeyDown(KEY_X))
+	{
+		Vector3 camPos = cameraNode_->GetPosition();
+		// cameraNode_->SetPosition(Vector3(camPos.x_, 0.0f, camPos.z_));
+		cameraNode_->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+	}
+
     // "Shoot" a physics object with left mousebutton
     if (input->GetMouseButtonDown(MOUSEB_LEFT))
         SpawnObject();
@@ -313,10 +364,6 @@ void Physics::MoveCamera(float timeStep)
         File loadFile(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/Physics.xml", FILE_READ);
         scene_->LoadXML(loadFile);
     }
-
-    // Toggle physics debug geometry with space
-    if (input->GetKeyPress(KEY_SPACE))
-        drawDebug_ = !drawDebug_;
 }
 
 void Physics::SpawnObject()
@@ -337,10 +384,11 @@ void Physics::SpawnObject()
     RigidBody* body = boxNode->CreateComponent<RigidBody>();
     body->SetMass(0.25f);
     body->SetFriction(0.75f);
+	body->SetCollisionLayer(1 << 0);
     CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
     shape->SetBox(Vector3::ONE);
 
-    const float OBJECT_VELOCITY = 10.0f;
+    const float OBJECT_VELOCITY = 1.0f;
 
     // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
     // to overcome gravity better
@@ -354,8 +402,30 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Take the frame time step, which is stored as a float
     float timeStep = eventData[P_TIMESTEP].GetFloat();
 
-    // Move the camera, scale movement with time step
-    MoveCamera(timeStep);
+	//Node* vehicleNode = body_->GetNode();
+
+	//// Physics update has completed. Position camera behind vehicle
+	//Quaternion dir(vehicleNode->GetRotation().YawAngle(), Vector3::UP);
+	//dir = dir * Quaternion(-90.0f, Vector3::UP);
+	////dir = dir * Quaternion(vehicle_->controls_.pitch_, Vector3::RIGHT);
+
+	//Vector3 cameraTargetPos = vehicleNode->GetPosition() - dir * Vector3(0.0f, 0.0f, CAMERA_DISTANCE);
+	//Vector3 cameraStartPos = vehicleNode->GetPosition();
+
+	//// Raycast camera against static objects (physics collision mask 2)
+	//// and move it closer to the vehicle if something in between
+	//Ray cameraRay(cameraStartPos, cameraTargetPos - cameraStartPos);
+	//float cameraRayLength = (cameraTargetPos - cameraStartPos).Length();
+	//PhysicsRaycastResult result;
+	//scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, cameraRay, cameraRayLength, 2);
+	//if (result.body_)
+	//	cameraTargetPos = cameraStartPos + cameraRay.direction_ * (result.distance_ - 0.5f);
+
+	//cameraNode_->SetPosition(cameraTargetPos);
+	//cameraNode_->SetRotation(dir);
+
+	// Move the camera, scale movement with time step
+	MoveCamera(timeStep);
 }
 
 void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
@@ -399,27 +469,81 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 		kFactor_--;
 		k_ = kFactor_ * 10.0f;
 	}
+
+	if (key == KEY_Z)
+	{
+		Quaternion rot = body_->GetRotation();
+		Vector3 pos = body_->GetPosition();
+		Vector3 vel = rot * Vector3::FORWARD;
+
+		Vector3 relPos = rot * Vector3::ZERO;
+		float forwardFactor_ = 2000.0f;
+
+		body_->ApplyForce(vel * forwardFactor_, relPos);
+	}
+
+	// Toggle physics debug geometry with space
+	if (key == KEY_SPACE)
+		drawDebug_ = !drawDebug_;
+
+	Sample::HandleKeyDown(eventType, eventData);
 }
 
 void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
     // If draw debug mode is enabled, draw physics debug geometry. Use depth test to make the result easier to interpret
     if (drawDebug_)
-        scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(true);
+        scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(false);
 
 	if (debugText_)
 	{
-		float posy = body_->GetPosition().y_ - 0.5f;
-		if (posy > maxHeight_)
-			maxHeight_ = posy;
+		//float posy = body_->GetPosition().y_ - 0.5f;
+		//if (posy > maxHeight_)
+		//	maxHeight_ = posy;
 
-		if (impulse_.y_ > maxImpulse_)
-			maxImpulse_ = impulse_.y_;
+		//if (impulse_.y_ > maxImpulse_)
+		//	maxImpulse_ = impulse_.y_;
 
 		String text;
-		float vel = body_->GetLinearVelocity().y_;
-		text.AppendWithFormat("height <%f>\n max height <%f>\n vel <%f>\n k <%f>\n c <%f>\n error <%f>\n impulse <%f, %f, %f> maximp <%f>", 
-			posy, maxHeight_, vel, k_, c_, floatHeight_ - posy, impulse_.x_, impulse_.y_, impulse_.z_, maxImpulse_);
+		//float vel = body_->GetLinearVelocity().y_;
+		//text.AppendWithFormat("height <%f>\n max height <%f>\n vel <%f>\n k <%f>\n c <%f>\n error <%f>\n impulse <%f, %f, %f> maximp <%f>", 
+		//	posy, maxHeight_, vel, k_, c_, floatHeight_ - posy, impulse_.x_, impulse_.y_, impulse_.z_, maxImpulse_);
+
+		text.AppendWithFormat("\nhits <%i> ", convexCastTest_->hitPoints_);
+
+		char buff[128];
+		memset(buff, 0, 128);
+		Vector3 hp = convexCastTest_->hardPointWS_;
+		sprintf(buff, "\nfrom <%.2f,%.2f,%.2f> ", hp.x_, hp.y_, hp.z_);
+		text.AppendWithFormat("%s", buff);
+
+		Vector3 to = hp + convexCastTest_->suspensionRest_ * convexCastTest_->direction_;
+		memset(buff, 0, 128);
+		sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
+		text.AppendWithFormat("%s", buff);
+
+		for (int i = 0; i < convexCastTest_->hitPoints_; i++)
+		{
+			Vector3 h = convexCastTest_->hitPointWorld_.At(i);
+			char buff[128];
+			memset(buff, 0, 128);
+			sprintf(buff, "\nhit <%.2f,%.2f,%.2f> ", h.x_, h.y_, h.z_);
+			text.AppendWithFormat("%s", buff);
+
+			Vector3 l = convexCastTest_->hitPointLocal_.At(i);
+			memset(buff, 0, 128);
+			sprintf(buff, "local <%.2f,%.2f,%.2f> ", l.x_, l.y_, l.z_);
+			text.AppendWithFormat("%s", buff);
+
+			memset(buff, 0, 128);
+			float d = convexCastTest_->distance_.At(i);
+			sprintf(buff, "f <%.2f> d <%.2f>", convexCastTest_->hitFraction_.At(i), d);
+			text.AppendWithFormat("%s", buff);
+		}
+		
+		if(convexCastTest_->hitBody_ && convexCastTest_->hitBody_->GetNode())
+			text.AppendWithFormat("\nbody <%s> ", convexCastTest_->hitBody_->GetNode()->GetName().CString());
+
 		debugText_->SetText(text);
 	}
 }
@@ -432,6 +556,7 @@ void Physics::UpdateLineal(float timeStep)
 	Vector3 pos = body_->GetPosition();
 
 	float posy = pos.y_ - 0.5;
+	// float posy = convexCastTest_->distance_ - 0.4;
 	float k = k_;
 	float x = floatHeight_ - posy;
 	float springForce = k * x;
