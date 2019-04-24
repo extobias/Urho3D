@@ -85,7 +85,7 @@ private:
     /// Read input and moves the camera.
     void MoveCamera(float timeStep);
     /// Spawn a physics object from the camera position.
-    void SpawnObject();
+    void SpawnObject(bool camera = true);
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle the post-render update event.
@@ -94,9 +94,10 @@ private:
 	void HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData);
 
 	void UpdateLineal(float timeStep);
+	void UpdateLinealCast(float timeStep, class Raycastest* caster);
 	void UpdateRotation(float timeStep);
 
-	float GetVelocity();
+	float GetVelocity(const Vector3& relPos);
     /// Flag for drawing debug geometry.
     bool drawDebug_;
 
@@ -114,5 +115,7 @@ private:
 	float timeElapsed_;
 	Text* debugText_;
 
-	class Raycastest* convexCastTest_;
+	Vector<Node*> boxNodes_;
+
+	Vector<class Raycastest*> convexCastTest_;
 };

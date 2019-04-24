@@ -98,8 +98,8 @@ struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
 
 Raycastest::Raycastest(Context* context)
     : LogicComponent(context),
-    suspensionRest_(1.0f),
-    radius_(0.1f),
+    suspensionRest_(2.0f),
+    radius_(0.15f),
     hardPointWS_(Vector3::ZERO),
     direction_(Vector3::DOWN),
 	hitPoints_(0),
@@ -136,18 +136,17 @@ void Raycastest::OnNodeSet(Node* node)
 
     Quaternion rot(90.0f, Vector3::FORWARD);
     // Quaternion rot = Quaternion::IDENTITY;
-    shape_->SetCylinder(radius_ * 2, radius_, Vector3::ZERO, rot);
-	// shape_->SetSphere(radius_ * 2);
+    shape_->SetCylinder(radius_ * 2, radius_ * 4, Vector3::ZERO, rot);
+	//shape_->SetSphere(radius_ * 2);
 }
 
 void Raycastest::FixedUpdate(float timeStep)
 {
+	RayCast();
 }
 
 void Raycastest::PostUpdate(float timeStep)
 {
-    RayCast();
-
 	DebugDraw();
 }
 
@@ -163,8 +162,8 @@ void Raycastest::DebugDraw()
 	Ray ray(hardPointWS_, direction_);
 	Vector3 startPos = ray.origin_;
 	Vector3 endPos = ray.origin_ + suspensionRest_ * ray.direction_;
-	// Vector3 startPos = ray.origin_ + suspensionRest_ * ray.direction_;
-	// Vector3 endPos = ray.origin_;
+	//Vector3 startPos = Vector3(0.0f, 1.0f, 0.0f);
+	//Vector3 endPos = Vector3(0.0f, -1.0f, 0.0f);
 
 	Sphere startSphere(startPos, 0.1f);
 	debug->AddSphere(startSphere, Color::RED, false);
@@ -186,22 +185,24 @@ void Raycastest::DebugDraw()
 	colors.Push(Color::YELLOW);
 	if (hasHit_)
 	{
-		for (int i = 0; i < hitPointWorld_.Size(); i++)
+		// for (int i = 0; i < hitPointWorld_.Size(); i++)
+		int i = hitIndex_;
 		{
 			Vector3 local(hitPointLocal_.At(i));
 			Color color = colors.At(i % 9);
 			Sphere sphere(local, 0.01f);
 			debug->AddSphere(sphere, color, false);
 
-			// cylinder
+			// cylinder, el hitpointworld es relativo al comienzo del rayo (?)
+			// Vector3 hit(hardPointWS_ - hitPointWorld_.At(i));
 			Vector3 hit(hitPointWorld_.At(i));
-			//Sphere sphereHit(hit, radius_);
-			//debug->AddSphere(sphereHit, Color::BLUE, false);
+			Sphere sphereHit(hit, 0.01f);
+			debug->AddSphere(sphereHit, Color::BLUE, false);
 
 
 			// debug->AddCylinder(hit, radius_, radius_, Color::BLUE, false);
 			pw->SetDebugRenderer(debug);
-			pw->SetDebugDepthTest(false);
+			pw->SetDebugDepthTest(true);
 
 			Matrix3x4 worldTransform = node_->GetTransform();
 			Quaternion rotation = shape_->GetRotation();
@@ -238,8 +239,11 @@ void Raycastest::DebugDraw()
 
 void Raycastest::Update()
 {
-    hardPointWS_ = node_->GetPosition();
-    // shapeNode_->SetPosition(hardPointWS_);
+	// va relativo al centro del nodo
+	// sino habria que hacer la transformacion con hardPointCS_
+	// respecto a la posicion/rotacion del nodo
+	Quaternion rot = node_->GetRotation();
+    hardPointWS_ = node_->GetPosition() + rot * offset_;
 }
 
 void Raycastest::RayCast()
@@ -255,8 +259,8 @@ void Raycastest::RayCast()
     Ray ray(hardPointWS_, direction_);
     Vector3 startPos = ray.origin_;
     Vector3 endPos = ray.origin_ + suspensionRest_ * ray.direction_;
-	// Vector3 startPos = ray.origin_ + suspensionRest_ * ray.direction_;
-	// Vector3 endPos = ray.origin_;
+	//Vector3 startPos = Vector3(0.0f, 1.0f, 0.0f);
+	//Vector3 endPos = Vector3(0.0f, -1.0f, 0.0f);
     Quaternion startRot = worldRotation;
     Quaternion endRot = worldRotation;
 
@@ -268,16 +272,18 @@ void Raycastest::RayCast()
     world->convexSweepTest(reinterpret_cast<btConvexShape*>(shape),
         btTransform(ToBtQuaternion(startRot), convexCallback.m_convexFromWorld),
         btTransform(ToBtQuaternion(endRot), convexCallback.m_convexToWorld),
-        convexCallback, 0.01f);
+        convexCallback, world->getDispatchInfo().m_allowedCcdPenetration);
 
 	hasHit_ = false;
 	hitPoints_ = 0;
-	distance_.Clear();
+	hitIndex_ = -1;
+	hitDistance_.Clear();
 	hitFraction_.Clear();
 	hitPointWorld_.Clear();
 	hitNormalWorld_.Clear();
 	hitPointLocal_.Clear();
 
+	float distance = 1000.0f;
 	if (convexCallback.hasHit())
     {
 		hasHit_ = true;
@@ -289,10 +295,25 @@ void Raycastest::RayCast()
 			hitPointLocal_.Push(ToVector3(convexCallback.m_hitPointLocal.at(i)));
 			hitNormal_ = ToVector3(convexCallback.m_hitNormalWorld.at(i));
 			hitNormalWorld_.Push(hitNormal_);
-			hitFraction_.Push(convexCallback.m_hitFractions.at(i));
+			hitFraction_.Push((float)convexCallback.m_hitFractions.at(i));
 			
-			distance_.Push((hitPoint_ - startPos).Length());
+			float d = (hitPoint_ - startPos).Length();
+			hitDistance_.Push(d);
+			if (distance > d)
+			{
+				distance = d;
+				hitIndex_ = i;
+			}
+				
 			hitBody_ = static_cast<RigidBody*>(convexCallback.m_collisionObjects[i]->getUserPointer());
 		}
     }
+}
+
+void Raycastest::SetRadius(float r)
+{
+	radius_ = r;
+	Quaternion rot(90.0f, Vector3::FORWARD);
+	shape_->SetCylinder(radius_ * 2, radius_ * 4, Vector3::ZERO, rot);
+	// shape_->SetSphere(radius_ * 2);
 }
