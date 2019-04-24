@@ -66,8 +66,8 @@ Physics::Physics(Context* context) :
 	maxHeight_(0.0f),
 	updateLinSuspension_(false),
 	updateRotSuspension_(false),
-	floatHeight_(0.5f),
-	k_(50.0f),
+	floatHeight_(1.0f),
+	k_(350.0f),
 	kFactor_(0),
 	maxImpulse_(0.0f),
 	timeElapsed_(0.0f)
@@ -102,6 +102,7 @@ void Physics::CreateScene()
 
     scene_ = new Scene(context_);
 
+	engine_->SetMaxFps(60);
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
     // Create a physics simulation world with default parameters, which will update at 60fps. Like the Octree must
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
@@ -142,16 +143,17 @@ void Physics::CreateScene()
         // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
         Node* floorNode = scene_->CreateChild("Floor");
         floorNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-        floorNode->SetScale(Vector3(1000.0f, 0.1f, 1000.0f));
+        floorNode->SetScale(Vector3(1000.0f, 0.0f, 1000.0f));
         StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
         floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+        floorObject->SetMaterial(cache->GetResource<Material>("Materials/FloorBlackWhite.xml"));
 
         // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
         // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
         // in the physics simulation
         RigidBody* body = floorNode->CreateComponent<RigidBody>();
         body->SetCollisionLayer(1 << 0);
+		body->SetMass(0.0f);
         CollisionShape* shape = floorNode->CreateComponent<CollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
@@ -175,39 +177,49 @@ void Physics::CreateScene()
 		//shape->SetTerrain();
     }
 
+	Node* boxNode;
+	if(1)
     {
-        // Create a pyramid of movable physics objects
-        //for (int y = 0; y < 8; ++y)
-        //{
-        //    for (int x = -y; x <= y; ++x)
-        //    {
 		int x = 0, y = 0;
-        Node* boxNode = scene_->CreateChild("Box");
+        boxNode = scene_->CreateChild("Box");
 		boxNode->SetScale(Vector3(width_, 1.0f, length_));
         boxNode->SetPosition(Vector3((float)x, -(float)y + 0.5f, 0.0f));
-        //StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-        //boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        //boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-        //boxObject->SetCastShadows(true);
+        StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        boxObject->SetCastShadows(true);
 
         // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
         // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
         // objects are significant
-  //      body_ = boxNode->CreateComponent<RigidBody>();
-		//body_->SetCollisionLayer(1 << 1);
-  //      body_->SetMass(mass_);
-		//body_->SetRestitution(1.0f);
+        body_ = boxNode->CreateComponent<RigidBody>();
+		body_->SetCollisionLayer(1 << 1);
+        body_->SetMass(mass_);
+		body_->SetRestitution(1.0f);
         // body_->SetFriction(0.75f);
 		// body_->SetAngularFactor(Vector3::ZERO);
 		// body_->SetLinearFactor(Vector3::UP);
-        //CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-        //shape->SetBox(Vector3::ONE);
-        //    }
-        //}
-
-        // Node* rtNode = scene_->CreateChild("RT");
-        convexCastTest_ = boxNode->CreateComponent<Raycastest>();
+        CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+        shape->SetBox(Vector3::ONE);
     }
+
+	// Node* rtNode = scene_->CreateChild("RT");
+	// Node* boxNode = scene_->CreateChild("Box");
+	// boxNode->SetScale(Vector3(width_, 1.0f, length_));
+	// boxNode->SetPosition(Vector3(0.0f, 0.5f, 0.0f));
+	Vector<Vector3> wheelPos;
+	wheelPos.Push(Vector3(0.5f, 0.0f, 1.0f));
+	wheelPos.Push(Vector3(-0.5f, 0.0f, 1.0f));
+	wheelPos.Push(Vector3(0.5f, 0.0f, -1.0f));
+	wheelPos.Push(Vector3(-0.5f, 0.0f, -1.0f));
+
+	for (int i = 0; i < wheelPos.Size(); i++)
+	{
+		Raycastest* rt = boxNode->CreateComponent<Raycastest>();
+		rt->SetOffset(wheelPos.At(i));
+		convexCastTest_.Push(rt);
+
+	}
 
 	{
 		//for (int i = 1; i < 8; ++i)
@@ -341,11 +353,11 @@ void Physics::MoveCamera(float timeStep)
 	if (input->GetKeyDown(KEY_Q))
 		cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
 
-	if (input->GetKeyDown(KEY_X))
+	if (input->GetKeyDown(KEY_C))
 	{
 		Vector3 camPos = cameraNode_->GetPosition();
 		// cameraNode_->SetPosition(Vector3(camPos.x_, 0.0f, camPos.z_));
-		cameraNode_->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+		cameraNode_->SetPosition(Vector3(5.0f, 0.0f, 0.0f));
 	}
 
     // "Shoot" a physics object with left mousebutton
@@ -366,33 +378,51 @@ void Physics::MoveCamera(float timeStep)
     }
 }
 
-void Physics::SpawnObject()
+void Physics::SpawnObject(bool camera)
 {
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
+	ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-    // Create a smaller box at camera position
-    Node* boxNode = scene_->CreateChild("SmallBox");
-    boxNode->SetPosition(cameraNode_->GetPosition());
-    boxNode->SetRotation(cameraNode_->GetRotation());
-    boxNode->SetScale(0.25f);
-    StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-    boxObject->SetCastShadows(true);
+	// Create a smaller box at camera position
+	Node* boxNode = scene_->CreateChild("SmallBox");
+	if (camera)
+	{
+		boxNode->SetPosition(cameraNode_->GetPosition());
+		boxNode->SetRotation(cameraNode_->GetRotation());
+	}
+	else
+	{
+		boxNode->SetPosition(Vector3::ZERO);
+		boxNode->SetRotation(Quaternion::IDENTITY);
+	}
 
-    // Create physics components, use a smaller mass also
-    RigidBody* body = boxNode->CreateComponent<RigidBody>();
-    body->SetMass(0.25f);
-    body->SetFriction(0.75f);
+	boxNode->SetScale(0.1f);
+	StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+	boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+	boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+	boxObject->SetCastShadows(true);
+
+	// Create physics components, use a smaller mass also
+	RigidBody* body = boxNode->CreateComponent<RigidBody>();
+	body->SetMass(0.25f);
+	body->SetFriction(0.75f);
 	body->SetCollisionLayer(1 << 0);
-    CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-    shape->SetBox(Vector3::ONE);
+	CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+	shape->SetBox(Vector3::ONE);
 
-    const float OBJECT_VELOCITY = 1.0f;
+	const float OBJECT_VELOCITY = 1.0f;
 
-    // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
-    // to overcome gravity better
-    body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+	// Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
+	// to overcome gravity better
+	if (camera)
+	{
+		body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+	}
+	else
+	{
+		
+	}
+
+	boxNodes_.Push(boxNode);
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -460,14 +490,20 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 
 	if (key == KEY_UP)
 	{
-		kFactor_++;
-		k_ = kFactor_ * 10.0f;
+		//kFactor_++;
+		//k_ = kFactor_ * 10.0f;
+
+		//float radius = convexCastTest_->GetRadius();
+		//convexCastTest_->SetRadius(radius + 0.05f);
 	}
 
 	if (key == KEY_DOWN)
 	{
-		kFactor_--;
-		k_ = kFactor_ * 10.0f;
+		//kFactor_--;
+		//k_ = kFactor_ * 10.0f;
+
+		//float radius = convexCastTest_->GetRadius();
+		//convexCastTest_->SetRadius(radius - 0.05f);
 	}
 
 	if (key == KEY_Z)
@@ -482,9 +518,23 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 		body_->ApplyForce(vel * forwardFactor_, relPos);
 	}
 
+	if (key == KEY_LEFT)
+	{
+		SpawnObject(false);
+	}
+
 	// Toggle physics debug geometry with space
 	if (key == KEY_SPACE)
 		drawDebug_ = !drawDebug_;
+
+	if (key == KEY_X)
+	{
+		for(unsigned i = 0; i < boxNodes_.Size(); i++)
+		{
+			boxNodes_.At(i)->Remove();
+		}
+		boxNodes_.Clear();
+	}
 
 	Sample::HandleKeyDown(eventType, eventData);
 }
@@ -497,52 +547,57 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 
 	if (debugText_)
 	{
-		//float posy = body_->GetPosition().y_ - 0.5f;
-		//if (posy > maxHeight_)
-		//	maxHeight_ = posy;
+		// float posy = body_->GetPosition().y_;
+		Raycastest* caster = convexCastTest_.At(0);
+		int index = caster->hitIndex_;
+		if (index < 0)
+			return;
 
-		//if (impulse_.y_ > maxImpulse_)
-		//	maxImpulse_ = impulse_.y_;
+		float posy = caster->hitDistance_.At(index) + caster->GetRadius();
 
 		String text;
-		//float vel = body_->GetLinearVelocity().y_;
-		//text.AppendWithFormat("height <%f>\n max height <%f>\n vel <%f>\n k <%f>\n c <%f>\n error <%f>\n impulse <%f, %f, %f> maximp <%f>", 
-		//	posy, maxHeight_, vel, k_, c_, floatHeight_ - posy, impulse_.x_, impulse_.y_, impulse_.z_, maxImpulse_);
-
-		text.AppendWithFormat("\nhits <%i> ", convexCastTest_->hitPoints_);
-
 		char buff[128];
+
+		float vel = body_->GetLinearVelocity().y_;
+		sprintf(buff, "height <%.2f>\n max height <%.2f>\n vel <%.2f>\n k <%.2f>\n c <%.2f>\n error <%.2f>\n", 
+			posy, maxHeight_, vel, k_, c_, floatHeight_ - posy);
+		text.AppendWithFormat("%s", buff);
+
+		text.AppendWithFormat("\nhits <%i> index <%i>", caster->hitPoints_, caster->hitIndex_);
+
+		text.AppendWithFormat("\nradius <%f> ", caster->GetRadius());
 		memset(buff, 0, 128);
-		Vector3 hp = convexCastTest_->hardPointWS_;
+		Vector3 hp = caster->hardPointWS_;
 		sprintf(buff, "\nfrom <%.2f,%.2f,%.2f> ", hp.x_, hp.y_, hp.z_);
 		text.AppendWithFormat("%s", buff);
 
-		Vector3 to = hp + convexCastTest_->suspensionRest_ * convexCastTest_->direction_;
+		Vector3 to = hp + caster->suspensionRest_ * caster->direction_;
 		memset(buff, 0, 128);
 		sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
 		text.AppendWithFormat("%s", buff);
 
-		for (int i = 0; i < convexCastTest_->hitPoints_; i++)
+		// for (int i = 0; i < convexCastTest_->hitPoints_; i++)
+		int i = index;
 		{
-			Vector3 h = convexCastTest_->hitPointWorld_.At(i);
+			Vector3 h = caster->hitPointWorld_.At(i);
 			char buff[128];
 			memset(buff, 0, 128);
 			sprintf(buff, "\nhit <%.2f,%.2f,%.2f> ", h.x_, h.y_, h.z_);
 			text.AppendWithFormat("%s", buff);
 
-			Vector3 l = convexCastTest_->hitPointLocal_.At(i);
+			Vector3 l = caster->hitPointLocal_.At(i);
 			memset(buff, 0, 128);
-			sprintf(buff, "local <%.2f,%.2f,%.2f> ", l.x_, l.y_, l.z_);
+			sprintf(buff, "local <%.2f,%.2f	,%.2f> ", l.x_, l.y_, l.z_);
 			text.AppendWithFormat("%s", buff);
 
 			memset(buff, 0, 128);
-			float d = convexCastTest_->distance_.At(i);
-			sprintf(buff, "f <%.2f> d <%.2f>", convexCastTest_->hitFraction_.At(i), d);
+			float d = caster->hitDistance_.At(i);
+			sprintf(buff, "f <%.2f> d <%.2f>", caster->hitFraction_.At(i), d);
 			text.AppendWithFormat("%s", buff);
 		}
 		
-		if(convexCastTest_->hitBody_ && convexCastTest_->hitBody_->GetNode())
-			text.AppendWithFormat("\nbody <%s> ", convexCastTest_->hitBody_->GetNode()->GetName().CString());
+		if(caster->hitBody_ && caster->hitBody_->GetNode())
+			text.AppendWithFormat("\nbody <%s> ", caster->hitBody_->GetNode()->GetName().CString());
 
 		debugText_->SetText(text);
 	}
@@ -550,18 +605,15 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 
 void Physics::UpdateLineal(float timeStep)
 {
-	// timeElapsed_ += timeStep;
-
 	Quaternion rot = body_->GetRotation();
 	Vector3 pos = body_->GetPosition();
-
 	float posy = pos.y_ - 0.5;
-	// float posy = convexCastTest_->distance_ - 0.4;
+
 	float k = k_;
 	float x = floatHeight_ - posy;
 	float springForce = k * x;
 
-	float vel = GetVelocity();
+	float vel = GetVelocity(pos);
 	float d = 1.0f;
 	float c = -sqrt(mass_ * k * 4) * d;
 	c_ = c;
@@ -574,6 +626,48 @@ void Physics::UpdateLineal(float timeStep)
 	impulse_ = direction * suspensionForce; // *timeStep;
 
 	body_->ApplyForce(impulse_);
+}
+
+void Physics::UpdateLinealCast(float timeStep, Raycastest* caster)
+{
+	float mass = mass_ / convexCastTest_.Size();
+
+	if (caster->hasHit_)
+	{
+		int index = caster->hitIndex_;
+
+		Quaternion rot = body_->GetRotation();
+		Vector3 pos = body_->GetPosition();
+
+		float posy = caster->hitDistance_.At(index);
+		float k = k_;
+		float x = floatHeight_ - (posy); // +caster->GetRadius());
+		// x = 0.0f;
+		float springForce = k * x;
+
+		float vel = GetVelocity(pos + caster->offset_);
+		float d = 1.0f;
+		float c = -sqrt(mass * k * 4.0f) * d;
+		c_ = c;
+
+		float antiG = mass * 9.81f;
+		float dampingForce = c * vel;
+		float suspensionForce = springForce + dampingForce + antiG;
+
+    	Vector3 direction = Vector3::UP;
+		//Vector3 local(convexCastTest_->hitPointLocal_.At(index));
+		Vector3 normal(caster->hitNormalWorld_.At(index));
+		//Vector3 direction = normal;
+		impulse_ = direction * suspensionForce; // *timeStep;
+	}
+	else
+	{
+		impulse_ = Vector3::ZERO;
+	}
+	
+	Vector3 relpos = caster->offset_;
+	
+	body_->ApplyForce(impulse_, relpos);
 
 	//URHO3D_LOGERRORF("time, pos <%f, %f>", timeElapsed_, posy);
 }
@@ -615,7 +709,10 @@ void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 
 	if (updateLinSuspension_)
 	{
-		UpdateLineal(timeStep);
+		for (int i = 0; i < 4; i++)
+		{
+			UpdateLinealCast(timeStep, convexCastTest_.At(i));
+		}
 	}
 	if (updateRotSuspension_)
 	{
@@ -623,14 +720,14 @@ void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 	}
 }
 
-float Physics::GetVelocity()
+float Physics::GetVelocity(const Vector3& relPos)
 {
 	Quaternion rot = body_->GetRotation();
 	Vector3 pos = body_->GetPosition();
 
 	Vector3 normal = rot * Vector3::UP;
 	float dd = normal.DotProduct(-Vector3::UP);
-	Vector3 relPos = body_->GetPosition();
+	// Vector3 relPos = body_->GetPosition();
 
 	Vector3 contactVel = body_->GetVelocityAtPoint(relPos);
 	float projVel = normal.DotProduct(contactVel);

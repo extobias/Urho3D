@@ -40,7 +40,7 @@ subject to the following restrictions:
 //#define DISABLE_DBVT_COMPOUNDSHAPE_RAYCAST_ACCELERATION
 
 
-#define USE_BRUTEFORCE_RAYBROADPHASE 1
+//#define USE_BRUTEFORCE_RAYBROADPHASE 1
 //RECALCULATE_AABB is slower, but benefit is that you don't need to call 'stepSimulation'  or 'updateAabbs' before using a rayTest
 //#define RECALCULATE_AABB_RAYCAST 1
 

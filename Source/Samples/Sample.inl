@@ -63,8 +63,8 @@ void Sample::Setup()
     engineParameters_[EP_HEADLESS]     = false;
     engineParameters_[EP_SOUND]        = false;
 
-	engineParameters_[EP_WINDOW_WIDTH] = 800;
-	engineParameters_[EP_WINDOW_HEIGHT] = 600;
+	engineParameters_[EP_WINDOW_WIDTH] = 1024;
+	engineParameters_[EP_WINDOW_HEIGHT] = 468;
 	engineParameters_[EP_WINDOW_RESIZABLE] = true;
 
     // Construct a search path to find the resource prefix with two entries:
