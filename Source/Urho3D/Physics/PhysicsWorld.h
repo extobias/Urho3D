@@ -30,6 +30,7 @@
 #include "../Scene/Component.h"
 
 #include <Bullet/LinearMath/btIDebugDraw.h>
+#include <Bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 
 class btCollisionConfiguration;
 class btCollisionShape;
@@ -53,6 +54,7 @@ class RigidBody;
 class Scene;
 class Serializer;
 class XMLElement;
+class SoftBody;
 
 struct CollisionGeometryData;
 
@@ -134,11 +136,13 @@ class URHO3D_API PhysicsWorld : public Component, public btIDebugDraw
 
 public:
     /// Construct.
-    explicit PhysicsWorld(Context* context);
+    explicit PhysicsWorld(Context* context, bool softbodyWorld = false);
     /// Destruct.
     ~PhysicsWorld() override;
     /// Register object factory.
     static void RegisterObject(Context* context);
+    /// Handle attribute write access. Default implementation writes to the variable at offset, or invokes the set accessor.
+    virtual void OnSetAttribute(const AttributeInfo& attr, const Variant& src);
 
     /// Check if an AABB is visible for debug drawing.
     bool isVisible(const btVector3& aabbMin, const btVector3& aabbMax) override;
@@ -242,6 +246,10 @@ public:
     void AddRigidBody(RigidBody* body);
     /// Remove a rigid body. Called by RigidBody.
     void RemoveRigidBody(RigidBody* body);
+    // Add soft body
+    void AddSoftBody(SoftBody* body);
+    // Remove soft body
+    void RemoveSoftBody(SoftBody* body);
     /// Add a collision shape to keep track of. Called by CollisionShape.
     void AddCollisionShape(CollisionShape* shape);
     /// Remove a collision shape. Called by CollisionShape.
@@ -283,10 +291,13 @@ public:
     /// Return whether is currently inside the Bullet substep loop.
     bool IsSimulating() const { return simulating_; }
 
+    /// Soft body world info
+    btSoftBodyWorldInfo* GetWorldInfo() const { return softBodyWorldInfo_; }
     /// Overrides of the internal configuration.
     static struct PhysicsWorldConfig config;
 
 protected:
+    void CreateDynaymicWorld();
     /// Handle scene being assigned.
     void OnSceneSet(Scene* scene) override;
 
@@ -360,6 +371,12 @@ private:
     DebugRenderer* debugRenderer_{};
     /// Debug draw flags.
     int debugMode_{};
+    /// SoftBody world.
+    bool useSoftBodyWorld_;
+    /// SoftBody world info.
+    btSoftBodyWorldInfo* softBodyWorldInfo_{};
+    /// Soft bodies in the world.
+    PODVector<SoftBody*> softBodies_;
 };
 
 /// Register Physics library objects.

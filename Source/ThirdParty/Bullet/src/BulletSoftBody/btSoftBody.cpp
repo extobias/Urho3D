@@ -13,6 +13,7 @@ subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 ///btSoftBody implementation by Nathanael Presson
+// Modified by Lumak for Urho3D
 
 #include "btSoftBodyInternals.h"
 #include "BulletSoftBody/btSoftBodySolvers.h"
@@ -2287,8 +2288,11 @@ void					btSoftBody::updateNormals()
 	for(i=0,ni=m_faces.size();i<ni;++i)
 	{
 		btSoftBody::Face&	f=m_faces[i];
-		const btVector3		n=btCross(f.m_n[1]->m_x-f.m_n[0]->m_x,
+		btVector3 n = btCross(f.m_n[1]->m_x-f.m_n[0]->m_x,
 			f.m_n[2]->m_x-f.m_n[0]->m_x);
+                // Urho3D: scale normal
+		if (n.length2() < SIMD_EPSILON)
+			n = n * 1.0f/SIMD_EPSILON;
 		f.m_normal=n.normalized();
 		f.m_n[0]->m_n+=n;
 		f.m_n[1]->m_n+=n;
@@ -3224,12 +3228,24 @@ void			btSoftBody::defaultCollisionHandler(const btCollisionObjectWrapper* pcoWr
 			docollide.dynmargin	=	basemargin+timemargin;
 			docollide.stamargin	=	basemargin;
 			m_ndbvt.collideTV(m_ndbvt.m_root,volume,docollide);
+
+                        // Urho3D: activate on collision
+                        if (getActivationState() == ISLAND_SLEEPING)
+                        {
+                            setActivationState(ACTIVE_TAG);
+                        }
 		}
 		break;
 	case	fCollision::CL_RS:
 		{
 			btSoftColliders::CollideCL_RS	collider;
 			collider.ProcessColObj(this,pcoWrap);
+
+                        // Urho3D: activate on collision
+                        if (getActivationState() == ISLAND_SLEEPING)
+                        {
+                                            setActivationState(ACTIVE_TAG);
+                        }
 		}
 		break;
 	}

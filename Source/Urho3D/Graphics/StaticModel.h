@@ -82,7 +82,7 @@ public:
     /// Return material from the first geometry, assuming all the geometries use the same material.
     virtual Material* GetMaterial() const { return GetMaterial(0); }
     /// Return material by geometry index.
-    virtual Material* GetMaterial(unsigned index) const;
+    virtual Material* GetMaterial(unsigned index = 0) const;
 
     /// Return occlusion LOD level.
     unsigned GetOcclusionLodLevel() const { return occlusionLodLevel_; }
@@ -101,11 +101,12 @@ public:
     /// Return materials attribute.
     const ResourceRefList& GetMaterialsAttr() const;
 
-protected:
-    /// Recalculate the world-space bounding box.
-    void OnWorldBoundingBoxUpdate() override;
     /// Set local-space bounding box.
     void SetBoundingBox(const BoundingBox& box);
+
+protected:
+    /// Recalculate the world-space bounding box.
+    virtual void OnWorldBoundingBoxUpdate() override;
     /// Set number of geometries.
     void SetNumGeometries(unsigned num);
     /// Reset LOD levels.

@@ -749,8 +749,8 @@ void RigidBody::UpdateMass()
     auto numShapes = (unsigned)compoundShape_->getNumChildShapes();
     if (numShapes)
     {
-        //PODVector<float> masses(numShapes);
-		PODVector<btScalar> masses(numShapes);
+        PODVector<float> masses(numShapes);
+        //PODVector<btScalar> masses(numShapes);
         for (unsigned i = 0; i < numShapes; ++i)
         {
             // The actual mass does not matter, divide evenly between child shapes
