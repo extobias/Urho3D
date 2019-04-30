@@ -545,9 +545,8 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
     if (drawDebug_)
         scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(false);
 
-	if (debugText_)
+    if (debugText_ && convexCastTest_.Size())
 	{
-		// float posy = body_->GetPosition().y_;
 		Raycastest* caster = convexCastTest_.At(0);
 		int index = caster->hitIndex_;
 		if (index < 0)
@@ -575,6 +574,9 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 		memset(buff, 0, 128);
 		sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
 		text.AppendWithFormat("%s", buff);
+
+        if(convexCastTest_.Size() <= 4)
+            return;
 
 		// for (int i = 0; i < convexCastTest_->hitPoints_; i++)
 		int i = index;
@@ -709,7 +711,7 @@ void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 
 	if (updateLinSuspension_)
 	{
-		for (int i = 0; i < 4; i++)
+        for (int i = 0; i < convexCastTest_.Size(); i++)
 		{
 			UpdateLinealCast(timeStep, convexCastTest_.At(i));
 		}

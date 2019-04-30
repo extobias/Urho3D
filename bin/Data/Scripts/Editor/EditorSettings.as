@@ -412,7 +412,7 @@ void EditDynamicInstancing(StringHash eventType, VariantMap& eventData)
 void EditFrameLimiter(StringHash eventType, VariantMap& eventData)
 {
     CheckBox@ edit = eventData["Element"].GetPtr();
-    engine.maxFps = edit.checked ? 200 : 0;
+    engine.maxFps = edit.checked ? 60 : 0;
 }
 
 void EditGammaCorrection(StringHash eventType, VariantMap& eventData)

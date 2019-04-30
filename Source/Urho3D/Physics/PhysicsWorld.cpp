@@ -149,7 +149,8 @@ struct PhysicsQueryCallback : public btCollisionWorld::ContactResultCallback
 PhysicsWorld::PhysicsWorld(Context* context, bool softbodyWorld) :
     Component(context),
     fps_(DEFAULT_FPS),
-    debugMode_(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawConstraints | btIDebugDraw::DBG_DrawConstraintLimits)
+    debugMode_(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawConstraints | btIDebugDraw::DBG_DrawConstraintLimits),
+    useSoftBodyWorld_(softbodyWorld)
 {
     gContactAddedCallback = CustomMaterialCombinerCallback;
 
