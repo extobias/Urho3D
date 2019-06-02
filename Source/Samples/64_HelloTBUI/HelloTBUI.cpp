@@ -80,7 +80,7 @@ void HelloTBUI::Start()
     stateUI->SetGravity(WIDGET_GRAVITY_ALL);
     tbelement->AddStateWidget(stateUI, true);
     tbelement->LoadResources();
-    tbelement->LoadWidgets(stateUI, "Data/TB/layout/nav_test.txt");
+    tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
 	URHO3D_LOGERRORF("state ui id <%u>", stateUI->GetID());
 
      // 1 bindear el evento a una funcion

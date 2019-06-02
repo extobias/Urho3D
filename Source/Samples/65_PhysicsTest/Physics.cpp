@@ -33,6 +33,7 @@
 #include <Urho3D/Graphics/Skybox.h>
 #include <Urho3D/Graphics/Zone.h>
 #include <Urho3D/Graphics/Terrain.h>
+#include <Urho3D/Graphics/RenderPath.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/IO/File.h>
 #include <Urho3D/IO/Log.h>
@@ -41,6 +42,7 @@
 #include <Urho3D/Physics/PhysicsWorld.h>
 #include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
+#include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
@@ -296,10 +298,16 @@ void Physics::CreateDebugText()
 void Physics::SetupViewport()
 {
     Renderer* renderer = GetSubsystem<Renderer>();
+	ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
+
+	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+	effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/Deferred.xml"));
+
+	viewport->SetRenderPath(effectRenderPath);
 }
 
 void Physics::SubscribeToEvents()
@@ -326,7 +334,7 @@ void Physics::MoveCamera(float timeStep)
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
-    const float MOVE_SPEED = 4.0f;
+    const float MOVE_SPEED = 1.0f;
     // Mouse sensitivity as degrees per pixel
     const float MOUSE_SENSITIVITY = 0.1f;
 

@@ -30,6 +30,10 @@
 #include <Urho3D/Graphics/StaticModel.h>
 #include <Urho3D/Graphics/Renderer.h>
 #include <Urho3D/Graphics/RenderPath.h>
+#include <Urho3D/Graphics/Skybox.h>
+#include <Urho3D/Graphics/ParticleEmitter.h>
+#include <Urho3D/Graphics/ParticleEffect.h>
+#include <Urho3D/Graphics/Zone.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
@@ -60,7 +64,7 @@ void StaticScene::Start()
     CreateScene();
 
     // Create the UI content
-    CreateInstructions();
+    // CreateInstructions();
 
     // Setup the viewport for displaying the scene
     SetupViewport();
@@ -77,41 +81,59 @@ void StaticScene::CreateScene()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     scene_ = new Scene(context_);
-
-    // Create the Octree component to the scene. This is required before adding any drawable components, or else nothing will
-    // show up. The default octree volume will be from (-1000, -1000, -1000) to (1000, 1000, 1000) in world coordinates; it
-    // is also legal to place objects outside the volume but their visibility can then not be checked in a hierarchically
-    // optimizing manner
     scene_->CreateComponent<Octree>();
 
-    // Create a child scene node (at world origin) and a StaticModel component into it. Set the StaticModel to show a simple
-    // plane mesh with a "stone" material. Note that naming the scene nodes is optional. Scale the scene node larger
-    // (100 x 100 world units)
+	// zone
+	Node* zoneNode = scene_->CreateChild("Zone");
+	Zone* zone = zoneNode->CreateComponent<Zone>();
+	// zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
+	zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
+
+	// ground
     Node* planeNode = scene_->CreateChild("Plane");
     planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
     StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
     planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
-    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+	planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-    // Create a directional light to the world so that we can see something. The light scene node's orientation controls the
-    // light direction; we will use the SetDirection() function which calculates the orientation from a forward direction vector.
-    // The light will use default settings (white light, no shadows)
+	// light
     Node* lightNode = scene_->CreateChild("DirectionalLight");
+	lightNode->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
     lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f)); // The direction vector does not need to be normalized
     Light* light = lightNode->CreateComponent<Light>();
     light->SetLightType(LIGHT_DIRECTIONAL);
+	light->SetRadius(100.0f);
+	light->SetFov(150.0f);
+	light->SetBrightness(50.0f);
+	light->SetUsePhysicalValues(true);
+	light->SetTemperature(6500.0f);
+	light->SetCastShadows(true);
+	light->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+	// sky
+	//Node* skyNode = scene_->CreateChild("Sky");
+	//skyNode->SetScale(500.0f); // The scale actually does not matter
+	//Skybox* skybox = skyNode->CreateComponent<Skybox>();
+	//skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+	//skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
-    // Create more StaticModel objects to the scene, randomly positioned, rotated and scaled. For rotation, we construct a
-    // quaternion from Euler angles where the Y angle (rotation about the Y axis) is randomized. The mushroom model contains
-    // LOD levels, so the StaticModel component will automatically select the LOD level according to the view distance (you'll
-    // see the model get simpler as it moves further away). Finally, rendering a large number of the same object with the
-    // same material allows instancing to be used, if the GPU supports it. This reduces the amount of CPU work in rendering the
-    // scene.
-    const unsigned NUM_OBJECTS = 200;
+	// particles
+	Node* emitterNode = scene_->CreateChild("Emitter");
+	emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+	auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
+	ParticleEffect* effect = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
+	effectMaterial_ = effect->GetMaterial();
+	effect->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
+	effect->SetEmitterSize(Vector3::ONE * 0.5f);
+	particleEmitter->SetEffect(effect);
+	particleEmitter->SetEmitting(true);
+	
+    const unsigned NUM_OBJECTS = 1;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
-        mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
+        // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
+		mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
         mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
         mushroomNode->SetScale(0.5f + Random(2.0f));
         StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
@@ -123,10 +145,46 @@ void StaticScene::CreateScene()
     // Create a scene node for the camera, which we will move around
     // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
     cameraNode_ = scene_->CreateChild("Camera");
-    cameraNode_->CreateComponent<Camera>();
+    Camera* camera = cameraNode_->CreateComponent<Camera>();
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
+    cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
+	// cameraNode_->LookAt(Vector3::ZERO);
+	cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
+
+	// CreateDepthTexture();
+
+	//SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
+	//SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
+	//surface->SetViewport(0, rttViewport);
+	//surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+}
+
+void StaticScene::CreateDepthTexture()
+{
+	Graphics* graphics = GetSubsystem<Graphics>();
+	ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+	URHO3D_LOGERRORF("> > > > > > depth support <%u>", graphics->GetReadableDepthSupport());
+	// depth buffer texture
+	SharedPtr<Texture2D> renderTexture(new Texture2D(context_));
+	float div = 2.0f;
+	renderTexture->SetSize(graphics->GetWidth() / div, graphics->GetHeight() / div, Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
+	// renderTexture->SetFilterMode(FILTER_BILINEAR);
+	renderTexture->SetName("DepthBuffer");
+
+	cache->AddManualResource(renderTexture);
+
+	UI* ui = GetSubsystem<UI>();
+	Sprite* textSprite = ui->GetRoot()->CreateChild<Sprite>();
+
+	// textSprite->SetScale(256.0f / renderTexture->GetWidth());
+	textSprite->SetTexture(renderTexture);
+	textSprite->SetSize(renderTexture->GetWidth(), renderTexture->GetHeight());
+	textSprite->SetHotSpot(renderTexture->GetWidth(), renderTexture->GetHeight());
+	textSprite->SetAlignment(HA_RIGHT, VA_BOTTOM);
+	textSprite->SetOpacity(1.0f);
+	textSprite->SetVisible(true);
 }
 
 void StaticScene::CreateInstructions()
@@ -157,27 +215,29 @@ void StaticScene::SetupViewport()
 
 	//RenderPath* effectRenderPath = viewport->GetRenderPath();
 	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredSAO.xml"));
-	//effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardDepthSAO.xml"));
+    //effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredSAO.xml"));
+	//effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
+	// effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredRenderDepth.xml"));
+	effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
 
-	effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
-	effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
+	//effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
+	//effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
 
-	effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
+	//effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
 
-	effectRenderPath->SetEnabled("Bloom", true);
-	effectRenderPath->SetEnabled("FXAA2", true);
+	//effectRenderPath->SetEnabled("Bloom", true);
+	//effectRenderPath->SetEnabled("FXAA2", true);
 
 	viewport->SetRenderPath(effectRenderPath);
 
-	for (int i = 0; i < effectRenderPath->GetNumCommands(); i++)
-	{
-		RenderPathCommand* command = effectRenderPath->GetCommand(i);
-		if (command->tag_ == "SAO_copy")
-			commandIndexSaoCopy_ = i;
-		if (command->tag_ == "SAO_main")
-			commandIndexSaoMain_ = i;
-	}
+	//for (int i = 0; i < effectRenderPath->GetNumCommands(); i++)
+	//{
+	//	RenderPathCommand* command = effectRenderPath->GetCommand(i);
+	//	if (command->tag_ == "SAO_copy")
+	//		commandIndexSaoCopy_ = i;
+	//	if (command->tag_ == "SAO_main")
+	//		commandIndexSaoMain_ = i;
+	//}
 }
 
 void StaticScene::UpdateRenderPath(float timeStep)
@@ -209,7 +269,7 @@ void StaticScene::MoveCamera(float timeStep)
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
-    const float MOVE_SPEED = 20.0f;
+    float MOVE_SPEED = 1.0f;
     // Mouse sensitivity as degrees per pixel
     const float MOUSE_SENSITIVITY = 0.1f;
 
@@ -221,7 +281,10 @@ void StaticScene::MoveCamera(float timeStep)
 
     // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
     cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+	// printf("camera pitch <%f> yaw <%f>", pitch_, yaw_);
 
+	if (input->GetKeyDown(KEY_SHIFT))
+		MOVE_SPEED *= 10.0f;
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     // Use the Translate() function (default local space) to move relative to the node's orientation.
     if (input->GetKeyDown(KEY_W))
@@ -243,7 +306,7 @@ void StaticScene::SubscribeToEvents()
     // Subscribe HandleUpdate() function for processing update events
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
 
-	SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
+	// SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(StaticScene, HandleKeyDown));
 }
@@ -258,7 +321,7 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
 
-	UpdateRenderPath(timeStep);
+	// UpdateRenderPath(timeStep);
 }
 
 void StaticScene::HandleRenderUpdate(StringHash eventType, VariantMap& eventData)
@@ -305,4 +368,33 @@ void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 	{
 		aoOnly_ = !aoOnly_;
 	}
+
+	if (key == KEY_P)
+	{
+		scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
+	}
+
+	if (key == KEY_DOWN)
+	{
+		Color col = effectMaterial_->GetShaderParameter("MatSpecColor").GetColor();
+		URHO3D_LOGERRORF("col down <%f, %f, %f>", col.r_, col.g_, col.b_);
+		col.r_ -= 0.1;
+		col.g_ -= 0.1;
+		col.b_ -= 0.1;
+		effectMaterial_->SetShaderParameter("MatSpecColor", col);
+		URHO3D_LOGERRORF("col down <%f, %f, %f>", col.r_, col.g_, col.b_);
+	}
+
+	if (key == KEY_UP)
+	{
+		Color col = effectMaterial_->GetShaderParameter("MatSpecColor").GetColor();
+		col.r_ += 1.0f;
+		// col.g_ += 0.1;
+		// col.b_ += 0.1;
+		effectMaterial_->SetShaderParameter("MatSpecColor", col);
+		// effectMaterial_->
+		URHO3D_LOGERRORF("col up <%f, %f, %f>", col.r_, col.g_, col.b_);
+	}
+
+	Sample::HandleKeyDown(eventType, eventData);
 }

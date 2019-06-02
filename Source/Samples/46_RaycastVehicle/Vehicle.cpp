@@ -58,7 +58,7 @@ Vehicle::Vehicle(Urho3D::Context* context)
     engineForce_ = 0.0f;
     brakingForce_ = 50.0f;
     vehicleSteering_ = 0.0f;
-    maxEngineForce_ = 13000.0f;
+    maxEngineForce_ = 2500.0f;
     wheelRadius_ = 0.5f;
     suspensionRestLength_ = 0.6f;
     wheelWidth_ = 0.4f;
@@ -77,7 +77,7 @@ void Vehicle::Init()
     auto* vehicle = node_->CreateComponent<RaycastVehicle>();
     vehicle->Init();
     auto* hullBody = node_->GetComponent<RigidBody>();
-    hullBody->SetMass(2800.0f);
+    hullBody->SetMass(800.0f);
     hullBody->SetLinearDamping(0.2f); // Some air resistance
     hullBody->SetAngularDamping(0.5f);
     hullBody->SetCollisionLayer(1);
@@ -92,7 +92,7 @@ void Vehicle::Init()
     hullObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     hullObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
     hullObject->SetCastShadows(true);
-	hullObject->SetEnabled(false);
+	// hullObject->SetEnabled(false);
 
     float connectionHeight = -0.4f;
     bool isFrontWheel = true;

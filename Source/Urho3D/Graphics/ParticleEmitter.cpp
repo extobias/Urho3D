@@ -102,7 +102,7 @@ void ParticleEmitter::Update(const FrameInfo& frame)
 {
     if (!effect_)
         return;
-
+	
     // Cancel update if has only moved but does not actually need to animate the particles
     if (!needUpdate_)
         return;

@@ -234,7 +234,7 @@ void PS(
 
     #ifdef NORMALMAP
         const float3 nn = DecodeNormal(Sample2D(NormalMap, iTexCoord.xy));
-        //nn.rg *= 2.0;
+        // nn.rg *= 2.0;
         const float3 normal = normalize(mul(nn, tbn));
     #else
         const float3 normal = normalize(iNormal);
@@ -290,8 +290,10 @@ void PS(
             finalColor += cMatEmissiveColor;
             oColor = float4(GetFog(finalColor, fogFactor), diffColor.a);
         #else
+            // oColor = float4(GetLitFog(finalColor, fogFactor), diffColor.a);
             oColor = float4(GetLitFog(finalColor, fogFactor), diffColor.a);
         #endif
+        // oColor = float4(normal, 0.0);
     #elif defined(DEFERRED)
         // Fill deferred G-buffer
         const float3 spareData = 0; // Can be used to pass more data to deferred renderer

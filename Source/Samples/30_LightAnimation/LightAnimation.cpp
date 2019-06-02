@@ -28,6 +28,7 @@
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Graphics/Renderer.h>
+#include <Urho3D/Graphics/RenderPath.h>
 #include <Urho3D/Graphics/StaticModel.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
@@ -213,6 +214,12 @@ void LightAnimation::SetupViewport()
     // use, but now we just use full screen and default render path configured in the engine command line options
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
+
+	ResourceCache* cache = GetSubsystem<ResourceCache>();
+	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+	effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth.xml"));
+
+	viewport->SetRenderPath(effectRenderPath);
 }
 
 void LightAnimation::MoveCamera(float timeStep)
