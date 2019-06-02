@@ -59,6 +59,8 @@ private:
     void MoveCamera(float timeStep);
     /// Subscribe to application-wide logic update events.
     void SubscribeToEvents();
+
+	void CreateDepthTexture();
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
@@ -71,4 +73,6 @@ private:
 	int commandIndexSaoCopy_;
 	int commandIndexSaoMain_;
     bool aoOnly_;
+
+	Material* effectMaterial_;
 };

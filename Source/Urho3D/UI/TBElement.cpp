@@ -501,6 +501,8 @@ void TBUIElement::HandleKeyDown(StringHash eventType, VariantMap &eventData)
 
 	int tbModifier = FindKeyMap(KEY_QUAL_OFFSET + qualifiers);
 	int tbSpecial = FindKeyMap(key);
+	if (tbSpecial != TB_KEY_UNDEFINED)
+		key = TB_KEY_UNDEFINED;
 
     root_->InvokeKey(key, (SPECIAL_KEY)tbSpecial, (MODIFIER_KEYS)tbModifier, true);
 }
@@ -544,58 +546,60 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 		}
 	}
 
-	if (event->type == SDL_JOYHATMOTION)
-	{
-		int key = 9;
-		SPECIAL_KEY special = TB_KEY_TAB;
+	// FIXME this is navigation control, but should not have effect while focus is on
+	// edit alike field
+	//if (event->type == SDL_JOYHATMOTION)
+	//{
+	//	int key = 9;
+	//	SPECIAL_KEY special = TB_KEY_TAB;
 
-		if (event->jhat.value & SDL_HAT_RIGHT)
-		{
-			root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
+	//	if (event->jhat.value & SDL_HAT_RIGHT)
+	//	{
+	//		root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
 
-			//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-			//	event->type, event->jhat, event->jaxis.value);
-		}
-		else if (event->jhat.value & SDL_HAT_LEFT)
-		{
-			root_->InvokeKey(key, special, TB_SHIFT, true);
+	//		//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+	//		//	event->type, event->jhat, event->jaxis.value);
+	//	}
+	//	else if (event->jhat.value & SDL_HAT_LEFT)
+	//	{
+	//		root_->InvokeKey(key, special, TB_SHIFT, true);
 
-			//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-			//	event->type, event->jhat, event->jaxis.value);
-		}
-	}
+	//		//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+	//		//	event->type, event->jhat, event->jaxis.value);
+	//	}
+	//}
 
-	if (event->type == SDL_JOYAXISMOTION)
-	{
-		int key = 9;
-		SPECIAL_KEY special = TB_KEY_TAB;
+	//if (event->type == SDL_JOYAXISMOTION)
+	//{
+	//	int key = 9;
+	//	SPECIAL_KEY special = TB_KEY_TAB;
 
-		if (event->jaxis.value == 32767)
-		{
-			root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
+	//	if (event->jaxis.value == 32767)
+	//	{
+	//		root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
 
-			//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-			//	event->type, event->jhat, event->jaxis.value);
-		}
-		else if (event->jaxis.value == -32768)
-		{
-			root_->InvokeKey(key, special, TB_SHIFT, true);
+	//		//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+	//		//	event->type, event->jhat, event->jaxis.value);
+	//	}
+	//	else if (event->jaxis.value == -32768)
+	//	{
+	//		root_->InvokeKey(key, special, TB_SHIFT, true);
 
-			//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-			//	event->type, event->jhat, event->jaxis.value);
-		}
-	}
+	//		//URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+	//		//	event->type, event->jhat, event->jaxis.value);
+	//	}
+	//}
 
-	if (event->type == SDL_JOYBUTTONDOWN)
-	{
-		int key = 13;
-		root_->InvokeKey(key, TB_KEY_ENTER, TB_MODIFIER_NONE, true);
-	}
-	else if (event->type == SDL_JOYBUTTONUP)
-	{
-		int key = 13;
-		root_->InvokeKey(key, TB_KEY_ENTER, TB_MODIFIER_NONE, false);
-	}
+	//if (event->type == SDL_JOYBUTTONDOWN)
+	//{
+	//	int key = 13;
+	//	root_->InvokeKey(key, TB_KEY_ENTER, TB_MODIFIER_NONE, true);
+	//}
+	//else if (event->type == SDL_JOYBUTTONUP)
+	//{
+	//	int key = 13;
+	//	root_->InvokeKey(key, TB_KEY_ENTER, TB_MODIFIER_NONE, false);
+	//}
 }
 
 TBRootWidget::TBRootWidget(Context* context)

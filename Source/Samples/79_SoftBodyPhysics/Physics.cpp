@@ -68,9 +68,10 @@ void Physics::Setup()
     engineParameters_["LogName"]       = GetSubsystem<FileSystem>()->GetProgramDir() + "softbody.log";
     engineParameters_["FullScreen"]    = false;
     engineParameters_["Headless"]      = false;
-    engineParameters_["WindowWidth"]   = 1280; 
-    engineParameters_["WindowHeight"]  = 720;
+    engineParameters_["WindowWidth"]   = 1024; 
+    engineParameters_["WindowHeight"]  = 680;
     engineParameters_["ResourcePaths"] = "Data;CoreData;Data/SoftBody;";
+	engineParameters_[EP_WINDOW_RESIZABLE] = true;
 }
 
 void Physics::Start()

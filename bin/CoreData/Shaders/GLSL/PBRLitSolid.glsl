@@ -207,7 +207,8 @@ void PS()
             finalColor += cMatEmissiveColor;
             gl_FragColor = vec4(GetFog(finalColor, fogFactor), diffColor.a);
         #else
-            gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
+            //gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
         #endif
     #elif defined(DEFERRED)
         // Fill deferred G-buffer
