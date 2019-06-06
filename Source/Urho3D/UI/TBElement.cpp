@@ -308,13 +308,9 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
 		unsigned batchEnd = batch.vertexEnd_;
 		unsigned batchSize = batch.vertexEnd_ - batch.vertexStart_;
 
-		// URHO3D_LOGERRORF(" batches <%u, %u, %u> vertexData size <%u>", batchStart, batchEnd, batchSize, batch.vertexData_->Size());
-
 		// resize dest data vertex vector
         unsigned begin = vertexData.Size();
 		unsigned newSize = begin + batchSize;
-
-		// URHO3D_LOGERRORF(" newsize <%u>", newSize);
 
         vertexData.Resize(newSize);
         float* dest = &(vertexData.At(begin));
