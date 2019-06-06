@@ -40,6 +40,7 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
+#include <Urho3D/UI/ImGuiElement.h>
 
 #include "StaticScene.h"
 
@@ -64,7 +65,7 @@ void StaticScene::Start()
     CreateScene();
 
     // Create the UI content
-    // CreateInstructions();
+    CreateInstructions();
 
     // Setup the viewport for displaying the scene
     SetupViewport();
@@ -73,7 +74,7 @@ void StaticScene::Start()
     SubscribeToEvents();
 
     // Set the mouse mode to use in the sample
-    Sample::InitMouseMode(MM_RELATIVE);
+    Sample::InitMouseMode(MM_FREE);
 }
 
 void StaticScene::CreateScene()
@@ -192,15 +193,22 @@ void StaticScene::CreateInstructions()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
 
-    // Construct new Text object, set string to display and font to use
-    Text* instructionText = ui->GetRoot()->CreateChild<Text>();
-    instructionText->SetText("Use WASD keys and mouse/touch to move");
-    instructionText->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 15);
+	ImGuiElement* imgui = new ImGuiElement(context_);
+	ImGuiElement::RegisterObject(context_);
+	imgui->SetPosition(0, 0);
+	imgui->SetSize(800, 600);
+	ui->GetRoot()->AddChild(imgui);
+	imgui->SetScene(scene_);
 
-    // Position the text relative to the screen center
-    instructionText->SetHorizontalAlignment(HA_CENTER);
-    instructionText->SetVerticalAlignment(VA_CENTER);
-    instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+    //// Construct new Text object, set string to display and font to use
+    //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
+    //instructionText->SetText("Use WASD keys and mouse/touch to move");
+    //instructionText->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 15);
+
+    //// Position the text relative to the screen center
+    //instructionText->SetHorizontalAlignment(HA_CENTER);
+    //instructionText->SetVerticalAlignment(VA_CENTER);
+    //instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
 }
 
 void StaticScene::SetupViewport()
@@ -263,8 +271,8 @@ void StaticScene::UpdateRenderPath(float timeStep)
 void StaticScene::MoveCamera(float timeStep)
 {
     // Do not move if the UI has a focused element (the console)
-    if (GetSubsystem<UI>()->GetFocusElement())
-        return;
+ //   if (GetSubsystem<UI>()->GetFocusElement())
+ //       return;
 
     Input* input = GetSubsystem<Input>();
 
@@ -274,14 +282,17 @@ void StaticScene::MoveCamera(float timeStep)
     const float MOUSE_SENSITIVITY = 0.1f;
 
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    IntVector2 mouseMove = input->GetMouseMove();
-    yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
-    pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
-    pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+	if (input->GetMouseButtonDown(MOUSEB_RIGHT))
+	{
+		IntVector2 mouseMove = input->GetMouseMove();
+		yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
+		pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
+		pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
-    // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-    cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
-	// printf("camera pitch <%f> yaw <%f>", pitch_, yaw_);
+		// Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+		cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+		// printf("camera pitch <%f> yaw <%f>", pitch_, yaw_);
+	}
 
 	if (input->GetKeyDown(KEY_SHIFT))
 		MOVE_SPEED *= 10.0f;

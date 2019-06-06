@@ -33,6 +33,7 @@
 #include <Urho3D/UI/ToolTip.h>
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/TBElement.h>
+#include <Urho3D/UI/ImGuiElement.h>
 #include <Urho3D/UI/UIEvents.h>
 #include <Urho3D/UI/Window.h>
 
@@ -60,36 +61,45 @@ void HelloTBUI::Start()
     // Load XML file containing default UI style sheet
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
+	Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
 
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
     uiRoot_->SetSize(800, 600);
 
-    tbelement = new TBUIElement(context_);
-    TBUIElement::RegisterObject(context_);
-    tbelement->SetPosition(0, 0);
+	ImGuiElement* imgui = new ImGuiElement(context_);
+	ImGuiElement::RegisterObject(context_);
+	imgui->SetPosition(0, 0);
+	imgui->SetSize(800, 600);
 
-    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
-    URHO3D_LOGERRORF("HelloTBUI::Start size <%u,%u>", g->GetWidth(), g->GetHeight());
+	// ImGuiElement* imgui2 = new ImGuiElement(context_);
+	// imgui->AddChild(imgui2);
 
-//     tbelement->SetSize(g->GetWidth(), g->GetHeight());
-    tbelement->SetBoxSize(g->GetWidth(), g->GetHeight());
-    tbelement->SetAlignment(HA_CENTER, VA_BOTTOM);
+	uiRoot_->AddChild(imgui);
 
-    TBRootWidget* stateUI = new TBRootWidget(context_);
-    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-    tbelement->AddStateWidget(stateUI, true);
-    tbelement->LoadResources();
-    tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
-	URHO3D_LOGERRORF("state ui id <%u>", stateUI->GetID());
+	ToolTip* toolTip = new ToolTip(context_);
+	imgui->AddChild(toolTip);
 
-     // 1 bindear el evento a una funcion
-    uiRoot_->AddChild(tbelement);
+//    tbelement = new TBUIElement(context_);
+//    TBUIElement::RegisterObject(context_);
+//    tbelement->SetPosition(0, 0);
+//
+////     tbelement->SetSize(g->GetWidth(), g->GetHeight());
+//    tbelement->SetBoxSize(g->GetWidth(), g->GetHeight());
+//    tbelement->SetAlignment(HA_CENTER, VA_BOTTOM);
+//
+//    TBRootWidget* stateUI = new TBRootWidget(context_);
+//    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
+//    tbelement->AddStateWidget(stateUI, true);
+//    tbelement->LoadResources();
+//    tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
+//
+//    uiRoot_->AddChild(tbelement);
 
 	SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
 
-//     Initialize Window
-    //InitWindow();
+    // Initialize Window
+    // InitWindow();
 
     // Create and add some controls to the Window
     //InitControls();
@@ -207,16 +217,16 @@ void HelloTBUI::CreateDraggableFish()
     uiRoot_->AddChild(draggableFish);
 
     // Add a tooltip to Fish button
-    ToolTip* toolTip = new ToolTip(context_);
-    draggableFish->AddChild(toolTip);
-    toolTip->SetPosition(IntVector2(draggableFish->GetWidth() + 5, draggableFish->GetWidth() / 2)); // slightly offset from close button
-    BorderImage* textHolder = new BorderImage(context_);
-    toolTip->AddChild(textHolder);
-    textHolder->SetStyle("ToolTipBorderImage");
-    Text* toolTipText = new Text(context_);
-    textHolder->AddChild(toolTipText);
-    toolTipText->SetStyle("ToolTipText");
-    toolTipText->SetText("Please drag me!");
+    //ToolTip* toolTip = new ToolTip(context_);
+    //draggableFish->AddChild(toolTip);
+    //toolTip->SetPosition(IntVector2(draggableFish->GetWidth() + 5, draggableFish->GetWidth() / 2)); // slightly offset from close button
+    //BorderImage* textHolder = new BorderImage(context_);
+    //toolTip->AddChild(textHolder);
+    //textHolder->SetStyle("ToolTipBorderImage");
+    //Text* toolTipText = new Text(context_);
+    //textHolder->AddChild(toolTipText);
+    //toolTipText->SetStyle("ToolTipText");
+    //toolTipText->SetText("Please drag me!");
 
     // Subscribe draggableFish to Drag Events (in order to make it draggable)
     // See "Event list" in documentation's Main Page for reference on available Events and their eventData
