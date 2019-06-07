@@ -50,6 +50,13 @@ ImGuiElement::ImGuiElement(Context* context)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
+	ImGui::StyleColorsClassic();
+	// ImGui::StyleColorsDark();
+	// ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
+	ImGuiStyle& style = ImGui::GetStyle();
+	style.WindowBorderSize = 1.0f;
+	// style.Alpha = 0.5f;
+
 	// Create texture
 	texture_ = new Texture2D(context_);
 	texture_->SetMipsToSkip(QUALITY_LOW, 0);
@@ -137,7 +144,9 @@ void ImGuiElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& ver
 
 			if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
 			{
-				IntRect scissor(clip_rect.x, clip_rect.y, clip_rect.x + clip_rect.z, clip_rect.y + clip_rect.w);
+				IntRect scissor(clip_rect.x, clip_rect.y, clip_rect.z, clip_rect.w);
+				// IntRect scissor((int)clip_rect.x, (int)clip_rect.y, (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
+
 				UIBatch batch(this, BLEND_ALPHA, scissor, texture_, &vertexData);
 
 				unsigned vertexSize = VERTEX_SIZE * pcmd->ElemCount;
@@ -232,48 +241,69 @@ void ImGuiElement::Update(float timeStep)
 	static bool show_demo_window = true;
 	static bool show_another_window = true;
 
-	// if (show_demo_window)
-	//   ImGui::ShowDemoWindow(&show_demo_window);
+	ImGui::PushStyleColor(ImGuiCol_Separator, IM_COL32_BLACK);
+	if (show_demo_window)
+	  ImGui::ShowDemoWindow(&show_demo_window);
+	ImGui::PopStyleColor();
 
 	auto components = scene_->GetComponents();
 	ImGui::Begin("Scene Inspector");
 
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-	ImGui::Columns(2);
-	ImGui::Separator();
-
 	int i = 0;
+	static unsigned selected = 0;
 	for(Component* c : components)
 	{
-		if (ImGui::TreeNode((void*)(intptr_t)i, "%s", c->GetTypeName().CString()))
+		bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s", c->GetTypeName().CString());
+		if (ImGui::IsItemClicked())
+		{
+			URHO3D_LOGERRORF("item selected <%i>", i);
+		}
+		if (isOpen)
 		{
 			ImGui::Text("blah blah");
-			ImGui::SameLine();
+			// ImGui::SameLine();
 			if (ImGui::SmallButton("button")) {};
+		
 			ImGui::TreePop();
-
-			i++;
 		}
+		i++;
 	}
 
 	auto children = scene_->GetChildren();
 	for (Node* child : children)
 	{
-		if (ImGui::TreeNode((void*)(intptr_t)i, "%s", child->GetName().CString()))
+		bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i", child->GetName().CString(), child->GetID());
+		if (ImGui::IsItemClicked())
 		{
-			ImGui::Text("blah blah");
-			ImGui::SameLine();
-			if (ImGui::SmallButton("button")) 
-			{
-				URHO3D_LOGERROR("button down!");
-			}
+			selected = child->GetID();
+			URHO3D_LOGERRORF("item selected <%i>", child->GetID());
+		}
+		if (isOpen)
+		{
+			//ImGui::Text("blah blah");
+			//ImGui::SameLine();
+			//if (ImGui::SmallButton("button")) 
+			//{
+			//	URHO3D_LOGERROR("button down!");
+			//}
 			ImGui::TreePop();
+		}
+		i++;
+	}
 
-			i++;
+	if (selected)
+	{
+		Node* node = scene_->GetNode(selected);
+		if (node)
+		{
+			ImGui::Text("This is some useful text. %s", node->GetName().CString());
+		}
+		else
+		{
+			URHO3D_LOGERRORF("node <%u> not found!", selected);
 		}
 	}
 
-	ImGui::Text("This is some useful text.");
 	ImGui::Checkbox("Demo Window", &show_demo_window);
 	ImGui::Checkbox("Another Window", &show_another_window);
 
@@ -286,10 +316,6 @@ void ImGuiElement::Update(float timeStep)
 	ImGui::Text("counter = %d", counter);
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-	ImGui::Columns(1);
-	ImGui::Separator();
-	ImGui::PopStyleVar();
 
 	ImGui::End();
 }
