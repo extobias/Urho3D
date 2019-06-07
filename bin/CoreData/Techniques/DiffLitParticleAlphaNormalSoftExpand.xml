@@ -1,0 +1,5 @@
+<technique vs="LitParticleNormal" ps="LitParticleNormal" vsdefines="SOFTPARTICLES" psdefines="DIFFMAP SOFTPARTICLES NORMALMAP" >
+    <pass name="alpha" depthwrite="false" depthtest="false" blend="alpha" />
+    <pass name="litalpha" depthwrite="false" depthtest="false" blend="alpha" />
+    <pass name="shadow" vs="Shadow" ps="Shadow" />
+</technique>
