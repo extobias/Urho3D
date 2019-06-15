@@ -13,6 +13,7 @@
 #endif
 varying vec3 vNormal;
 varying vec4 vWorldPos;
+varying vec4 vWorldPos2;
 #ifdef VERTEXCOLOR
     varying vec4 vColor;
 #endif
@@ -42,10 +43,12 @@ void VS()
 {
     mat4 modelMatrix = iModelMatrix;
     vec3 worldPos = GetWorldPos(modelMatrix);
+    
     vNormal = GetWorldNormal(modelMatrix);
     gl_Position = GetClipPos(worldPos);
     // vTexCoord = GetTexCoord(iTexCoord);
     vWorldPos = vec4(worldPos, GetDepth(gl_Position));
+    vWorldPos2 = vec4((iPos * modelMatrix).xyz, 1.0 );
 
     #ifdef SOFTPARTICLES
         vScreenPos = GetScreenPos(gl_Position);
@@ -156,31 +159,34 @@ void PS()
         vec3 lightDir;
         vec3 finalColor;
 
-        //float diff = GetDiffuseVolumetric(vWorldPos.xyz);
-        float diff = GetDiffuse(normal, vWorldPos.xyz, lightDir);
+        // float diff = GetDiffuseVolumetric(vWorldPos.xyz);
+        // vWorldPos tiene q ver con la direccion de la iluminacion, ver como aplicar/desaplicar?
+        // la rotacion que viene iTexCoord1
+        float diff = GetDiffuse(normal, vWorldPos2.xyz, lightDir);
 
-        #ifdef SHADOW
-            diff *= GetShadow(vShadowPos, vWorldPos.w);
-        #endif
+//         #ifdef SHADOW
+//             diff *= GetShadow(vShadowPos, vWorldPos.w);
+//         #endif
     
-        #if defined(SPOTLIGHT)
-            lightColor = vSpotPos.w > 0.0 ? texture2DProj(sLightSpotMap, vSpotPos).rgb * cLightColor.rgb : vec3(0.0, 0.0, 0.0);
-        #elif defined(CUBEMASK)
-            lightColor = textureCube(sLightCubeMap, vCubeMaskVec).rgb * cLightColor.rgb;
-        #else
-            lightColor = cLightColor.rgb;
-        #endif
-        
-        vec3 specColor = cMatSpecColor.rgb;
-        #ifdef SPECULAR
-            float spec = GetSpecular(normal, cCameraPosPS - vWorldPos.xyz, lightDir, cMatSpecColor.a);
-            finalColor = diff * lightColor * (diffColor.rgb + spec * specColor * cLightColor.a);
-        #else
-            finalColor = diff * lightColor * diffColor.rgb;
-        #endif
+//         #if defined(SPOTLIGHT)
+//             lightColor = vSpotPos.w > 0.0 ? texture2DProj(sLightSpotMap, vSpotPos).rgb * cLightColor.rgb : vec3(0.0, 0.0, 0.0);
+//         #elif defined(CUBEMASK)
+//             lightColor = textureCube(sLightCubeMap, vCubeMaskVec).rgb * cLightColor.rgb;
+//         #else
+//             lightColor = cLightColor.rgb;
+//         #endif
+//         
+//         vec3 specColor = cMatSpecColor.rgb;
+//         #ifdef SPECULAR
+//             float spec = GetSpecular(normal, cCameraPosPS - vWorldPos.xyz, lightDir, cMatSpecColor.a);
+//             finalColor = diff * lightColor * (diffColor.rgb + spec * specColor * cLightColor.a);
+//         #else
+//             finalColor = diff * lightColor * diffColor.rgb;
+//         #endif
 
         // finalColor = diff * lightColor * diffColor.rgb;
         // gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
+        //
         gl_FragColor = vec4(vec3(diff), diffColor.a);
     #else
         // Ambient & per-vertex lighting
