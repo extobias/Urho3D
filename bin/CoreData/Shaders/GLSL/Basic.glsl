@@ -30,7 +30,7 @@ void PS()
     #ifdef VERTEXCOLOR
         diffColor *= vColor;
     #endif
-
+    
     #if (!defined(DIFFMAP)) && (!defined(ALPHAMAP))
         gl_FragColor = diffColor;
     #endif
