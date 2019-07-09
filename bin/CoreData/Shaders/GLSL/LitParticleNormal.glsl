@@ -39,6 +39,31 @@ varying vec4 vWorldPos2;
     varying vec3 vVertexLight;
 #endif
 
+mat4 rotationMatrix(vec3 axis, float angle)
+{
+    axis = normalize(axis);
+    float s = sin(angle);
+    float c = cos(angle);
+    float oc = 1.0 - c;
+    
+    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0);
+}
+
+// mat3 rotationMatrix(vec3 axis, float angle)
+// {
+//     axis = normalize(axis);
+//     float s = sin(angle);
+//     float c = cos(angle);
+//     float oc = 1.0 - c;
+//     
+//     return mat3(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,
+//                 oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
+//                 oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c );
+// }
+
 void VS()
 {
     mat4 modelMatrix = iModelMatrix;
@@ -48,7 +73,7 @@ void VS()
     gl_Position = GetClipPos(worldPos);
     // vTexCoord = GetTexCoord(iTexCoord);
     vWorldPos = vec4(worldPos, GetDepth(gl_Position));
-    vWorldPos2 = vec4((iPos * modelMatrix).xyz, 1.0 );
+    vWorldPos2 = vec4((iPos * modelMatrix).xyz + vec3(iTexCoord1.x, iTexCoord1.y, 0.0) * cBillboardRot, GetDepth(gl_Position));
 
     #ifdef SOFTPARTICLES
         vScreenPos = GetScreenPos(gl_Position);
@@ -59,7 +84,28 @@ void VS()
     #endif
     
     #ifdef NORMALMAP
-        vec4 tangent = GetWorldTangent(modelMatrix);
+       float M_DEGTORAD = 3.14159 / 180.0;
+//         float Sign = 1.0 - step(128.0, iColor.r)*2.0;
+//         float Exponent = 2.0 * mod(iColor.r,128.0) + step(128.0,iColor.g) - 127.0; 
+//         float Mantissa = mod(iColor.g, 128.0)*65536.0 + iColor.b*256.0 +iColor.a + float(0x800000);
+//         float rotation =  Sign * exp2(Exponent) * (Mantissa * exp2(-23.0 )); 
+//         // rotation = 45.0;
+//         float cosf = cos(rotation * M_DEGTORAD);
+//         float sinf = sin(rotation * M_DEGTORAD);
+        // float rotation = vColor.r * 360.0;
+        
+        float rotation = M_DEGTORAD * ((vColor.r * 360.0));
+        // float rotation = 0.0;
+        
+        mat4 rotMat = rotationMatrix(vNormal, -rotation);
+    
+        // vec4 tangent = GetWorldTangent(modelMatrix);
+        
+        // vec3 right = rotMat * vec3(1.0, 0.0, 0.0);
+        vec3 right = vec3(1.0, 0.0, 0.0);
+        vec4 tangent = vec4(normalize(right * cBillboardRot), 1.0);
+        tangent = rotMat * tangent;
+        
         vec3 bitangent = cross(tangent.xyz, vNormal) * tangent.w;
         vTexCoord = vec4(GetTexCoord(iTexCoord), bitangent.xy);
         vTangent = vec4(tangent.xyz, bitangent.z);
@@ -111,7 +157,7 @@ void PS()
     #endif
 
     #ifdef VERTEXCOLOR
-        diffColor *= vColor;
+        // diffColor *= vColor;
     #endif
 
     // Get fog factor
@@ -188,6 +234,12 @@ void PS()
         // gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
         //
         gl_FragColor = vec4(vec3(diff), diffColor.a);
+        float Sign = 1.0 - step(128.0, vColor.r)*2.0;
+        float Exponent = 2.0 * mod(vColor.r,128.0) + step(128.0,vColor.g) - 127.0; 
+        float Mantissa = mod(vColor.g, 128.0) * 65536.0 + vColor.b * 256.0 + vColor.a + float(0x800000);
+        float rotation =  Sign * exp2(Exponent) * (Mantissa * exp2(-23.0 )); 
+        
+        // gl_FragColor = vec4(normalize(vec3(rotation, rotation, rotation)), diffColor.a);
     #else
         // Ambient & per-vertex lighting
         vec3 finalColor = vVertexLight * diffColor.rgb;

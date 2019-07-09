@@ -34,6 +34,7 @@
 #include <Urho3D/Graphics/ParticleEmitter.h>
 #include <Urho3D/Graphics/ParticleEffect.h>
 #include <Urho3D/Graphics/Zone.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
@@ -83,12 +84,14 @@ void StaticScene::CreateScene()
 
     scene_ = new Scene(context_);
     scene_->CreateComponent<Octree>();
+	scene_->CreateComponent<DebugRenderer>();
 
 	// zone
 	Node* zoneNode = scene_->CreateChild("Zone");
 	Zone* zone = zoneNode->CreateComponent<Zone>();
 	// zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
 	zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
+	Node* zoneChild = zoneNode->CreateChild("ZoneChild");
 
 	// ground
     Node* planeNode = scene_->CreateChild("Plane");
@@ -100,17 +103,18 @@ void StaticScene::CreateScene()
 
 	// light
     Node* lightNode = scene_->CreateChild("DirectionalLight");
-	lightNode->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
-    lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f)); // The direction vector does not need to be normalized
-    Light* light = lightNode->CreateComponent<Light>();
-    light->SetLightType(LIGHT_DIRECTIONAL);
-	light->SetRadius(100.0f);
-	light->SetFov(150.0f);
-	light->SetBrightness(50.0f);
-	light->SetUsePhysicalValues(true);
-	light->SetTemperature(6500.0f);
-	light->SetCastShadows(true);
-	light->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+	lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
+    // lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
+    light_ = lightNode->CreateComponent<Light>();
+    light_->SetLightType(LIGHT_SPOT);
+	light_->SetRadius(10.0f);
+	light_->SetFov(50.0f);
+	light_->SetBrightness(50.0f);
+	light_->SetUsePhysicalValues(true);
+	light_->SetTemperature(6500.0f);
+	light_->SetCastShadows(true);
+	light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+
 	// sky
 	//Node* skyNode = scene_->CreateChild("Sky");
 	//skyNode->SetScale(500.0f); // The scale actually does not matter
@@ -122,14 +126,14 @@ void StaticScene::CreateScene()
 	Node* emitterNode = scene_->CreateChild("Emitter");
 	emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
 	auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
-	ParticleEffect* effect = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
-	effectMaterial_ = effect->GetMaterial();
-	effect->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
-	effect->SetEmitterSize(Vector3::ONE * 0.5f);
-	particleEmitter->SetEffect(effect);
+	effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
+	effectMaterial_ = effect_->GetMaterial();
+	effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
+	effect_->SetEmitterSize(Vector3::ONE * 0.5f);
+	particleEmitter->SetEffect(effect_);
 	particleEmitter->SetEmitting(true);
-	
-    const unsigned NUM_OBJECTS = 1;
+
+    const unsigned NUM_OBJECTS = 0;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -224,9 +228,9 @@ void StaticScene::SetupViewport()
 	//RenderPath* effectRenderPath = viewport->GetRenderPath();
 	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
     //effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredSAO.xml"));
-	//effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
+	effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
 	// effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredRenderDepth.xml"));
-	effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
+	// effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
 
 	//effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
 	//effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
@@ -320,6 +324,8 @@ void StaticScene::SubscribeToEvents()
 	// SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(StaticScene, HandleKeyDown));
+
+	SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(StaticScene, HandlePostRenderUpdate));
 }
 
 void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -407,5 +413,26 @@ void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 		URHO3D_LOGERRORF("col up <%f, %f, %f>", col.r_, col.g_, col.b_);
 	}
 
+	if (key == KEY_F)
+	{
+		float maxRot = effect_->GetMaxRotation();
+		if (maxRot != 0)
+		{
+			effect_->SetMaxRotation(0.0f);
+			effect_->SetMaxRotationSpeed(0.0f);
+		}
+		else
+		{
+			effect_->SetMaxRotation(360.0f);
+			effect_->SetMaxRotationSpeed(50.0f);
+		}
+	}
+
 	Sample::HandleKeyDown(eventType, eventData);
+}
+
+void StaticScene::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
+{
+	DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+	light_->DrawDebugGeometry(debugRenderer, false);
 }

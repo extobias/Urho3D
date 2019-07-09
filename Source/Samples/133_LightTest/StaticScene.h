@@ -68,6 +68,8 @@ private:
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
+	void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
+
 	void UpdateRenderPath(float timeStep);
 
 	int commandIndexSaoCopy_;
@@ -75,4 +77,6 @@ private:
     bool aoOnly_;
 
 	Material* effectMaterial_;
+	ParticleEffect* effect_;
+	Light* light_;
 };

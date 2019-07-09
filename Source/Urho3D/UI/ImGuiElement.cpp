@@ -9,6 +9,7 @@
 #include "../Core/CoreEvents.h"
 #include "../Core/ProcessUtils.h"
 #include "../Scene/Component.h"
+#include "../Graphics/Camera.h"
 #include "../Input/Input.h"
 #include "../UI/UI.h"
 #include "../UI/UIEvents.h"
@@ -16,6 +17,7 @@
 #include <SDL/SDL.h>
 
 #include "imgui.h"
+#include "ImGuizmo.h"
 
 #define VERTEX_SIZE 6
 
@@ -50,12 +52,12 @@ ImGuiElement::ImGuiElement(Context* context)
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-	ImGui::StyleColorsClassic();
-	// ImGui::StyleColorsDark();
+	// ImGui::StyleColorsClassic();
+	ImGui::StyleColorsDark();
 	// ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
-	ImGuiStyle& style = ImGui::GetStyle();
-	style.WindowBorderSize = 1.0f;
-	// style.Alpha = 0.5f;
+	// ImGuiStyle& style = ImGui::GetStyle();
+	// style.WindowBorderSize = 1.0f;
+	// style.Alpha = 1.0f;
 
 	// Create texture
 	texture_ = new Texture2D(context_);
@@ -128,9 +130,26 @@ void ImGuiElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& ver
 		const ImDrawVert* vtx_buffer = cmd_list->VtxBuffer.Data;
 		const ImDrawIdx* idx_buffer = cmd_list->IdxBuffer.Data;
 
-		//glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (const GLvoid*)((const char*)vtx_buffer + IM_OFFSETOF(ImDrawVert, pos)));
-		//glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (const GLvoid*)((const char*)vtx_buffer + IM_OFFSETOF(ImDrawVert, uv)));
-		//glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (const GLvoid*)((const char*)vtx_buffer + IM_OFFSETOF(ImDrawVert, col)));
+		//IntRect scissor(0, 0, 1000, 1000);
+		//UIBatch batch(this, BLEND_ALPHA, scissor, texture_, &vertexData);
+
+		//unsigned vertexSize = VERTEX_SIZE * cmd_list->IdxBuffer.Size;
+		//batch.vertexStart_ = vertexData.Size();
+		//batch.vertexEnd_ = batch.vertexStart_ + vertexSize;
+		//vertexData.Resize(batch.vertexEnd_);
+		//float* dest = &(vertexData.At(batch.vertexStart_));
+		//unsigned offset = 0;
+		//for (int i = 0; i < cmd_list->IdxBuffer.Size; i++, offset += VERTEX_SIZE)
+		//{
+		//	ImDrawVert v = cmd_list->VtxBuffer[cmd_list->IdxBuffer[i]];
+		//	dest[offset + 0] = v.pos.x;
+		//	dest[offset + 1] = v.pos.y;
+		//	dest[offset + 2] = 0.0f;
+		//	((unsigned&)dest[offset + 3]) = (unsigned)v.col;
+		//	dest[offset + 4] = v.uv.x;
+		//	dest[offset + 5] = v.uv.y;
+		//}
+		//UIBatch::AddOrMerge(batch, batches);
 
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
 		{
@@ -144,8 +163,10 @@ void ImGuiElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& ver
 
 			if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
 			{
-				IntRect scissor(clip_rect.x, clip_rect.y, clip_rect.z, clip_rect.w);
+				unsigned offset1 = 0;
+				IntRect scissor(clip_rect.x - offset1, clip_rect.y - offset1, clip_rect.z + offset1, clip_rect.w + offset1);
 				// IntRect scissor((int)clip_rect.x, (int)clip_rect.y, (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
+				// IntRect scissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
 
 				UIBatch batch(this, BLEND_ALPHA, scissor, texture_, &vertexData);
 
@@ -158,35 +179,18 @@ void ImGuiElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& ver
 				unsigned offset = 0;
 				for (int i = 0; i < pcmd->ElemCount; i++, offset += VERTEX_SIZE)
 				{
-					unsigned short vertexIndex = idx_buffer[i];
-					ImDrawVert v = vtx_buffer[vertexIndex];
-					dest[offset + 0] = v.pos.x;
-					dest[offset + 1] = v.pos.y;
+					const ImDrawVert* v = &cmd_list->VtxBuffer[cmd_list->IdxBuffer[pcmd->IdxOffset + i]];
+					dest[offset + 0] = v->pos.x;
+					dest[offset + 1] = v->pos.y;
 					dest[offset + 2] = 0.0f;
-					((unsigned&)dest[offset + 3]) = (unsigned)v.col;
-					dest[offset + 4] = v.uv.x;
-					dest[offset + 5] = v.uv.y;
+					((unsigned&)dest[offset + 3]) = (unsigned)v->col;
+					dest[offset + 4] = v->uv.x;
+					dest[offset + 5] = v->uv.y;
 				}
 
 				UIBatch::AddOrMerge(batch, batches);
-
-				//batch.element_ = this;
-				//batch.blendMode_ = BLEND_ALPHA;
-				//batch.texture_ = texture_;
-				//batch.vertexData_ = &vertexData;
-				//batch.scissor_ = scissor;
-				
-				// Apply scissor/clipping rectangle
-				//glScissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
-
-				//// Bind texture, Draw
-				//glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-				//glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer);
 			}
-			
-			idx_buffer += pcmd->ElemCount;
-		}
-		
+		 }
 	}
 }
 
@@ -241,11 +245,11 @@ void ImGuiElement::Update(float timeStep)
 	static bool show_demo_window = true;
 	static bool show_another_window = true;
 
-	ImGui::PushStyleColor(ImGuiCol_Separator, IM_COL32_BLACK);
-	if (show_demo_window)
-	  ImGui::ShowDemoWindow(&show_demo_window);
-	ImGui::PopStyleColor();
-
+	//ImGui::PushStyleColor(ImGuiCol_Separator, IM_COL32_WHITE);
+	//ImGui::PopStyleColor();
+	// if (show_demo_window)
+	//  ImGui::ShowDemoWindow(&show_demo_window);
+	
 	auto components = scene_->GetComponents();
 	ImGui::Begin("Scene Inspector");
 
@@ -291,12 +295,14 @@ void ImGuiElement::Update(float timeStep)
 		i++;
 	}
 
+	ImGui::Separator();
+
 	if (selected)
 	{
 		Node* node = scene_->GetNode(selected);
 		if (node)
 		{
-			ImGui::Text("This is some useful text. %s", node->GetName().CString());
+			ImGui::Text("%s", node->GetName().CString());
 		}
 		else
 		{
@@ -304,20 +310,48 @@ void ImGuiElement::Update(float timeStep)
 		}
 	}
 
-	ImGui::Checkbox("Demo Window", &show_demo_window);
-	ImGui::Checkbox("Another Window", &show_another_window);
+	//ImGui::Checkbox("Demo Window", &show_demo_window);
+	//ImGui::Checkbox("Another Window", &show_another_window);
 
-	ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-	ImGui::ColorEdit3("clear color", (float*)&clear_color);
+	//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+	//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
-	if (ImGui::Button("Button"))
-		counter++;
-	ImGui::SameLine();
-	ImGui::Text("counter = %d", counter);
+	//if (ImGui::Button("Button"))
+	//	counter++;
+	//ImGui::SameLine();
+	//ImGui::Text("counter = %d", counter);
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 	ImGui::End();
+
+	float objectMatrix[16] =
+	{ 1.f, 0.f, 0.f, 0.f,
+	  0.f, 1.f, 0.f, 0.f,
+	  0.f, 0.f, 1.f, 0.f,
+	  0.f, 0.f, 0.f, 1.f };
+
+	static const float identityMatrix[16] =
+	{ 1.f, 0.f, 0.f, 0.f,
+		0.f, 1.f, 0.f, 0.f,
+		0.f, 0.f, 1.f, 0.f,
+		0.f, 0.f, 0.f, 1.f };
+
+	float cameraView[16] =
+	{ 1.f, 0.f, 0.f, 0.f,
+	  0.f, 1.f, 0.f, 0.f,
+	  0.f, 0.f, 1.f, 0.f,
+	  0.f, 0.f, 0.f, 1.f };
+
+	Node* cameraNode = scene_->GetChild("Camera");
+	Camera* camera = cameraNode->GetComponent<Camera>();
+
+	Matrix4 projection = camera->GetProjection();
+	Matrix3x4 view = camera->GetView();
+
+	ImGuizmo::Enable(true);
+	ImGuizmo::DrawCube(view.Data(), projection.Data(), objectMatrix);
+	ImGuizmo::Manipulate(view.Data(), projection.Data(), ImGuizmo::ROTATE, ImGuizmo::LOCAL, objectMatrix);
 }
 
 void ImGuiElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
@@ -347,6 +381,9 @@ void ImGuiElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
 	io.DeltaTime = timeStep < M_EPSILON ? 1.0f / 60.0f : timeStep;
 
 	ImGui::NewFrame();
+
+	ImGuizmo::BeginFrame();
+	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 }
 
 void ImGuiElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
