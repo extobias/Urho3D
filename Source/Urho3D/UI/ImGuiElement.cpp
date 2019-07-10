@@ -41,7 +41,8 @@ extern const char* UI_CATEGORY;
 
 /*------------ TBElement ------------*/
 ImGuiElement::ImGuiElement(Context* context)
-    : UIElement(context)
+    : UIElement(context),
+      selectedNode_(0)
 {
     SetName("ImGuiElement");
 
@@ -129,27 +130,6 @@ void ImGuiElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& ver
 		const ImDrawList* cmd_list = draw_data->CmdLists[n];
 		const ImDrawVert* vtx_buffer = cmd_list->VtxBuffer.Data;
 		const ImDrawIdx* idx_buffer = cmd_list->IdxBuffer.Data;
-
-		//IntRect scissor(0, 0, 1000, 1000);
-		//UIBatch batch(this, BLEND_ALPHA, scissor, texture_, &vertexData);
-
-		//unsigned vertexSize = VERTEX_SIZE * cmd_list->IdxBuffer.Size;
-		//batch.vertexStart_ = vertexData.Size();
-		//batch.vertexEnd_ = batch.vertexStart_ + vertexSize;
-		//vertexData.Resize(batch.vertexEnd_);
-		//float* dest = &(vertexData.At(batch.vertexStart_));
-		//unsigned offset = 0;
-		//for (int i = 0; i < cmd_list->IdxBuffer.Size; i++, offset += VERTEX_SIZE)
-		//{
-		//	ImDrawVert v = cmd_list->VtxBuffer[cmd_list->IdxBuffer[i]];
-		//	dest[offset + 0] = v.pos.x;
-		//	dest[offset + 1] = v.pos.y;
-		//	dest[offset + 2] = 0.0f;
-		//	((unsigned&)dest[offset + 3]) = (unsigned)v.col;
-		//	dest[offset + 4] = v.uv.x;
-		//	dest[offset + 5] = v.uv.y;
-		//}
-		//UIBatch::AddOrMerge(batch, batches);
 
 		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
 		{
@@ -254,7 +234,6 @@ void ImGuiElement::Update(float timeStep)
 	ImGui::Begin("Scene Inspector");
 
 	int i = 0;
-	static unsigned selected = 0;
 	for(Component* c : components)
 	{
 		bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s", c->GetTypeName().CString());
@@ -279,7 +258,7 @@ void ImGuiElement::Update(float timeStep)
 		bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i", child->GetName().CString(), child->GetID());
 		if (ImGui::IsItemClicked())
 		{
-			selected = child->GetID();
+            selectedNode_ = child->GetID();
 			URHO3D_LOGERRORF("item selected <%i>", child->GetID());
 		}
 		if (isOpen)
@@ -297,16 +276,24 @@ void ImGuiElement::Update(float timeStep)
 
 	ImGui::Separator();
 
-	if (selected)
+    if (selectedNode_)
 	{
-		Node* node = scene_->GetNode(selected);
+        Node* node = scene_->GetNode(selectedNode_);
 		if (node)
 		{
-			ImGui::Text("%s", node->GetName().CString());
+            const Vector<AttributeInfo>* attr = node->GetAttributes();
+            for (auto var : (*attr))
+            {
+                //URHO3D_LOGERRORF("name <%s> type <%s> default <%f>",
+                //    var.name_.CString(), var.defaultValue_.GetTypeName().CString(), var.defaultValue_.GetFloat());
+
+                ImGui::Text("name. %s type %s", var.name_.CString(), var.defaultValue_.GetTypeName().CString());
+                // AddEditField(var);
+            }
 		}
 		else
 		{
-			URHO3D_LOGERRORF("node <%u> not found!", selected);
+            URHO3D_LOGERRORF("node <%u> not found!", selectedNode_);
 		}
 	}
 
@@ -325,33 +312,22 @@ void ImGuiElement::Update(float timeStep)
 
 	ImGui::End();
 
-	float objectMatrix[16] =
-	{ 1.f, 0.f, 0.f, 0.f,
-	  0.f, 1.f, 0.f, 0.f,
-	  0.f, 0.f, 1.f, 0.f,
-	  0.f, 0.f, 0.f, 1.f };
+    Node* node = scene_->GetNode(selectedNode_);
+    if (node)
+    {
+        Node* cameraNode = scene_->GetChild("Camera");
+        Camera* camera = cameraNode->GetComponent<Camera>();
 
-	static const float identityMatrix[16] =
-	{ 1.f, 0.f, 0.f, 0.f,
-		0.f, 1.f, 0.f, 0.f,
-		0.f, 0.f, 1.f, 0.f,
-		0.f, 0.f, 0.f, 1.f };
+        Matrix4 projection = camera->GetProjection();
+        Matrix4 view = camera->GetView().ToMatrix4().Transpose();
+        Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
+        Matrix4 delta;
 
-	float cameraView[16] =
-	{ 1.f, 0.f, 0.f, 0.f,
-	  0.f, 1.f, 0.f, 0.f,
-	  0.f, 0.f, 1.f, 0.f,
-	  0.f, 0.f, 0.f, 1.f };
-
-	Node* cameraNode = scene_->GetChild("Camera");
-	Camera* camera = cameraNode->GetComponent<Camera>();
-
-	Matrix4 projection = camera->GetProjection();
-	Matrix3x4 view = camera->GetView();
-
-	ImGuizmo::Enable(true);
-	ImGuizmo::DrawCube(view.Data(), projection.Data(), objectMatrix);
-	ImGuizmo::Manipulate(view.Data(), projection.Data(), ImGuizmo::ROTATE, ImGuizmo::LOCAL, objectMatrix);
+        ImGuizmo::Enable(true);
+        //ImGuizmo::SetRect(pos.x, pos.y, size.x, size.y);
+        // ImGuizmo::DrawCube(view.Data(), projection.Data(), objectMatrix);
+        ImGuizmo::Manipulate(&view.m00_, &projection.m00_, ImGuizmo::ROTATE, ImGuizmo::LOCAL, &nodeTransform.m00_);
+    }
 }
 
 void ImGuiElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)

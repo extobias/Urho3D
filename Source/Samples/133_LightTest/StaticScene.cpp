@@ -86,6 +86,7 @@ void StaticScene::CreateScene()
     scene_->CreateComponent<Octree>();
 	scene_->CreateComponent<DebugRenderer>();
 
+    engine_->SetMaxFps(60.0f);
 	// zone
 	Node* zoneNode = scene_->CreateChild("Zone");
 	Zone* zone = zoneNode->CreateComponent<Zone>();

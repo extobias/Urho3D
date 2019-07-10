@@ -68,6 +68,8 @@ void Sample::Setup()
 	engineParameters_[EP_WINDOW_RESIZABLE] = true;
 	engineParameters_[EP_FORCE_GL2] = true;
 
+    engineParameters_[EP_FORCE_GL2] = true;
+
     // Construct a search path to find the resource prefix with two entries:
     // The first entry is an empty path which will be substituted with program/bin directory -- this entry is for binary when it is still in build tree
     // The second and third entries are possible relative paths from the installed program/bin directory to the asset directory -- these entries are for binary when it is in the Urho3D SDK installation location
