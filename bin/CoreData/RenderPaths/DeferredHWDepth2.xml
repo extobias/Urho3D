@@ -22,7 +22,7 @@
     <command type="scenepass" pass="alpha" vertexlights="true" sort="backtofront" metadata="alpha" depthstencil="depth" psdefines="HWDEPTH">
         <texture unit="depth" name="depth" />
     </command>
-<!--    <command type="scenepass" pass="postalpha" sort="backtofront" depthstencil="depth" />-->
+    <command type="scenepass" pass="postalpha" sort="backtofront" depthstencil="depth" />
 
 <!--    <command type="clear" color="0 0 0 0" output="DepthBuffer" />
     <command type="quad" vs="CopyFramebufferDepth" ps="CopyFramebufferDepth" blend="replace" output="DepthBuffer">

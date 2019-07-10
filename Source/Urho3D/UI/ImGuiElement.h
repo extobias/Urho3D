@@ -16,6 +16,14 @@ class ImGuiElement : public UIElement
    URHO3D_OBJECT(ImGuiElement, UIElement)
 
 public:
+
+	enum EditMode
+	{
+		EDIT_MOVE = 0,
+		EDIT_ROTATE,
+		EDIT_SCALE
+	};
+
     ImGuiElement(Context* context);
 
     ~ImGuiElement();
