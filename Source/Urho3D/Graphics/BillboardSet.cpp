@@ -645,7 +645,7 @@ void BillboardSet::UpdateVertexBuffer(const FrameInfo& frame)
 
             Vector2 size(billboard.size_.x_ * billboardScale.x_, billboard.size_.y_ * billboardScale.y_);
             // unsigned color = billboard.color_.ToUInt();
-			unsigned color = Color(billboard.rotation_ / 360.0, 0.0, 0.0).ToUInt();
+	    unsigned color = Color(billboard.rotation_ / 360.0, 0.0, 0.0).ToUInt();
             if (fixedScreenSize_)
                 size *= billboard.screenScaleFactor_;
 

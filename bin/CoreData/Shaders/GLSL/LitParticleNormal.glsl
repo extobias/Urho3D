@@ -208,7 +208,8 @@ void PS()
         // float diff = GetDiffuseVolumetric(vWorldPos.xyz);
         // vWorldPos tiene q ver con la direccion de la iluminacion, ver como aplicar/desaplicar?
         // la rotacion que viene iTexCoord1
-        float diff = GetDiffuse(normal, vWorldPos2.xyz, lightDir);
+        // float diff = GetDiffuse(normal, vWorldPos2.xyz, lightDir);
+        float diff = max(dot(normal, cLightDirPS), 0.0);
 
 //         #ifdef SHADOW
 //             diff *= GetShadow(vShadowPos, vWorldPos.w);

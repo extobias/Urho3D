@@ -78,6 +78,8 @@ private:
 	SharedPtr<Texture2D> texture_;
 
 	WeakPtr<Scene> scene_;
+
+    unsigned selectedNode_;
 };
 
 
