@@ -41,7 +41,8 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
-#include <Urho3D/UI/ImGuiElement.h>
+#include <Urho3D/UI/EditorWindow.h>
+#include <Urho3D/UI/EditorGuizmo.h>
 
 #include "StaticScene.h"
 
@@ -86,7 +87,8 @@ void StaticScene::CreateScene()
     scene_->CreateComponent<Octree>();
 	scene_->CreateComponent<DebugRenderer>();
 
-    engine_->SetMaxFps(60.0f);
+    // engine_->SetMaxFps(60.0f);
+
 	// zone
 	Node* zoneNode = scene_->CreateChild("Zone");
 	Zone* zone = zoneNode->CreateComponent<Zone>();
@@ -195,15 +197,27 @@ void StaticScene::CreateDepthTexture()
 
 void StaticScene::CreateInstructions()
 {
+	EditorWindow::RegisterObject(context_);
+	ImGuiElement::RegisterObject(context_);
+
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
 
-	ImGuiElement* imgui = new ImGuiElement(context_);
-	ImGuiElement::RegisterObject(context_);
-	imgui->SetPosition(0, 0);
-	imgui->SetSize(800, 600);
+	EditorWindow* imgui = new EditorWindow(context_);
+	imgui->SetName("editor");
 	ui->GetRoot()->AddChild(imgui);
 	imgui->SetScene(scene_);
+
+	EditorGuizmo* guizmo = new EditorGuizmo(context_);
+	guizmo->SetName("guizmo");
+	guizmo->SetFocusMode(FM_NOTFOCUSABLE);
+	ui->GetRoot()->AddChild(guizmo);
+	guizmo->SetPosition(0, 0);
+	guizmo->SetScene(scene_);
+
+	imgui->BringToFront();
+	imgui->SetPriority(100);
+	imgui->SetGuizmo(guizmo);
 
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
