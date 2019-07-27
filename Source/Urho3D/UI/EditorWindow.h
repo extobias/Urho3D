@@ -24,7 +24,7 @@ public:
 	void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
 private:
-	void EditorWindow::AttributeEdit(Component* c);
+    void AttributeEdit(Component* c);
 
 	unsigned selectedNode_;
 

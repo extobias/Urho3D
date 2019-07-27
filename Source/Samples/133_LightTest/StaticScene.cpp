@@ -87,7 +87,7 @@ void StaticScene::CreateScene()
     scene_->CreateComponent<Octree>();
 	scene_->CreateComponent<DebugRenderer>();
 
-    // engine_->SetMaxFps(60.0f);
+    engine_->SetMaxFps(60.0f);
 
 	// zone
 	Node* zoneNode = scene_->CreateChild("Zone");
@@ -136,7 +136,7 @@ void StaticScene::CreateScene()
 	particleEmitter->SetEffect(effect_);
 	particleEmitter->SetEmitting(true);
 
-    const unsigned NUM_OBJECTS = 0;
+    const unsigned NUM_OBJECTS = 2;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -197,11 +197,11 @@ void StaticScene::CreateDepthTexture()
 
 void StaticScene::CreateInstructions()
 {
-	EditorWindow::RegisterObject(context_);
-	ImGuiElement::RegisterObject(context_);
-
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
+
+	EditorWindow::RegisterObject(context_);
+	ImGuiElement::RegisterObject(context_);
 
 	EditorWindow* imgui = new EditorWindow(context_);
 	imgui->SetName("editor");

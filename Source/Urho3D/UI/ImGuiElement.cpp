@@ -100,7 +100,7 @@ void ImGuiElement::SubscribeToEvents()
 {
 	SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(ImGuiElement, HandleScreenMode));
 	SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(ImGuiElement, HandlePostUpdate));
-	SubscribeToEvent(E_BEGINFRAME, URHO3D_HANDLER(ImGuiElement, HandleBeginFrame));
+    SubscribeToEvent(E_BEGINFRAME, URHO3D_HANDLER(ImGuiElement, HandleBeginFrame));
 
 	SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(ImGuiElement, HandleKeyDown));
 	SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(ImGuiElement, HandleKeyUp));
@@ -317,6 +317,18 @@ void ImGuiElement::Update(float timeStep)
 {
 	ImGui::SetCurrentContext(imguiContext_);
 
+    ImGuiIO& io = ImGui::GetIO();
+    int w, h;
+    int display_w, display_h;
+    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    w = g->GetWidth();
+    h = g->GetHeight();
+    //glfwGetWindowSize(g_Window, &w, &h);
+    //glfwGetFramebufferSize(g_Window, &display_w, &display_h);
+    io.DisplaySize = ImVec2((float)w, (float)h);
+    // if (w > 0 && h > 0)
+    //	io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
+
 	ImGui::NewFrame();
 
 	// static bool show_demo_window = true;
@@ -361,14 +373,14 @@ void ImGuiElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
 	IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
 
 	// Setup display size (every frame to accommodate for window resizing)
-	int w, h;
-	int display_w, display_h;
-	Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
-	w = g->GetWidth();
-	h = g->GetHeight();
-	//glfwGetWindowSize(g_Window, &w, &h);
-	//glfwGetFramebufferSize(g_Window, &display_w, &display_h);
-	io.DisplaySize = ImVec2((float)w, (float)h);
+//	int w, h;
+//	int display_w, display_h;
+//	Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+//	w = g->GetWidth();
+//	h = g->GetHeight();
+//	//glfwGetWindowSize(g_Window, &w, &h);
+//	//glfwGetFramebufferSize(g_Window, &display_w, &display_h);
+//	io.DisplaySize = ImVec2((float)w, (float)h);
 	// if (w > 0 && h > 0)
 	//	io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
 	using namespace BeginFrame;
