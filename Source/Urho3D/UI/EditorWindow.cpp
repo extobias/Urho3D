@@ -97,19 +97,19 @@ void EditorWindow::Render(float timeStep)
 				URHO3D_LOGERRORF("item selected <%i>", child->GetID());
 			}
 		}
-		if (isOpen)
-		{
-			auto childComponents = child->GetComponents();
-			for (Component* c : childComponents)
-			{
-				// ImGui::Text("%s", c->GetTypeName().CString());
-				if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
-				{
-					AttributeEdit(c);
-				}
-			}
-			ImGui::TreePop();
-		}
+        if (isOpen)
+        {
+//			auto childComponents = child->GetComponents();
+//			for (Component* c : childComponents)
+//			{
+//				// ImGui::Text("%s", c->GetTypeName().CString());
+//				if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
+//				{
+//					AttributeEdit(c);
+//				}
+//			}
+            ImGui::TreePop();
+        }
 		i++;
 	}
 
@@ -141,6 +141,17 @@ void EditorWindow::Render(float timeStep)
 			ImGui::InputFloat3("Rt", matrixRotation, 3);
 			ImGui::InputFloat3("Sc", matrixScale, 3);
 			ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
+
+            // components
+            auto childComponents = node->GetComponents();
+            for (Component* c : childComponents)
+            {
+                // ImGui::Text("%s", c->GetTypeName().CString());
+                if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
+                {
+                    AttributeEdit(c);
+                }
+            }
 		}
 		else
 		{

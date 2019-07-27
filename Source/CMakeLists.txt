@@ -70,6 +70,7 @@ endif ()
 # Add targets
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 foreach (TARGET ETCPACK FreeType LZ4 PugiXml rapidjson SDL StanHull STB)
 =======
 foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger)
@@ -77,6 +78,9 @@ foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger)
 =======
 foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger ImGui)
 >>>>>>> imgui integration
+=======
+foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger imgui)
+>>>>>>> cambios varios
     add_subdirectory (ThirdParty/${TARGET})
 endforeach ()
 
