@@ -43,6 +43,8 @@
 #include "PBRMaterials.h"
 
 #include <Urho3D/DebugNew.h>
+#include <Urho3D/UI/EditorWindow.h>
+#include <Urho3D/UI/EditorGuizmo.h>
 
 URHO3D_DEFINE_APPLICATION_MAIN(PBRMaterials)
 
@@ -90,6 +92,27 @@ void PBRMaterials::CreateInstructions()
     instructionText->SetHorizontalAlignment(HA_CENTER);
     instructionText->SetVerticalAlignment(VA_CENTER);
     instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+
+	EditorWindow::RegisterObject(context_);
+	ImGuiElement::RegisterObject(context_);
+
+	EditorWindow* imgui = new EditorWindow(context_);
+	imgui->SetName("editor");
+	imgui->SetCameraNode(cameraNode_);
+	ui->GetRoot()->AddChild(imgui);
+	imgui->SetScene(scene_);
+
+	EditorGuizmo* guizmo = new EditorGuizmo(context_);
+	guizmo->SetName("guizmo");
+	guizmo->SetCameraNode(cameraNode_);
+	guizmo->SetFocusMode(FM_NOTFOCUSABLE);
+	ui->GetRoot()->AddChild(guizmo);
+	guizmo->SetPosition(0, 0);
+	guizmo->SetScene(scene_);
+
+	imgui->BringToFront();
+	imgui->SetPriority(100);
+	imgui->SetGuizmo(guizmo);
 }
 
 void PBRMaterials::CreateScene()
@@ -218,6 +241,7 @@ void PBRMaterials::SetupViewport()
 
     // Add post-processing effects appropriate with the example scene
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+	effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
     effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
     effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/GammaCorrection.xml"));
     effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Tonemap.xml"));
@@ -240,8 +264,11 @@ void PBRMaterials::MoveCamera(float timeStep)
     ui->GetCursor()->SetVisible(!input->GetMouseButtonDown(MOUSEB_RIGHT));
 
     // Do not move if the UI has a focused element
-    if (ui->GetFocusElement())
-        return;
+	//if (ui->GetFocusElement())
+	//{
+	//	ui->GetFocusElement();
+	//	return;
+	//}
 
     // Movement speed as world units per second
     const float MOVE_SPEED = 10.0f;

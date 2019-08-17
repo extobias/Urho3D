@@ -26,9 +26,13 @@ public:
 
 	void SetCurrentMode(ImGuizmo::MODE currentMode) { currentMode_ = currentMode; }
 
+	void SetCameraNode(Node* node) { cameraNode_ = node; }
+
 private:
 
 	unsigned selectedNode_;
+
+	Node* cameraNode_;
 
 	ImGuizmo::OPERATION currentOperation_;
 	ImGuizmo::MODE currentMode_;

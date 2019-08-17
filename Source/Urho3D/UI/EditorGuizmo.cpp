@@ -31,8 +31,14 @@ void EditorGuizmo::Render(float timeStep)
 	SetPosition(0, 0);
 	SetSize(g->GetWidth(), g->GetHeight());
 
-	Node* cameraNode = scene_->GetChild("Camera");
+	// Node* cameraNode = scene_->GetNode(cameraNode_);
+	Node* cameraNode = cameraNode_;
+	if (!cameraNode)
+		return;
 	Camera* camera = cameraNode->GetComponent<Camera>();
+	if (!camera)
+		return;
+
 	Node* node = scene_->GetNode(selectedNode_);
 	if (node)
 	{

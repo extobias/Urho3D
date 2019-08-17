@@ -357,7 +357,7 @@ const char *TBValue::GetString()
 		SetString(tmp, SET_NEW_COPY);
 	}
 	else if (m_packed.type == TYPE_OBJECT)
-		return val_obj ? val_obj->GetClassName() : "";
+		return val_obj ? val_obj->GetClassNameTB() : "";
 	return m_packed.type == TYPE_STRING ? val_str : "";
 }
 

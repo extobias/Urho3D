@@ -137,7 +137,7 @@ public:
 		TBTempBuffer buf;
 		buf.AppendString(GetEventTypeStr(ev.type));
 		buf.AppendString(" (");
-		buf.AppendString(widget->GetClassName());
+		buf.AppendString(widget->GetClassNameTB());
 		buf.AppendString(")");
 
 		buf.AppendString(" id: ");
