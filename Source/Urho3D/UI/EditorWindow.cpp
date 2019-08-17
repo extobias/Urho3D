@@ -2,11 +2,15 @@
 #include "../UI/EditorGuizmo.h"
 
 #include "../IO/Log.h"
+#include "../IO/FileSystem.h"
+#include "../Resource/ResourceCache.h"
 #include "../Graphics/Graphics.h"
 #include "../Graphics/Camera.h"
 #include "../Graphics/ParticleEffect.h"
 #include "../Graphics/ParticleEmitter.h"
 #include "../Graphics/Material.h"
+#include "../Graphics/Model.h"
+#include "../Graphics/StaticModel.h"
 
 #include "imgui.h"
 // #include "ImGuizmo.h"
@@ -19,8 +23,77 @@ extern const char* UI_CATEGORY;
 EditorWindow::EditorWindow(Context* context) :
 	ImGuiElement(context),
 	guizmo_(nullptr),
-	selectedNode_(0)
+	selectedNode_(0),
+	currentModel_(2)
 {
+	ResourceCache* cache = GetSubsystem<ResourceCache>();
+	FileSystem dir(context_);
+
+	const Vector<String>& dirs = cache->GetResourceDirs();
+	for (int i = 0; i < dirs.Size(); i++)
+	{
+		String dirPath = dirs.At(i);
+		URHO3D_LOGERRORF("dir <%s>", dirPath.CString());
+
+		Vector<String> result;
+		dir.ScanDir(result, dirPath, "*.*", SCAN_FILES, true);
+		for (int j = 0; j < result.Size(); j++)
+		{
+			String prefix, name, ext;
+			SplitPath(result.At(j), prefix, name, ext);
+
+			ext.Erase(0, 1);
+
+			ResourceFile resFile;
+			resFile.prefix = prefix;
+			resFile.path = dirPath;
+			resFile.ext = ext;
+			resFile.name = result.At(j);
+
+			if (!resources_.Contains(prefix))
+			{
+				Vector<ResourceFile> list;
+				list.Push(resFile);
+				resources_.Insert(Pair<String, Vector<ResourceFile>>(prefix, list));
+			}
+			else
+			{
+				resources_[prefix].Push(resFile);
+			}
+		}
+	}
+
+	StringVector keys = resources_.Keys();
+	URHO3D_LOGERRORF("keys size <%i>", keys.Size());
+	ResourceMap modelResources;
+	for (int i = 0; i < keys.Size(); i++)
+	{
+		Vector<ResourceFile> list = resources_[keys.At(i)];
+		// URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
+		for (int l = 0; l < list.Size(); l++)
+		{
+			ResourceFile file = list.At(l);
+			String modelsFilter("mdl");
+			if (file.ext == modelsFilter)
+			{
+				URHO3D_LOGERRORF("	file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
+
+				modelResources_[file.name] = file;
+			}
+			else if (file.prefix.Contains("materials", false) && (file.ext == "xml" || file.ext == "material" || file.ext == "json"))
+			{
+				materialResources_[file.name] = file;
+			}
+		}
+	}
+
+	modelResourcesString_.Join(modelResources_.Keys(), "@");
+	modelResourcesString_.Replace('@', '\0');
+	modelResourcesString_.Append('\0');
+
+	materialResourcesString_.Join(materialResources_.Keys(), "@");
+	materialResourcesString_.Replace('@', '\0');
+	materialResourcesString_.Append('\0');
 }
 
 EditorWindow::~EditorWindow() = default;
@@ -32,7 +105,8 @@ void EditorWindow::RegisterObject(Context* context)
 
 void EditorWindow::Render(float timeStep)
 {
-	ImGui::Begin("Scene Inspector");
+	bool closable = true;
+	ImGui::Begin("Scene Inspector", &closable);
 
 	// Guizmo stuff
 	static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::ROTATE);
@@ -84,6 +158,11 @@ void EditorWindow::Render(float timeStep)
 		i++;
 	}
 
+	ImGui::Separator();
+
+	ImGui::BeginGroup();
+	ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
+
 	auto children = scene_->GetChildren();
 	for (Node* child : children)
 	{
@@ -113,14 +192,18 @@ void EditorWindow::Render(float timeStep)
 		i++;
 	}
 
-	ImGui::Separator();
+	ImGui::EndChild();
+	ImGui::EndGroup();
+
+	// ImGui::Separator();
 
 	if (selectedNode_)
 	{
 		Node* node = scene_->GetNode(selectedNode_);
 		if (node)
 		{
-			Node* cameraNode = scene_->GetChild("Camera");
+			// Node* cameraNode = scene_->GetChild("Camera");
+			Node* cameraNode = cameraNode_;
 			Camera* camera = cameraNode->GetComponent<Camera>();
 
 			Matrix4 identity = Matrix4::IDENTITY;
@@ -143,6 +226,9 @@ void EditorWindow::Render(float timeStep)
 			ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
 
             // components
+			ImGui::BeginGroup();
+			ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
+
             auto childComponents = node->GetComponents();
             for (Component* c : childComponents)
             {
@@ -152,6 +238,9 @@ void EditorWindow::Render(float timeStep)
                     AttributeEdit(c);
                 }
             }
+
+			ImGui::EndChild();
+			ImGui::EndGroup();
 		}
 		else
 		{
@@ -172,8 +261,7 @@ void EditorWindow::Render(float timeStep)
 
 void EditorWindow::AttributeEdit(Component* c)
 {
-	// URHO3D_LOGERRORF("name <%s> type <%s> default <%f>", info.name_.CString(), var.defaultValue_.GetTypeName().CString(), var.defaultValue_.GetFloat());
-
+	ResourceCache* cache = GetSubsystem<ResourceCache>();
 	const Vector<AttributeInfo>* attr = c->GetAttributes();
 	for (auto var : (*attr))
 	{
@@ -210,15 +298,34 @@ void EditorWindow::AttributeEdit(Component* c)
 			c->SetAttribute(info.name_, buffer);
 		}
 		break;
+		case VAR_COLOR:
+		{
+			float col[4];
+			Color color = c->GetAttribute(info.name_).GetColor();
+			memcpy(col, color.Data(), sizeof(col));
+			ImGui::ColorEdit4(info.name_.CString(), (float*)&col);
+			c->SetAttribute(info.name_, Color(col));
+		}
+		break;
+		case VAR_VECTOR3:
+		{
+			float v[3];
+			Vector3 value = c->GetAttribute(info.name_).GetVector3();
+			memcpy(v, value.Data(), sizeof(v));
+			ImGui::InputFloat3(info.name_.CString(), (float*)&v);
+			c->SetAttribute(info.name_, Vector3(v));
+		}
+		break;
 		case VAR_RESOURCEREF:
 		{
+			//resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
+			//resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
+			//resourcePickers.Push(ResourcePicker("ParticleEffect", "*.xml", ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
 			//resourcePickers.Push(ResourcePicker("Animation", "*.ani", ACTION_PICK | ACTION_TEST));
+
 			//resourcePickers.Push(ResourcePicker("Font", fontFilters));
 			//resourcePickers.Push(ResourcePicker("Image", imageFilters));
 			//resourcePickers.Push(ResourcePicker("LuaFile", luaFileFilters));
-			//resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
-			//resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
-			//resourcePickers.Push(ResourcePicker("ParticleEffect", "*.xml", ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
 			//resourcePickers.Push(ResourcePicker("ScriptFile", scriptFilters));
 			//resourcePickers.Push(ResourcePicker("Sound", soundFilters));
 			//resourcePickers.Push(ResourcePicker("Technique", "*.xml"));
@@ -227,13 +334,15 @@ void EditorWindow::AttributeEdit(Component* c)
 			//resourcePickers.Push(ResourcePicker("Texture3D", "*.xml"));
 			//resourcePickers.Push(ResourcePicker("XMLFile", "*.xml"));
 			//resourcePickers.Push(ResourcePicker("JSONFile", "*.json"));
+
 			//resourcePickers.Push(ResourcePicker("Sprite2D", textureFilters, ACTION_PICK | ACTION_OPEN));
 			//resourcePickers.Push(ResourcePicker("AnimationSet2D", anmSetFilters, ACTION_PICK | ACTION_OPEN));
 			//resourcePickers.Push(ResourcePicker("ParticleEffect2D", pexFilters, ACTION_PICK | ACTION_OPEN));
 			//resourcePickers.Push(ResourcePicker("TmxFile2D", tmxFilters, ACTION_PICK | ACTION_OPEN));
 
 			ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
-			ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), v.name_.CString());
+			currentModel_ = FindModel(v.name_);
+			// ImGui::Text("type <%s> name <%s> currentid <%i>", info.defaultValue_.GetTypeName().CString(), v.name_.CString(), currentModel_);
 			if (v.type_ == StringHash("ParticleEffect"))
 			{
 				ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
@@ -378,9 +487,39 @@ void EditorWindow::AttributeEdit(Component* c)
 				}
 				
 			}
-			//strncpy(buffer, v.CString(), v.Length());
-			//ImGui::InputText(info.name_.CString(), buffer, 512);
-			//c->SetAttribute(info.name_, buffer);
+			else if (v.type_ == StringHash("Model"))
+			{
+				if (ImGui::Combo("Model", &currentModel_, modelResourcesString_.CString()))
+				{
+					ResourceFile resource = modelResources_.Values().At(currentModel_);
+					v.name_ = resource.path + resource.name;
+					c->SetAttribute(info.name_, v);
+				}
+			}
+		}
+		break;
+		case VAR_RESOURCEREFLIST:
+		{
+			ResourceRefList v = c->GetAttribute(info.name_).GetResourceRefList();
+			// ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
+			currentMaterialList_.Resize(v.names_.Size());
+			int *currentMaterialList = currentMaterialList_.Buffer();
+			for (int i = 0; i < v.names_.Size(); i++)
+			{
+				if (v.type_ == StringHash("Material"))
+				{
+					currentMaterialList[i] = FindMaterial(v.names_.At(i));
+					char comboName[10];
+					sprintf(comboName, "Material%i", i);
+					if (ImGui::Combo(comboName, &currentMaterialList[i], materialResourcesString_.CString()))
+					{
+						int pos = currentMaterialList[i];
+						ResourceFile resource = materialResources_.Values().At(pos);
+						v.names_[i] = resource.path + resource.name;
+					}
+				}
+			}
+			c->SetAttribute(info.name_, v);
 		}
 		break;
 		default:
@@ -390,6 +529,32 @@ void EditorWindow::AttributeEdit(Component* c)
 		break;
 		}
 	}
+}
+
+int EditorWindow::FindModel(const String& name)
+{
+	int index = 0;
+	for (auto it = modelResources_.Begin(); it != modelResources_.End(); it++, index++)
+	{
+		ResourceFile resource = (*it).second_;
+		String s = resource.name;
+		if (name == s)
+			return index;
+	}
+	return -1;
+}
+
+int EditorWindow::FindMaterial(const String& name)
+{
+	int index = 0;
+	for (auto it = materialResources_.Begin(); it != materialResources_.End(); it++, index++)
+	{
+		ResourceFile resource = (*it).second_;
+		String s = resource.name;
+		if (name == s)
+			return index;
+	}
+	return -1;
 }
 
 }

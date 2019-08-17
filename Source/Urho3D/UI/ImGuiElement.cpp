@@ -408,7 +408,7 @@ void ImGuiElement::HandleKeyDown(StringHash eventType, VariantMap &eventData)
 	unsigned scancode = eventData[P_SCANCODE].GetUInt();
 	QualifierFlags qualifiers = QualifierFlags(eventData[P_QUALIFIERS].GetUInt());
 
-	URHO3D_LOGERRORF("onkey key <%i> scancode <%i> qualifiers <%i>", key, scancode, qualifiers);
+	// URHO3D_LOGERRORF("onkey key <%i> scancode <%i> qualifiers <%i>", key, scancode, qualifiers);
 
 	ImGui::SetCurrentContext(imguiContext_);
 

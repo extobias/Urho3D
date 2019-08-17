@@ -205,11 +205,13 @@ void StaticScene::CreateInstructions()
 
 	EditorWindow* imgui = new EditorWindow(context_);
 	imgui->SetName("editor");
+	imgui->SetCameraNode(cameraNode_);
 	ui->GetRoot()->AddChild(imgui);
 	imgui->SetScene(scene_);
 
 	EditorGuizmo* guizmo = new EditorGuizmo(context_);
 	guizmo->SetName("guizmo");
+	guizmo->SetCameraNode(cameraNode_);
 	guizmo->SetFocusMode(FM_NOTFOCUSABLE);
 	ui->GetRoot()->AddChild(guizmo);
 	guizmo->SetPosition(0, 0);

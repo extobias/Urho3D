@@ -43,6 +43,20 @@
 
 URHO3D_DEFINE_APPLICATION_MAIN(HelloTBUI)
 
+class CheckPointWindow : public TBWindow, public Object
+{
+	URHO3D_OBJECT(CheckPointWindow, Object)
+public:
+
+	TBOBJECT_SUBCLASS(CheckPointWindow, TBWindow)
+
+	CheckPointWindow(TBWidget* root, Context* context) 
+		: Object(context)
+	{};
+
+	~CheckPointWindow() {};
+};
+
 HelloTBUI::HelloTBUI(Context* context) :
     Sample(context),
     uiRoot_(GetSubsystem<UI>()->GetRoot()),
@@ -67,34 +81,34 @@ void HelloTBUI::Start()
     uiRoot_->SetDefaultStyle(style);
     uiRoot_->SetSize(800, 600);
 
-	ImGuiElement* imgui = new ImGuiElement(context_);
-	ImGuiElement::RegisterObject(context_);
-	imgui->SetPosition(0, 0);
-	imgui->SetSize(800, 600);
+	//ImGuiElement* imgui = new ImGuiElement(context_);
+	//ImGuiElement::RegisterObject(context_);
+	//imgui->SetPosition(0, 0);
+	//imgui->SetSize(800, 600);
 
 	// ImGuiElement* imgui2 = new ImGuiElement(context_);
 	// imgui->AddChild(imgui2);
 
-	uiRoot_->AddChild(imgui);
+	//uiRoot_->AddChild(imgui);
 
-	ToolTip* toolTip = new ToolTip(context_);
-	imgui->AddChild(toolTip);
+	//ToolTip* toolTip = new ToolTip(context_);
+	//imgui->AddChild(toolTip);
 
-//    tbelement = new TBUIElement(context_);
-//    TBUIElement::RegisterObject(context_);
-//    tbelement->SetPosition(0, 0);
-//
-////     tbelement->SetSize(g->GetWidth(), g->GetHeight());
-//    tbelement->SetBoxSize(g->GetWidth(), g->GetHeight());
-//    tbelement->SetAlignment(HA_CENTER, VA_BOTTOM);
-//
-//    TBRootWidget* stateUI = new TBRootWidget(context_);
-//    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-//    tbelement->AddStateWidget(stateUI, true);
-//    tbelement->LoadResources();
-//    tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
-//
-//    uiRoot_->AddChild(tbelement);
+    tbelement = new TBUIElement(context_);
+    TBUIElement::RegisterObject(context_);
+    tbelement->SetPosition(0, 0);
+
+	// tbelement->SetSize(g->GetWidth(), g->GetHeight());
+    tbelement->SetBoxSize(g->GetWidth(), g->GetHeight());
+    tbelement->SetAlignment(HA_CENTER, VA_BOTTOM);
+
+    TBRootWidget* stateUI = new TBRootWidget(context_);
+    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
+    tbelement->AddStateWidget(stateUI, true);
+    tbelement->LoadResources();
+    tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
+
+    uiRoot_->AddChild(tbelement);
 
 	SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
 

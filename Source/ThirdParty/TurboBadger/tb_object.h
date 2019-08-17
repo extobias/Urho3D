@@ -36,7 +36,7 @@ public:
 	template<class T> bool IsOfType() const { return SafeCastTo<T>() ? true : false; }
 
 	/** Get the classname of the object. */
-	virtual const char *GetClassName() const { return "TBTypedObject"; }
+	virtual const char *GetClassNameTB() const { return "TBTypedObject"; }
 };
 
 /** Returns the given object as the given type, or nullptr if it's not that type
@@ -51,9 +51,10 @@ template<class T> const T *TBSafeCast(const TBTypedObject *obj) {
 	return obj ? obj->SafeCastTo<T>() : nullptr;
 }
 
+
 /** Implement the methods for safe typecasting without requiring RTTI. */
 #define TBOBJECT_SUBCLASS(clazz, baseclazz) \
-	virtual const char *GetClassName() const override { return #clazz; } \
+	virtual const char *GetClassNameTB() const override { return #clazz; } \
 	virtual bool IsOfTypeId(const tb::TB_TYPE_ID type_id) const override \
 		{ return GetTypeId<clazz>() == type_id ? true : baseclazz::IsOfTypeId(type_id); }
 
