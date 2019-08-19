@@ -521,6 +521,10 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
             result.distance_ = (result.position_ - ray.origin_).Length();
             result.hitFraction_ = rayCallback.m_closestHitFraction;
             result.body_ = static_cast<RigidBody*>(rayCallback.m_collisionObject->getUserPointer());
+
+			result.shapePart_ = rayCallback.m_shapePart;
+			result.triangleIndex_ = rayCallback.m_triangleIndex;
+
             // No need to cast the rest of the segments
             return;
         }

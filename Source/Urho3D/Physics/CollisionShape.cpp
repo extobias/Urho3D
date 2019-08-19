@@ -196,6 +196,28 @@ private:
     Vector<SharedArrayPtr<unsigned char> > dataArrays_;
 };
 
+MaterialTriangleMeshData::MaterialTriangleMeshData(Model* model, unsigned lodLevel)
+{
+	meshInterface_ = new MaterialTriangleMeshInterface(model, lodLevel);
+	shape_ = new btBvhTriangleMeshShape(meshInterface_.Get(), meshInterface_->useQuantize_, true);
+
+	infoMap_ = new btTriangleInfoMap();
+	btGenerateInternalEdgeInfo(shape_.Get(), infoMap_.Get());
+}
+
+MaterialTriangleMeshData::MaterialTriangleMeshData(CustomGeometry* custom)
+{
+	meshInterface_ = new MaterialTriangleMeshInterface(custom);
+	shape_ = new btBvhTriangleMeshShape(meshInterface_.Get(), meshInterface_->useQuantize_, true);
+
+	infoMap_ = new btTriangleInfoMap();
+	btGenerateInternalEdgeInfo(shape_.Get(), infoMap_.Get());
+}
+
+MaterialTriangleMeshData::~MaterialTriangleMeshData()
+{
+}
+
 TriangleMeshData::TriangleMeshData(Model* model, unsigned lodLevel)
 {
     meshInterface_ = new TriangleMeshInterface(model, lodLevel);
@@ -399,7 +421,8 @@ CollisionGeometryData* CreateCollisionGeometryData(ShapeType shapeType, Model* m
     switch (shapeType)
     {
     case SHAPE_TRIANGLEMESH:
-        return new TriangleMeshData(model, lodLevel);
+		return new MaterialTriangleMeshData(model, lodLevel);
+        // return new TriangleMeshData(model, lodLevel);
     case SHAPE_CONVEXHULL:
         return new ConvexData(model, lodLevel);
     case SHAPE_GIMPACTMESH:
@@ -414,7 +437,8 @@ CollisionGeometryData* CreateCollisionGeometryData(ShapeType shapeType, CustomGe
     switch (shapeType)
     {
     case SHAPE_TRIANGLEMESH:
-        return new TriangleMeshData(custom);
+		return new MaterialTriangleMeshData(custom);
+        // return new TriangleMeshData(custom);
     case SHAPE_CONVEXHULL:
         return new ConvexData(custom);
     case SHAPE_GIMPACTMESH:
@@ -430,7 +454,7 @@ btCollisionShape* CreateCollisionGeometryDataShape(ShapeType shapeType, Collisio
     {
     case SHAPE_TRIANGLEMESH:
         {
-            auto* triMesh = static_cast<TriangleMeshData*>(geometry);
+			auto* triMesh = static_cast<MaterialTriangleMeshData*>(geometry);
             return new btScaledBvhTriangleMeshShape(triMesh->shape_.Get(), ToBtVector3(scale));
         }
     case SHAPE_CONVEXHULL:

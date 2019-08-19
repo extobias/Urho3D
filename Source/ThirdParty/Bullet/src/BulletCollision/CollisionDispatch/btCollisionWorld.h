@@ -252,6 +252,10 @@ public:
 
 		btVector3	m_hitNormalWorld;
 		btVector3	m_hitPointWorld;
+
+		// @extobias modification
+		int m_shapePart;
+		int m_triangleIndex;
 			
 		virtual	btScalar	addSingleResult(LocalRayResult& rayResult,bool normalInWorldSpace)
 		{
@@ -268,6 +272,14 @@ public:
 				///need to transform normal into worldspace
 				m_hitNormalWorld = m_collisionObject->getWorldTransform().getBasis()*rayResult.m_hitNormalLocal;
 			}
+
+			// @extobias modification
+			if (rayResult.m_localShapeInfo)
+			{
+				m_shapePart = rayResult.m_localShapeInfo->m_shapePart;
+				m_triangleIndex = rayResult.m_localShapeInfo->m_triangleIndex;
+			}
+
 			m_hitPointWorld.setInterpolate3(m_rayFromWorld,m_rayToWorld,rayResult.m_hitFraction);
 			return rayResult.m_hitFraction;
 		}
