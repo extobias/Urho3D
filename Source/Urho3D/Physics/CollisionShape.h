@@ -29,6 +29,8 @@
 #include "../Math/Quaternion.h"
 #include "../Scene/Component.h"
 
+#include "MaterialTriangleMeshInterface.h"
+
 class btBvhTriangleMeshShape;
 class btCollisionShape;
 class btCompoundShape;
@@ -71,6 +73,25 @@ struct CollisionGeometryData : public RefCounted
 /// Cache of collision geometry data.
 /// \todo Remove duplicate declaration
 using CollisionGeometryDataCache = HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >;
+
+// @extobias modification
+/// Triangle mesh geometry data.
+struct MaterialTriangleMeshData : public CollisionGeometryData
+{
+	/// Construct from a model.
+	MaterialTriangleMeshData(Model* model, unsigned lodLevel);
+	/// Construct from a custom geometry.
+	MaterialTriangleMeshData(CustomGeometry* custom);
+	/// Destruct. Free geometry data.
+	~MaterialTriangleMeshData();
+
+	/// Bullet triangle mesh interface.
+	UniquePtr<MaterialTriangleMeshInterface> meshInterface_;
+	/// Bullet triangle mesh collision shape.
+	UniquePtr<btBvhTriangleMeshShape> shape_;
+	/// Bullet triangle info map.
+	UniquePtr<btTriangleInfoMap> infoMap_;
+};
 
 /// Triangle mesh geometry data.
 struct TriangleMeshData : public CollisionGeometryData
