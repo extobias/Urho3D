@@ -50,6 +50,10 @@
 #include <Bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <Bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
 
+#include <Bullet/BulletDynamics/Dynamics/btRigidBody.h>
+#include <Bullet/BulletCollision/CollisionShapes/btScaledBvhTriangleMeshShape.h>
+#include <Bullet/BulletCollision/CollisionShapes/btMaterial.h>
+
 extern ContactAddedCallback gContactAddedCallback;
 
 namespace Urho3D
@@ -486,6 +490,38 @@ void PhysicsWorld::RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, f
     }
 }
 
+struct VertexAccessor
+{
+	const unsigned char* base;
+	unsigned int stride;
+
+	VertexAccessor(const unsigned char* ptr, unsigned int stride, unsigned int offset)
+		: base(ptr + offset)
+		, stride(stride)
+	{
+	}
+
+	btVector3 operator[](unsigned int i) const
+	{
+
+		float *ptr = (float*)(base + stride * i);
+		return btVector3(ptr[0], ptr[1], ptr[2]);
+		//            return *(const btVector3*) (base + stride * i);
+	}
+
+	float GetFloat(unsigned int i) const
+	{
+		float *ptr = (float*)(base + stride * i);
+		return ptr[0];
+	}
+
+	unsigned GetUnsigned(unsigned int i) const
+	{
+		unsigned *ptr = (unsigned*)(base + stride * i);
+		return ptr[0];
+	}
+};
+
 void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask, float overlapDistance)
 {
     URHO3D_PROFILE(PhysicsRaycastSingleSegmented);
@@ -525,6 +561,70 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
 			result.shapePart_ = rayCallback.m_shapePart;
 			result.triangleIndex_ = rayCallback.m_triangleIndex;
 
+			const btRigidBody* hitBody = btRigidBody::upcast(rayCallback.m_collisionObject);
+			btCollisionShape* hitShape = (btCollisionShape*)hitBody->getCollisionShape();
+			if (hitShape->getShapeType() == SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE)
+			{
+				btScaledBvhTriangleMeshShape* scaled_mesh = static_cast<btScaledBvhTriangleMeshShape*>(hitShape);
+				btBvhTriangleMeshShape* mesh_shape = scaled_mesh->getChildShape();
+				btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
+
+				//const unsigned char* vertexbase;
+				//int numverts;
+				//PHY_ScalarType type;
+				//int stride;
+
+				//const unsigned char *indexbase;
+				//int indexstride;
+				//int numfaces;
+				//PHY_ScalarType indicestype;
+
+				//mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
+				//	&indexbase, indexstride, numfaces, indicestype, result.shapePart_);
+
+				////     FIXME: handle unsigned int indices
+				////    long int offset = (unsigned int)(triangle * indexstride);
+				////    unsigned int* ptr = (unsigned int*)(indexbase);
+
+				//const unsigned short* ptr = (const unsigned short*)(indexbase + result.triangleIndex_ * indexstride);
+				//unsigned int i = ptr[0];
+				//unsigned int j = ptr[1];
+				//unsigned int k = ptr[2];
+				//    URHO3D_LOGERRORF("physicsworld.interpolatemeshnormal: indices <%u,%u,%u>", i, j, k);
+
+				const unsigned char * materialBase = 0;
+				int numMaterials;
+				PHY_ScalarType materialType;
+				int materialStride;
+				const unsigned char * triangleMaterialBase = 0;
+				int numTriangles;
+				int triangleMaterialStride;
+				PHY_ScalarType triangleType;
+
+				MaterialTriangleMeshInterface* my_mesh = static_cast<MaterialTriangleMeshInterface*>(mesh_interface);
+				// btAssert(my_mesh);
+				if (my_mesh->GetColorOffset() != M_MAX_UNSIGNED)
+				{
+					my_mesh->getLockedReadOnlyMaterialBase(&materialBase, numMaterials, materialType, materialStride,
+						&triangleMaterialBase, numTriangles, triangleMaterialStride, triangleType, result.shapePart_);
+
+					// VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
+					// VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
+					VertexAccessor colors(materialBase, materialStride, my_mesh->GetColorOffset());
+
+					// ptr[0, 1, 2] -> indices de result.triangleIndex_	
+					const unsigned short* ptr = (const unsigned short*)(triangleMaterialBase + result.triangleIndex_ * triangleMaterialStride);
+					unsigned int i = ptr[0];
+					unsigned int j = ptr[1];
+					unsigned int k = ptr[2];
+
+					result.color_ = colors.GetUnsigned(i);
+				}
+				else
+				{
+					result.color_ = 0;
+				}
+			}
             // No need to cast the rest of the segments
             return;
         }

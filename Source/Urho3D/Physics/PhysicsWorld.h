@@ -81,6 +81,8 @@ struct URHO3D_API PhysicsRaycastResult
 	int shapePart_{};
 
 	int triangleIndex_{};
+
+	unsigned color_{};
 };
 
 /// Delayed world transform assignment for parented rigidbodies.

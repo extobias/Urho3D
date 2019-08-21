@@ -276,6 +276,7 @@ public:
 			// @extobias modification
 			if (rayResult.m_localShapeInfo)
 			{
+
 				m_shapePart = rayResult.m_localShapeInfo->m_shapePart;
 				m_triangleIndex = rayResult.m_localShapeInfo->m_triangleIndex;
 			}
