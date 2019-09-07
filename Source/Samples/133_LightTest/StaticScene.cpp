@@ -28,6 +28,7 @@
 #include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Graphics/StaticModel.h>
+#include <Urho3D/Graphics/AnimatedModel.h>
 #include <Urho3D/Graphics/Renderer.h>
 #include <Urho3D/Graphics/RenderPath.h>
 #include <Urho3D/Graphics/Skybox.h>
@@ -136,7 +137,7 @@ void StaticScene::CreateScene()
 	particleEmitter->SetEffect(effect_);
 	particleEmitter->SetEmitting(true);
 
-    const unsigned NUM_OBJECTS = 2;
+    const unsigned NUM_OBJECTS = 0;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -150,6 +151,16 @@ void StaticScene::CreateScene()
         mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
     }
 
+    Node* riderNode = scene_->CreateChild("Rider");
+    // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
+    riderNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+    // riderNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+    // riderNode->SetScale(0.5f + Random(2.0f));
+    AnimatedModel* riderObject = riderNode->CreateComponent<AnimatedModel>();
+    riderObject->SetModel(cache->GetResource<Model>("Models/retro_car_B3D.mdl"));
+    riderObject->SetCastShadows(true);
+    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
+
     // Create a scene node for the camera, which we will move around
     // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
     cameraNode_ = scene_->CreateChild("Camera");
@@ -161,6 +172,8 @@ void StaticScene::CreateScene()
 	cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
 
 	// CreateDepthTexture();
+	Graphics* graphics = GetSubsystem<Graphics>();
+	graphics->Maximize();
 
 	//SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
 	//SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));

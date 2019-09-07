@@ -267,6 +267,9 @@ void PhysicsWorld::CreateDynaymicWorld()
         softBodyWorldInfo_->m_gravity = world_->getGravity();
         softBodyWorldInfo_->m_sparsesdf.Initialize();
     }
+
+	colors.m_activeObject = btVector3(0.0f, 0.0f, 0.0f);
+	colors.m_deactivatedObject = btVector3(0.0f, 0.0f, 1.0f);
 }
 bool PhysicsWorld::isVisible(const btVector3& aabbMin, const btVector3& aabbMax)
 {
@@ -569,19 +572,6 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
 				btBvhTriangleMeshShape* mesh_shape = scaled_mesh->getChildShape();
 				btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
 
-				//const unsigned char* vertexbase;
-				//int numverts;
-				//PHY_ScalarType type;
-				//int stride;
-
-				//const unsigned char *indexbase;
-				//int indexstride;
-				//int numfaces;
-				//PHY_ScalarType indicestype;
-
-				//mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
-				//	&indexbase, indexstride, numfaces, indicestype, result.shapePart_);
-
 				////     FIXME: handle unsigned int indices
 				////    long int offset = (unsigned int)(triangle * indexstride);
 				////    unsigned int* ptr = (unsigned int*)(indexbase);
@@ -592,33 +582,68 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
 				//unsigned int k = ptr[2];
 				//    URHO3D_LOGERRORF("physicsworld.interpolatemeshnormal: indices <%u,%u,%u>", i, j, k);
 
-				const unsigned char * materialBase = 0;
-				int numMaterials;
-				PHY_ScalarType materialType;
-				int materialStride;
-				const unsigned char * triangleMaterialBase = 0;
-				int numTriangles;
-				int triangleMaterialStride;
-				PHY_ScalarType triangleType;
-
 				MaterialTriangleMeshInterface* my_mesh = static_cast<MaterialTriangleMeshInterface*>(mesh_interface);
 				// btAssert(my_mesh);
 				if (my_mesh->GetColorOffset() != M_MAX_UNSIGNED)
 				{
+                    const unsigned char* materialBase = nullptr;
+                    int numMaterials;
+                    PHY_ScalarType materialType;
+                    int materialStride;
+                    const unsigned char* triangleMaterialBase = nullptr;
+                    int numTriangles;
+                    int triangleMaterialStride;
+                    PHY_ScalarType triangleType;
+
 					my_mesh->getLockedReadOnlyMaterialBase(&materialBase, numMaterials, materialType, materialStride,
 						&triangleMaterialBase, numTriangles, triangleMaterialStride, triangleType, result.shapePart_);
 
+                    const unsigned char* vertexbase;
+                    int numverts;
+                    PHY_ScalarType type;
+                    int stride;
+
+                    const unsigned char *indexbase;
+                    int indexstride;
+                    int numfaces;
+                    PHY_ScalarType indicestype;
+
+                    mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
+                        &indexbase, indexstride, numfaces, indicestype, result.shapePart_);
+
+
 					// VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
-					// VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
+                    VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
 					VertexAccessor colors(materialBase, materialStride, my_mesh->GetColorOffset());
 
 					// ptr[0, 1, 2] -> indices de result.triangleIndex_	
-					const unsigned short* ptr = (const unsigned short*)(triangleMaterialBase + result.triangleIndex_ * triangleMaterialStride);
+                    // const unsigned short* ptr = (const unsigned short*)(triangleMaterialBase + result.triangleIndex_ * triangleMaterialStride);
+                    const unsigned short* ptr = (const unsigned short*)(indexbase + result.triangleIndex_ * indexstride);
 					unsigned int i = ptr[0];
 					unsigned int j = ptr[1];
 					unsigned int k = ptr[2];
+                    // URHO3D_LOGERRORF("idx <%u, %u, %u>", i, j, k);
 
-					result.color_ = colors.GetUnsigned(i);
+                    // search the near vertex
+                    Node* node = result.body_->GetNode();
+                    Vector3 scale = node->GetScale();
+                    btVector3 vi = positions[i] * scale.x_;
+                    btVector3 vj = positions[j] * scale.y_;
+                    btVector3 vk = positions[k] * scale.z_;
+
+                    btScalar di = vi.distance(rayCallback.m_hitPointWorld);
+                    btScalar dj = vj.distance(rayCallback.m_hitPointWorld);
+                    btScalar dk = vk.distance(rayCallback.m_hitPointWorld);
+
+                    unsigned colorIndex;
+                    if(di < dj && di < dk)
+                        colorIndex = i;
+                    else if(dj < di && dj < dk)
+                        colorIndex = j;
+                    else
+                        colorIndex = k;
+
+                    result.color_ = colors.GetUnsigned(colorIndex);
 				}
 				else
 				{

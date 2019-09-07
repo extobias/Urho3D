@@ -10,10 +10,11 @@
 #include "../Graphics/ParticleEmitter.h"
 #include "../Graphics/Material.h"
 #include "../Graphics/Model.h"
+#include "../Graphics/Renderer.h"
 #include "../Graphics/StaticModel.h"
+#include "../Graphics/DebugRenderer.h"
 
 #include "imgui.h"
-// #include "ImGuizmo.h"
 
 namespace Urho3D
 {
@@ -94,6 +95,8 @@ EditorWindow::EditorWindow(Context* context) :
 	materialResourcesString_.Join(materialResources_.Keys(), "@");
 	materialResourcesString_.Replace('@', '\0');
 	materialResourcesString_.Append('\0');
+
+	SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
 }
 
 EditorWindow::~EditorWindow() = default;
@@ -103,9 +106,14 @@ void EditorWindow::RegisterObject(Context* context)
 	context->RegisterFactory<EditorWindow>(UI_CATEGORY);
 }
 
+void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
+{
+	selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetInt();
+}
+
 void EditorWindow::Render(float timeStep)
 {
-	bool closable = true;
+	static bool closable = true;
 	ImGui::Begin("Scene Inspector", &closable);
 
 	// Guizmo stuff
@@ -166,7 +174,7 @@ void EditorWindow::Render(float timeStep)
 	auto children = scene_->GetChildren();
 	for (Node* child : children)
 	{
-		bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i", child->GetName().CString(), child->GetID());
+        bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i - %i", child->GetName().CString(), child->GetID(), child->GetChildren().Size());
 		if (ImGui::IsItemClicked())
 		{
 			selectedNode_ = child->GetID();
@@ -178,6 +186,9 @@ void EditorWindow::Render(float timeStep)
 		}
         if (isOpen)
         {
+            auto grantchidren = child->GetChildren();
+            for (Node* grantchild : grantchidren)
+                DrawChild(grantchild, i);
 //			auto childComponents = child->GetComponents();
 //			for (Component* c : childComponents)
 //			{
@@ -220,11 +231,14 @@ void EditorWindow::Render(float timeStep)
 
 			float matrixTranslation[3], matrixRotation[3], matrixScale[3];
 			ImGuizmo::DecomposeMatrixToComponents(&nodeTransform.m00_, matrixTranslation, matrixRotation, matrixScale);
+			bool modified = false;
 			ImGui::InputFloat3("Tr", matrixTranslation, 3);
 			ImGui::InputFloat3("Rt", matrixRotation, 3);
 			ImGui::InputFloat3("Sc", matrixScale, 3);
 			ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
 
+			node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
+			
             // components
 			ImGui::BeginGroup();
 			ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
@@ -237,6 +251,13 @@ void EditorWindow::Render(float timeStep)
                 {
                     AttributeEdit(c);
                 }
+
+				StaticModel* model = dynamic_cast<StaticModel*>(c);
+				if (model)
+				{
+					DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+					model->DrawDebugGeometry(debugRenderer, false);
+				}
             }
 
 			ImGui::EndChild();
@@ -257,6 +278,29 @@ void EditorWindow::Render(float timeStep)
 	SetSize(windowSize.x, windowSize.y);
 
 	ImGui::End();
+}
+
+void EditorWindow::DrawChild(Node* node, int& i)
+{
+    bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i - %i", node->GetName().CString(), node->GetID(), node->GetChildren().Size());
+    if (ImGui::IsItemClicked())
+    {
+        selectedNode_ = node->GetID();
+        if (guizmo_)
+        {
+            guizmo_->SetSelectedNode(selectedNode_);
+            URHO3D_LOGERRORF("item selected <%i>", node->GetID());
+        }
+    }
+    if (isOpen)
+    {
+        auto grantchidren = node->GetChildren();
+        for (Node* grantchild : grantchidren)
+            DrawChild(grantchild, i);
+
+        ImGui::TreePop();
+    }
+    i++;
 }
 
 void EditorWindow::AttributeEdit(Component* c)
