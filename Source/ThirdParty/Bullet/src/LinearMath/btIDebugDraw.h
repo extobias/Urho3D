@@ -78,11 +78,12 @@ class	btIDebugDraw
 
 	virtual ~btIDebugDraw() {};
 
-	
+	DefaultColors colors;
+
 	// Urho3D: added function to test visibility of an AABB
 	virtual bool    isVisible(const btVector3& aabbMin,const btVector3& aabbMax)=0;
 
-	virtual DefaultColors	getDefaultColors() const	{	DefaultColors colors;	return colors;	}
+	virtual DefaultColors	getDefaultColors() const	{	return colors;	}
 	///the default implementation for setDefaultColors has no effect. A derived class can implement it and store the colors.
 	virtual void setDefaultColors(const DefaultColors& /*colors*/) {}
 	

@@ -37,30 +37,34 @@ public:
 
 	void SetCameraNode(Node* node) { cameraNode_ = node; }
 
+	void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
+
 private:
     void AttributeEdit(Component* c);
 
-	int FindModel(const String& name);
+    int FindModel(const String& name);
 
-	int FindMaterial(const String& name);
+    int FindMaterial(const String& name);
 
-	unsigned selectedNode_;
+    void DrawChild(Node* node, int &i);
 
-	Node* cameraNode_;
+    unsigned selectedNode_;
 
-	EditorGuizmo* guizmo_;
+    Node* cameraNode_;
 
-	ResourceDir resources_;
+    EditorGuizmo* guizmo_;
 
-	ResourceMap modelResources_;
-	String modelResourcesString_;
+    ResourceDir resources_;
 
-	ResourceMap materialResources_;
-	String materialResourcesString_;
+    ResourceMap modelResources_;
+    String modelResourcesString_;
 
-	int currentModel_;
+    ResourceMap materialResources_;
+    String materialResourcesString_;
 
-	PODVector<int> currentMaterialList_;
+    int currentModel_;
+
+    PODVector<int> currentMaterialList_;
 };
 
 }
