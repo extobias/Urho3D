@@ -5,6 +5,7 @@
 #include "../Graphics/Renderer.h"
 #include "../Graphics/Octree.h"
 #include "../Graphics/View.h"
+#include "../Graphics/DebugRenderer.h"
 #include "../Input/Input.h"
 #include "../Resource/ResourceCache.h"
 #include "../UI/UI.h"
@@ -46,18 +47,25 @@ void EditorGuizmo::Render(float timeStep)
 	if (!camera)
 		return;
 
-	Node* node = scene_->GetNode(selectedNode_);
-	if (node)
-	{
-		Matrix4 identity = Matrix4::IDENTITY;
-		Matrix4 projection = camera->GetProjection().Transpose();
-		Matrix4 view = camera->GetView().ToMatrix4().Transpose();
-		Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
+    if(editNode_)
+    {
+        Node* node = scene_->GetNode(selectedNode_);
+        if (node)
+        {
+            Matrix4 identity = Matrix4::IDENTITY;
+            Matrix4 projection = camera->GetProjection().Transpose();
+            Matrix4 view = camera->GetView().ToMatrix4().Transpose();
+            Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
 
-		ImGuizmo::Manipulate(&view.m00_, &projection.m00_, currentOperation_, currentMode_, &nodeTransform.m00_);
+            ImGuizmo::Manipulate(&view.m00_, &projection.m00_, currentOperation_, currentMode_, &nodeTransform.m00_);
 
-		node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
-	}
+            node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
+        }
+    }
+    else
+    {
+
+    }
 }
 
 Ray EditorGuizmo::GetCameraRay()
@@ -99,7 +107,7 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
 		Viewport* v0 = renderer->GetViewport(0);
 		IntVector2 mousePos = position;
 		Ray ray = v0->GetScreenRay(mousePos.x_, mousePos.y_);
-		// Ray ray = GetCameraRay();
+        DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
 
 		PODVector<RayQueryResult> result;
 		RayOctreeQuery query(result, ray);
@@ -112,6 +120,7 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
 			{
 				RayQueryResult r = result[i];
 				Node* hitNode = r.drawable_->GetNode();
+
 				if (hitNode)
 				{
 					String name = hitNode->GetName();
@@ -122,9 +131,11 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
 
 					VariantMap eventData;
 					eventData[P_GUIZMO_NODE_SELECTED] = selectedNode_;
+                    eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX] = r.subObjectElementIndex_;
+                    eventData[P_GUIZMO_NODE_SELECTED_POSITION] = r.position_;
 					SendEvent(E_GUIZMO_NODE_SELECTED, eventData);
 
-					URHO3D_LOGERRORF("hit node <%s>", name.CString());
+                    URHO3D_LOGERRORF("hit node <%s> subObject <%i>", name.CString(), r.subObjectElementIndex_);
 					break;
 				}
 			}

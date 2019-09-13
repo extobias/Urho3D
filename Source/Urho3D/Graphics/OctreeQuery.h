@@ -217,6 +217,8 @@ struct URHO3D_API RayQueryResult
     Node* node_;
     /// Drawable specific subobject if applicable.
     unsigned subObject_{};
+
+    unsigned subObjectElementIndex_{ M_MAX_UNSIGNED };
 };
 
 /// Raycast octree query.

@@ -97,7 +97,7 @@ public:
             Vector2* outUV = nullptr, unsigned uvOffset = 0) const;
     /// Return hit distance to indexed geometry data, or infinity if no hit. Optionally return hit normal and hit uv coordinates at intersect point.
     float HitDistance(const void* vertexData, unsigned vertexStride, const void* indexData, unsigned indexSize, unsigned indexStart,
-        unsigned indexCount, Vector3* outNormal = nullptr, Vector2* outUV = nullptr, unsigned uvOffset = 0) const;
+        unsigned indexCount, unsigned &subObjectElementIndex, Vector3* outNormal = nullptr, Vector2* outUV = nullptr, unsigned uvOffset = 0) const;
     /// Return whether ray is inside non-indexed geometry.
     bool InsideGeometry(const void* vertexData, unsigned vertexSize, unsigned vertexStart, unsigned vertexCount) const;
     /// Return whether ray is inside indexed geometry.
