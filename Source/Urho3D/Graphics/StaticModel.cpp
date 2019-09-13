@@ -90,6 +90,7 @@ void StaticModel::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQuer
         Vector3 normal = -query.ray_.direction_;
         Vector2 geometryUV;
         unsigned hitBatch = M_MAX_UNSIGNED;
+        unsigned subObjectElementIndex = M_MAX_UNSIGNED;
 
         if (level >= RAY_TRIANGLE && distance < query.maxDistance_)
         {
@@ -101,8 +102,8 @@ void StaticModel::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQuer
                 if (geometry)
                 {
                     Vector3 geometryNormal;
-                    float geometryDistance = level == RAY_TRIANGLE ? geometry->GetHitDistance(localRay, &geometryNormal) :
-                        geometry->GetHitDistance(localRay, &geometryNormal, &geometryUV);
+                    float geometryDistance = level == RAY_TRIANGLE ? geometry->GetHitDistance(localRay, subObjectElementIndex, &geometryNormal) :
+                        geometry->GetHitDistance(localRay, subObjectElementIndex, &geometryNormal, &geometryUV);
                     if (geometryDistance < query.maxDistance_ && geometryDistance < distance)
                     {
                         distance = geometryDistance;
@@ -123,6 +124,7 @@ void StaticModel::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQuer
             result.drawable_ = this;
             result.node_ = node_;
             result.subObject_ = hitBatch;
+            result.subObjectElementIndex_ = subObjectElementIndex;
             results.Push(result);
         }
         break;

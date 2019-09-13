@@ -5,6 +5,8 @@
 #include "../IO/FileSystem.h"
 #include "../Resource/ResourceCache.h"
 #include "../Graphics/Graphics.h"
+#include "../Graphics/VertexBuffer.h"
+#include "../Graphics/IndexBuffer.h"
 #include "../Graphics/Camera.h"
 #include "../Graphics/ParticleEffect.h"
 #include "../Graphics/ParticleEmitter.h"
@@ -13,6 +15,7 @@
 #include "../Graphics/Renderer.h"
 #include "../Graphics/StaticModel.h"
 #include "../Graphics/DebugRenderer.h"
+#include "../Graphics/Geometry.h"
 
 #include "imgui.h"
 
@@ -108,7 +111,9 @@ void EditorWindow::RegisterObject(Context* context)
 
 void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
 {
-	selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetInt();
+    selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
+    selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
+    hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
 }
 
 void EditorWindow::Render(float timeStep)
@@ -189,15 +194,7 @@ void EditorWindow::Render(float timeStep)
             auto grantchidren = child->GetChildren();
             for (Node* grantchild : grantchidren)
                 DrawChild(grantchild, i);
-//			auto childComponents = child->GetComponents();
-//			for (Component* c : childComponents)
-//			{
-//				// ImGui::Text("%s", c->GetTypeName().CString());
-//				if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
-//				{
-//					AttributeEdit(c);
-//				}
-//			}
+
             ImGui::TreePop();
         }
 		i++;
@@ -215,7 +212,12 @@ void EditorWindow::Render(float timeStep)
 		{
 			// Node* cameraNode = scene_->GetChild("Camera");
 			Node* cameraNode = cameraNode_;
+            if(!cameraNode)
+                return;
+
 			Camera* camera = cameraNode->GetComponent<Camera>();
+            if(!camera)
+                return;
 
 			Matrix4 identity = Matrix4::IDENTITY;
 			Matrix4 projection = camera->GetProjection().Transpose();
@@ -252,11 +254,89 @@ void EditorWindow::Render(float timeStep)
                     AttributeEdit(c);
                 }
 
-				StaticModel* model = dynamic_cast<StaticModel*>(c);
-				if (model)
+                StaticModel* staticModel = dynamic_cast<StaticModel*>(c);
+                if (staticModel)
 				{
 					DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-					model->DrawDebugGeometry(debugRenderer, false);
+                    staticModel->DrawDebugGeometry(debugRenderer, true);
+
+                    Model* model = staticModel->GetModel();
+                    ImGui::Text("geom <%i> vb <%i> ib <%i> olod <%i>", model->GetNumGeometries(),
+                                model->GetVertexBuffers().Size(), model->GetIndexBuffers().Size(), staticModel->GetOcclusionLodLevel());
+
+                    for(unsigned int i = 0; i < model->GetIndexBuffers().Size(); i++)
+                    {
+                        IndexBuffer* ib = model->GetIndexBuffers().At(i);
+                        ImGui::Text("ib size <%i> count <%i>", ib->GetIndexSize(), ib->GetIndexCount());
+                    }
+
+                    for(unsigned int i = 0; i < model->GetVertexBuffers().Size(); i++)
+                    {
+                        VertexBuffer* vb = model->GetVertexBuffers().At(i);
+                        ImGui::Text("vb size <%i> count <%i>", vb->GetVertexSize(), vb->GetVertexCount());
+                    }
+
+                    for(unsigned int i = 0; i < model->GetNumGeometries(); i++)
+                    {
+                        unsigned int lodLevel = model->GetNumGeometryLodLevels(i);
+                        for (unsigned int j = 0; j < lodLevel ; j++)
+                        {
+                            Geometry* geom = model->GetGeometry(i, j);
+                            ImGui::Text("geom <%i> lod <%i> vb <%i> ib <%i> is <%i> ic <%i>", i, j,
+                                        geom->GetVertexCount(), geom->GetIndexCount(), geom->GetIndexStart(), geom->GetIndexCount());
+                        }
+                    }
+                    Geometry* geom = model->GetGeometry(0, 0);
+                    SharedArrayPtr<unsigned char> vertexData;
+                    SharedArrayPtr<unsigned char> indexData;
+                    unsigned vertexSize;
+                    unsigned indexSize;
+                    const PODVector<VertexElement>* elements;
+
+                    geom->GetRawDataShared(vertexData, vertexSize, indexData, indexSize, elements);
+                    Matrix3x4 transform = node->GetTransform();
+                    Color color = Color::YELLOW;
+                    ImGui::Text("geom vsize <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
+
+                    if(selectedSubElementIndex_ != M_MAX_UNSIGNED)
+                    {
+                        auto* vertices = &vertexData[0];
+                        unsigned short* index = ((unsigned short*)&indexData[0]) + geom->GetIndexStart() + selectedSubElementIndex_;
+
+                        const Vector3& v0 = *((const Vector3*)(&vertices[index[0] * vertexSize]));
+                        const Vector3& v1 = *((const Vector3*)(&vertices[index[1] * vertexSize]));
+                        const Vector3& v2 = *((const Vector3*)(&vertices[index[2] * vertexSize]));
+
+                        const Matrix3x4& worldTransform = transform; //node->GetWorldTransform();
+                        debugRenderer->AddTriangle(worldTransform * v0, worldTransform * v1, worldTransform * v2, Color::CYAN);
+
+                        float d0 = (worldTransform * v0).DistanceToPoint(hitPosition_);
+                        float d1 = (worldTransform * v1).DistanceToPoint(hitPosition_);
+                        float d2 = (worldTransform * v2).DistanceToPoint(hitPosition_);
+
+                        Sphere sphere;
+                        sphere.radius_ = 0.02f;
+                        Color sphereColor;
+                        sphereColor.FromHSL(39.0f, 100.0f, 50.0f);
+
+                        if(d0 < d1 && d0 < d2)
+                        {
+                            sphere.center_ = (worldTransform * v0);
+                            debugRenderer->AddSphere(sphere, sphereColor);
+                        }
+                        else if(d1 < d0 && d1 < d2)
+                        {
+                            sphere.center_ = (worldTransform * v1);
+                            debugRenderer->AddSphere(sphere, sphereColor);
+                        }
+                        else
+                        {
+                            sphere.center_ = (worldTransform * v2);
+                            debugRenderer->AddSphere(sphere, sphereColor);
+                        }
+                    }
+
+                    debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);
 				}
             }
 

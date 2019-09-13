@@ -135,9 +135,9 @@ void StaticScene::CreateScene()
 	effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
 	effect_->SetEmitterSize(Vector3::ONE * 0.5f);
 	particleEmitter->SetEffect(effect_);
-	particleEmitter->SetEmitting(true);
+    particleEmitter->SetEmitting(false);
 
-    const unsigned NUM_OBJECTS = 0;
+    const unsigned NUM_OBJECTS = 1;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -146,20 +146,21 @@ void StaticScene::CreateScene()
         mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
         mushroomNode->SetScale(0.5f + Random(2.0f));
         StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
-        mushroomObject->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
+        Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
+        mushroomObject->SetModel(mushroomModel);
 		mushroomObject->SetCastShadows(true);
         mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
     }
 
-    Node* riderNode = scene_->CreateChild("Rider");
-    // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
-    riderNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    // riderNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
-    // riderNode->SetScale(0.5f + Random(2.0f));
-    AnimatedModel* riderObject = riderNode->CreateComponent<AnimatedModel>();
-    riderObject->SetModel(cache->GetResource<Model>("Models/retro_car_B3D.mdl"));
-    riderObject->SetCastShadows(true);
-    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
+//    Node* riderNode = scene_->CreateChild("Rider");
+//    // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
+//    riderNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+//    // riderNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+//    // riderNode->SetScale(0.5f + Random(2.0f));
+//    AnimatedModel* riderObject = riderNode->CreateComponent<AnimatedModel>();
+//    riderObject->SetModel(cache->GetResource<Model>("Models/retro_car_B3D.mdl"));
+//    riderObject->SetCastShadows(true);
+//    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     // Create a scene node for the camera, which we will move around
     // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)

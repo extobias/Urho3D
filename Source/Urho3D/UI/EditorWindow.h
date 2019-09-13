@@ -48,8 +48,6 @@ private:
 
     void DrawChild(Node* node, int &i);
 
-    unsigned selectedNode_;
-
     Node* cameraNode_;
 
     EditorGuizmo* guizmo_;
@@ -65,6 +63,12 @@ private:
     int currentModel_;
 
     PODVector<int> currentMaterialList_;
+
+    unsigned selectedNode_;
+
+    unsigned selectedSubElementIndex_{ M_MAX_UNSIGNED };
+
+    Vector3 hitPosition_{ Vector3::ZERO };
 };
 
 }

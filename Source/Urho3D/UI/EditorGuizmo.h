@@ -10,6 +10,8 @@ namespace Urho3D
 
 static const StringHash E_GUIZMO_NODE_SELECTED("GUIZMO_NODE_SELECTED");
 static const StringHash P_GUIZMO_NODE_SELECTED("GUIZMO_NODE_SELECTED_ID");
+static const StringHash P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX("GUIZMO_NODE_SELECTED_SUBELEMENTINDEX");
+static const StringHash P_GUIZMO_NODE_SELECTED_POSITION("GUIZMO_NODE_SELECTED_POSITION");
 
 class URHO3D_API EditorGuizmo : public ImGuiElement
 {
@@ -47,6 +49,8 @@ private:
 	ImGuizmo::OPERATION currentOperation_;
 
 	ImGuizmo::MODE currentMode_;
+
+        bool editNode_ { true };
 };
 
 }

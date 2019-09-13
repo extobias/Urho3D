@@ -87,11 +87,12 @@ void TerrainPatch::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQue
             Ray localRay = query.ray_.Transformed(inverse);
             float distance = localRay.HitDistance(boundingBox_);
             Vector3 normal = -query.ray_.direction_;
+            unsigned subObjectElementIndex = 0;
 
             if (level == RAY_TRIANGLE && distance < query.maxDistance_)
             {
                 Vector3 geometryNormal;
-                distance = geometry_->GetHitDistance(localRay, &geometryNormal);
+                distance = geometry_->GetHitDistance(localRay, subObjectElementIndex, &geometryNormal);
                 normal = (node_->GetWorldTransform() * Vector4(geometryNormal, 0.0f)).Normalized();
             }
 
@@ -104,6 +105,7 @@ void TerrainPatch::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQue
                 result.drawable_ = this;
                 result.node_ = node_;
                 result.subObject_ = M_MAX_UNSIGNED;
+                result.subObjectElementIndex_ = subObjectElementIndex;
                 results.Push(result);
             }
         }
