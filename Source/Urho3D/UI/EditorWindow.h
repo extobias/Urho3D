@@ -7,6 +7,9 @@ namespace Urho3D
 
 class EditorGuizmo;
 
+static const StringHash E_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED");
+static const StringHash P_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED_ID");
+
 struct ResourceFile
 {
 	String prefix;
