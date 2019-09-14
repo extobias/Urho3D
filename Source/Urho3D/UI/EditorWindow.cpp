@@ -16,6 +16,7 @@
 #include "../Graphics/StaticModel.h"
 #include "../Graphics/DebugRenderer.h"
 #include "../Graphics/Geometry.h"
+#include "../Math/Polyhedron.h"
 
 #include "imgui.h"
 
@@ -112,6 +113,9 @@ void EditorWindow::RegisterObject(Context* context)
 void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
 {
     selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
+
+    URHO3D_LOGERRORF("editwindow: node selected <%i>", selectedNode_);
+
     selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
     hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
 }
@@ -183,11 +187,11 @@ void EditorWindow::Render(float timeStep)
 		if (ImGui::IsItemClicked())
 		{
 			selectedNode_ = child->GetID();
-			if (guizmo_)
-			{
-				guizmo_->SetSelectedNode(selectedNode_);
-				URHO3D_LOGERRORF("item selected <%i>", child->GetID());
-			}
+
+            VariantMap eventData;
+            eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
+
+            SendEvent(E_EDITOR_NODE_SELECTED, eventData);
 		}
         if (isOpen)
         {
@@ -286,6 +290,20 @@ void EditorWindow::Render(float timeStep)
                                         geom->GetVertexCount(), geom->GetIndexCount(), geom->GetIndexStart(), geom->GetIndexCount());
                         }
                     }
+
+                    const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
+                    for(unsigned i = 0; i < vb.Size(); i++)
+                    {
+                        VertexBuffer* vertexBuffer = vb.At(i);
+                        const PODVector<VertexElement>& ves = vertexBuffer->GetElements();
+                        for(unsigned j = 0; j < ves.Size(); j++)
+                        {
+                            const VertexElement& ve = ves.At(j);
+                            ImGui::Text("vertexbuffer <%i> vertexlement <%i> index <%i> offset <%i> semantic <%i> type <%i>", i, j,
+                                        ve.index_, ve.offset_, ve.semantic_, ve.type_);
+                        }
+                    }
+
                     Geometry* geom = model->GetGeometry(0, 0);
                     SharedArrayPtr<unsigned char> vertexData;
                     SharedArrayPtr<unsigned char> indexData;
@@ -301,6 +319,20 @@ void EditorWindow::Render(float timeStep)
                     if(selectedSubElementIndex_ != M_MAX_UNSIGNED)
                     {
                         auto* vertices = &vertexData[0];
+                        for(unsigned i = 0; i < geom->GetVertexCount(); i++)
+                        {
+                            const Vector3& v0 = *((const Vector3*)(&vertices[i * vertexSize]));
+
+                            Sphere sphere;
+                            sphere.radius_ = 0.01f;
+                            sphere.center_ = transform * v0;
+                            BoundingBox bb(sphere);
+                            Polyhedron poly(bb);
+
+                            Color sphereColor(Color::RED);
+                            debugRenderer->AddPolyhedron(poly, sphereColor);
+                        }
+
                         unsigned short* index = ((unsigned short*)&indexData[0]) + geom->GetIndexStart() + selectedSubElementIndex_;
 
                         const Vector3& v0 = *((const Vector3*)(&vertices[index[0] * vertexSize]));

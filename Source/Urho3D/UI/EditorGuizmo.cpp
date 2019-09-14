@@ -10,6 +10,7 @@
 #include "../Resource/ResourceCache.h"
 #include "../UI/UI.h"
 #include "../IO/Log.h"
+#include "../UI/EditorWindow.h"
 
 #include "imgui.h"
 
@@ -21,6 +22,7 @@ extern const char* UI_CATEGORY;
 EditorGuizmo::EditorGuizmo(Context* context) :
 	ImGuiElement(context)
 {
+    SubscribeToEvent(E_EDITOR_NODE_SELECTED, URHO3D_HANDLER(EditorGuizmo, HandleNodeSelected));
 }
 
 EditorGuizmo::~EditorGuizmo() = default;
@@ -28,6 +30,16 @@ EditorGuizmo::~EditorGuizmo() = default;
 void EditorGuizmo::RegisterObject(Context* context)
 {
 	context->RegisterFactory<EditorGuizmo>(UI_CATEGORY);
+}
+
+void EditorGuizmo::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
+{
+    selectedNode_ = eventData[P_EDITOR_NODE_SELECTED].GetUInt();
+
+    URHO3D_LOGERRORF("editguizmo: node selected <%i>", selectedNode_);
+
+    // selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
+    // hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
 }
 
 void EditorGuizmo::Render(float timeStep)

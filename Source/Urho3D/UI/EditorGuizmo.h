@@ -38,6 +38,8 @@ public:
 
 	void SetCameraNode(Node* node) { cameraNode_ = node; }
 
+    void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
+
 private:
 
 	Ray GetCameraRay();
