@@ -448,7 +448,7 @@ void StaticModel::CalculateLodLevels()
 void StaticModel::HandleModelReloadFinished(StringHash eventType, VariantMap& eventData)
 {
     Model* currentModel = model_;
-    model_.Reset(); // Set null to allow to be re-set
+    model_.Reset();
     SetModel(currentModel);
 }
 

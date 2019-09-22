@@ -3,6 +3,7 @@
 
 #include "../Math/Ray.h"
 #include "../UI/ImGuiElement.h"
+#include "../Graphics/CustomGeometry.h"
 #include "../ThirdParty/ImGui/ImGuizmo.h"
 
 namespace Urho3D
@@ -38,7 +39,7 @@ public:
 
 	void SetCameraNode(Node* node) { cameraNode_ = node; }
 
-    void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
+        void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
 private:
 
@@ -46,7 +47,7 @@ private:
 
 	unsigned selectedNode_;
 
-	Node* cameraNode_;
+        WeakPtr<Node> cameraNode_;
 
 	ImGuizmo::OPERATION currentOperation_;
 

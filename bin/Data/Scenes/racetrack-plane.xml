@@ -7,8 +7,8 @@
 	<attribute name="Elapsed Time" value="8582.09" />
 	<attribute name="Next Replicated Node ID" value="79" />
 	<attribute name="Next Replicated Component ID" value="166" />
-	<attribute name="Next Local Node ID" value="16830497" />
-	<attribute name="Next Local Component ID" value="16830777" />
+	<attribute name="Next Local Node ID" value="16834597" />
+	<attribute name="Next Local Component ID" value="16834901" />
 	<attribute name="Variables">
 		<variant hash="2706235083" type="Vector3" value="0 1.5 0" />
 		<variant hash="3728386944" type="Vector3" value="0 90 0" />
@@ -39,9 +39,7 @@
 	</attribute>
 	<attribute name="Variable Names" value="checkpointsize;cp0;cp1;cp2;cp3;cp4;cp5;cp6;cp7;cp8;cp9;cp10;cp11;cp12;cp13;cp14;cp15;cp16;cp17;cp18;cp19;cp20;cp21;startposition;startrotation" />
 	<component type="Octree" id="1" />
-	<component type="DebugRenderer" id="2">
-		<attribute name="Line Antialias" value="true" />
-	</component>
+	<component type="DebugRenderer" id="2" />
 	<component type="PhysicsWorld" id="6" />
 	<node id="16777217">
 		<attribute name="Is Enabled" value="false" />
@@ -1275,5 +1273,25 @@
 				</node>
 			</node>
 		</node>
+	</node>
+	<node id="16834596">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="-9.7624 49.5858 -20.1207" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="0.005 0.005 0.005" />
+		<attribute name="Variables" />
+		<component type="StaticModel" id="16834898">
+			<attribute name="Model" value="Model;Models/Mesh.mdl" />
+			<attribute name="Material" value="Material;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;" />
+		</component>
+		<component type="RigidBody" id="16834899">
+			<attribute name="Physics Position" value="-9.7624 49.5858 -20.1207" />
+		</component>
+		<component type="CollisionShape" id="16834900">
+			<attribute name="Shape Type" value="TriangleMesh" />
+			<attribute name="Model" value="Model;Models/Mesh.mdl" />
+		</component>
 	</node>
 </scene>

@@ -48,7 +48,7 @@ class TerrainEditorBrushVisualizer
             float z = radius * Sin(angle / 0.0174532925);
             float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
             customGeometry.DefineVertex(Vector3(x, y + 0.25, z));
-            customGeometry.DefineColor(Color(0, 1, 0));
+            customGeometry.DefineColor(Color(1, 1, 0));
         }
         customGeometry.Commit();
 

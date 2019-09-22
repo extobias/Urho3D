@@ -23,6 +23,34 @@
 namespace Urho3D
 {
 
+//class URHO3D_API EditorBrush : public Object
+//{
+//public:
+//    explicit EditorBrush(Context* context);
+
+//    ~EditorBrush();
+
+//    void Update(StaticModel* model, const Vector3& position, float radius);
+
+//private:
+//    SharedPtr<Node> node_;
+//    SharedPtr<CustomGeometry> customGeometry_;
+//    bool addedToOctree_{ false };
+//};
+
+//EditorBrush::EditorBrush(Context *context)
+//    : Object(context)
+//{
+
+//}
+
+//EditorBrush::~EditorBrush() = default;
+
+//void EditorBrush::Update(StaticModel* model, const Vector3& position, float radius)
+//{
+
+//}
+
 extern const char* UI_CATEGORY;
 
 EditorWindow::EditorWindow(Context* context) :
@@ -255,14 +283,14 @@ void EditorWindow::Render(float timeStep)
                 // ImGui::Text("%s", c->GetTypeName().CString());
                 if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
                 {
-                    AttributeEdit(c);
+                    // AttributeEdit(c);
                 }
 
                 StaticModel* staticModel = dynamic_cast<StaticModel*>(c);
                 if (staticModel)
 				{
 					DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-                    staticModel->DrawDebugGeometry(debugRenderer, true);
+                    // staticModel->DrawDebugGeometry(debugRenderer, true);
 
                     Model* model = staticModel->GetModel();
                     ImGui::Text("geom <%i> vb <%i> ib <%i> olod <%i>", model->GetNumGeometries(),
@@ -274,22 +302,43 @@ void EditorWindow::Render(float timeStep)
                         ImGui::Text("ib size <%i> count <%i>", ib->GetIndexSize(), ib->GetIndexCount());
                     }
 
+                    Matrix3x4 transform = node->GetWorldTransform();
+                    const BoundingBox& modelBoundingBox = model->GetBoundingBox();
+
                     for(unsigned int i = 0; i < model->GetVertexBuffers().Size(); i++)
                     {
                         VertexBuffer* vb = model->GetVertexBuffers().At(i);
-                        ImGui::Text("vb size <%i> count <%i>", vb->GetVertexSize(), vb->GetVertexCount());
-                    }
+                        ImGui::Text("vb size <%i> count <%i> shadow <%i>", vb->GetVertexSize(), vb->GetVertexCount(), vb->IsShadowed());
 
-                    for(unsigned int i = 0; i < model->GetNumGeometries(); i++)
-                    {
-                        unsigned int lodLevel = model->GetNumGeometryLodLevels(i);
-                        for (unsigned int j = 0; j < lodLevel ; j++)
-                        {
-                            Geometry* geom = model->GetGeometry(i, j);
-                            ImGui::Text("geom <%i> lod <%i> vb <%i> ib <%i> is <%i> ic <%i>", i, j,
-                                        geom->GetVertexCount(), geom->GetIndexCount(), geom->GetIndexStart(), geom->GetIndexCount());
-                        }
-                    }
+//                        const SharedArrayPtr<unsigned char>& vertexData = vb->GetShadowDataShared();
+//                        const auto* srcData = (const unsigned char*)&vertexData[0];
+//                        unsigned vertexSize = vb->GetVertexSize();
+
+//                        Sphere sphere;
+//                        sphere.radius_ = 0.01f;
+
+//                        for (unsigned j = 0; j < vb->GetVertexCount(); j++)
+//                        {
+//                            Vector3 v0 = transform * *((const Vector3*)(&srcData[j * vertexSize]));
+
+//                            sphere.center_ = v0;
+//                            BoundingBox bb(sphere);
+//                            Polyhedron poly(bb);
+
+//                            debugRenderer->AddPolyhedron(poly, Color::RED);
+//                        }
+                    }      
+
+//                    for(unsigned int i = 0; i < model->GetNumGeometries(); i++)
+//                    {
+//                        unsigned int lodLevel = model->GetNumGeometryLodLevels(i);
+//                        for (unsigned int j = 0; j < lodLevel ; j++)
+//                        {
+//                            Geometry* geom = model->GetGeometry(i, j);
+//                            ImGui::Text("geom <%i> lod <%i> vb <%i> ib <%i> is <%i> ic <%i>", i, j,
+//                                        geom->GetVertexCount(), geom->GetIndexCount(), geom->GetIndexStart(), geom->GetIndexCount());
+//                        }
+//                    }
 
                     const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
                     for(unsigned i = 0; i < vb.Size(); i++)
@@ -312,27 +361,12 @@ void EditorWindow::Render(float timeStep)
                     const PODVector<VertexElement>* elements;
 
                     geom->GetRawDataShared(vertexData, vertexSize, indexData, indexSize, elements);
-                    Matrix3x4 transform = node->GetTransform();
                     Color color = Color::YELLOW;
                     ImGui::Text("geom vsize <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
 
                     if(selectedSubElementIndex_ != M_MAX_UNSIGNED)
                     {
                         auto* vertices = &vertexData[0];
-                        for(unsigned i = 0; i < geom->GetVertexCount(); i++)
-                        {
-                            const Vector3& v0 = *((const Vector3*)(&vertices[i * vertexSize]));
-
-                            Sphere sphere;
-                            sphere.radius_ = 0.01f;
-                            sphere.center_ = transform * v0;
-                            BoundingBox bb(sphere);
-                            Polyhedron poly(bb);
-
-                            Color sphereColor(Color::RED);
-                            debugRenderer->AddPolyhedron(poly, sphereColor);
-                        }
-
                         unsigned short* index = ((unsigned short*)&indexData[0]) + geom->GetIndexStart() + selectedSubElementIndex_;
 
                         const Vector3& v0 = *((const Vector3*)(&vertices[index[0] * vertexSize]));
@@ -368,7 +402,7 @@ void EditorWindow::Render(float timeStep)
                         }
                     }
 
-                    debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);
+                    // debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);
 				}
             }
 
