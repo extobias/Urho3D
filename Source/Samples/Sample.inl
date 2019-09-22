@@ -66,9 +66,7 @@ void Sample::Setup()
 	engineParameters_[EP_WINDOW_WIDTH] = 1024;
 	engineParameters_[EP_WINDOW_HEIGHT] = 468;
 	engineParameters_[EP_WINDOW_RESIZABLE] = true;
-	engineParameters_[EP_FORCE_GL2] = true;
-
-    engineParameters_[EP_FORCE_GL2] = true;
+    // engineParameters_[EP_FORCE_GL2] = true;
 
     // Construct a search path to find the resource prefix with two entries:
     // The first entry is an empty path which will be substituted with program/bin directory -- this entry is for binary when it is still in build tree

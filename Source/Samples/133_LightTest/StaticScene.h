@@ -23,6 +23,7 @@
 #pragma once
 
 #include "Sample.h"
+#include <Urho3D/Physics/CollisionShape.h>
 
 namespace Urho3D
 {
@@ -79,4 +80,5 @@ private:
 	Material* effectMaterial_;
 	ParticleEffect* effect_;
 	Light* light_;
+    CollisionShape* meshShape;
 };

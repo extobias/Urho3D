@@ -47,7 +47,7 @@ URHO3D_DEFINE_APPLICATION_MAIN(HugeObjectCount)
 HugeObjectCount::HugeObjectCount(Context* context) :
     Sample(context),
     animate_(false),
-    useGroups_(false)
+    useGroups_(true)
 {
 }
 

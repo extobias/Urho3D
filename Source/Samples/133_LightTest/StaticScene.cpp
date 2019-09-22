@@ -44,6 +44,8 @@
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/EditorWindow.h>
 #include <Urho3D/UI/EditorGuizmo.h>
+#include <Urho3D/UI/EditorModelDebug.h>
+#include <Urho3D/Physics/RigidBody.h>
 
 #include "StaticScene.h"
 
@@ -63,6 +65,10 @@ void StaticScene::Start()
 {
     // Execute base class startup
     Sample::Start();
+
+    EditorWindow::RegisterObject(context_);
+    ImGuiElement::RegisterObject(context_);
+    EditorModelDebug::RegisterObject(context_);
 
     // Create the scene content
     CreateScene();
@@ -110,7 +116,7 @@ void StaticScene::CreateScene()
 	lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
     // lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
     light_ = lightNode->CreateComponent<Light>();
-    light_->SetLightType(LIGHT_SPOT);
+    light_->SetLightType(LIGHT_DIRECTIONAL);
 	light_->SetRadius(10.0f);
 	light_->SetFov(50.0f);
 	light_->SetBrightness(50.0f);
@@ -143,10 +149,11 @@ void StaticScene::CreateScene()
         Node* mushroomNode = scene_->CreateChild("Mushroom");
         // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
 		mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-        mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
-        mushroomNode->SetScale(0.5f + Random(2.0f));
+        // mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+        // mushroomNode->SetScale(0.5f + Random(2.0f));
+        mushroomNode->SetScale(1.0f);
         StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
-        Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
+        Model* mushroomModel = cache->GetResource<Model>("Models/Box.mdl");
         mushroomObject->SetModel(mushroomModel);
 		mushroomObject->SetCastShadows(true);
         mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
@@ -161,6 +168,22 @@ void StaticScene::CreateScene()
 //    riderObject->SetModel(cache->GetResource<Model>("Models/retro_car_B3D.mdl"));
 //    riderObject->SetCastShadows(true);
 //    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
+
+    Node* meshNode = scene_->CreateChild("Mesh");
+    meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+    meshNode->SetScale(0.005f);
+    StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
+    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
+    meshObject->SetModel(meshModel);
+    meshObject->SetCastShadows(true);
+    // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
+    meshShape = meshNode->CreateComponent<CollisionShape>();
+    meshShape->SetTriangleMesh(meshModel);
+    EditorModelDebug* editorModel = meshNode->CreateComponent<EditorModelDebug>();
+    editorModel->SetModel(meshModel);
+    editorModel->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+
+    // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     // Create a scene node for the camera, which we will move around
     // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
@@ -213,9 +236,6 @@ void StaticScene::CreateInstructions()
 {
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
-
-	EditorWindow::RegisterObject(context_);
-	ImGuiElement::RegisterObject(context_);
 
 	EditorWindow* imgui = new EditorWindow(context_);
 	imgui->SetName("editor");
@@ -369,6 +389,8 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
 
+    // DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+    // meshShape->DrawDebugGeometry(debugRenderer, true);
 	// UpdateRenderPath(timeStep);
 }
 
