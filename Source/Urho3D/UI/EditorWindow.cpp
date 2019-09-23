@@ -142,7 +142,7 @@ void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventDat
 {
     selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
 
-    URHO3D_LOGERRORF("editwindow: node selected <%i>", selectedNode_);
+    // URHO3D_LOGERRORF("editwindow: node selected <%i>", selectedNode_);
 
     selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
     hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
@@ -374,32 +374,32 @@ void EditorWindow::Render(float timeStep)
                         const Vector3& v2 = *((const Vector3*)(&vertices[index[2] * vertexSize]));
 
                         const Matrix3x4& worldTransform = transform; //node->GetWorldTransform();
-                        debugRenderer->AddTriangle(worldTransform * v0, worldTransform * v1, worldTransform * v2, Color::CYAN);
+                        // debugRenderer->AddTriangle(worldTransform * v0, worldTransform * v1, worldTransform * v2, Color::CYAN);
 
-                        float d0 = (worldTransform * v0).DistanceToPoint(hitPosition_);
-                        float d1 = (worldTransform * v1).DistanceToPoint(hitPosition_);
-                        float d2 = (worldTransform * v2).DistanceToPoint(hitPosition_);
+//                        float d0 = (worldTransform * v0).DistanceToPoint(hitPosition_);
+//                        float d1 = (worldTransform * v1).DistanceToPoint(hitPosition_);
+//                        float d2 = (worldTransform * v2).DistanceToPoint(hitPosition_);
 
-                        Sphere sphere;
-                        sphere.radius_ = 0.02f;
-                        Color sphereColor;
-                        sphereColor.FromHSL(39.0f, 100.0f, 50.0f);
+//                        Sphere sphere;
+//                        sphere.radius_ = 0.02f;
+//                        Color sphereColor;
+//                        sphereColor.FromHSL(39.0f, 100.0f, 50.0f);
 
-                        if(d0 < d1 && d0 < d2)
-                        {
-                            sphere.center_ = (worldTransform * v0);
-                            debugRenderer->AddSphere(sphere, sphereColor);
-                        }
-                        else if(d1 < d0 && d1 < d2)
-                        {
-                            sphere.center_ = (worldTransform * v1);
-                            debugRenderer->AddSphere(sphere, sphereColor);
-                        }
-                        else
-                        {
-                            sphere.center_ = (worldTransform * v2);
-                            debugRenderer->AddSphere(sphere, sphereColor);
-                        }
+//                        if(d0 < d1 && d0 < d2)
+//                        {
+//                            sphere.center_ = (worldTransform * v0);
+//                            debugRenderer->AddSphere(sphere, sphereColor);
+//                        }
+//                        else if(d1 < d0 && d1 < d2)
+//                        {
+//                            sphere.center_ = (worldTransform * v1);
+//                            debugRenderer->AddSphere(sphere, sphereColor);
+//                        }
+//                        else
+//                        {
+//                            sphere.center_ = (worldTransform * v2);
+//                            debugRenderer->AddSphere(sphere, sphereColor);
+//                        }
                     }
 
                     // debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);

@@ -147,8 +147,8 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
                     eventData[P_GUIZMO_NODE_SELECTED_POSITION] = r.position_;
 					SendEvent(E_GUIZMO_NODE_SELECTED, eventData);
 
-                    URHO3D_LOGERRORF("hit node <%s> subObject <%i>", name.CString(), r.subObjectElementIndex_);
-					break;
+                    // URHO3D_LOGERRORF("hit node <%s> subObject <%i>", name.CString(), r.subObjectElementIndex_);
+                    // break;
 				}
 			}
 		}
