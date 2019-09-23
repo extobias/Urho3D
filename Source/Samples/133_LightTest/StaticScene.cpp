@@ -143,7 +143,7 @@ void StaticScene::CreateScene()
 	particleEmitter->SetEffect(effect_);
     particleEmitter->SetEmitting(false);
 
-    const unsigned NUM_OBJECTS = 1;
+    const unsigned NUM_OBJECTS = 0;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -176,13 +176,13 @@ void StaticScene::CreateScene()
     Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
+
     // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
     meshShape = meshNode->CreateComponent<CollisionShape>();
     meshShape->SetTriangleMesh(meshModel);
     EditorModelDebug* editorModel = meshNode->CreateComponent<EditorModelDebug>();
     editorModel->SetModel(meshModel);
     editorModel->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
-
     // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     // Create a scene node for the camera, which we will move around
@@ -197,7 +197,7 @@ void StaticScene::CreateScene()
 
 	// CreateDepthTexture();
 	Graphics* graphics = GetSubsystem<Graphics>();
-	graphics->Maximize();
+    // graphics->Maximize();
 
 	//SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
 	//SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));

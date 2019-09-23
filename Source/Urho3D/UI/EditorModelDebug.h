@@ -22,6 +22,8 @@ public:
     /// Register object factory.
     static void RegisterObject(Context* context);
 
+    void ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryResult>& results) override;
+
     void UpdateBatches(const FrameInfo& frame) override;
 
     void SetModel(Model* model);
@@ -48,6 +50,10 @@ protected:
     Matrix3x4 transform_;
 
     PODVector<Matrix3x4> worldTransforms_;
+
+    PODVector<Vector3> vertexOffset_;
+
+    unsigned numWorldTransforms_{};
 
 private:
     /// Handle model reload finished.
