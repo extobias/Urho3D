@@ -132,6 +132,9 @@ void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<Ra
             result.node_ = node_;
             result.subObject_ = i;
             result.subObjectElementIndex_ = subObjectElementIndex;
+
+            URHO3D_LOGERRORF("hit node <%s> subObject <%i> subObjectElementIndex <%i>",
+                             node_->GetName().CString(), i, subObjectElementIndex);
             results.Push(result);
         }
     }

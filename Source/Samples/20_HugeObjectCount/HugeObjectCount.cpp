@@ -38,6 +38,10 @@
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
 
+#include <Urho3D/UI/EditorWindow.h>
+#include <Urho3D/UI/EditorGuizmo.h>
+#include <Urho3D/UI/EditorModelDebug.h>
+
 #include "HugeObjectCount.h"
 
 #include <Urho3D/DebugNew.h>
@@ -56,6 +60,10 @@ void HugeObjectCount::Start()
     // Execute base class startup
     Sample::Start();
 
+    EditorWindow::RegisterObject(context_);
+    ImGuiElement::RegisterObject(context_);
+    EditorModelDebug::RegisterObject(context_);
+
     // Create the scene content
     CreateScene();
 
@@ -69,7 +77,8 @@ void HugeObjectCount::Start()
     SubscribeToEvents();
 
     // Set the mouse mode to use in the sample
-    Sample::InitMouseMode(MM_RELATIVE);
+    // Sample::InitMouseMode(MM_RELATIVE);
+    Sample::InitMouseMode(MM_FREE);
 }
 
 void HugeObjectCount::CreateScene()
@@ -166,6 +175,24 @@ void HugeObjectCount::CreateInstructions()
     auto* cache = GetSubsystem<ResourceCache>();
     auto* ui = GetSubsystem<UI>();
 
+    EditorWindow* imgui = new EditorWindow(context_);
+    imgui->SetName("editor");
+    imgui->SetCameraNode(cameraNode_);
+    ui->GetRoot()->AddChild(imgui);
+    imgui->SetScene(scene_);
+
+    EditorGuizmo* guizmo = new EditorGuizmo(context_);
+    guizmo->SetName("guizmo");
+    guizmo->SetCameraNode(cameraNode_);
+    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
+    ui->GetRoot()->AddChild(guizmo);
+    guizmo->SetPosition(0, 0);
+    guizmo->SetScene(scene_);
+
+    imgui->BringToFront();
+    imgui->SetPriority(100);
+    imgui->SetGuizmo(guizmo);
+
     // Construct new Text object, set string to display and font to use
     auto* instructionText = ui->GetRoot()->CreateChild<Text>();
     instructionText->SetText(
@@ -217,8 +244,9 @@ void HugeObjectCount::MoveCamera(float timeStep)
     pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
     pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
+    if (input->GetMouseButtonDown(MOUSEB_RIGHT))
     // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-    cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
 
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     if (input->GetKeyDown(KEY_W))
