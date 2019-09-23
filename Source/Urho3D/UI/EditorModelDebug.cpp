@@ -4,9 +4,11 @@
 #include "../Graphics/Batch.h"
 #include "../Graphics/Drawable.h"
 #include "../Graphics/Geometry.h"
-#include "../Graphics/Model.h"
-#include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
+#include "../Graphics/Model.h"
+#include "../Graphics/OctreeQuery.h"
+#include "../Graphics/VertexBuffer.h"
+
 #include "../IO/Log.h"
 #include "../Resource/ResourceEvents.h"
 
@@ -70,10 +72,80 @@ void EditorModelDebug::RegisterObject(Context* context)
     context->RegisterFactory<EditorModelDebug>(SUBSYSTEM_CATEGORY);
 }
 
+void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryResult>& results)
+{
+    // If no bones or no bone-level testing, use the Drawable test
+    RayQueryLevel level = query.level_;
+    if (level < RAY_AABB)
+    {
+        Drawable::ProcessRayQuery(query, results);
+        return;
+    }
+
+    // Check ray hit distance to AABB before proceeding with more accurate tests
+    // GetWorldBoundingBox() updates the world transforms
+    if (query.ray_.HitDistance(GetWorldBoundingBox()) >= query.maxDistance_)
+        return;
+
+    for (unsigned i = 0; i < numWorldTransforms_; ++i)
+    {
+        // Initial test using AABB
+        float distance = query.ray_.HitDistance(boundingBox_.Transformed(worldTransforms_[i]));
+        Vector3 normal = -query.ray_.direction_;
+        unsigned subObjectElementIndex = M_MAX_UNSIGNED;
+
+        // Then proceed to OBB and triangle-level tests if necessary
+        if (level >= RAY_OBB && distance < query.maxDistance_)
+        {
+            Matrix3x4 inverse = worldTransforms_[i].Inverse();
+            Ray localRay = query.ray_.Transformed(inverse);
+            distance = localRay.HitDistance(boundingBox_);
+
+            if (level == RAY_TRIANGLE && distance < query.maxDistance_)
+            {
+                distance = M_INFINITY;
+
+                for (unsigned j = 0; j < batches_.Size(); ++j)
+                {
+                    Geometry* geometry = batches_[j].geometry_;
+                    if (geometry)
+                    {
+                        Vector3 geometryNormal;
+                        float geometryDistance = geometry->GetHitDistance(localRay, subObjectElementIndex, &geometryNormal);
+                        if (geometryDistance < query.maxDistance_ && geometryDistance < distance)
+                        {
+                            distance = geometryDistance;
+                            normal = (worldTransforms_[i] * Vector4(geometryNormal, 0.0f)).Normalized();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (distance < query.maxDistance_)
+        {
+            RayQueryResult result;
+            result.position_ = query.ray_.origin_ + distance * query.ray_.direction_;
+            result.normal_ = normal;
+            result.distance_ = distance;
+            result.drawable_ = this;
+            result.node_ = node_;
+            result.subObject_ = i;
+            result.subObjectElementIndex_ = subObjectElementIndex;
+            results.Push(result);
+        }
+    }
+}
+
 void EditorModelDebug::UpdateBatches(const FrameInfo& frame)
 {
     const Matrix3x4* worldTransform = node_ ? &node_->GetWorldTransform() : nullptr;
-    transform_ = *worldTransform;
+    for(unsigned i = 0; i < numWorldTransforms_; i++)
+    {
+        Matrix3x4 transform(Matrix3x4::IDENTITY);
+        transform.SetTranslation(*worldTransform * vertexOffset_[i]);
+        worldTransforms_[i] = transform;
+    }
 }
 
 void EditorModelDebug::SetModel(Model* model)
@@ -99,7 +171,7 @@ void EditorModelDebug::SetModel(Model* model)
        SetBoundingBox(model->GetBoundingBox());
 
        /// set up
-       primitiveType_ = TRIANGLE_STRIP;
+       primitiveType_ = TRIANGLE_LIST;
 
        const Matrix3x4* worldTransform = node_ ? &node_->GetWorldTransform() : nullptr;
        // transform_ = *worldTransform;
@@ -128,15 +200,13 @@ void EditorModelDebug::SetModel(Model* model)
            unsigned indexLength = sizeof(cubeIndex) / sizeof(cubeIndex[0]);
            unsigned indexCount = totalVertices * indexLength;
 
-           // indexBuffer_ = new IndexBuffer(context_);
-           // indexBuffer_->SetShadowed(true);
+           indexBuffer_->SetShadowed(true);
            // indexCount > 0xFFFF
            indexBuffer_->SetSize(indexCount, true);
 
            unsigned* indexDest = (unsigned*)indexBuffer_->Lock(0, indexCount);
 
-           // vertexBuffer_ = new VertexBuffer(context_);
-           // vertexBuffer_->SetShadowed(true);
+           vertexBuffer_->SetShadowed(true);
            vertexBuffer_->SetSize(totalVertices * size, vertexElements_, true);
            unsigned vertexSize2 = vertexBuffer_->GetVertexSize();
            (void)vertexSize2;
@@ -144,7 +214,7 @@ void EditorModelDebug::SetModel(Model* model)
 
            if (dest && indexDest)
            {
-               float scale = 15.0f;
+               float scale = 0.02f;
                unsigned color = Color::GREEN.ToUInt();
                unsigned indexOffset = 0;
 
@@ -154,6 +224,7 @@ void EditorModelDebug::SetModel(Model* model)
                {
                    // Vector3 position = *((const Vector3*)(&srcData[i * vertexSize + positionOffset]));
                    Vector3 position = Vector3::ZERO;
+                   // position.y_ = 3.0f;
                    for(unsigned j = 0; j < size; j++)
                    {
                        *((Vector3*)dest) = position + Vector3(cubeVertices + j * 3) * scale;
@@ -168,20 +239,17 @@ void EditorModelDebug::SetModel(Model* model)
                        unsigned index = indexOffset + cubeIndex[j];
                        indexDest[indexOffset + j] = index;
                    }
-                   /// indexDest[indexOffset + indexLength] = 0xFFFF;
-
                    indexOffset += indexLength;
                }
 
                worldTransforms_.Resize(totalVerticesReal);
+               numWorldTransforms_ = totalVerticesReal;
                batches_[0].worldTransform_ = &worldTransforms_[0];
                batches_[0].numWorldTransforms_ = totalVerticesReal;
                for(unsigned i = 0; i < totalVerticesReal; i++)
                {
                    Vector3 position = *((const Vector3*)(&srcData[i * vertexSize + positionOffset]));
-                   Matrix3x4 worldTransform (transform);
-                   worldTransform.SetTranslation(position);
-                   worldTransforms_[i] = worldTransform;
+                   vertexOffset_.Push(position);
                }
 
                geometry_->SetVertexBuffer(0, vertexBuffer_);
