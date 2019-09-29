@@ -41,7 +41,8 @@ extern const char* UI_CATEGORY;
 /*------------ TBElement ------------*/
 ImGuiElement::ImGuiElement(Context* context)
     : UIElement(context),
-	imguiContext_(nullptr)
+    imguiContext_(nullptr),
+    scene_(nullptr)
 {
     SetName("ImGuiElement");
 

@@ -23,34 +23,6 @@
 namespace Urho3D
 {
 
-//class URHO3D_API EditorBrush : public Object
-//{
-//public:
-//    explicit EditorBrush(Context* context);
-
-//    ~EditorBrush();
-
-//    void Update(StaticModel* model, const Vector3& position, float radius);
-
-//private:
-//    SharedPtr<Node> node_;
-//    SharedPtr<CustomGeometry> customGeometry_;
-//    bool addedToOctree_{ false };
-//};
-
-//EditorBrush::EditorBrush(Context *context)
-//    : Object(context)
-//{
-
-//}
-
-//EditorBrush::~EditorBrush() = default;
-
-//void EditorBrush::Update(StaticModel* model, const Vector3& position, float radius)
-//{
-
-//}
-
 extern const char* UI_CATEGORY;
 
 EditorWindow::EditorWindow(Context* context) :
@@ -66,7 +38,7 @@ EditorWindow::EditorWindow(Context* context) :
 	for (int i = 0; i < dirs.Size(); i++)
 	{
 		String dirPath = dirs.At(i);
-		URHO3D_LOGERRORF("dir <%s>", dirPath.CString());
+        // URHO3D_LOGERRORF("dir <%s>", dirPath.CString());
 
 		Vector<String> result;
 		dir.ScanDir(result, dirPath, "*.*", SCAN_FILES, true);
@@ -109,7 +81,7 @@ EditorWindow::EditorWindow(Context* context) :
 			String modelsFilter("mdl");
 			if (file.ext == modelsFilter)
 			{
-				URHO3D_LOGERRORF("	file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
+                // URHO3D_LOGERRORF("	file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
 
 				modelResources_[file.name] = file;
 			}
@@ -157,6 +129,9 @@ void EditorWindow::Render(float timeStep)
 	static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::ROTATE);
 	static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
 
+    static const char* modeTypes[] = { "Select Object", "Select Vertex" };
+    ImGui::Combo("Mode", (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
+
 	if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
 		currentGizmoOperation = ImGuizmo::TRANSLATE;
 	ImGui::SameLine();
@@ -172,13 +147,15 @@ void EditorWindow::Render(float timeStep)
 			currentGizmoMode = ImGuizmo::LOCAL;
 		ImGui::SameLine();
 		if (ImGui::RadioButton("World", currentGizmoMode == ImGuizmo::WORLD))
-			currentGizmoMode = ImGuizmo::WORLD;
+            currentGizmoMode = ImGuizmo::WORLD;
 	}
 
+    // FIXME? manejar esto con eventos
 	if (guizmo_)
 	{
 		guizmo_->SetCurrentOperation(currentGizmoOperation);
 		guizmo_->SetCurrentMode(currentGizmoMode);
+        guizmo_->SetCurrentEditMode(mode_);
 	}
 
 	ImGui::Separator();
@@ -214,12 +191,20 @@ void EditorWindow::Render(float timeStep)
         bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i - %i", child->GetName().CString(), child->GetID(), child->GetChildren().Size());
 		if (ImGui::IsItemClicked())
 		{
-			selectedNode_ = child->GetID();
+            // select node
+            if(mode_ == SELECT_OBJECT)
+            {
+                selectedNode_ = child->GetID();
 
-            VariantMap eventData;
-            eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
+                VariantMap eventData;
+                eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
 
-            SendEvent(E_EDITOR_NODE_SELECTED, eventData);
+                SendEvent(E_EDITOR_NODE_SELECTED, eventData);
+            }
+            else
+            {
+                URHO3D_LOGERRORF("mode <%i>", mode_);
+            }
 		}
         if (isOpen)
         {
@@ -340,6 +325,8 @@ void EditorWindow::Render(float timeStep)
 //                        }
 //                    }
 
+                    int addIndex = -1;
+                    int vertexIndex = -1;
                     const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
                     for(unsigned i = 0; i < vb.Size(); i++)
                     {
@@ -350,6 +337,50 @@ void EditorWindow::Render(float timeStep)
                             const VertexElement& ve = ves.At(j);
                             ImGui::Text("vertexbuffer <%i> vertexlement <%i> index <%i> offset <%i> semantic <%i> type <%i>", i, j,
                                         ve.index_, ve.offset_, ve.semantic_, ve.type_);
+                            ImGui::SameLine();
+                            char label[8];
+                            sprintf(label,"\+##%i", j);
+                            if(ImGui::Button(label))
+                            {
+                                vertexIndex = i;
+                                addIndex = j;
+                            }
+                        }
+                    }
+
+                    if(addIndex > -1 && vertexIndex > -1)
+                    {
+                        // Resize VertexElement anterior
+                        URHO3D_LOGERRORF("addindex <%i> vertexindex <%i>", addIndex, vertexIndex);
+                        const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
+                        VertexBuffer* vertexBuffer = vb.At(vertexIndex);
+                        PODVector<VertexElement> ves = vertexBuffer->GetElements();
+                        VertexElementType type = TYPE_INT;
+                        VertexElementSemantic semantic = SEM_BLENDWEIGHTS;
+
+                        ves.Insert(addIndex + 1, VertexElement(type, semantic));
+
+                        // Save data before resizing
+                        SharedArrayPtr<unsigned char> vertexData;
+                        vertexData = vertexBuffer->GetShadowData();
+                        URHO3D_LOGERRORF("before size <%i> count <%i> size <%i>", sizeof(vertexData.Get()), vertexBuffer->GetVertexCount(), vertexBuffer->GetVertexSize());
+
+                        vertexBuffer->SetSize(vertexBuffer->GetVertexCount(), ves);
+                        URHO3D_LOGERRORF("after size <%i>  count <%i> size <%i>", sizeof(vertexBuffer->GetShadowData()), vertexBuffer->GetVertexCount(), vertexBuffer->GetVertexSize());
+
+
+                        auto* dest = (unsigned char*)vertexBuffer->Lock(0, vertexBuffer->GetVertexCount(), true);
+                        if(dest)
+                        {
+                            const PODVector<VertexElement>& ve = vertexBuffer->GetElements();
+                            for(unsigned i = 0; i < vertexBuffer->GetVertexCount(); i++)
+                            {
+                                for(unsigned j = 0; j < ve.Size(); j++)
+                                {
+                                    const VertexElement& el = ve.At(j);
+
+                                }
+                            }
                         }
                     }
 

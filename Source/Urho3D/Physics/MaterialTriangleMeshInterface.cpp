@@ -50,8 +50,8 @@ MaterialTriangleMeshInterface::MaterialTriangleMeshInterface(Model* model,
         unsigned vertexStart = geometry->GetVertexStart();
         unsigned vertexCount = geometry->GetVertexCount();
 
-        URHO3D_LOGINFOF("Materialtrianglemeshinterface.customtrianglemeshinterface: vertexStart <%u> vertexCount <%u>", vertexStart, vertexCount);
-        URHO3D_LOGINFOF("Materialtrianglemeshinterface.customtrianglemeshinterface: indexStart <%u> indexCount <%u>", indexStart, indexCount);
+        // URHO3D_LOGINFOF("Materialtrianglemeshinterface.customtrianglemeshinterface: vertexStart <%u> vertexCount <%u>", vertexStart, vertexCount);
+        // URHO3D_LOGINFOF("Materialtrianglemeshinterface.customtrianglemeshinterface: indexStart <%u> indexCount <%u>", indexStart, indexCount);
 
         btIndexedMesh meshIndex;
         meshIndex.m_numTriangles = indexCount / 3;

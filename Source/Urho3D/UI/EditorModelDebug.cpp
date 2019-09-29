@@ -90,13 +90,17 @@ void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<Ra
     for (unsigned i = 0; i < numWorldTransforms_; ++i)
     {
         // Initial test using AABB
-        float distance = query.ray_.HitDistance(boundingBox_.Transformed(worldTransforms_[i]));
+        const Matrix3x4& transform = worldTransforms_[i];
+        BoundingBox transformedBoundingBox = boundingBox_.Transformed(transform);
+        float distance = query.ray_.HitDistance(transformedBoundingBox);
         Vector3 normal = -query.ray_.direction_;
         unsigned subObjectElementIndex = M_MAX_UNSIGNED;
 
         // Then proceed to OBB and triangle-level tests if necessary
         if (level >= RAY_OBB && distance < query.maxDistance_)
         {
+            float distance2 = query.ray_.HitDistance(boundingBox_.Transformed(transform));
+
             Matrix3x4 inverse = worldTransforms_[i].Inverse();
             Ray localRay = query.ray_.Transformed(inverse);
             distance = localRay.HitDistance(boundingBox_);
@@ -133,8 +137,8 @@ void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<Ra
             result.subObject_ = i;
             result.subObjectElementIndex_ = subObjectElementIndex;
 
-            URHO3D_LOGERRORF("hit node <%s> subObject <%i> subObjectElementIndex <%i>",
-                             node_->GetName().CString(), i, subObjectElementIndex);
+            URHO3D_LOGERRORF("hit node <%s> subObject <%i> subObjectElementIndex <%i>", node_->GetName().CString(), i, subObjectElementIndex);
+
             results.Push(result);
         }
     }
@@ -171,8 +175,6 @@ void EditorModelDebug::SetModel(Model* model)
     {
        SubscribeToEvent(model, E_RELOADFINISHED, URHO3D_HANDLER(EditorModelDebug, HandleModelReloadFinished));
 
-       SetBoundingBox(model->GetBoundingBox());
-
        /// set up
        primitiveType_ = TRIANGLE_LIST;
 
@@ -186,6 +188,7 @@ void EditorModelDebug::SetModel(Model* model)
 
            unsigned vertexSize = vb->GetVertexSize();
            unsigned totalVerticesReal = vb->GetVertexCount();
+           URHO3D_LOGERRORF("editormodeldebug: vertices <%u>", totalVerticesReal);
            unsigned totalVertices = 1;
 
            const SharedArrayPtr<unsigned char>& vertexData = vb->GetShadowDataShared();
@@ -261,6 +264,14 @@ void EditorModelDebug::SetModel(Model* model)
 
                vertexBuffer_->Unlock();
                indexBuffer_->Unlock();
+
+               Vector3 min(cubeVertices + 4 * 3);
+               Vector3 max(cubeVertices + 2 * 3);
+
+               URHO3D_LOGERRORF("vector min <%f, %f, %f>", min.x_, min.y_, min.z_);
+               URHO3D_LOGERRORF("vector max <%f, %f, %f>", max.x_, max.y_, max.z_);
+
+               SetBoundingBox(BoundingBox(min * scale, max * scale));
            }
        }
     }
@@ -279,7 +290,28 @@ void EditorModelDebug::SetBoundingBox(const BoundingBox& box)
 
 void EditorModelDebug::OnWorldBoundingBoxUpdate()
 {
-    worldBoundingBox_ = boundingBox_.Transformed(node_->GetWorldTransform());
+    if(model_)
+    {
+        float scale = 0.02f;
+        worldBoundingBox_ = model_->GetBoundingBox();
+        const Matrix3x4& transform = node_->GetWorldTransform();
+        worldBoundingBox_.Transform(transform);
+    }
+//    unsigned index = 0;
+
+//    BoundingBox worldBox;
+
+//    for (unsigned i = 0; i < vertexOffset_.Size(); ++i)
+//    {
+//        const Matrix3x4& worldTransform = worldTransforms_[index++];
+//        worldBox.Merge(boundingBox_.Transformed(worldTransform));
+//    }
+
+//    worldBoundingBox_ = worldBox;
+
+//    // Store the amount of valid instances we found instead of resizing worldTransforms_. This is because this function may be
+//    // called from multiple worker threads simultaneously
+//    numWorldTransforms_ = index;
 }
 
 void EditorModelDebug::HandleModelReloadFinished(StringHash eventType, VariantMap& eventData)
