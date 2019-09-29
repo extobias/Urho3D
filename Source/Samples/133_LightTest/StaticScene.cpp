@@ -171,33 +171,48 @@ void StaticScene::CreateScene()
 
     Node* meshNode = scene_->CreateChild("Mesh");
     meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    meshNode->SetScale(0.005f);
+    // meshNode->SetScale(0.005f);
     StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
+    Model* meshModel = cache->GetResource<Model>("Models/Box.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
 
     // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
     meshShape = meshNode->CreateComponent<CollisionShape>();
     meshShape->SetTriangleMesh(meshModel);
-    EditorModelDebug* editorModel = meshNode->CreateComponent<EditorModelDebug>();
-    editorModel->SetModel(meshModel);
-    editorModel->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
+    editorModel_->SetModel(meshModel);
+    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     // Create a scene node for the camera, which we will move around
     // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
     cameraNode_ = scene_->CreateChild("Camera");
     Camera* camera = cameraNode_->CreateComponent<Camera>();
+    // camera->SetAspectRatio()
 
     // Set an initial position for the camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
 	// cameraNode_->LookAt(Vector3::ZERO);
 	cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
+    // Set an initial position for the front camera scene node above the plane
+    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
 
 	// CreateDepthTexture();
 	Graphics* graphics = GetSubsystem<Graphics>();
     // graphics->Maximize();
+
+    rearCameraNode_ = scene_->CreateChild("RearCamera");
+    rearCameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
+    rearCameraNode_->SetRotation(Quaternion(-90.0f, Vector3::LEFT));
+    // rearCameraNode_->Rotate(Quaternion(180.0f, Vector3::UP));
+    auto* rearCamera = rearCameraNode_->CreateComponent<Camera>();
+    rearCamera->SetFarClip(300.0f);
+
+    // Because the rear viewport is rather small, disable occlusion culling from it. Use the camera's
+    // "view override flags" for this. We could also disable eg. shadows or force low material quality
+    // if we wanted
+    rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
 
 	//SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
 	//SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
@@ -270,6 +285,9 @@ void StaticScene::SetupViewport()
 {
     Renderer* renderer = GetSubsystem<Renderer>();
 	ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+    renderer->SetNumViewports(2);
+
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen. We need to define the scene and the camera
     // at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
     // use, but now we just use full screen and default render path configured in the engine command line options
@@ -291,7 +309,7 @@ void StaticScene::SetupViewport()
 	//effectRenderPath->SetEnabled("Bloom", true);
 	//effectRenderPath->SetEnabled("FXAA2", true);
 
-	viewport->SetRenderPath(effectRenderPath);
+    // viewport->SetRenderPath(effectRenderPath);
 
 	//for (int i = 0; i < effectRenderPath->GetNumCommands(); i++)
 	//{
@@ -301,6 +319,10 @@ void StaticScene::SetupViewport()
 	//	if (command->tag_ == "SAO_main")
 	//		commandIndexSaoMain_ = i;
 	//}
+    Graphics* graphics = GetSubsystem<Graphics>();
+    SharedPtr<Viewport> rearViewport(new Viewport(context_, scene_, rearCameraNode_->GetComponent<Camera>(),
+        IntRect(graphics->GetWidth() * 2 / 3, 32, graphics->GetWidth() - 32, graphics->GetHeight() / 3)));
+    renderer->SetViewport(1, rearViewport);
 }
 
 void StaticScene::UpdateRenderPath(float timeStep)
@@ -389,8 +411,8 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
 
-    // DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-    // meshShape->DrawDebugGeometry(debugRenderer, true);
+    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+    editorModel_->DrawDebugGeometry(debugRenderer, true);
 	// UpdateRenderPath(timeStep);
 }
 

@@ -22,6 +22,12 @@ using ResourceDir = HashMap<String, Vector<ResourceFile>>;
 
 using ResourceMap = HashMap<String, ResourceFile>;
 
+enum EditorMode
+{
+    SELECT_OBJECT,
+    SELECT_VERTEX
+};
+
 class URHO3D_API EditorWindow : public ImGuiElement
 {
 	URHO3D_OBJECT(EditorWindow, ImGuiElement);
@@ -58,9 +64,11 @@ private:
     ResourceDir resources_;
 
     ResourceMap modelResources_;
+
     String modelResourcesString_;
 
     ResourceMap materialResources_;
+
     String materialResourcesString_;
 
     int currentModel_;
@@ -72,6 +80,8 @@ private:
     unsigned selectedSubElementIndex_{ M_MAX_UNSIGNED };
 
     Vector3 hitPosition_{ Vector3::ZERO };
+
+    EditorMode mode_ { SELECT_OBJECT };
 };
 
 }

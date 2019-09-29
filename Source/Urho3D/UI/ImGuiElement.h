@@ -25,34 +25,33 @@ public:
 
     static void RegisterObject(Context* context);
     
-    virtual void GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, 
-							const IntRect& currentScissor);
+    virtual void GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, const IntRect& currentScissor);
 
-	virtual void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor);
+    virtual void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor);
 
     virtual void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor);
 
     virtual void OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement);
    
-	virtual void OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
+    virtual void OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
 
-	virtual void OnDragBegin(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor) override;
+    virtual void OnDragBegin(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor) override;
 
-	virtual void OnDragEnd(const IntVector2& position, const IntVector2& screenPosition, int dragButtons, int buttons, Cursor* cursor) override;
+    virtual void OnDragEnd(const IntVector2& position, const IntVector2& screenPosition, int dragButtons, int buttons, Cursor* cursor) override;
 
-	virtual void OnDragMove(const IntVector2& position, const IntVector2& screenPosition, const IntVector2& deltaPos,
-		int buttons, int qualifiers, Cursor* cursor)  override;
+    virtual void OnDragMove(const IntVector2& position, const IntVector2& screenPosition, const IntVector2& deltaPos,
+            int buttons, int qualifiers, Cursor* cursor)  override;
 
-	virtual void OnKey(Key key, MouseButtonFlags buttons, QualifierFlags qualifiers);
-	
-	virtual void OnTextInput(const String& text);
+    virtual void OnKey(Key key, MouseButtonFlags buttons, QualifierFlags qualifiers);
+
+    virtual void OnTextInput(const String& text);
 	
     // uielement callback
     virtual void OnPositionSet(const IntVector2& newPosition);
 
     virtual void Update(float timeStep);
 
-	virtual void Render(float timeStep);
+    virtual void Render(float timeStep);
 
     void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
 
@@ -64,16 +63,16 @@ public:
 
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
 
-	void HandleRawEvent(StringHash eventType, VariantMap& args);
+    void HandleRawEvent(StringHash eventType, VariantMap& args);
 
-	bool IsWithinScissor(const IntRect& currentScissor);
+    bool IsWithinScissor(const IntRect& currentScissor);
 
-	// soon to be removed
-	void SetScene(Scene* scene) { scene_ = scene; }
+    // soon to be removed
+    virtual void SetScene(Scene* scene) { scene_ = scene; }
 
 protected:
 
-	WeakPtr<Scene> scene_;
+    WeakPtr<Scene> scene_;
 
 private:
 
@@ -81,23 +80,23 @@ private:
 
     void HandleFocused(StringHash /*eventType*/, VariantMap& eventData);
 
-	void CreateKeyMap();
+    void CreateKeyMap();
 
-	void SubscribeToEvents();
+    void SubscribeToEvents();
 
-	int FindKeyMap(int key);
+    int FindKeyMap(int key);
 
-	HashMap<int, int> mapKey_;
+    HashMap<int, int> mapKey_;
 
-	SharedPtr<Texture2D> texture_;
+    SharedPtr<Texture2D> texture_;
 
-	IntVector2 dragBeginCursor_;
+    IntVector2 dragBeginCursor_;
 
-	IntVector2 dragBeginPosition_;
+    IntVector2 dragBeginPosition_;
 
-	ImGuiContext* imguiContext_;
+    ImGuiContext* imguiContext_;
 
-	String inputText_;
+    String inputText_;
 };
 
 

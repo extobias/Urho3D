@@ -81,4 +81,6 @@ private:
 	ParticleEffect* effect_;
 	Light* light_;
     CollisionShape* meshShape;
+    EditorModelDebug* editorModel_;
+    SharedPtr<Node> rearCameraNode_;
 };
