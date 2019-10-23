@@ -6,12 +6,13 @@
 #include "../Graphics/Octree.h"
 #include "../Graphics/View.h"
 #include "../Graphics/DebugRenderer.h"
-#include "../Input/Input.h"
-#include "../Resource/ResourceCache.h"
-#include "../UI/UI.h"
-#include "../IO/Log.h"
-#include "../UI/EditorWindow.h"
 #include "../Graphics/StaticModel.h"
+#include "../Input/Input.h"
+#include "../IO/Log.h"
+#include "../Resource/ResourceCache.h"
+#include "../UI/EditorWindow.h"
+#include "../UI/EditorModelDebug.h"
+#include "../UI/UI.h"
 
 #include "imgui.h"
 
@@ -36,11 +37,18 @@ public:
 
     IntRect GetScreenRect();
 
+    void HandleWheelMouse(StringHash eventType, VariantMap& eventData);
+
 private:
+
     SharedPtr<Node> node_;
+
     SharedPtr<CustomGeometry> customGeometry_;
+
     SharedPtr<BorderImage> selectionImage_;
-    int size_{ 100 };
+
+    int size_{ 5 };
+
     bool addedToOctree_{ false };
 };
 
@@ -65,6 +73,8 @@ EditorBrush::EditorBrush(Context *context, Node *node)
 //    customGeometry_->SetMaterial(cache->GetResource<Material>("Materials/VColUnlit.xml"));
 //    customGeometry_->SetOccludee(false);
 //    customGeometry_->SetEnabled(true);
+
+    SubscribeToEvent(E_MOUSEWHEEL, URHO3D_HANDLER(EditorBrush, HandleWheelMouse));
 }
 
 EditorBrush::~EditorBrush() = default;
@@ -107,6 +117,14 @@ IntRect EditorBrush::GetScreenRect()
     return IntRect(position, position + IntVector2(size_, size_));
 }
 
+void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
+{
+    using namespace MouseWheel;
+    int delta = eventData[P_WHEEL].GetInt();
+    size_ += delta;
+    selectionImage_->SetSize(size_, size_);
+}
+
 
 /// EditorGuizmo
 EditorGuizmo::EditorGuizmo(Context* context) :
@@ -139,6 +157,9 @@ void EditorGuizmo::Render(float timeStep)
     if (!camera)
         return;
 
+    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+//    debugRenderer->AddFrustum(selectFrustum_, Color::RED, false);
+
     Node* node = scene_->GetNode(selectedNode_);
     brush_->SetVisible(currentEditMode_ == SELECT_VERTEX && node);
 
@@ -163,16 +184,21 @@ void EditorGuizmo::Render(float timeStep)
             // Vector3 worldPos = GetWorldPosition();
 
             StaticModel* staticModel = node->GetComponent<StaticModel>();
-            brush_->Update(staticModel, cursorPos, 1.0f);
+            if(staticModel)
+            {
+                BoundingBox modelBox = staticModel->GetBoundingBox();
+
+                debugRenderer->AddBoundingBox(modelBox, Color::YELLOW, false);
+
+                brush_->Update(staticModel, cursorPos, 1.0f);
+            }
         }
     }
 
-//    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-//    debugRenderer->AddLine(ray_.origin_, ray_.origin_ + ray_.direction_ * 1000.0f, Color::BLUE, false);
+    debugRenderer->AddLine(ray_.origin_, ray_.origin_ + ray_.direction_ * 1000.0f, Color::BLUE, false);
 
-    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-    debugRenderer->AddFrustum(selectFrustum_, Color::RED, false);
-
+    // Octree* octree = scene_->GetComponent<Octree>();
+    // octree->DrawDebugGeometry(false);
 //    Sphere sphereHit;
 //    sphereHit.radius_ = 0.01f;
 //    for(unsigned i = 0; i < hitPositions_.Size(); i++)
@@ -205,6 +231,16 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
         }
         else if(currentEditMode_ == SELECT_VERTEX)
         {
+            PODVector<IntVector2> faces = SelectVertex(position);
+            Node* node = scene_->GetNode(selectedNode_);
+            if (node)
+            {
+                EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+                if (debugModel)
+                {
+                    debugModel->DrawFaces(faces);
+                }
+            }
         }
     }
 }
@@ -216,10 +252,23 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
     Node* node = scene_->GetNode(selectedNode_);
     if(currentEditMode_ == SELECT_VERTEX && node)
     {
+        PODVector<IntVector2> faces = SelectVertex(position);
+        EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+        for(unsigned i = 0; i < faces.Size(); i++)
+        {
+            if (debugModel)
+            {
+                debugModel->DrawFaces(faces);
+            }
+        }
+
         Input* input = GetSubsystem<Input>();
         if (input->GetMouseButtonDown(MOUSEB_LEFT))
         {
-            SelectVertex(brush_->GetScreenRect());
+            if (debugModel)
+            {
+                debugModel->AddSelectedFaces(faces);
+            }
         }
     }
 }
@@ -244,6 +293,7 @@ Ray EditorGuizmo::GetCameraRay()
     Node* cameraNode = cameraNode_;
     if (!cameraNode)
         return Ray();
+
     Camera* camera = cameraNode->GetComponent<Camera>();
 //	float x = float(cursorPos.x_ - rect.Left()) / rect.Width();
 //	float y = float(cursorPos.y_ - rect.Top()) / rect.Height();
@@ -334,7 +384,10 @@ void EditorGuizmo::SelectVertex(const IntRect& screenRect)
 //    URHO3D_LOGERRORF("fov <%f> aspect <%f> zoom <%f> near <%f> far <%f>", camera->GetFov(), camera->GetAspectRatio(),
 //                     camera->GetZoom(), camera->GetNearClip(), camera->GetFarClip());
     // Frustum fr = camera->GetFrustum();
+    camera->SetOrthographic(true);
     Frustum fr =  camera->GetSplitFrustum(1.0f, 1000.0f);
+    camera->SetOrthographic(false);
+
     Ray lefttopRectRay = camera->GetScreenRay((float)rectPos.x_ / graphics->GetWidth(), (float)rectPos.y_ / graphics->GetHeight());
     float dNear = lefttopRectRay.HitDistance(fr.planes_[PLANE_NEAR]);
     float dFar = lefttopRectRay.HitDistance(fr.planes_[PLANE_FAR]);
@@ -363,20 +416,70 @@ void EditorGuizmo::SelectVertex(const IntRect& screenRect)
 
     selectFrustum_ = fr;
 
-    PODVector<Drawable *> results;
-    FrustumOctreeQuery query(results, fr);
-
-    octree->GetDrawables(query);
-
-    for ( unsigned i = 0; i < results.Size(); i++)
+    Node* node = scene_->GetNode(selectedNode_);
+    if (node)
     {
-        Drawable* drawable = results[i];
-        Node* node = drawable->GetNode();
-        if(node)
+        EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+        if (debugModel)
         {
-            URHO3D_LOGERRORF("result <%u> name <%s>", i, node->GetName().CString());
+            debugModel->SelectVertex(selectFrustum_);
         }
     }
+}
+
+PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
+{
+    PODVector<IntVector2> faces;
+    if (!cameraNode_ || !scene_)
+        return faces;
+
+    Octree* octree = scene_->GetComponent<Octree>();
+    Renderer* renderer = GetSubsystem<Renderer>();
+    Viewport* v0 = renderer->GetViewport(0);
+    IntVector2 mousePos = position;
+    ray_ = v0->GetScreenRay(mousePos.x_, mousePos.y_);
+
+    PODVector<RayQueryResult> result;
+    RayOctreeQuery query(result, ray_);
+    octree->Raycast(query);
+
+    Node* node = scene_->GetNode(selectedNode_);
+    if (result.Size())
+    {
+        hitPositions_.Clear();
+        for (int i = 0; i < result.Size(); i++)
+        {
+            RayQueryResult r = result[i];
+            Node* hitNode = r.drawable_->GetNode();
+
+//            if (node && node->GetID() == r.node_->GetID())
+//            {
+//                URHO3D_LOGERRORF("rayquery result: node <%s> subObject <%i> subObjectElementIndex <%i>",
+//                                 r.node_->GetName().CString(), r.subObject_, r.subObjectElementIndex_);
+//            }
+
+            if(r.subObjectElementIndex_ == M_MAX_UNSIGNED)
+            {
+                hitPositions_.Push(r.position_);
+            }
+            else
+            {
+                if (node && node->GetID() == r.node_->GetID())
+                {
+                    faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
+                }
+            }
+
+            if (hitNode)
+            {
+                String name = hitNode->GetName();
+                if (name == "Zone")
+                    continue;
+            }
+        }
+    }
+
+    return faces;
 }
 
 void EditorGuizmo::CreateBrush()

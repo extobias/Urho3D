@@ -62,6 +62,8 @@ private:
 
     void SelectVertex(const IntRect& screenRect);
 
+    PODVector<IntVector2> SelectVertex(const IntVector2& position);
+
     void CreateBrush();
 
 	unsigned selectedNode_;

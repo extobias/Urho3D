@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <material>
-	<technique name="Techniques/NoTextureVCol.xml" />
-	<parameter name="MatDiffColor" value="0.8 0.8 0.8 1" />
+	<technique name="Techniques/NoTextureVColInstanced.xml" />
+	<parameter name="MatDiffColor" value="1 1 1 1" />
 	<parameter name="MatSpecColor" value="1 1 1 1" />
 	<parameter name="MatEmissiveColor" value="0 0 0 1" />
 </material>

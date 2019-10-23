@@ -4,8 +4,8 @@
 	<texture unit="diffuse" name="Textures/PBR/Pannel/Albedo.jpg" />
 	<texture unit="normal" name="Textures/PBR/Pannel/Normal.jpg" />
 	<texture unit="specular" name="Textures/PBR/Pannel/PBR.jpg" />
-	<parameter name="UOffset" value="1 0 0 0" />
-	<parameter name="VOffset" value="0 1 0 0" />
+	<parameter name="UOffset" value="100 0 0 0" />
+	<parameter name="VOffset" value="0 100 0 0" />
 	<parameter name="MatDiffColor" value="1 1 1 1" />
 	<parameter name="MatEmissiveColor" value="0 0 0" />
 	<parameter name="MatEnvMapColor" value="1 1 1" />

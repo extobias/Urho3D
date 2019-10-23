@@ -1,4 +1,4 @@
-<technique vs="LitParticleNormal" ps="LitParticleNormal" vsdefines="SOFTPARTICLES NORMALMAP VERTEXCOLOR" psdefines="DIFFMAP SOFTPARTICLES NORMALMAP VERTEXCOLOR" >
+<technique vs="LitParticleNormal" ps="LitParticleNormal" vsdefines="NORMALMAP VERTEXCOLOR" psdefines="DIFFMAP NORMALMAP VERTEXCOLOR" >
     <pass name="alpha" depthwrite="false" depthtest="false" blend="alpha" />
     <pass name="litalpha" depthwrite="false" depthtest="false" blend="alpha" />
     <pass name="shadow" vs="Shadow" ps="Shadow" />
