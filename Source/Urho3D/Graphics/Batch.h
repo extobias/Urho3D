@@ -154,11 +154,17 @@ struct BatchGroup : public Batch
     {
         InstanceData newInstance;
         newInstance.distance_ = batch.distance_;
-        newInstance.instancingData_ = batch.instancingData_;
+
+        unsigned char* buffer = static_cast<unsigned char*>(batch.instancingData_);
+        if(!buffer)
+            newInstance.instancingData_ = batch.instancingData_;
 
         for (unsigned i = 0; i < batch.numWorldTransforms_; ++i)
         {
             newInstance.worldTransform_ = &batch.worldTransform_[i];
+            if(buffer)
+                newInstance.instancingData_ = buffer + sizeof(Vector4) * i;
+
             instances_.Push(newInstance);
         }
     }

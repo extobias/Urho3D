@@ -23,7 +23,7 @@ public:
 
     unsigned GetNormalOffset() const { return normalOffset_; }
     unsigned GetPositionOffset() const { return positionOffset_; }
-	unsigned GetColorOffset() const { return colorOffset_; }
+    unsigned GetColorOffset() const { return colorOffset_; }
 
 private:
     /// Shared vertex/index data used in the collision

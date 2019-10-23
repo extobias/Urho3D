@@ -78,11 +78,13 @@ struct URHO3D_API PhysicsRaycastResult
     /// Rigid body that was hit.
     RigidBody* body_{};
 
-	int shapePart_{};
+    int shapePart_{};
 
-	int triangleIndex_{};
+    int triangleIndex_{};
 
-	unsigned color_{};
+    unsigned collisionMask_{};
+
+    IntVector3 vc_{};
 };
 
 /// Delayed world transform assignment for parented rigidbodies.
@@ -301,6 +303,8 @@ public:
     btSoftBodyWorldInfo* GetWorldInfo() const { return softBodyWorldInfo_; }
     /// Overrides of the internal configuration.
     static struct PhysicsWorldConfig config;
+
+    static unsigned GetCollisionMask(const btCollisionObject* collisionObject, const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc);
 
 protected:
     void CreateDynaymicWorld();

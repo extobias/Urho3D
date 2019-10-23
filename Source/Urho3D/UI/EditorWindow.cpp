@@ -1,9 +1,5 @@
 #include "../UI/EditorWindow.h"
-#include "../UI/EditorGuizmo.h"
 
-#include "../IO/Log.h"
-#include "../IO/FileSystem.h"
-#include "../Resource/ResourceCache.h"
 #include "../Graphics/Graphics.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
@@ -16,7 +12,12 @@
 #include "../Graphics/StaticModel.h"
 #include "../Graphics/DebugRenderer.h"
 #include "../Graphics/Geometry.h"
+#include "../IO/Log.h"
+#include "../IO/FileSystem.h"
 #include "../Math/Polyhedron.h"
+#include "../Resource/ResourceCache.h"
+#include "../UI/EditorGuizmo.h"
+#include "../UI/EditorModelDebug.h"
 
 #include "imgui.h"
 
@@ -268,173 +269,11 @@ void EditorWindow::Render(float timeStep)
                 // ImGui::Text("%s", c->GetTypeName().CString());
                 if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
                 {
-                    // AttributeEdit(c);
+                    AttributeEdit(c);
+
+                    EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
+                    EditModelDebug(modelDebug);
                 }
-
-                StaticModel* staticModel = dynamic_cast<StaticModel*>(c);
-                if (staticModel)
-				{
-					DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-                    // staticModel->DrawDebugGeometry(debugRenderer, true);
-
-                    Model* model = staticModel->GetModel();
-                    ImGui::Text("geom <%i> vb <%i> ib <%i> olod <%i>", model->GetNumGeometries(),
-                                model->GetVertexBuffers().Size(), model->GetIndexBuffers().Size(), staticModel->GetOcclusionLodLevel());
-
-                    for(unsigned int i = 0; i < model->GetIndexBuffers().Size(); i++)
-                    {
-                        IndexBuffer* ib = model->GetIndexBuffers().At(i);
-                        ImGui::Text("ib size <%i> count <%i>", ib->GetIndexSize(), ib->GetIndexCount());
-                    }
-
-                    Matrix3x4 transform = node->GetWorldTransform();
-                    const BoundingBox& modelBoundingBox = model->GetBoundingBox();
-
-                    for(unsigned int i = 0; i < model->GetVertexBuffers().Size(); i++)
-                    {
-                        VertexBuffer* vb = model->GetVertexBuffers().At(i);
-                        ImGui::Text("vb size <%i> count <%i> shadow <%i>", vb->GetVertexSize(), vb->GetVertexCount(), vb->IsShadowed());
-
-//                        const SharedArrayPtr<unsigned char>& vertexData = vb->GetShadowDataShared();
-//                        const auto* srcData = (const unsigned char*)&vertexData[0];
-//                        unsigned vertexSize = vb->GetVertexSize();
-
-//                        Sphere sphere;
-//                        sphere.radius_ = 0.01f;
-
-//                        for (unsigned j = 0; j < vb->GetVertexCount(); j++)
-//                        {
-//                            Vector3 v0 = transform * *((const Vector3*)(&srcData[j * vertexSize]));
-
-//                            sphere.center_ = v0;
-//                            BoundingBox bb(sphere);
-//                            Polyhedron poly(bb);
-
-//                            debugRenderer->AddPolyhedron(poly, Color::RED);
-//                        }
-                    }      
-
-//                    for(unsigned int i = 0; i < model->GetNumGeometries(); i++)
-//                    {
-//                        unsigned int lodLevel = model->GetNumGeometryLodLevels(i);
-//                        for (unsigned int j = 0; j < lodLevel ; j++)
-//                        {
-//                            Geometry* geom = model->GetGeometry(i, j);
-//                            ImGui::Text("geom <%i> lod <%i> vb <%i> ib <%i> is <%i> ic <%i>", i, j,
-//                                        geom->GetVertexCount(), geom->GetIndexCount(), geom->GetIndexStart(), geom->GetIndexCount());
-//                        }
-//                    }
-
-                    int addIndex = -1;
-                    int vertexIndex = -1;
-                    const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
-                    for(unsigned i = 0; i < vb.Size(); i++)
-                    {
-                        VertexBuffer* vertexBuffer = vb.At(i);
-                        const PODVector<VertexElement>& ves = vertexBuffer->GetElements();
-                        for(unsigned j = 0; j < ves.Size(); j++)
-                        {
-                            const VertexElement& ve = ves.At(j);
-                            ImGui::Text("vertexbuffer <%i> vertexlement <%i> index <%i> offset <%i> semantic <%i> type <%i>", i, j,
-                                        ve.index_, ve.offset_, ve.semantic_, ve.type_);
-                            ImGui::SameLine();
-                            char label[8];
-                            sprintf(label,"\+##%i", j);
-                            if(ImGui::Button(label))
-                            {
-                                vertexIndex = i;
-                                addIndex = j;
-                            }
-                        }
-                    }
-
-                    if(addIndex > -1 && vertexIndex > -1)
-                    {
-                        // Resize VertexElement anterior
-                        URHO3D_LOGERRORF("addindex <%i> vertexindex <%i>", addIndex, vertexIndex);
-                        const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
-                        VertexBuffer* vertexBuffer = vb.At(vertexIndex);
-                        PODVector<VertexElement> ves = vertexBuffer->GetElements();
-                        VertexElementType type = TYPE_INT;
-                        VertexElementSemantic semantic = SEM_BLENDWEIGHTS;
-
-                        ves.Insert(addIndex + 1, VertexElement(type, semantic));
-
-                        // Save data before resizing
-                        SharedArrayPtr<unsigned char> vertexData;
-                        vertexData = vertexBuffer->GetShadowData();
-                        URHO3D_LOGERRORF("before size <%i> count <%i> size <%i>", sizeof(vertexData.Get()), vertexBuffer->GetVertexCount(), vertexBuffer->GetVertexSize());
-
-                        vertexBuffer->SetSize(vertexBuffer->GetVertexCount(), ves);
-                        URHO3D_LOGERRORF("after size <%i>  count <%i> size <%i>", sizeof(vertexBuffer->GetShadowData()), vertexBuffer->GetVertexCount(), vertexBuffer->GetVertexSize());
-
-
-                        auto* dest = (unsigned char*)vertexBuffer->Lock(0, vertexBuffer->GetVertexCount(), true);
-                        if(dest)
-                        {
-                            const PODVector<VertexElement>& ve = vertexBuffer->GetElements();
-                            for(unsigned i = 0; i < vertexBuffer->GetVertexCount(); i++)
-                            {
-                                for(unsigned j = 0; j < ve.Size(); j++)
-                                {
-                                    const VertexElement& el = ve.At(j);
-
-                                }
-                            }
-                        }
-                    }
-
-                    Geometry* geom = model->GetGeometry(0, 0);
-                    SharedArrayPtr<unsigned char> vertexData;
-                    SharedArrayPtr<unsigned char> indexData;
-                    unsigned vertexSize;
-                    unsigned indexSize;
-                    const PODVector<VertexElement>* elements;
-
-                    geom->GetRawDataShared(vertexData, vertexSize, indexData, indexSize, elements);
-                    Color color = Color::YELLOW;
-                    ImGui::Text("geom vsize <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
-
-                    if(selectedSubElementIndex_ != M_MAX_UNSIGNED)
-                    {
-                        auto* vertices = &vertexData[0];
-                        unsigned short* index = ((unsigned short*)&indexData[0]) + geom->GetIndexStart() + selectedSubElementIndex_;
-
-                        const Vector3& v0 = *((const Vector3*)(&vertices[index[0] * vertexSize]));
-                        const Vector3& v1 = *((const Vector3*)(&vertices[index[1] * vertexSize]));
-                        const Vector3& v2 = *((const Vector3*)(&vertices[index[2] * vertexSize]));
-
-                        const Matrix3x4& worldTransform = transform; //node->GetWorldTransform();
-                        // debugRenderer->AddTriangle(worldTransform * v0, worldTransform * v1, worldTransform * v2, Color::CYAN);
-
-//                        float d0 = (worldTransform * v0).DistanceToPoint(hitPosition_);
-//                        float d1 = (worldTransform * v1).DistanceToPoint(hitPosition_);
-//                        float d2 = (worldTransform * v2).DistanceToPoint(hitPosition_);
-
-//                        Sphere sphere;
-//                        sphere.radius_ = 0.02f;
-//                        Color sphereColor;
-//                        sphereColor.FromHSL(39.0f, 100.0f, 50.0f);
-
-//                        if(d0 < d1 && d0 < d2)
-//                        {
-//                            sphere.center_ = (worldTransform * v0);
-//                            debugRenderer->AddSphere(sphere, sphereColor);
-//                        }
-//                        else if(d1 < d0 && d1 < d2)
-//                        {
-//                            sphere.center_ = (worldTransform * v1);
-//                            debugRenderer->AddSphere(sphere, sphereColor);
-//                        }
-//                        else
-//                        {
-//                            sphere.center_ = (worldTransform * v2);
-//                            debugRenderer->AddSphere(sphere, sphereColor);
-//                        }
-                    }
-
-                    // debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);
-				}
             }
 
 			ImGui::EndChild();
@@ -484,6 +323,9 @@ void EditorWindow::AttributeEdit(Component* c)
 {
 	ResourceCache* cache = GetSubsystem<ResourceCache>();
 	const Vector<AttributeInfo>* attr = c->GetAttributes();
+    if(!attr)
+        return;
+
 	for (auto var : (*attr))
 	{
 		const AttributeInfo& info = var;
@@ -498,9 +340,34 @@ void EditorWindow::AttributeEdit(Component* c)
 		break;
 		case VAR_INT:
 		{
-			int v = c->GetAttribute(info.name_).GetInt();
-			ImGui::InputInt(info.name_.CString(), &v);
-			c->SetAttribute(info.name_, v);
+            unsigned int v = c->GetAttribute(info.name_).GetUInt();
+
+            if(info.enumNames_)
+            {
+                const char** name = info.enumNames_;
+                Vector<String> enumNames;
+                while(*name)
+                {
+                    enumNames.Push(*name);
+                    name++;
+                }
+                String enumName;
+                enumName.Join(enumNames, "@");
+                enumName.Replace('@', '\0');
+                enumName.Append('\0');
+
+
+                if (ImGui::Combo(info.name_.CString(), (int*)&v, enumName.CString()))
+                {
+                    // URHO3D_LOGERRORF("imgui return val <%u>", v);
+                    c->SetAttribute(info.name_, v);
+                }
+            }
+            else
+            {
+                ImGui::InputInt(info.name_.CString(), (int*)&v);
+                c->SetAttribute(info.name_, v);
+            }
 		}
 		break;
 		case VAR_FLOAT:
@@ -567,146 +434,7 @@ void EditorWindow::AttributeEdit(Component* c)
 			if (v.type_ == StringHash("ParticleEffect"))
 			{
 				ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
-				if (emitter)
-				{
-					ParticleEffect* effect = emitter->GetEffect();
-
-					float constantForce[3];
-					Vector3 econstantForce = effect->GetConstantForce();
-					memcpy(constantForce, econstantForce.Data(), sizeof(constantForce));
-					ImGui::InputFloat3("Constant Force", constantForce);
-					effect->SetConstantForce(Vector3(constantForce));
-
-					float directionMin[3];
-					Vector3 edirectionMin = effect->GetMinDirection();
-					memcpy(directionMin, edirectionMin.Data(), sizeof(directionMin));
-					ImGui::InputFloat3("Direction (Min)", directionMin);
-					effect->SetMinDirection(Vector3(directionMin));
-
-					float directionMax[3];
-					Vector3 edirectionMax = effect->GetMaxDirection();
-					memcpy(directionMax, edirectionMax.Data(), sizeof(directionMax));
-					ImGui::InputFloat3("Direction (Max)", directionMax);
-					effect->SetMaxDirection(Vector3(directionMax));
-
-					float dampingForce = effect->GetDampingForce();
-					ImGui::InputFloat("Damping Force", &dampingForce);
-					effect->SetDampingForce(dampingForce);
-
-					float activeTime = effect->GetActiveTime();
-					ImGui::InputFloat("Active Time", &activeTime);
-					effect->SetActiveTime(activeTime);
-
-					float minParticleSize[2];
-					Vector2 eminParticleSize = effect->GetMinParticleSize();
-					memcpy(minParticleSize, eminParticleSize.Data(), sizeof(minParticleSize));
-					ImGui::InputFloat2("Particle Size (Min)", minParticleSize);
-					effect->SetMinParticleSize(Vector2(minParticleSize));
-
-					float maxParticleSize[2];
-					Vector2 emaxParticleSize = effect->GetMaxParticleSize();
-					memcpy(maxParticleSize, emaxParticleSize.Data(), sizeof(maxParticleSize));
-					ImGui::InputFloat2("Particle Size (Max)", maxParticleSize);
-					effect->SetMaxParticleSize(Vector2(maxParticleSize));
-
-					float timeToLive[2];
-					timeToLive[0] = effect->GetMinTimeToLive();
-					timeToLive[1] = effect->GetMaxTimeToLive();
-					ImGui::InputFloat2("Time to Live", timeToLive);
-					effect->SetMinTimeToLive(timeToLive[0]);
-					effect->SetMaxTimeToLive(timeToLive[1]);
-					
-					float velocity[2];
-					velocity[0] = effect->GetMinVelocity();
-					velocity[1] = effect->GetMaxVelocity();
-					ImGui::InputFloat2("Velocity", velocity);
-					effect->SetMinVelocity(velocity[0]);
-					effect->SetMaxVelocity(velocity[1]);
-
-					float rotation[2];
-					rotation[0] = effect->GetMinRotation();
-					rotation[1] = effect->GetMaxRotation();
-					ImGui::InputFloat2("Rotation", rotation);
-					effect->SetMinRotation(rotation[0]);
-					effect->SetMaxRotation(rotation[1]);
-
-					float rotationSpeed[2];
-					rotationSpeed[0] = effect->GetMinRotationSpeed();
-					rotationSpeed[1] = effect->GetMaxRotationSpeed();
-					ImGui::InputFloat2("Rotation Speed", rotationSpeed);
-					effect->SetMinRotationSpeed(rotationSpeed[0]);
-					effect->SetMaxRotationSpeed(rotationSpeed[1]);
-
-					ImGui::Separator(); ImGui::Text("Variation");
-
-					float sizeAdd = effect->GetSizeAdd();
-					ImGui::InputFloat("Size Add", &sizeAdd);
-					effect->SetSizeAdd(sizeAdd);
-
-					float sizeMul = effect->GetSizeMul();
-					ImGui::InputFloat("Size Multiply", &sizeMul);
-					effect->SetSizeMul(sizeMul);
-
-					float animBias = effect->GetAnimationLodBias();
-					ImGui::InputFloat("Animation LOD", &animBias);
-					effect->SetAnimationLodBias(animBias);
-
-					ImGui::Separator(); ImGui::Text("Emitter");
-
-					int numParticles = effect->GetNumParticles();
-					ImGui::InputInt("Num Particles", &numParticles);
-					effect->SetNumParticles(numParticles);
-					emitter->ApplyEffect();
-
-					float emitterSize[3];
-					Vector3 eemitterSize = effect->GetEmitterSize();
-					memcpy(emitterSize, eemitterSize.Data(), sizeof(emitterSize));
-					effect->SetEmitterSize(Vector3(emitterSize));
-
-					float emissionRate[2];
-					emissionRate[0] = effect->GetMinEmissionRate();
-					emissionRate[1] = effect->GetMaxEmissionRate();
-					ImGui::InputFloat2("Emission Rate", emissionRate);
-					effect->SetMinEmissionRate(emissionRate[0]);
-					effect->SetMaxEmissionRate(emissionRate[1]);
-
-					const char* emitterTypes[] = { "Sphere", "Box", "SphereVolume", "Cylinder", "Ring" };
-					int emitterType = effect->GetEmitterType();
-					ImGui::Combo("Emitter Type", &emitterType, emitterTypes, IM_ARRAYSIZE(emitterTypes));
-					effect->SetEmitterType((EmitterType)emitterType);
-
-					ImGui::Separator(); ImGui::Text("Renderer");
-
-					Material* material = effect->GetMaterial();
-					ImGui::Text("Material", material->GetName().CString());
-
-					bool relative = effect->IsRelative();
-					ImGui::Checkbox("Relative Transform", &relative);
-					effect->SetRelative(relative);
-					emitter->ApplyEffect();
-
-					bool scaled = effect->IsScaled();
-					ImGui::Checkbox("Scaled", &scaled);
-					effect->SetScaled(scaled);
-					emitter->ApplyEffect();
-
-					bool sorted = effect->IsSorted();
-					ImGui::Checkbox("Sorted", &sorted);
-					effect->SetSorted(sorted);
-					emitter->ApplyEffect();
-
-					bool fixedScreen = effect->IsFixedScreenSize();
-					ImGui::Checkbox("Fixed Screen", &fixedScreen);
-					effect->SetFixedScreenSize(fixedScreen);
-					emitter->ApplyEffect();
-
-					const char* faceCameraModes[] = { "None", "Rotate XYZ", "Rotate Y", "LookAt XYZ", "LookAt Y", "LookAt Mixed", "Direction" };
-					int cameraMode = effect->GetFaceCameraMode();
-					ImGui::Combo("Face Mode", &cameraMode, faceCameraModes, IM_ARRAYSIZE(faceCameraModes));
-					effect->SetFaceCameraMode((FaceCameraMode)cameraMode);
-					emitter->ApplyEffect();
-				}
-				
+                EditParticleEmitter(emitter);
 			}
 			else if (v.type_ == StringHash("Model"))
 			{
@@ -730,7 +458,7 @@ void EditorWindow::AttributeEdit(Component* c)
 				if (v.type_ == StringHash("Material"))
 				{
 					currentMaterialList[i] = FindMaterial(v.names_.At(i));
-					char comboName[10];
+                    char comboName[32];
 					sprintf(comboName, "Material%i", i);
 					if (ImGui::Combo(comboName, &currentMaterialList[i], materialResourcesString_.CString()))
 					{
@@ -750,6 +478,256 @@ void EditorWindow::AttributeEdit(Component* c)
 		break;
 		}
 	}
+}
+
+void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
+{
+    if (!emitter)
+        return;
+
+    ParticleEffect* effect = emitter->GetEffect();
+
+    float constantForce[3];
+    Vector3 econstantForce = effect->GetConstantForce();
+    memcpy(constantForce, econstantForce.Data(), sizeof(constantForce));
+    ImGui::InputFloat3("Constant Force", constantForce);
+    effect->SetConstantForce(Vector3(constantForce));
+
+    float directionMin[3];
+    Vector3 edirectionMin = effect->GetMinDirection();
+    memcpy(directionMin, edirectionMin.Data(), sizeof(directionMin));
+    ImGui::InputFloat3("Direction (Min)", directionMin);
+    effect->SetMinDirection(Vector3(directionMin));
+
+    float directionMax[3];
+    Vector3 edirectionMax = effect->GetMaxDirection();
+    memcpy(directionMax, edirectionMax.Data(), sizeof(directionMax));
+    ImGui::InputFloat3("Direction (Max)", directionMax);
+    effect->SetMaxDirection(Vector3(directionMax));
+
+    float dampingForce = effect->GetDampingForce();
+    ImGui::InputFloat("Damping Force", &dampingForce);
+    effect->SetDampingForce(dampingForce);
+
+    float activeTime = effect->GetActiveTime();
+    ImGui::InputFloat("Active Time", &activeTime);
+    effect->SetActiveTime(activeTime);
+
+    float minParticleSize[2];
+    Vector2 eminParticleSize = effect->GetMinParticleSize();
+    memcpy(minParticleSize, eminParticleSize.Data(), sizeof(minParticleSize));
+    ImGui::InputFloat2("Particle Size (Min)", minParticleSize);
+    effect->SetMinParticleSize(Vector2(minParticleSize));
+
+    float maxParticleSize[2];
+    Vector2 emaxParticleSize = effect->GetMaxParticleSize();
+    memcpy(maxParticleSize, emaxParticleSize.Data(), sizeof(maxParticleSize));
+    ImGui::InputFloat2("Particle Size (Max)", maxParticleSize);
+    effect->SetMaxParticleSize(Vector2(maxParticleSize));
+
+    float timeToLive[2];
+    timeToLive[0] = effect->GetMinTimeToLive();
+    timeToLive[1] = effect->GetMaxTimeToLive();
+    ImGui::InputFloat2("Time to Live", timeToLive);
+    effect->SetMinTimeToLive(timeToLive[0]);
+    effect->SetMaxTimeToLive(timeToLive[1]);
+
+    float velocity[2];
+    velocity[0] = effect->GetMinVelocity();
+    velocity[1] = effect->GetMaxVelocity();
+    ImGui::InputFloat2("Velocity", velocity);
+    effect->SetMinVelocity(velocity[0]);
+    effect->SetMaxVelocity(velocity[1]);
+
+    float rotation[2];
+    rotation[0] = effect->GetMinRotation();
+    rotation[1] = effect->GetMaxRotation();
+    ImGui::InputFloat2("Rotation", rotation);
+    effect->SetMinRotation(rotation[0]);
+    effect->SetMaxRotation(rotation[1]);
+
+    float rotationSpeed[2];
+    rotationSpeed[0] = effect->GetMinRotationSpeed();
+    rotationSpeed[1] = effect->GetMaxRotationSpeed();
+    ImGui::InputFloat2("Rotation Speed", rotationSpeed);
+    effect->SetMinRotationSpeed(rotationSpeed[0]);
+    effect->SetMaxRotationSpeed(rotationSpeed[1]);
+
+    ImGui::Separator(); ImGui::Text("Variation");
+
+    float sizeAdd = effect->GetSizeAdd();
+    ImGui::InputFloat("Size Add", &sizeAdd);
+    effect->SetSizeAdd(sizeAdd);
+
+    float sizeMul = effect->GetSizeMul();
+    ImGui::InputFloat("Size Multiply", &sizeMul);
+    effect->SetSizeMul(sizeMul);
+
+    float animBias = effect->GetAnimationLodBias();
+    ImGui::InputFloat("Animation LOD", &animBias);
+    effect->SetAnimationLodBias(animBias);
+
+    ImGui::Separator(); ImGui::Text("Emitter");
+
+    int numParticles = effect->GetNumParticles();
+    ImGui::InputInt("Num Particles", &numParticles);
+    effect->SetNumParticles(numParticles);
+    emitter->ApplyEffect();
+
+    float emitterSize[3];
+    Vector3 eemitterSize = effect->GetEmitterSize();
+    memcpy(emitterSize, eemitterSize.Data(), sizeof(emitterSize));
+    effect->SetEmitterSize(Vector3(emitterSize));
+
+    float emissionRate[2];
+    emissionRate[0] = effect->GetMinEmissionRate();
+    emissionRate[1] = effect->GetMaxEmissionRate();
+    ImGui::InputFloat2("Emission Rate", emissionRate);
+    effect->SetMinEmissionRate(emissionRate[0]);
+    effect->SetMaxEmissionRate(emissionRate[1]);
+
+    const char* emitterTypes[] = { "Sphere", "Box", "SphereVolume", "Cylinder", "Ring" };
+    int emitterType = effect->GetEmitterType();
+    ImGui::Combo("Emitter Type", &emitterType, emitterTypes, IM_ARRAYSIZE(emitterTypes));
+    effect->SetEmitterType((EmitterType)emitterType);
+
+    ImGui::Separator(); ImGui::Text("Renderer");
+
+    Material* material = effect->GetMaterial();
+    ImGui::Text("Material", material->GetName().CString());
+
+    bool relative = effect->IsRelative();
+    ImGui::Checkbox("Relative Transform", &relative);
+    effect->SetRelative(relative);
+    emitter->ApplyEffect();
+
+    bool scaled = effect->IsScaled();
+    ImGui::Checkbox("Scaled", &scaled);
+    effect->SetScaled(scaled);
+    emitter->ApplyEffect();
+
+    bool sorted = effect->IsSorted();
+    ImGui::Checkbox("Sorted", &sorted);
+    effect->SetSorted(sorted);
+    emitter->ApplyEffect();
+
+    bool fixedScreen = effect->IsFixedScreenSize();
+    ImGui::Checkbox("Fixed Screen", &fixedScreen);
+    effect->SetFixedScreenSize(fixedScreen);
+    emitter->ApplyEffect();
+
+    const char* faceCameraModes[] = { "None", "Rotate XYZ", "Rotate Y", "LookAt XYZ", "LookAt Y", "LookAt Mixed", "Direction" };
+    int cameraMode = effect->GetFaceCameraMode();
+    ImGui::Combo("Face Mode", &cameraMode, faceCameraModes, IM_ARRAYSIZE(faceCameraModes));
+    effect->SetFaceCameraMode((FaceCameraMode)cameraMode);
+    emitter->ApplyEffect();
+}
+
+void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
+{
+    if (!modelDebug)
+        return;
+
+    Model* model = modelDebug->GetModel();
+    if (!model)
+        return;
+
+    int addIndex = -1;
+    int vertexIndex = -1;
+    const Vector<SharedPtr<VertexBuffer> >& vb = model->GetVertexBuffers();
+    for(unsigned i = 0; i < vb.Size(); i++)
+    {
+        VertexBuffer* vertexBuffer = vb.At(i);
+        const PODVector<VertexElement>& ves = vertexBuffer->GetElements();
+        for(unsigned j = 0; j < ves.Size(); j++)
+        {
+            const VertexElement& ve = ves.At(j);
+            ImGui::Text("ve <%i> index <%i> offset <%i> semantic <%i> type <%i>", j,
+                        ve.index_, ve.offset_, ve.semantic_, ve.type_);
+            ImGui::SameLine();
+            char label[8];
+            sprintf(label,"\+##%i", j);
+            if(ImGui::Button(label))
+            {
+                vertexIndex = i;
+                addIndex = j;
+            }
+        }
+    }
+
+    ImGui::Text("selected faces <%i>", modelDebug->GetSelectedFaces().Size());
+    if(ImGui::Button("Save Model"))
+    {
+        modelDebug->SaveModel();
+    }
+
+    if(addIndex > -1 && vertexIndex > -1)
+    {
+        modelDebug->AddVertexElement(vertexIndex, addIndex);
+    }
+
+/*
+                StaticModel* staticModel = dynamic_cast<StaticModel*>(c);
+                if (staticModel)
+                {
+//					DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+                    // staticModel->DrawDebugGeometry(debugRenderer, true);
+
+                    Model* model = staticModel->GetModel();
+                    ImGui::Text("geom <%i> vb <%i> ib <%i> olod <%i>", model->GetNumGeometries(),
+                                model->GetVertexBuffers().Size(), model->GetIndexBuffers().Size(), staticModel->GetOcclusionLodLevel());
+
+                    for(unsigned int i = 0; i < model->GetIndexBuffers().Size(); i++)
+                    {
+                        IndexBuffer* ib = model->GetIndexBuffers().At(i);
+                        ImGui::Text("ib size <%i> count <%i>", ib->GetIndexSize(), ib->GetIndexCount());
+                    }
+
+//                    Matrix3x4 transform = node->GetWorldTransform();
+//                    const BoundingBox& modelBoundingBox = model->GetBoundingBox();
+
+                    for(unsigned int i = 0; i < model->GetVertexBuffers().Size(); i++)
+                    {
+                        VertexBuffer* vb = model->GetVertexBuffers().At(i);
+                        ImGui::Text("vb size <%i> count <%i> shadow <%i>", vb->GetVertexSize(), vb->GetVertexCount(), vb->IsShadowed());
+
+//                        const SharedArrayPtr<unsigned char>& vertexData = vb->GetShadowDataShared();
+//                        const auto* srcData = (const unsigned char*)&vertexData[0];
+//                        unsigned vertexSize = vb->GetVertexSize();
+
+//                        Sphere sphere;
+//                        sphere.radius_ = 0.01f;
+
+//                        for (unsigned j = 0; j < vb->GetVertexCount(); j++)
+//                        {
+//                            Vector3 v0 = transform * *((const Vector3*)(&srcData[j * vertexSize]));
+
+//                            sphere.center_ = v0;
+//                            BoundingBox bb(sphere);
+//                            Polyhedron poly(bb);
+
+//                            debugRenderer->AddPolyhedron(poly, Color::RED);
+//                        }
+                    }
+
+//                    for(unsigned int i = 0; i < model->GetNumGeometries(); i++)
+//                    {
+//                        unsigned int lodLevel = model->GetNumGeometryLodLevels(i);
+//                        for (unsigned int j = 0; j < lodLevel ; j++)
+//                        {
+//                            Geometry* geom = model->GetGeometry(i, j);
+//                            ImGui::Text("geom <%i> lod <%i> vb <%i> ib <%i> is <%i> ic <%i>", i, j,
+//                                        geom->GetVertexCount(), geom->GetIndexCount(), geom->GetIndexStart(), geom->GetIndexCount());
+//                        }
+//                    }
+
+//                    ImGui::Text("geom vsize <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
+                }
+                */
+}
+
+void EditorWindow::DebugModelSubPart()
+{
 }
 
 int EditorWindow::FindModel(const String& name)

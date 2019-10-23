@@ -5,7 +5,10 @@
 namespace Urho3D
 {
 
+class Model;
+class ParticleEmitter;
 class EditorGuizmo;
+class EditorModelDebug;
 
 static const StringHash E_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED");
 static const StringHash P_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED_ID");
@@ -50,6 +53,12 @@ public:
 
 private:
     void AttributeEdit(Component* c);
+
+    void EditParticleEmitter(ParticleEmitter* emitter);
+
+    void EditModelDebug(EditorModelDebug* model);
+
+    void DebugModelSubPart();
 
     int FindModel(const String& name);
 

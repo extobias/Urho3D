@@ -10,6 +10,15 @@ class Model;
 class VertexBuffer;
 class IndexBuffer;
 
+enum VertexCollisionMaskType
+{
+    NONE = 0x00,
+    TRACK_ROAD = 0x01,
+    TRACK_BORDER = 0x02,
+    OFFTRACK_WEAK = 0x04,
+    OFFTRACK_HEAVY = 0x08
+};
+
 class URHO3D_API EditorModelDebug : public Drawable
 {
     URHO3D_OBJECT(EditorModelDebug, Drawable);
@@ -26,14 +35,41 @@ public:
 
     void UpdateBatches(const FrameInfo& frame) override;
 
+    void ApplyAttributes() override;
+
+    void OnSetAttribute(const AttributeInfo& attr, const Variant& src) override;
+
     void SetModel(Model* model);
 
     void SetMaterial(Material* material);
 
     void SetBoundingBox(const BoundingBox& box);
 
+    void SelectVertex(const Frustum& frustum);
+
+    void SelectFaces(const PODVector<IntVector2>& faces);
+
+    void AddSelectedFaces(const PODVector<IntVector2>& faces);
+
+    void DrawFaces(const PODVector<IntVector2>& faces);
+
+    const PODVector<int>& GetSelectedVertex() const { return selected_; }
+
+    const PODVector<IntVector2>& GetSelectedFaces() const { return selectedFaces_; }
+
+    Model* GetModel() const { return model_; }
+
+    void UpdateVertexFaces();
+
+    void ApplyVertexCollisionMask();
+
+    void AddVertexElement(unsigned vertexIndex, unsigned vertexElementIndex);
+
+    void SaveModel();
+
 protected:
-     virtual void OnWorldBoundingBoxUpdate();
+
+    virtual void OnWorldBoundingBoxUpdate();
 
     PrimitiveType primitiveType_;
 
@@ -41,9 +77,15 @@ protected:
 
     SharedPtr<Geometry> geometry_;
 
+    SharedPtr<Geometry> geometryFaces_;
+
     SharedPtr<VertexBuffer> vertexBuffer_;
 
     SharedPtr<IndexBuffer> indexBuffer_;
+
+    SharedPtr<VertexBuffer> vertexBufferFaces_;
+
+    SharedPtr<IndexBuffer> indexBufferFaces_;
 
     PODVector<VertexElement> vertexElements_;
 
@@ -51,13 +93,45 @@ protected:
 
     PODVector<Matrix3x4> worldTransforms_;
 
+    PODVector<Matrix3x4> worldTransformsFaces_;
+
     PODVector<Vector3> vertexOffset_;
 
+    PODVector<int> selected_;
+
+    PODVector<IntVector2> selectedFaces_;
+
     unsigned numWorldTransforms_{};
+
+    unsigned numWorldTransformsFaces_{};
 
 private:
     /// Handle model reload finished.
     void HandleModelReloadFinished(StringHash eventType, VariantMap& eventData);
+
+    Color GetFaceColor();
+
+    Color GetFaceColor(unsigned mask);
+
+    VertexCollisionMaskType GetCollisionMask(unsigned int mask);
+
+    void CreateVertexInstances();
+
+    void CreateFaceInstances();
+
+    void UpdateFacesColor();
+
+    void CalcMatrixFaces();
+
+    Vector<Vector3> GetFacePoints(unsigned face);
+
+    VertexCollisionMaskType GetFaceCollisionMask(unsigned face);
+
+    void DebugList(const PODVector<IntVector2>& list);
+
+    unsigned vertexMaskType_;
+
+    float vertexScale_;
 };
 
 }

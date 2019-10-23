@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <material>
-	<technique name="Techniques/PBR/PBRNoTexture.xml" quality="0" loddistance="0" />
+	<technique name="Techniques/PBR/PBRDiffNormalEmissive.xml" quality="0" loddistance="0" />
+	<texture unit="diffuse" name="Textures/PBR/Emissive Pannel/Albedo.jpg" />
+	<texture unit="normal" name="Textures/PBR/Emissive Pannel/Normal.jpg" />
+	<texture unit="emissive" name="Textures/PBR/Emissive Pannel/Emissive.jpg" />
 	<parameter name="UOffset" value="1 0 0 0" />
 	<parameter name="VOffset" value="0 1 0 0" />
 	<parameter name="MatDiffColor" value="1 1 1 1" />
@@ -14,6 +17,7 @@
 	<fill value="solid" />
 	<depthbias constant="0" slopescaled="0" />
 	<alphatocoverage enable="false" />
+	<lineantialias enable="false" />
 	<renderorder value="128" />
 	<occlusion enable="true" />
 </material>

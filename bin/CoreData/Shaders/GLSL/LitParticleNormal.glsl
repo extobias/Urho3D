@@ -147,10 +147,10 @@ void PS()
     // Get material diffuse albedo
     #ifdef DIFFMAP
         vec4 diffInput = texture2D(sDiffMap, vTexCoord.xy);
-        #ifdef ALPHAMASK
+        // #ifdef ALPHAMASK
             if (diffInput.a < 0.1)
                 discard;
-        #endif
+        // #endif
         vec4 diffColor = cMatDiffColor * diffInput;
     #else
         vec4 diffColor = cMatDiffColor;
@@ -204,43 +204,38 @@ void PS()
         vec3 lightColor;
         vec3 lightDir;
         vec3 finalColor;
+        
+        // con estas dos funciona inicialmente
+//         float diff = max(dot(normal, cLightDirPS), 0.0);
+//         gl_FragColor = vec4(vec3(diff), diffColor.a);
 
         // float diff = GetDiffuseVolumetric(vWorldPos.xyz);
         // vWorldPos tiene q ver con la direccion de la iluminacion, ver como aplicar/desaplicar?
         // la rotacion que viene iTexCoord1
-        // float diff = GetDiffuse(normal, vWorldPos2.xyz, lightDir);
-        float diff = max(dot(normal, cLightDirPS), 0.0);
-
-//         #ifdef SHADOW
-//             diff *= GetShadow(vShadowPos, vWorldPos.w);
-//         #endif
-    
-//         #if defined(SPOTLIGHT)
-//             lightColor = vSpotPos.w > 0.0 ? texture2DProj(sLightSpotMap, vSpotPos).rgb * cLightColor.rgb : vec3(0.0, 0.0, 0.0);
-//         #elif defined(CUBEMASK)
-//             lightColor = textureCube(sLightCubeMap, vCubeMaskVec).rgb * cLightColor.rgb;
-//         #else
-//             lightColor = cLightColor.rgb;
-//         #endif
-//         
-//         vec3 specColor = cMatSpecColor.rgb;
-//         #ifdef SPECULAR
-//             float spec = GetSpecular(normal, cCameraPosPS - vWorldPos.xyz, lightDir, cMatSpecColor.a);
-//             finalColor = diff * lightColor * (diffColor.rgb + spec * specColor * cLightColor.a);
-//         #else
-//             finalColor = diff * lightColor * diffColor.rgb;
-//         #endif
-
-        // finalColor = diff * lightColor * diffColor.rgb;
-        // gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
-        //
-        gl_FragColor = vec4(vec3(diff), diffColor.a);
-        float Sign = 1.0 - step(128.0, vColor.r)*2.0;
-        float Exponent = 2.0 * mod(vColor.r,128.0) + step(128.0,vColor.g) - 127.0; 
-        float Mantissa = mod(vColor.g, 128.0) * 65536.0 + vColor.b * 256.0 + vColor.a + float(0x800000);
-        float rotation =  Sign * exp2(Exponent) * (Mantissa * exp2(-23.0 )); 
+        float diff = GetDiffuse(normal, vWorldPos2.xyz, lightDir);
         
-        // gl_FragColor = vec4(normalize(vec3(rotation, rotation, rotation)), diffColor.a);
+        #ifdef SHADOW
+            diff *= GetShadow(vShadowPos, vWorldPos.w);
+        #endif
+    
+        #if defined(SPOTLIGHT)
+            lightColor = vSpotPos.w > 0.0 ? texture2DProj(sLightSpotMap, vSpotPos).rgb * cLightColor.rgb : vec3(0.0, 0.0, 0.0);
+        #elif defined(CUBEMASK)
+            lightColor = textureCube(sLightCubeMap, vCubeMaskVec).rgb * cLightColor.rgb;
+        #else
+            lightColor = cLightColor.rgb;
+        #endif
+        
+        vec3 specColor = cMatSpecColor.rgb;
+        #ifdef SPECULAR
+            float spec = GetSpecular(normal, cCameraPosPS - vWorldPos.xyz, lightDir, cMatSpecColor.a);
+            finalColor = diff * lightColor * (diffColor.rgb + spec * specColor * cLightColor.a);
+        #else
+            finalColor = diff * lightColor * diffColor.rgb;
+        #endif
+
+        // gl_FragColor = vec4(GetLitFog(finalColor, 1), diffColor.a);
+        gl_FragColor = vec4(vec3(diff), diffColor.a);
     #else
         // Ambient & per-vertex lighting
         vec3 finalColor = vVertexLight * diffColor.rgb;

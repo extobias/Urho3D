@@ -69,3 +69,5 @@ add_sample_subdirectory (133_LightTest)
 add_sample_subdirectory (44_RibbonTrailDemo)
 add_sample_subdirectory (42_PBRMaterials)
 add_sample_subdirectory (20_HugeObjectCount)
+add_sample_subdirectory (06_SkeletalAnimation)
+

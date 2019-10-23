@@ -1,0 +1,5 @@
+<technique vs="LitSolidInstanced" ps="LitSolidInstanced" vsdefines="NOUV VERTEXCOLOR" psdefines="VERTEXCOLOR" >
+    <pass name="alpha"  depthwrite="false" blend="alpha" />
+    <pass name="litalpha" depthwrite="false" blend="addalpha" />
+    <pass name="shadow" vs="Shadow" ps="Shadow" />
+</technique>

@@ -14,7 +14,7 @@ MaterialTriangleMeshInterface::MaterialTriangleMeshInterface(Model* model,
     unsigned numGeometries = model->GetNumGeometries();
     unsigned totalTriangles = 0;
 
-    URHO3D_LOGINFOF("Materialtrianglemeshinterface.Materialtrianglemeshinterface: model name <%s> numGeometries <%u>", model->GetName().CString(), numGeometries);
+    URHO3D_LOGERRORF("Materialtrianglemeshinterface.Materialtrianglemeshinterface: model name <%s> numGeometries <%u>", model->GetName().CString(), numGeometries);
     for (unsigned i = 0; i < numGeometries; ++i)
     {
         Geometry* geometry = model->GetGeometry(i, lodLevel);
@@ -64,7 +64,7 @@ MaterialTriangleMeshInterface::MaterialTriangleMeshInterface(Model* model,
         meshIndex.m_vertexType = PHY_FLOAT;
         m_indexedMeshes.push_back(meshIndex);
 
-		colorOffset_ = VertexBuffer::GetElementOffset(*elements, TYPE_UBYTE4_NORM, SEM_COLOR);
+        colorOffset_ = VertexBuffer::GetElementOffset(*elements, TYPE_INT, SEM_OBJECTINDEX);
 		if (colorOffset_ != M_MAX_UNSIGNED)
 		{
 			btMaterialProperties matProp;
