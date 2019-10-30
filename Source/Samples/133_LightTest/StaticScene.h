@@ -83,4 +83,6 @@ private:
     CollisionShape* meshShape;
     EditorModelDebug* editorModel_;
     SharedPtr<Node> rearCameraNode_;
+
+    float cameraDistance_;
 };

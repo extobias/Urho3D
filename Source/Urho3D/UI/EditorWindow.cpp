@@ -334,19 +334,20 @@ void EditorWindow::AttributeEdit(Component* c)
 		case VAR_BOOL:
 		{
 			bool v = c->GetAttribute(info.name_).GetBool();
-			ImGui::Checkbox(info.name_.CString(), &v);
-			c->SetAttribute(info.name_, v);
+            if (ImGui::Checkbox(info.name_.CString(), &v))
+            {
+                c->SetAttribute(info.name_, v);
+            }
 		}
 		break;
 		case VAR_INT:
 		{
             unsigned int v = c->GetAttribute(info.name_).GetUInt();
-
-            if(info.enumNames_)
+            if (info.enumNames_)
             {
                 const char** name = info.enumNames_;
                 Vector<String> enumNames;
-                while(*name)
+                while (*name)
                 {
                     enumNames.Push(*name);
                     name++;
@@ -365,16 +366,20 @@ void EditorWindow::AttributeEdit(Component* c)
             }
             else
             {
-                ImGui::InputInt(info.name_.CString(), (int*)&v);
-                c->SetAttribute(info.name_, v);
+                if (ImGui::InputInt(info.name_.CString(), (int*)&v))
+                {
+                    c->SetAttribute(info.name_, v);
+                }
             }
 		}
 		break;
 		case VAR_FLOAT:
 		{
 			float v = c->GetAttribute(info.name_).GetFloat();
-			ImGui::InputFloat(info.name_.CString(), &v);
-			c->SetAttribute(info.name_, v);
+            if (ImGui::InputFloat(info.name_.CString(), &v))
+            {
+                c->SetAttribute(info.name_, v);
+            }
 		}
 		break;
 		case VAR_STRING:

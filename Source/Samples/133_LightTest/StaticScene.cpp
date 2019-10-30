@@ -57,7 +57,8 @@ StaticScene::StaticScene(Context* context) :
     Sample(context),
 	commandIndexSaoCopy_(-1),
     commandIndexSaoMain_(-1),
-    aoOnly_(false)
+    aoOnly_(false),
+    cameraDistance_(8.0f)
 {
 }
 
@@ -175,7 +176,7 @@ void StaticScene::CreateScene()
     meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
     meshNode->SetScale(0.005f);
     StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-    Model* meshModel = cache->GetResource<Model>("Models/plane-collision.mdl");
+    Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
     meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/DiamonPlate.xml"));
@@ -184,9 +185,9 @@ void StaticScene::CreateScene()
     // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
 //    meshShape = meshNode->CreateComponent<CollisionShape>();
 //    meshShape->SetTriangleMesh(meshModel);
-//    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
-//    editorModel_->SetModel(meshModel);
-//    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
+    editorModel_->SetModel(meshModel);
+    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     // Create a scene node for the camera, which we will move around
@@ -356,8 +357,9 @@ void StaticScene::UpdateRenderPath(float timeStep)
 void StaticScene::MoveCamera(float timeStep)
 {
     // Do not move if the UI has a focused element (the console)
- //   if (GetSubsystem<UI>()->GetFocusElement())
- //       return;
+    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
+    if (focusElement)
+        return;
 
     Input* input = GetSubsystem<Input>();
 
@@ -382,6 +384,16 @@ void StaticScene::MoveCamera(float timeStep)
         Quaternion camRot = cameraNode_->GetRotation();
         pitch_ = camRot.PitchAngle();
         yaw_ = camRot.YawAngle();
+
+        cameraDistance_ += input->GetMouseMoveWheel();
+
+        Vector3 lookAt = cameraNode_->GetDirection(); // pos - rot * Vector3(0.0f, 0.0f, -3.0f);
+        Quaternion dir(yaw_, Vector3::UP);
+        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
+
+        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
+
+        cameraNode_->SetPosition(cameraTargetPos);
     }
 
 	if (input->GetKeyDown(KEY_SHIFT))
