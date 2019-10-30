@@ -249,6 +249,11 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
 {
     ImGuiElement::OnHover(position, screenPosition, buttons, qualifiers, cursor);
 
+    if(ImGuizmo::IsOver())
+        SetFocusMode(FM_FOCUSABLE);
+    else
+        SetFocusMode(FM_NOTFOCUSABLE);
+
     Node* node = scene_->GetNode(selectedNode_);
     if(currentEditMode_ == SELECT_VERTEX && node)
     {

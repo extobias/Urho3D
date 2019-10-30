@@ -1416,7 +1416,16 @@ void UI::ProcessHover(const IntVector2& windowCursorPos, MouseButtonFlags button
                     return;
             }
             hoveredElements_[element] = true;
+
+            if (element->GetFocusMode() != FM_NOTFOCUSABLE)
+                SetFocusElement(element);
+            else
+                SetFocusElement(nullptr);
         }
+    }
+    else
+    {
+        SetFocusElement(nullptr);
     }
 }
 
