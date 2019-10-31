@@ -199,6 +199,7 @@ void EditorGuizmo::Render(float timeStep)
 
     // Octree* octree = scene_->GetComponent<Octree>();
     // octree->DrawDebugGeometry(false);
+
 //    Sphere sphereHit;
 //    sphereHit.radius_ = 0.01f;
 //    for(unsigned i = 0; i < hitPositions_.Size(); i++)
