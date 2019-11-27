@@ -55,7 +55,7 @@ URHO3D_DEFINE_APPLICATION_MAIN(StaticScene)
 
 StaticScene::StaticScene(Context* context) :
     Sample(context),
-	commandIndexSaoCopy_(-1),
+    commandIndexSaoCopy_(-1),
     commandIndexSaoMain_(-1),
     aoOnly_(false),
     cameraDistance_(8.0f)
@@ -93,57 +93,57 @@ void StaticScene::CreateScene()
 
     scene_ = new Scene(context_);
     scene_->CreateComponent<Octree>();
-	scene_->CreateComponent<DebugRenderer>();
+    scene_->CreateComponent<DebugRenderer>();
 
     engine_->SetMaxFps(60.0f);
 
-	// zone
-	Node* zoneNode = scene_->CreateChild("Zone");
-	Zone* zone = zoneNode->CreateComponent<Zone>();
+    // zone
+    Node* zoneNode = scene_->CreateChild("Zone");
+    Zone* zone = zoneNode->CreateComponent<Zone>();
     zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
-	zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
-	Node* zoneChild = zoneNode->CreateChild("ZoneChild");
+    zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
+    Node* zoneChild = zoneNode->CreateChild("ZoneChild");
 
-	// ground
+    // ground
     Node* planeNode = scene_->CreateChild("Plane");
     planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
     StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
     planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
     // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-	planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
     planeNode->SetEnabled(true);
 
-	// light
+    // light
     Node* lightNode = scene_->CreateChild("DirectionalLight");
-	lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
+    lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
     lightNode->SetRotation(Quaternion(90.0f, Vector3::RIGHT));
     // lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
     light_ = lightNode->CreateComponent<Light>();
     light_->SetLightType(LIGHT_DIRECTIONAL);
-	light_->SetRadius(10.0f);
-	light_->SetFov(50.0f);
+    light_->SetRadius(10.0f);
+    light_->SetFov(50.0f);
     light_->SetBrightness(5000.0f);
-	light_->SetUsePhysicalValues(true);
-	light_->SetTemperature(6500.0f);
-	light_->SetCastShadows(true);
-	light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+    light_->SetUsePhysicalValues(true);
+    light_->SetTemperature(6500.0f);
+    light_->SetCastShadows(true);
+    light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
 
-	// sky
-	//Node* skyNode = scene_->CreateChild("Sky");
-	//skyNode->SetScale(500.0f); // The scale actually does not matter
-	//Skybox* skybox = skyNode->CreateComponent<Skybox>();
-	//skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-	//skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+    // sky
+    //Node* skyNode = scene_->CreateChild("Sky");
+    //skyNode->SetScale(500.0f); // The scale actually does not matter
+    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
+    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
-	// particles
-	Node* emitterNode = scene_->CreateChild("Emitter");
-	emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
-	auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
-	effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
-	effectMaterial_ = effect_->GetMaterial();
-	effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
+    // particles
+    Node* emitterNode = scene_->CreateChild("Emitter");
+    emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+    auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
+    effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
+    effectMaterial_ = effect_->GetMaterial();
+    effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
     effect_->SetEmitterSize(Vector3::ONE);
-	particleEmitter->SetEffect(effect_);
+    particleEmitter->SetEffect(effect_);
     // particleEmitter->SetEmitting(false);
 
     const unsigned NUM_OBJECTS = 0;
@@ -151,14 +151,14 @@ void StaticScene::CreateScene()
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
         // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
-		mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+        mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
         // mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
         // mushroomNode->SetScale(0.5f + Random(2.0f));
         mushroomNode->SetScale(1.0f);
         StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
         Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
         mushroomObject->SetModel(mushroomModel);
-		mushroomObject->SetCastShadows(true);
+        mushroomObject->SetCastShadows(true);
         mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
     }
 
@@ -179,7 +179,7 @@ void StaticScene::CreateScene()
     Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
-    meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/DiamonPlate.xml"));
+    meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
 
 
     // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
@@ -198,14 +198,14 @@ void StaticScene::CreateScene()
 
     // Set an initial position for the camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
-	// cameraNode_->LookAt(Vector3::ZERO);
-	cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
+    // cameraNode_->LookAt(Vector3::ZERO);
+    cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
     // Set an initial position for the front camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
-	// CreateDepthTexture();
-	Graphics* graphics = GetSubsystem<Graphics>();
-    // graphics->Maximize();
+    // CreateDepthTexture();
+    Graphics* graphics = GetSubsystem<Graphics>();
+    graphics->Maximize();
 
     rearCameraNode_ = scene_->CreateChild("RearCamera");
     rearCameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
@@ -219,37 +219,37 @@ void StaticScene::CreateScene()
     // if we wanted
     rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
 
-	//SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
-	//SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
-	//surface->SetViewport(0, rttViewport);
-	//surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+    //SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
+    //SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
+    //surface->SetViewport(0, rttViewport);
+    //surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
 }
 
 void StaticScene::CreateDepthTexture()
 {
-	Graphics* graphics = GetSubsystem<Graphics>();
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
+    Graphics* graphics = GetSubsystem<Graphics>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-	URHO3D_LOGERRORF("> > > > > > depth support <%u>", graphics->GetReadableDepthSupport());
-	// depth buffer texture
-	SharedPtr<Texture2D> renderTexture(new Texture2D(context_));
-	float div = 2.0f;
-	renderTexture->SetSize(graphics->GetWidth() / div, graphics->GetHeight() / div, Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
-	// renderTexture->SetFilterMode(FILTER_BILINEAR);
-	renderTexture->SetName("DepthBuffer");
+    URHO3D_LOGERRORF("> > > > > > depth support <%u>", graphics->GetReadableDepthSupport());
+    // depth buffer texture
+    SharedPtr<Texture2D> renderTexture(new Texture2D(context_));
+    float div = 2.0f;
+    renderTexture->SetSize(graphics->GetWidth() / div, graphics->GetHeight() / div, Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
+    // renderTexture->SetFilterMode(FILTER_BILINEAR);
+    renderTexture->SetName("DepthBuffer");
 
-	cache->AddManualResource(renderTexture);
+    cache->AddManualResource(renderTexture);
 
-	UI* ui = GetSubsystem<UI>();
-	Sprite* textSprite = ui->GetRoot()->CreateChild<Sprite>();
+    UI* ui = GetSubsystem<UI>();
+    Sprite* textSprite = ui->GetRoot()->CreateChild<Sprite>();
 
-	// textSprite->SetScale(256.0f / renderTexture->GetWidth());
-	textSprite->SetTexture(renderTexture);
-	textSprite->SetSize(renderTexture->GetWidth(), renderTexture->GetHeight());
-	textSprite->SetHotSpot(renderTexture->GetWidth(), renderTexture->GetHeight());
-	textSprite->SetAlignment(HA_RIGHT, VA_BOTTOM);
-	textSprite->SetOpacity(1.0f);
-	textSprite->SetVisible(true);
+    // textSprite->SetScale(256.0f / renderTexture->GetWidth());
+    textSprite->SetTexture(renderTexture);
+    textSprite->SetSize(renderTexture->GetWidth(), renderTexture->GetHeight());
+    textSprite->SetHotSpot(renderTexture->GetWidth(), renderTexture->GetHeight());
+    textSprite->SetAlignment(HA_RIGHT, VA_BOTTOM);
+    textSprite->SetOpacity(1.0f);
+    textSprite->SetVisible(true);
 }
 
 void StaticScene::CreateInstructions()
@@ -257,23 +257,23 @@ void StaticScene::CreateInstructions()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
 
-	EditorWindow* imgui = new EditorWindow(context_);
-	imgui->SetName("editor");
-	imgui->SetCameraNode(cameraNode_);
-	ui->GetRoot()->AddChild(imgui);
-	imgui->SetScene(scene_);
+    EditorWindow* imgui = new EditorWindow(context_);
+    imgui->SetName("editor");
+    imgui->SetCameraNode(cameraNode_);
+    ui->GetRoot()->AddChild(imgui);
+    imgui->SetScene(scene_);
 
-	EditorGuizmo* guizmo = new EditorGuizmo(context_);
-	guizmo->SetName("guizmo");
-	guizmo->SetCameraNode(cameraNode_);
-	guizmo->SetFocusMode(FM_NOTFOCUSABLE);
-	ui->GetRoot()->AddChild(guizmo);
-	guizmo->SetPosition(0, 0);
-	guizmo->SetScene(scene_);
+    EditorGuizmo* guizmo = new EditorGuizmo(context_);
+    guizmo->SetName("guizmo");
+    guizmo->SetCameraNode(cameraNode_);
+    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
+    ui->GetRoot()->AddChild(guizmo);
+    guizmo->SetPosition(0, 0);
+    guizmo->SetScene(scene_);
 
-	imgui->BringToFront();
-	imgui->SetPriority(100);
-	imgui->SetGuizmo(guizmo);
+    imgui->BringToFront();
+    imgui->SetPriority(100);
+    imgui->SetGuizmo(guizmo);
 
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
@@ -289,7 +289,7 @@ void StaticScene::CreateInstructions()
 void StaticScene::SetupViewport()
 {
     Renderer* renderer = GetSubsystem<Renderer>();
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     renderer->SetNumExtraInstancingBufferElements(1);
     renderer->SetMinInstances(1);
@@ -302,31 +302,31 @@ void StaticScene::SetupViewport()
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
 
-	//RenderPath* effectRenderPath = viewport->GetRenderPath();
-	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+    //RenderPath* effectRenderPath = viewport->GetRenderPath();
+    SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
     // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
-	// effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredRenderDepth.xml"));
-	// effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredRenderDepth.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
 
     effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
-	//effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
+    //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
 
-	//effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
+    //effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
 
-	//effectRenderPath->SetEnabled("Bloom", true);
-	//effectRenderPath->SetEnabled("FXAA2", true);
+    //effectRenderPath->SetEnabled("Bloom", true);
+    //effectRenderPath->SetEnabled("FXAA2", true);
 
     viewport->SetRenderPath(effectRenderPath);
 
-	//for (int i = 0; i < effectRenderPath->GetNumCommands(); i++)
-	//{
-	//	RenderPathCommand* command = effectRenderPath->GetCommand(i);
-	//	if (command->tag_ == "SAO_copy")
-	//		commandIndexSaoCopy_ = i;
-	//	if (command->tag_ == "SAO_main")
-	//		commandIndexSaoMain_ = i;
-	//}
+    //for (int i = 0; i < effectRenderPath->GetNumCommands(); i++)
+    //{
+    //    RenderPathCommand* command = effectRenderPath->GetCommand(i);
+    //    if (command->tag_ == "SAO_copy")
+    //        commandIndexSaoCopy_ = i;
+    //    if (command->tag_ == "SAO_main")
+    //        commandIndexSaoMain_ = i;
+    //}
 
 //    Graphics* graphics = GetSubsystem<Graphics>();
 //    SharedPtr<Viewport> rearViewport(new Viewport(context_, scene_, rearCameraNode_->GetComponent<Camera>(),
@@ -336,11 +336,11 @@ void StaticScene::SetupViewport()
 
 void StaticScene::UpdateRenderPath(float timeStep)
 {
-	Renderer* renderer = GetSubsystem<Renderer>();
-	Viewport* viewport = renderer->GetViewport(0);
-	RenderPath* rp = viewport->GetRenderPath();
+    Renderer* renderer = GetSubsystem<Renderer>();
+    Viewport* viewport = renderer->GetViewport(0);
+    RenderPath* rp = viewport->GetRenderPath();
 
-	rp->SetEnabled("SAO_copy", true);
+    rp->SetEnabled("SAO_copy", true);
 
     if(commandIndexSaoCopy_ != -1)
     {
@@ -369,34 +369,34 @@ void StaticScene::MoveCamera(float timeStep)
     const float MOUSE_SENSITIVITY = 0.1f;
 
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-	if (input->GetMouseButtonDown(MOUSEB_RIGHT))
-	{
-		IntVector2 mouseMove = input->GetMouseMove();
+    if (input->GetMouseButtonDown(MOUSEB_RIGHT))
+    {
+        IntVector2 mouseMove = input->GetMouseMove();
         yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
         pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
-		pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+        pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
-		// Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-		cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
-	}
+        // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
     else
     {
-        Quaternion camRot = cameraNode_->GetRotation();
-        pitch_ = camRot.PitchAngle();
-        yaw_ = camRot.YawAngle();
+//        Quaternion camRot = cameraNode_->GetRotation();
+//        pitch_ = camRot.PitchAngle();
+//        yaw_ = camRot.YawAngle();
 
-        cameraDistance_ += input->GetMouseMoveWheel();
+//        cameraDistance_ += input->GetMouseMoveWheel();
 
-        Vector3 lookAt = cameraNode_->GetDirection(); // pos - rot * Vector3(0.0f, 0.0f, -3.0f);
-        Quaternion dir(yaw_, Vector3::UP);
-        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
+//        Vector3 lookAt = cameraNode_->GetDirection(); // pos - rot * Vector3(0.0f, 0.0f, -3.0f);
+//        Quaternion dir(yaw_, Vector3::UP);
+//        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
 
-        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
+//        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
 
-        cameraNode_->SetPosition(cameraTargetPos);
+//        cameraNode_->SetPosition(cameraTargetPos);
     }
 
-	if (input->GetKeyDown(KEY_SHIFT))
+    if (input->GetKeyDown(KEY_SHIFT))
         MOVE_SPEED *= 50.0f;
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     // Use the Translate() function (default local space) to move relative to the node's orientation.
@@ -419,11 +419,11 @@ void StaticScene::SubscribeToEvents()
     // Subscribe HandleUpdate() function for processing update events
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
 
-	// SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
+    // SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(StaticScene, HandleKeyDown));
 
-	SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(StaticScene, HandlePostRenderUpdate));
+    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(StaticScene, HandlePostRenderUpdate));
 }
 
 void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -439,20 +439,20 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
 //    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
 //    editorModel_->DrawDebugGeometry(debugRenderer, true);
 
-	// UpdateRenderPath(timeStep);
+    // UpdateRenderPath(timeStep);
 }
 
 void StaticScene::HandleRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
-	Camera* camera = cameraNode_->GetComponent<Camera>();
+    Camera* camera = cameraNode_->GetComponent<Camera>();
 
-	Renderer* renderer = GetSubsystem<Renderer>();
-	Viewport* viewport = renderer->GetViewport(0);
-	RenderPath* rp = viewport->GetRenderPath();
-	Graphics* graphics = GetSubsystem<Graphics>();
+    Renderer* renderer = GetSubsystem<Renderer>();
+    Viewport* viewport = renderer->GetViewport(0);
+    RenderPath* rp = viewport->GetRenderPath();
+    Graphics* graphics = GetSubsystem<Graphics>();
 
-	Matrix4 p = camera->GetProjection();
-	Vector4 projInfo;
+    Matrix4 p = camera->GetProjection();
+    Vector4 projInfo;
     bool opengl = true;
     if(opengl)
     {
@@ -467,10 +467,10 @@ void StaticScene::HandleRenderUpdate(StringHash eventType, VariantMap& eventData
             (1.0f - p.m12_ + 1.0f / graphics->GetHeight()) / p.m11_);
     }
 
-	rp->SetShaderParameter("ProjInfo", Variant(projInfo));
+    rp->SetShaderParameter("ProjInfo", Variant(projInfo));
 
-	float viewSize = camera->GetHalfViewSize();
-	rp->SetShaderParameter("ProjScale", Variant(graphics->GetHeight() / viewSize));
+    float viewSize = camera->GetHalfViewSize();
+    rp->SetShaderParameter("ProjScale", Variant(graphics->GetHeight() / viewSize));
 
     Matrix4 v = camera->GetView().ToMatrix4();
     rp->SetShaderParameter("View", Variant(v));
@@ -482,58 +482,58 @@ void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 
     int key = eventData[P_KEY].GetInt();
 
-	if (key == KEY_O)
-	{
-		aoOnly_ = !aoOnly_;
-	}
+    if (key == KEY_O)
+    {
+        aoOnly_ = !aoOnly_;
+    }
 
-	if (key == KEY_P)
-	{
-		scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
-	}
+    if (key == KEY_P)
+    {
+        scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
+    }
 
-	if (key == KEY_DOWN)
-	{
-		Color col = effectMaterial_->GetShaderParameter("MatSpecColor").GetColor();
-		URHO3D_LOGERRORF("col down <%f, %f, %f>", col.r_, col.g_, col.b_);
-		col.r_ -= 0.1;
-		col.g_ -= 0.1;
-		col.b_ -= 0.1;
-		effectMaterial_->SetShaderParameter("MatSpecColor", col);
-		URHO3D_LOGERRORF("col down <%f, %f, %f>", col.r_, col.g_, col.b_);
-	}
+    if (key == KEY_DOWN)
+    {
+        Color col = effectMaterial_->GetShaderParameter("MatSpecColor").GetColor();
+        URHO3D_LOGERRORF("col down <%f, %f, %f>", col.r_, col.g_, col.b_);
+        col.r_ -= 0.1;
+        col.g_ -= 0.1;
+        col.b_ -= 0.1;
+        effectMaterial_->SetShaderParameter("MatSpecColor", col);
+        URHO3D_LOGERRORF("col down <%f, %f, %f>", col.r_, col.g_, col.b_);
+    }
 
-	if (key == KEY_UP)
-	{
-		Color col = effectMaterial_->GetShaderParameter("MatSpecColor").GetColor();
-		col.r_ += 1.0f;
-		// col.g_ += 0.1;
-		// col.b_ += 0.1;
-		effectMaterial_->SetShaderParameter("MatSpecColor", col);
-		// effectMaterial_->
-		URHO3D_LOGERRORF("col up <%f, %f, %f>", col.r_, col.g_, col.b_);
-	}
+    if (key == KEY_UP)
+    {
+        Color col = effectMaterial_->GetShaderParameter("MatSpecColor").GetColor();
+        col.r_ += 1.0f;
+        // col.g_ += 0.1;
+        // col.b_ += 0.1;
+        effectMaterial_->SetShaderParameter("MatSpecColor", col);
+        // effectMaterial_->
+        URHO3D_LOGERRORF("col up <%f, %f, %f>", col.r_, col.g_, col.b_);
+    }
 
-	if (key == KEY_F)
-	{
-		float maxRot = effect_->GetMaxRotation();
-		if (maxRot != 0)
-		{
-			effect_->SetMaxRotation(0.0f);
-			effect_->SetMaxRotationSpeed(0.0f);
-		}
-		else
-		{
-			effect_->SetMaxRotation(360.0f);
-			effect_->SetMaxRotationSpeed(50.0f);
-		}
-	}
+    if (key == KEY_F)
+    {
+        float maxRot = effect_->GetMaxRotation();
+        if (maxRot != 0)
+        {
+            effect_->SetMaxRotation(0.0f);
+            effect_->SetMaxRotationSpeed(0.0f);
+        }
+        else
+        {
+            effect_->SetMaxRotation(360.0f);
+            effect_->SetMaxRotationSpeed(50.0f);
+        }
+    }
 
-	Sample::HandleKeyDown(eventType, eventData);
+    Sample::HandleKeyDown(eventType, eventData);
 }
 
 void StaticScene::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
-//	DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-//	light_->DrawDebugGeometry(debugRenderer, false);
+//    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+//    light_->DrawDebugGeometry(debugRenderer, false);
 }

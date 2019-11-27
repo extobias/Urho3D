@@ -55,9 +55,9 @@ static short cubeIndex[] = {
     6, 7, 3
 };
 
-static const VertexCollisionMaskType DEFAULT_VERTEX_COLLISION_MASK_TYPE = TRACK_ROAD;
+static const VertexCollisionMask DEFAULT_VERTEX_COLLISION_MASK_TYPE = TRACK_ROAD;
 
-static const char* vertexCollisionMaskTypeNames[] = {
+static const char* VertexCollisionMaskNames[] = {
     "None",
     "Track Road",
     "Track Border",
@@ -75,7 +75,9 @@ EditorModelDebug::EditorModelDebug(Context* context) :
     vertexBufferFaces_(new VertexBuffer(context)),
     indexBufferFaces_(new IndexBuffer(context)),
     vertexMaskType_(TRACK_ROAD),
-    vertexScale_(0.01f)
+    vertexScale_(0.01f),
+    currentFace_(0),
+    currentIndex_(IntVector3::ZERO)
 {
     geometry_->SetVertexBuffer(0, vertexBuffer_);
     geometry_->SetIndexBuffer(indexBuffer_);
@@ -97,7 +99,9 @@ void EditorModelDebug::RegisterObject(Context* context)
 {
     context->RegisterFactory<EditorModelDebug>(SUBSYSTEM_CATEGORY);
 
-    URHO3D_ENUM_ATTRIBUTE("Vertex Mask Type", vertexMaskType_, vertexCollisionMaskTypeNames, DEFAULT_VERTEX_COLLISION_MASK_TYPE, AM_DEFAULT);
+    URHO3D_ACCESSOR_ATTRIBUTE("Is Enabled", IsEnabled, SetEnabled, bool, true, AM_DEFAULT);
+    URHO3D_ENUM_ATTRIBUTE("Vertex Mask Type", vertexMaskType_, VertexCollisionMaskNames, DEFAULT_VERTEX_COLLISION_MASK_TYPE, AM_DEFAULT);
+    URHO3D_MIXED_ACCESSOR_ATTRIBUTE("Model", GetModelAttr, SetModelAttr, ResourceRef, ResourceRef(Model::GetTypeStatic()), AM_DEFAULT);
 }
 
 void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQueryResult>& results)
@@ -164,10 +168,9 @@ void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<Ra
             result.node_ = node_;
             result.subObject_ = i;
             result.subObjectElementIndex_ = subObjectElementIndex;
+            results.Push(result);
 
             URHO3D_LOGERRORF("hit node <%s> subObject <%i> subObjectElementIndex <%i>", node_->GetName().CString(), i, subObjectElementIndex);
-
-            results.Push(result);
         }
     }
 }
@@ -236,7 +239,7 @@ void EditorModelDebug::OnSetAttribute(const AttributeInfo& attr, const Variant& 
 //            case 4: vertexMaskType_ = OFFTRACK_HEAVY; break;
 //        }
 //        if(src.GetInt())
-//            vertexMaskType_ = (VertexCollisionMaskType) (1 << (src.GetInt() - 1));
+//            vertexMaskType_ = (VertexCollisionMask) (1 << (src.GetInt() - 1));
 //        else
 //            vertexMaskType_ = NONE;
     }
@@ -248,6 +251,27 @@ void EditorModelDebug::OnSetAttribute(const AttributeInfo& attr, const Variant& 
 
     selectedFaces_.Clear();
     selected_.Clear();
+}
+
+void EditorModelDebug::SetModelAttr(const ResourceRef& value)
+{
+    auto* cache = GetSubsystem<ResourceCache>();
+    SetModel(cache->GetResource<Model>(value.name_));
+}
+
+ResourceRef EditorModelDebug::GetModelAttr() const
+{
+    return GetResourceRef(model_, Model::GetTypeStatic());
+}
+
+unsigned EditorModelDebug::GetFacesCount() const
+{
+    const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
+    IndexBuffer* indexBuffer = ib.At(0);
+
+    unsigned count = indexBuffer->GetIndexCount();
+
+    return  count / 3;
 }
 
 void EditorModelDebug::SetModel(Model* model)
@@ -371,6 +395,11 @@ void EditorModelDebug::DrawFaces(const PODVector<IntVector2>& faces)
             SharedPtr<Geometry> g = geoms[face.x_][0];
 
             unsigned short* index = ((unsigned short*)&indexData[0]) + g->GetIndexStart() + face.y_;
+
+            currentFace_ = face.y_ / 3;
+            currentIndex_.x_ = index[0];
+            currentIndex_.y_ = index[1];
+            currentIndex_.z_ = index[2];
 
             const Vector3& v0 = *((const Vector3*)(&dstData[index[0] * vertexSize]));
             const Vector3& v1 = *((const Vector3*)(&dstData[index[1] * vertexSize]));
@@ -551,10 +580,14 @@ void EditorModelDebug::SaveModel()
 {
     ApplyVertexCollisionMask();
 
-    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "MeshTest.mdl";
+    // String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "MeshTest.mdl";
+    URHO3D_LOGERRORF("file name <%s>", model_->GetName().CString());
+    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + model_->GetName();
     File file(context_, fileName, FILE_WRITE);
-    bool saved = model_->Save(file);
-    URHO3D_LOGERRORF("file saved <%i> name <%s>", saved, fileName.CString());
+    if (model_->Save(file))
+        URHO3D_LOGERRORF("file saved name <%s>", fileName.CString());
+    else
+        URHO3D_LOGERRORF("error saving name <%s>", fileName.CString());
 }
 
 void EditorModelDebug::OnWorldBoundingBoxUpdate()
@@ -576,29 +609,37 @@ void EditorModelDebug::HandleModelReloadFinished(StringHash eventType, VariantMa
 
 Color EditorModelDebug::GetFaceColor()
 {
-    VertexCollisionMaskType type = GetCollisionMask(vertexMaskType_);
+    VertexCollisionMask type = GetCollisionMask(vertexMaskType_);
     return GetFaceColor(type);
 }
 
-Color EditorModelDebug::GetFaceColor(unsigned mask)
+Color EditorModelDebug::GetFaceColor(VertexCollisionMaskFlags mask)
 {
-    Color color;
-    if((mask & TRACK_ROAD) == TRACK_ROAD)
+    Color color(Color::BLUE);
+//    if((mask & TRACK_ROAD) == TRACK_ROAD)
+//        color = Color::GREEN;
+//    else if((mask & TRACK_BORDER) == TRACK_BORDER)
+//        color = Color::YELLOW;
+//    else if((mask & OFFTRACK_WEAK) == OFFTRACK_WEAK)
+//        color = Color::RED;
+//    else if((mask & OFFTRACK_HEAVY) == OFFTRACK_HEAVY)
+//        color = Color::BLACK;
+    if((mask & TRACK_ROAD))
         color = Color::GREEN;
-    else if((mask & TRACK_BORDER) == TRACK_BORDER)
+    else if((mask & TRACK_BORDER))
         color = Color::YELLOW;
-    else if((mask & OFFTRACK_WEAK) == OFFTRACK_WEAK)
+    else if((mask & OFFTRACK_WEAK))
         color = Color::RED;
-    else if((mask & OFFTRACK_HEAVY) == OFFTRACK_HEAVY)
+    else if((mask & OFFTRACK_HEAVY))
         color = Color::BLACK;
 
     color.a_ = 0.7f;
     return color;
 }
 
-VertexCollisionMaskType EditorModelDebug::GetCollisionMask(unsigned int mask)
+VertexCollisionMask EditorModelDebug::GetCollisionMask(unsigned int mask)
 {
-    VertexCollisionMaskType maskType = NONE;
+    VertexCollisionMask maskType = NONE;
     switch (mask) {
         case 0: maskType = NONE; break;
         case 1: maskType = TRACK_ROAD; break;
@@ -606,7 +647,6 @@ VertexCollisionMaskType EditorModelDebug::GetCollisionMask(unsigned int mask)
         case 3: maskType = OFFTRACK_WEAK; break;
         case 4: maskType = OFFTRACK_HEAVY; break;
     }
-
     return maskType;
 }
 
@@ -802,7 +842,7 @@ void EditorModelDebug::UpdateFacesColor()
     // count = 6;
     for(unsigned i = 0; i < count; i += 3)
     {
-        VertexCollisionMaskType collisionMask = GetFaceCollisionMask(i);
+        VertexCollisionMask collisionMask = GetFaceCollisionMask(i);
 
         memcpy(instanceData + offset, GetFaceColor(collisionMask).Data(), sizeof(Vector4));
         // memcpy(instanceData + offset, Color::GREEN.Data(), sizeof(Vector4));
@@ -903,7 +943,7 @@ Vector<Vector3> EditorModelDebug::GetFacePoints(unsigned face)
     return result;
 }
 
-VertexCollisionMaskType EditorModelDebug::GetFaceCollisionMask(unsigned face)
+VertexCollisionMask EditorModelDebug::GetFaceCollisionMask(unsigned face)
 {
     const Vector<SharedPtr<VertexBuffer> >& vb = model_->GetVertexBuffers();
     const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
@@ -915,7 +955,7 @@ VertexCollisionMaskType EditorModelDebug::GetFaceCollisionMask(unsigned face)
     // unsigned indexSize = indexBuffer->GetIndexSize();
     unsigned char* indexData = indexBuffer->GetShadowData();
     // unsigned indexStart = indexBuffer->GetS
-
+    const Vector<Vector<SharedPtr<Geometry> > >& geoms = model_->GetGeometries();
     // FIXME here isn't required to lock, its only for reading
     unsigned char* vertexData = vertexBuffer->GetShadowData();
     if(!vertexData)
@@ -931,11 +971,20 @@ VertexCollisionMaskType EditorModelDebug::GetFaceCollisionMask(unsigned face)
 
     if(face != M_MAX_UNSIGNED)
     {
-        unsigned short* index = ((unsigned short*)&indexData[0]) + face;
+        SharedPtr<Geometry> g = geoms[0][0];
 
-        const unsigned& c0 = *((const unsigned*)(&vertexData[index[0] * vertexSize + vertexElement->offset_]));
-        const unsigned& c1 = *((const unsigned*)(&vertexData[index[1] * vertexSize + vertexElement->offset_]));
-        const unsigned& c2 = *((const unsigned*)(&vertexData[index[2] * vertexSize + vertexElement->offset_]));
+        // FIXME verificar el tipo de los indices
+        unsigned short* index = ((unsigned short*)&indexData[0]) + g->GetIndexStart() + face;
+        unsigned short i = index[0];
+        unsigned short j = index[1];
+        unsigned short k = index[2];
+//        const unsigned& c0 = *((const unsigned*)(&vertexData[index[0] * vertexSize + vertexElement->offset_]));
+//        const unsigned& c1 = *((const unsigned*)(&vertexData[index[1] * vertexSize + vertexElement->offset_]));
+//        const unsigned& c2 = *((const unsigned*)(&vertexData[index[2] * vertexSize + vertexElement->offset_]));
+
+        const VertexCollisionMaskFlags& c0 = *((const VertexCollisionMaskFlags*)(&vertexData[i * vertexSize + vertexElement->offset_]));
+        const VertexCollisionMaskFlags& c1 = *((const VertexCollisionMaskFlags*)(&vertexData[j * vertexSize + vertexElement->offset_]));
+        const VertexCollisionMaskFlags& c2 = *((const VertexCollisionMaskFlags*)(&vertexData[k * vertexSize + vertexElement->offset_]));
 
         // color = GetFaceColor(c0);
         if((c0 & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
@@ -943,7 +992,7 @@ VertexCollisionMaskType EditorModelDebug::GetFaceCollisionMask(unsigned face)
            && (c2 & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
            && c0 == c1 && c0 == c2 && c1 == c2)
         {
-            return (VertexCollisionMaskType)c0;
+            return (VertexCollisionMask)c0;
         }
     }
 

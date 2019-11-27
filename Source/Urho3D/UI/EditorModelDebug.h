@@ -10,7 +10,7 @@ class Model;
 class VertexBuffer;
 class IndexBuffer;
 
-enum VertexCollisionMaskType
+enum VertexCollisionMask
 {
     NONE = 0x00,
     TRACK_ROAD = 0x01,
@@ -18,6 +18,7 @@ enum VertexCollisionMaskType
     OFFTRACK_WEAK = 0x04,
     OFFTRACK_HEAVY = 0x08
 };
+URHO3D_FLAGSET(VertexCollisionMask, VertexCollisionMaskFlags);
 
 class URHO3D_API EditorModelDebug : public Drawable
 {
@@ -67,6 +68,18 @@ public:
 
     void SaveModel();
 
+    void SetModelAttr(const ResourceRef& value);
+
+    ResourceRef GetModelAttr() const;
+
+    VertexCollisionMaskFlags GetCurrentMask() { return GetFaceCollisionMask(currentFace_ * 3); }
+
+    IntVector3 GetCurrentIndex() const { return currentIndex_; }
+
+    unsigned GetCurrentFace() const { return currentFace_; }
+
+    unsigned GetFacesCount() const;
+
 protected:
 
     virtual void OnWorldBoundingBoxUpdate();
@@ -111,9 +124,9 @@ private:
 
     Color GetFaceColor();
 
-    Color GetFaceColor(unsigned mask);
+    Color GetFaceColor(Urho3D::VertexCollisionMaskFlags mask);
 
-    VertexCollisionMaskType GetCollisionMask(unsigned int mask);
+    VertexCollisionMask GetCollisionMask(unsigned int mask);
 
     void CreateVertexInstances();
 
@@ -125,13 +138,17 @@ private:
 
     Vector<Vector3> GetFacePoints(unsigned face);
 
-    VertexCollisionMaskType GetFaceCollisionMask(unsigned face);
+    VertexCollisionMask GetFaceCollisionMask(unsigned face);
 
     void DebugList(const PODVector<IntVector2>& list);
 
     unsigned vertexMaskType_;
 
     float vertexScale_;
+
+    unsigned currentFace_;
+
+    IntVector3 currentIndex_;
 };
 
 }

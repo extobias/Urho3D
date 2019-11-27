@@ -268,8 +268,8 @@ void PhysicsWorld::CreateDynaymicWorld()
         softBodyWorldInfo_->m_sparsesdf.Initialize();
     }
 
-	colors.m_activeObject = btVector3(0.0f, 0.0f, 0.0f);
-	colors.m_deactivatedObject = btVector3(0.0f, 0.0f, 1.0f);
+        colors.m_activeObject = btVector3(0.0f, 0.0f, 0.0f);
+        colors.m_deactivatedObject = btVector3(0.0f, 0.0f, 1.0f);
 }
 bool PhysicsWorld::isVisible(const btVector3& aabbMin, const btVector3& aabbMax)
 {
@@ -495,34 +495,34 @@ void PhysicsWorld::RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, f
 
 struct VertexAccessor
 {
-	const unsigned char* base;
-	unsigned int stride;
+        const unsigned char* base;
+        unsigned int stride;
 
-	VertexAccessor(const unsigned char* ptr, unsigned int stride, unsigned int offset)
-		: base(ptr + offset)
-		, stride(stride)
-	{
-	}
+        VertexAccessor(const unsigned char* ptr, unsigned int stride, unsigned int offset)
+                : base(ptr + offset)
+                , stride(stride)
+        {
+        }
 
-	btVector3 operator[](unsigned int i) const
-	{
+        btVector3 operator[](unsigned int i) const
+        {
 
-		float *ptr = (float*)(base + stride * i);
-		return btVector3(ptr[0], ptr[1], ptr[2]);
-		//            return *(const btVector3*) (base + stride * i);
-	}
+                float *ptr = (float*)(base + stride * i);
+                return btVector3(ptr[0], ptr[1], ptr[2]);
+                //            return *(const btVector3*) (base + stride * i);
+        }
 
-	float GetFloat(unsigned int i) const
-	{
-		float *ptr = (float*)(base + stride * i);
-		return ptr[0];
-	}
+        float GetFloat(unsigned int i) const
+        {
+                float *ptr = (float*)(base + stride * i);
+                return ptr[0];
+        }
 
-	unsigned GetUnsigned(unsigned int i) const
-	{
-		unsigned *ptr = (unsigned*)(base + stride * i);
-		return ptr[0];
-	}
+        unsigned GetUnsigned(unsigned int i) const
+        {
+                unsigned *ptr = (unsigned*)(base + stride * i);
+                return ptr[0];
+        }
 };
 
 void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask, float overlapDistance)
@@ -561,8 +561,8 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
             result.hitFraction_ = rayCallback.m_closestHitFraction;
             result.body_ = static_cast<RigidBody*>(rayCallback.m_collisionObject->getUserPointer());
 
-			result.shapePart_ = rayCallback.m_shapePart;
-			result.triangleIndex_ = rayCallback.m_triangleIndex;           
+                        result.shapePart_ = rayCallback.m_shapePart;
+                        result.triangleIndex_ = rayCallback.m_triangleIndex;
 
             Node* node = result.body_->GetNode();
             Vector3 scale = node->GetScale();
@@ -1205,7 +1205,7 @@ void RegisterPhysicsLibrary(Context* context)
     SoftBody::RegisterObject(context);
 }
 
-unsigned PhysicsWorld::GetCollisionMask(const btCollisionObject* collisionObject,
+bool PhysicsWorld::GetCollisionMask(const btCollisionObject* collisionObject,
                                         const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc)
 {
     const btRigidBody* hitBody = btRigidBody::upcast(collisionObject);
@@ -1255,56 +1255,105 @@ unsigned PhysicsWorld::GetCollisionMask(const btCollisionObject* collisionObject
             mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
                 &indexbase, indexstride, numfaces, indicestype, shapePart);
 
-
             // VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
             VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
             VertexAccessor colors(materialBase, materialStride, my_mesh->GetColorOffset());
 
             // ptr[0, 1, 2] -> indices de result.triangleIndex_
             // const unsigned short* ptr = (const unsigned short*)(triangleMaterialBase + result.triangleIndex_ * triangleMaterialStride);
-            const unsigned short* ptr = (const unsigned short*)(indexbase + triangleIndex * indexstride);
-            unsigned int i = ptr[0];
-            unsigned int j = ptr[1];
-            unsigned int k = ptr[2];
+            unsigned ci, cj, ck;
+            if (indicestype == PHY_SHORT)
+            {
+                const unsigned short* ptr = (const unsigned short*)(indexbase + triangleIndex * indexstride);
+                unsigned short i = ptr[0];
+                unsigned short j = ptr[1];
+                unsigned short k = ptr[2];
 
-            // search the near vertex
-            btVector3 vi = positions[i] * scale.x();
-            btVector3 vj = positions[j] * scale.y();
-            btVector3 vk = positions[k] * scale.z();
+                // search the near vertex
+    //            btVector3 vi = positions[i] * scale.x();
+    //            btVector3 vj = positions[j] * scale.y();
+    //            btVector3 vk = positions[k] * scale.z();
 
-            btScalar di = vi.distance(hitPointWorld);
-            btScalar dj = vj.distance(hitPointWorld);
-            btScalar dk = vk.distance(hitPointWorld);
+    //            btScalar di = vi.distance(hitPointWorld);
+    //            btScalar dj = vj.distance(hitPointWorld);
+    //            btScalar dk = vk.distance(hitPointWorld);
 
-            unsigned colorIndex;
-//                    if(di < dj && di < dk)
-//                        colorIndex = i;
-//                    else if(dj < di && dj < dk)
-//                        colorIndex = j;
-//                    else
-//                        colorIndex = k;
+                unsigned colorIndex;
+    //                    if(di < dj && di < dk)
+    //                        colorIndex = i;
+    //                    else if(dj < di && dj < dk)
+    //                        colorIndex = j;
+    //                    else
+    //                        colorIndex = k;
 
-            unsigned ci = colors.GetUnsigned(i);
-            unsigned cj = colors.GetUnsigned(j);
-            unsigned ck = colors.GetUnsigned(k);
+                ci = colors.GetUnsigned(i);
+                cj = colors.GetUnsigned(j);
+                ck = colors.GetUnsigned(k);
 
-            vc.x_ = ci;
-            vc.y_ = cj;
-            vc.z_ = ck;
+                vc.x_ = ci;
+                vc.y_ = cj;
+                vc.z_ = ck;
 
-            if(ci > cj && ci > ck)
-                colorIndex = i;
-            else if(cj > ci && cj > ck)
-                colorIndex = j;
-            else
-                colorIndex = k;
+                if(ci > cj && ci > ck)
+                    colorIndex = i;
+                else if(cj > ci && cj > ck)
+                    colorIndex = j;
+                else
+                    colorIndex = k;
+                // return colors.GetUnsigned(colorIndex);
+            }
+            else if(indicestype == PHY_INTEGER)
+            {
+                const unsigned* ptr = (const unsigned*)(indexbase + triangleIndex * indexstride);
+                unsigned i = ptr[0];
+                unsigned j = ptr[1];
+                unsigned k = ptr[2];
 
+                // search the near vertex
+    //            btVector3 vi = positions[i] * scale.x();
+    //            btVector3 vj = positions[j] * scale.y();
+    //            btVector3 vk = positions[k] * scale.z();
 
-            return colors.GetUnsigned(colorIndex);
+    //            btScalar di = vi.distance(hitPointWorld);
+    //            btScalar dj = vj.distance(hitPointWorld);
+    //            btScalar dk = vk.distance(hitPointWorld);
+
+                unsigned colorIndex;
+    //                    if(di < dj && di < dk)
+    //                        colorIndex = i;
+    //                    else if(dj < di && dj < dk)
+    //                        colorIndex = j;
+    //                    else
+    //                        colorIndex = k;
+
+                ci = colors.GetUnsigned(i);
+                cj = colors.GetUnsigned(j);
+                ck = colors.GetUnsigned(k);
+
+                vc.x_ = ci;
+                vc.y_ = cj;
+                vc.z_ = ck;
+
+                if(ci > cj && ci > ck)
+                    colorIndex = i;
+                else if(cj > ci && cj > ck)
+                    colorIndex = j;
+                else
+                    colorIndex = k;
+            }
+
+//            if((ci & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
+//               && (cj & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
+//               && (ck & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
+//               && ci == cj && ci == ck && cj == ck)
+//            {
+//                return ci;
+//            }
+            return true;
         }
     }
 
-    return 0;
+    return false;
 }
 
 }

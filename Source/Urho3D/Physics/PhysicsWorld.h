@@ -304,7 +304,7 @@ public:
     /// Overrides of the internal configuration.
     static struct PhysicsWorldConfig config;
 
-    static unsigned GetCollisionMask(const btCollisionObject* collisionObject, const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc);
+    static bool GetCollisionMask(const btCollisionObject* collisionObject, const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc);
 
 protected:
     void CreateDynaymicWorld();

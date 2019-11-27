@@ -19,31 +19,31 @@ class EditorBrush;
 
 class URHO3D_API EditorGuizmo : public ImGuiElement
 {
-	URHO3D_OBJECT(EditorGuizmo, ImGuiElement);
+    URHO3D_OBJECT(EditorGuizmo, ImGuiElement);
 
 public:
-	/// Construct.
-	explicit EditorGuizmo(Context* context);
-	/// Destruct.
-	~EditorGuizmo() override;
-	/// Register object factory.
-	static void RegisterObject(Context* context);
+    /// Construct.
+    explicit EditorGuizmo(Context* context);
+    /// Destruct.
+    ~EditorGuizmo() override;
+    /// Register object factory.
+    static void RegisterObject(Context* context);
 
-	virtual void Render(float timeStep);
+    virtual void Render(float timeStep);
 
     void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor);
 
     void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor);
 
-	void SetSelectedNode(unsigned selectedNode) { selectedNode_ = selectedNode;	}
+    void SetSelectedNode(unsigned selectedNode) { selectedNode_ = selectedNode;    }
 
-	void SetCurrentOperation(ImGuizmo::OPERATION currentOperation) { currentOperation_ = currentOperation; }
+    void SetCurrentOperation(ImGuizmo::OPERATION currentOperation) { currentOperation_ = currentOperation; }
 
-	void SetCurrentMode(ImGuizmo::MODE currentMode) { currentMode_ = currentMode; }
+    void SetCurrentMode(ImGuizmo::MODE currentMode) { currentMode_ = currentMode; }
 
     void SetCurrentEditMode(EditorMode mode) { currentEditMode_ = mode; }
 
-	void SetCameraNode(Node* node) { cameraNode_ = node; }
+    void SetCameraNode(Node* node) { cameraNode_ = node; }
 
     void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
@@ -54,7 +54,7 @@ protected:
 
 private:
 
-	Ray GetCameraRay();
+    Ray GetCameraRay();
 
     Vector3 GetWorldPosition();
 
@@ -66,13 +66,13 @@ private:
 
     void CreateBrush();
 
-	unsigned selectedNode_;
+    unsigned selectedNode_;
 
     WeakPtr<Node> cameraNode_;
 
-	ImGuizmo::OPERATION currentOperation_;
+    ImGuizmo::OPERATION currentOperation_;
 
-	ImGuizmo::MODE currentMode_;
+    ImGuizmo::MODE currentMode_;
 
     EditorMode currentEditMode_;
 

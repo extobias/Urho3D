@@ -15,8 +15,8 @@ class MaterialTriangleMeshInterface : public btTriangleIndexVertexMaterialArray
 {
 public:
 
-	MaterialTriangleMeshInterface(Model* model, unsigned lodLevel);
-	MaterialTriangleMeshInterface(CustomGeometry* custom);
+    MaterialTriangleMeshInterface(Model* model, unsigned lodLevel);
+    MaterialTriangleMeshInterface(CustomGeometry* custom);
 
     /// OK to use quantization flag.
     bool useQuantize_;
@@ -30,7 +30,7 @@ private:
     Vector<SharedArrayPtr<unsigned char> > dataArrays_;
     unsigned normalOffset_;
     unsigned positionOffset_;
-	unsigned colorOffset_;
+    unsigned colorOffset_;
 };
 
 }

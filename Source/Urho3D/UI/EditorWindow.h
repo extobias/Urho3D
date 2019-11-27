@@ -15,10 +15,10 @@ static const StringHash P_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED_ID");
 
 struct ResourceFile
 {
-	String prefix;
-	String path;
-	String name;
-	String ext;
+        String prefix;
+        String path;
+        String name;
+        String ext;
 };
 
 using ResourceDir = HashMap<String, Vector<ResourceFile>>;
@@ -33,23 +33,23 @@ enum EditorMode
 
 class URHO3D_API EditorWindow : public ImGuiElement
 {
-	URHO3D_OBJECT(EditorWindow, ImGuiElement);
+        URHO3D_OBJECT(EditorWindow, ImGuiElement);
 
 public:
-	/// Construct.
-	explicit EditorWindow(Context* context);
-	/// Destruct.
-	~EditorWindow() override;
-	/// Register object factory.
-	static void RegisterObject(Context* context);
+    /// Construct.
+    explicit EditorWindow(Context* context);
+    /// Destruct.
+    ~EditorWindow() override;
+    /// Register object factory.
+    static void RegisterObject(Context* context);
 
-	virtual void Render(float timeStep);
+    virtual void Render(float timeStep);
 
-	void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
+    void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
-	void SetCameraNode(Node* node) { cameraNode_ = node; }
+    void SetCameraNode(Node* node) { cameraNode_ = node; }
 
-	void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
+    void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
 private:
     void AttributeEdit(Component* c);

@@ -27,88 +27,88 @@ namespace Urho3D
 extern const char* UI_CATEGORY;
 
 EditorWindow::EditorWindow(Context* context) :
-	ImGuiElement(context),
-	guizmo_(nullptr),
-	selectedNode_(0),
-	currentModel_(2)
+    ImGuiElement(context),
+    guizmo_(nullptr),
+    selectedNode_(0),
+    currentModel_(2)
 {
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
-	FileSystem dir(context_);
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    FileSystem dir(context_);
 
-	const Vector<String>& dirs = cache->GetResourceDirs();
-	for (int i = 0; i < dirs.Size(); i++)
-	{
-		String dirPath = dirs.At(i);
+    const Vector<String>& dirs = cache->GetResourceDirs();
+    for (int i = 0; i < dirs.Size(); i++)
+    {
+        String dirPath = dirs.At(i);
         // URHO3D_LOGERRORF("dir <%s>", dirPath.CString());
 
-		Vector<String> result;
-		dir.ScanDir(result, dirPath, "*.*", SCAN_FILES, true);
-		for (int j = 0; j < result.Size(); j++)
-		{
-			String prefix, name, ext;
-			SplitPath(result.At(j), prefix, name, ext);
+        Vector<String> result;
+        dir.ScanDir(result, dirPath, "*.*", SCAN_FILES, true);
+        for (int j = 0; j < result.Size(); j++)
+        {
+            String prefix, name, ext;
+            SplitPath(result.At(j), prefix, name, ext);
 
-			ext.Erase(0, 1);
+            ext.Erase(0, 1);
 
-			ResourceFile resFile;
-			resFile.prefix = prefix;
-			resFile.path = dirPath;
-			resFile.ext = ext;
-			resFile.name = result.At(j);
+            ResourceFile resFile;
+            resFile.prefix = prefix;
+            resFile.path = dirPath;
+            resFile.ext = ext;
+            resFile.name = result.At(j);
 
-			if (!resources_.Contains(prefix))
-			{
-				Vector<ResourceFile> list;
-				list.Push(resFile);
-				resources_.Insert(Pair<String, Vector<ResourceFile>>(prefix, list));
-			}
-			else
-			{
-				resources_[prefix].Push(resFile);
-			}
-		}
-	}
+            if (!resources_.Contains(prefix))
+            {
+                Vector<ResourceFile> list;
+                list.Push(resFile);
+                resources_.Insert(Pair<String, Vector<ResourceFile>>(prefix, list));
+            }
+            else
+            {
+                resources_[prefix].Push(resFile);
+            }
+        }
+    }
 
-	StringVector keys = resources_.Keys();
-	URHO3D_LOGERRORF("keys size <%i>", keys.Size());
-	ResourceMap modelResources;
-	for (int i = 0; i < keys.Size(); i++)
-	{
-		Vector<ResourceFile> list = resources_[keys.At(i)];
-		// URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
-		for (int l = 0; l < list.Size(); l++)
-		{
-			ResourceFile file = list.At(l);
-			String modelsFilter("mdl");
-			if (file.ext == modelsFilter)
-			{
-                // URHO3D_LOGERRORF("	file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
+    StringVector keys = resources_.Keys();
+    URHO3D_LOGERRORF("keys size <%i>", keys.Size());
+    ResourceMap modelResources;
+    for (int i = 0; i < keys.Size(); i++)
+    {
+        Vector<ResourceFile> list = resources_[keys.At(i)];
+        // URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
+        for (int l = 0; l < list.Size(); l++)
+        {
+            ResourceFile file = list.At(l);
+            String modelsFilter("mdl");
+            if (file.ext == modelsFilter)
+            {
+                // URHO3D_LOGERRORF("    file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
 
-				modelResources_[file.name] = file;
-			}
-			else if (file.prefix.Contains("materials", false) && (file.ext == "xml" || file.ext == "material" || file.ext == "json"))
-			{
-				materialResources_[file.name] = file;
-			}
-		}
-	}
+                modelResources_[file.name] = file;
+            }
+            else if (file.prefix.Contains("materials", false) && (file.ext == "xml" || file.ext == "material" || file.ext == "json"))
+            {
+                materialResources_[file.name] = file;
+            }
+        }
+    }
 
-	modelResourcesString_.Join(modelResources_.Keys(), "@");
-	modelResourcesString_.Replace('@', '\0');
-	modelResourcesString_.Append('\0');
+    modelResourcesString_.Join(modelResources_.Keys(), "@");
+    modelResourcesString_.Replace('@', '\0');
+    modelResourcesString_.Append('\0');
 
-	materialResourcesString_.Join(materialResources_.Keys(), "@");
-	materialResourcesString_.Replace('@', '\0');
-	materialResourcesString_.Append('\0');
+    materialResourcesString_.Join(materialResources_.Keys(), "@");
+    materialResourcesString_.Replace('@', '\0');
+    materialResourcesString_.Append('\0');
 
-	SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
+    SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
 }
 
 EditorWindow::~EditorWindow() = default;
 
 void EditorWindow::RegisterObject(Context* context)
 {
-	context->RegisterFactory<EditorWindow>(UI_CATEGORY);
+    context->RegisterFactory<EditorWindow>(UI_CATEGORY);
 }
 
 void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
@@ -123,75 +123,75 @@ void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventDat
 
 void EditorWindow::Render(float timeStep)
 {
-	static bool closable = true;
-	ImGui::Begin("Scene Inspector", &closable);
+    static bool closable = true;
+    ImGui::Begin("Scene Inspector", &closable);
 
-	// Guizmo stuff
-	static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::ROTATE);
-	static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
+    // Guizmo stuff
+    static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::ROTATE);
+    static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
 
     static const char* modeTypes[] = { "Select Object", "Select Vertex" };
     ImGui::Combo("Mode", (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
 
-	if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
-		currentGizmoOperation = ImGuizmo::TRANSLATE;
-	ImGui::SameLine();
-	if (ImGui::RadioButton("Rotate", currentGizmoOperation == ImGuizmo::ROTATE))
-		currentGizmoOperation = ImGuizmo::ROTATE;
-	ImGui::SameLine();
-	if (ImGui::RadioButton("Scale", currentGizmoOperation == ImGuizmo::SCALE))
-		currentGizmoOperation = ImGuizmo::SCALE;
+    if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
+        currentGizmoOperation = ImGuizmo::TRANSLATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Rotate", currentGizmoOperation == ImGuizmo::ROTATE))
+        currentGizmoOperation = ImGuizmo::ROTATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Scale", currentGizmoOperation == ImGuizmo::SCALE))
+        currentGizmoOperation = ImGuizmo::SCALE;
 
-	if (currentGizmoOperation != ImGuizmo::SCALE)
-	{
-		if (ImGui::RadioButton("Local", currentGizmoMode == ImGuizmo::LOCAL))
-			currentGizmoMode = ImGuizmo::LOCAL;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("World", currentGizmoMode == ImGuizmo::WORLD))
+    if (currentGizmoOperation != ImGuizmo::SCALE)
+    {
+        if (ImGui::RadioButton("Local", currentGizmoMode == ImGuizmo::LOCAL))
+            currentGizmoMode = ImGuizmo::LOCAL;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("World", currentGizmoMode == ImGuizmo::WORLD))
             currentGizmoMode = ImGuizmo::WORLD;
-	}
+    }
 
     // FIXME? manejar esto con eventos
-	if (guizmo_)
-	{
-		guizmo_->SetCurrentOperation(currentGizmoOperation);
-		guizmo_->SetCurrentMode(currentGizmoMode);
+    if (guizmo_)
+    {
+        guizmo_->SetCurrentOperation(currentGizmoOperation);
+        guizmo_->SetCurrentMode(currentGizmoMode);
         guizmo_->SetCurrentEditMode(mode_);
-	}
+    }
 
-	ImGui::Separator();
+    ImGui::Separator();
 
-	int i = 0;
-	auto components = scene_->GetComponents();
-	for (Component* c : components)
-	{
-		bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s", c->GetTypeName().CString());
-		if (ImGui::IsItemClicked())
-		{
-			URHO3D_LOGERRORF("item selected <%i>", i);
-		}
-		if (isOpen)
-		{
-			// ImGui::Text("blah blah");
-			// ImGui::SameLine();
-			// if (ImGui::SmallButton("button")) {};
+    int i = 0;
+    auto components = scene_->GetComponents();
+    for (Component* c : components)
+    {
+        bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s", c->GetTypeName().CString());
+        if (ImGui::IsItemClicked())
+        {
+            URHO3D_LOGERRORF("item selected <%i>", i);
+        }
+        if (isOpen)
+        {
+            // ImGui::Text("blah blah");
+            // ImGui::SameLine();
+            // if (ImGui::SmallButton("button")) {};
 
-			ImGui::TreePop();
-		}
-		i++;
-	}
+            ImGui::TreePop();
+        }
+        i++;
+    }
 
-	ImGui::Separator();
+    ImGui::Separator();
 
-	ImGui::BeginGroup();
-	ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
+    ImGui::BeginGroup();
+    ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
 
-	auto children = scene_->GetChildren();
-	for (Node* child : children)
-	{
+    auto children = scene_->GetChildren();
+    for (Node* child : children)
+    {
         bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i - %i", child->GetName().CString(), child->GetID(), child->GetChildren().Size());
-		if (ImGui::IsItemClicked())
-		{
+        if (ImGui::IsItemClicked())
+        {
             // select node
             if(mode_ == SELECT_OBJECT)
             {
@@ -206,7 +206,7 @@ void EditorWindow::Render(float timeStep)
             {
                 URHO3D_LOGERRORF("mode <%i>", mode_);
             }
-		}
+        }
         if (isOpen)
         {
             auto grantchidren = child->GetChildren();
@@ -215,53 +215,53 @@ void EditorWindow::Render(float timeStep)
 
             ImGui::TreePop();
         }
-		i++;
-	}
+        i++;
+    }
 
-	ImGui::EndChild();
-	ImGui::EndGroup();
+    ImGui::EndChild();
+    ImGui::EndGroup();
 
-	// ImGui::Separator();
+    // ImGui::Separator();
 
-	if (selectedNode_)
-	{
-		Node* node = scene_->GetNode(selectedNode_);
-		if (node)
-		{
-			// Node* cameraNode = scene_->GetChild("Camera");
-			Node* cameraNode = cameraNode_;
+    if (selectedNode_)
+    {
+        Node* node = scene_->GetNode(selectedNode_);
+        if (node)
+        {
+            // Node* cameraNode = scene_->GetChild("Camera");
+            Node* cameraNode = cameraNode_;
             if(!cameraNode)
                 return;
 
-			Camera* camera = cameraNode->GetComponent<Camera>();
+            Camera* camera = cameraNode->GetComponent<Camera>();
             if(!camera)
                 return;
 
-			Matrix4 identity = Matrix4::IDENTITY;
-			Matrix4 projection = camera->GetProjection().Transpose();
-			Matrix4 view = camera->GetView().ToMatrix4().Transpose();
-			Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
-			// Matrix4 nodeTransform = Matrix4::IDENTITY.Transpose();
-			Matrix4 delta;
+            Matrix4 identity = Matrix4::IDENTITY;
+            Matrix4 projection = camera->GetProjection().Transpose();
+            Matrix4 view = camera->GetView().ToMatrix4().Transpose();
+            Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
+            // Matrix4 nodeTransform = Matrix4::IDENTITY.Transpose();
+            Matrix4 delta;
 
-			const unsigned len = node->GetName().Length();
-			char name[512];
-			sprintf(name, node->GetName().CString());
-			ImGui::InputText("Name", name, node->GetName().Length());
+            const unsigned len = node->GetName().Length();
+            char name[512];
+            sprintf(name, node->GetName().CString());
+            ImGui::InputText("Name", name, node->GetName().Length());
 
-			float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-			ImGuizmo::DecomposeMatrixToComponents(&nodeTransform.m00_, matrixTranslation, matrixRotation, matrixScale);
-			bool modified = false;
-			ImGui::InputFloat3("Tr", matrixTranslation, 3);
-			ImGui::InputFloat3("Rt", matrixRotation, 3);
-			ImGui::InputFloat3("Sc", matrixScale, 3);
-			ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
+            float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+            ImGuizmo::DecomposeMatrixToComponents(&nodeTransform.m00_, matrixTranslation, matrixRotation, matrixScale);
+            bool modified = false;
+            ImGui::InputFloat3("Tr", matrixTranslation, 3);
+            ImGui::InputFloat3("Rt", matrixRotation, 3);
+            ImGui::InputFloat3("Sc", matrixScale, 3);
+            ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
 
-			node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
-			
+            node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
+
             // components
-			ImGui::BeginGroup();
-			ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
+            ImGui::BeginGroup();
+            ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
 
             auto childComponents = node->GetComponents();
             for (Component* c : childComponents)
@@ -276,24 +276,24 @@ void EditorWindow::Render(float timeStep)
                 }
             }
 
-			ImGui::EndChild();
-			ImGui::EndGroup();
-		}
-		else
-		{
-			URHO3D_LOGERRORF("node <%u> not found!", selectedNode_);
-		}
-	}
+            ImGui::EndChild();
+            ImGui::EndGroup();
+        }
+        else
+        {
+            URHO3D_LOGERRORF("node <%u> not found!", selectedNode_);
+        }
+    }
 
-	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-	ImVec2 windowPos = ImGui::GetWindowPos();
-	SetPosition(windowPos.x, windowPos.y);
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    SetPosition(windowPos.x, windowPos.y);
 
-	ImVec2 windowSize = ImGui::GetWindowSize();
-	SetSize(windowSize.x, windowSize.y);
+    ImVec2 windowSize = ImGui::GetWindowSize();
+    SetSize(windowSize.x, windowSize.y);
 
-	ImGui::End();
+    ImGui::End();
 }
 
 void EditorWindow::DrawChild(Node* node, int& i)
@@ -321,27 +321,27 @@ void EditorWindow::DrawChild(Node* node, int& i)
 
 void EditorWindow::AttributeEdit(Component* c)
 {
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
-	const Vector<AttributeInfo>* attr = c->GetAttributes();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    const Vector<AttributeInfo>* attr = c->GetAttributes();
     if(!attr)
         return;
 
-	for (auto var : (*attr))
-	{
-		const AttributeInfo& info = var;
-		switch (info.type_)
-		{
-		case VAR_BOOL:
-		{
-			bool v = c->GetAttribute(info.name_).GetBool();
+    for (auto var : (*attr))
+    {
+        const AttributeInfo& info = var;
+        switch (info.type_)
+        {
+        case VAR_BOOL:
+        {
+            bool v = c->GetAttribute(info.name_).GetBool();
             if (ImGui::Checkbox(info.name_.CString(), &v))
             {
                 c->SetAttribute(info.name_, v);
             }
-		}
-		break;
-		case VAR_INT:
-		{
+        }
+        break;
+        case VAR_INT:
+        {
             unsigned int v = c->GetAttribute(info.name_).GetUInt();
             if (info.enumNames_)
             {
@@ -371,118 +371,118 @@ void EditorWindow::AttributeEdit(Component* c)
                     c->SetAttribute(info.name_, v);
                 }
             }
-		}
-		break;
-		case VAR_FLOAT:
-		{
-			float v = c->GetAttribute(info.name_).GetFloat();
+        }
+        break;
+        case VAR_FLOAT:
+        {
+            float v = c->GetAttribute(info.name_).GetFloat();
             if (ImGui::InputFloat(info.name_.CString(), &v))
             {
                 c->SetAttribute(info.name_, v);
             }
-		}
-		break;
-		case VAR_STRING:
-		{
-			String v = c->GetAttribute(info.name_).GetString();
-			char buffer[512];
-			strncpy(buffer, v.CString(), v.Length());
-			ImGui::InputText(info.name_.CString(), buffer, 512);
-			c->SetAttribute(info.name_, buffer);
-		}
-		break;
-		case VAR_COLOR:
-		{
-			float col[4];
-			Color color = c->GetAttribute(info.name_).GetColor();
-			memcpy(col, color.Data(), sizeof(col));
-			ImGui::ColorEdit4(info.name_.CString(), (float*)&col);
-			c->SetAttribute(info.name_, Color(col));
-		}
-		break;
-		case VAR_VECTOR3:
-		{
-			float v[3];
-			Vector3 value = c->GetAttribute(info.name_).GetVector3();
-			memcpy(v, value.Data(), sizeof(v));
-			ImGui::InputFloat3(info.name_.CString(), (float*)&v);
-			c->SetAttribute(info.name_, Vector3(v));
-		}
-		break;
-		case VAR_RESOURCEREF:
-		{
-			//resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
-			//resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
-			//resourcePickers.Push(ResourcePicker("ParticleEffect", "*.xml", ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
-			//resourcePickers.Push(ResourcePicker("Animation", "*.ani", ACTION_PICK | ACTION_TEST));
+        }
+        break;
+        case VAR_STRING:
+        {
+            String v = c->GetAttribute(info.name_).GetString();
+            char buffer[512];
+            strncpy(buffer, v.CString(), v.Length());
+            ImGui::InputText(info.name_.CString(), buffer, 512);
+            c->SetAttribute(info.name_, buffer);
+        }
+        break;
+        case VAR_COLOR:
+        {
+            float col[4];
+            Color color = c->GetAttribute(info.name_).GetColor();
+            memcpy(col, color.Data(), sizeof(col));
+            ImGui::ColorEdit4(info.name_.CString(), (float*)&col);
+            c->SetAttribute(info.name_, Color(col));
+        }
+        break;
+        case VAR_VECTOR3:
+        {
+            float v[3];
+            Vector3 value = c->GetAttribute(info.name_).GetVector3();
+            memcpy(v, value.Data(), sizeof(v));
+            ImGui::InputFloat3(info.name_.CString(), (float*)&v);
+            c->SetAttribute(info.name_, Vector3(v));
+        }
+        break;
+        case VAR_RESOURCEREF:
+        {
+            //resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
+            //resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
+            //resourcePickers.Push(ResourcePicker("ParticleEffect", "*.xml", ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
+            //resourcePickers.Push(ResourcePicker("Animation", "*.ani", ACTION_PICK | ACTION_TEST));
 
-			//resourcePickers.Push(ResourcePicker("Font", fontFilters));
-			//resourcePickers.Push(ResourcePicker("Image", imageFilters));
-			//resourcePickers.Push(ResourcePicker("LuaFile", luaFileFilters));
-			//resourcePickers.Push(ResourcePicker("ScriptFile", scriptFilters));
-			//resourcePickers.Push(ResourcePicker("Sound", soundFilters));
-			//resourcePickers.Push(ResourcePicker("Technique", "*.xml"));
-			//resourcePickers.Push(ResourcePicker("Texture2D", textureFilters));
-			//resourcePickers.Push(ResourcePicker("TextureCube", "*.xml"));
-			//resourcePickers.Push(ResourcePicker("Texture3D", "*.xml"));
-			//resourcePickers.Push(ResourcePicker("XMLFile", "*.xml"));
-			//resourcePickers.Push(ResourcePicker("JSONFile", "*.json"));
+            //resourcePickers.Push(ResourcePicker("Font", fontFilters));
+            //resourcePickers.Push(ResourcePicker("Image", imageFilters));
+            //resourcePickers.Push(ResourcePicker("LuaFile", luaFileFilters));
+            //resourcePickers.Push(ResourcePicker("ScriptFile", scriptFilters));
+            //resourcePickers.Push(ResourcePicker("Sound", soundFilters));
+            //resourcePickers.Push(ResourcePicker("Technique", "*.xml"));
+            //resourcePickers.Push(ResourcePicker("Texture2D", textureFilters));
+            //resourcePickers.Push(ResourcePicker("TextureCube", "*.xml"));
+            //resourcePickers.Push(ResourcePicker("Texture3D", "*.xml"));
+            //resourcePickers.Push(ResourcePicker("XMLFile", "*.xml"));
+            //resourcePickers.Push(ResourcePicker("JSONFile", "*.json"));
 
-			//resourcePickers.Push(ResourcePicker("Sprite2D", textureFilters, ACTION_PICK | ACTION_OPEN));
-			//resourcePickers.Push(ResourcePicker("AnimationSet2D", anmSetFilters, ACTION_PICK | ACTION_OPEN));
-			//resourcePickers.Push(ResourcePicker("ParticleEffect2D", pexFilters, ACTION_PICK | ACTION_OPEN));
-			//resourcePickers.Push(ResourcePicker("TmxFile2D", tmxFilters, ACTION_PICK | ACTION_OPEN));
+            //resourcePickers.Push(ResourcePicker("Sprite2D", textureFilters, ACTION_PICK | ACTION_OPEN));
+            //resourcePickers.Push(ResourcePicker("AnimationSet2D", anmSetFilters, ACTION_PICK | ACTION_OPEN));
+            //resourcePickers.Push(ResourcePicker("ParticleEffect2D", pexFilters, ACTION_PICK | ACTION_OPEN));
+            //resourcePickers.Push(ResourcePicker("TmxFile2D", tmxFilters, ACTION_PICK | ACTION_OPEN));
 
-			ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
-			currentModel_ = FindModel(v.name_);
-			// ImGui::Text("type <%s> name <%s> currentid <%i>", info.defaultValue_.GetTypeName().CString(), v.name_.CString(), currentModel_);
-			if (v.type_ == StringHash("ParticleEffect"))
-			{
-				ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
+            ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
+            currentModel_ = FindModel(v.name_);
+            // ImGui::Text("type <%s> name <%s> currentid <%i>", info.defaultValue_.GetTypeName().CString(), v.name_.CString(), currentModel_);
+            if (v.type_ == StringHash("ParticleEffect"))
+            {
+                ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
                 EditParticleEmitter(emitter);
-			}
-			else if (v.type_ == StringHash("Model"))
-			{
-				if (ImGui::Combo("Model", &currentModel_, modelResourcesString_.CString()))
-				{
-					ResourceFile resource = modelResources_.Values().At(currentModel_);
-					v.name_ = resource.path + resource.name;
-					c->SetAttribute(info.name_, v);
-				}
-			}
-		}
-		break;
-		case VAR_RESOURCEREFLIST:
-		{
-			ResourceRefList v = c->GetAttribute(info.name_).GetResourceRefList();
-			// ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
-			currentMaterialList_.Resize(v.names_.Size());
-			int *currentMaterialList = currentMaterialList_.Buffer();
-			for (int i = 0; i < v.names_.Size(); i++)
-			{
-				if (v.type_ == StringHash("Material"))
-				{
-					currentMaterialList[i] = FindMaterial(v.names_.At(i));
+            }
+            else if (v.type_ == StringHash("Model"))
+            {
+                if (ImGui::Combo("Model", &currentModel_, modelResourcesString_.CString()))
+                {
+                    ResourceFile resource = modelResources_.Values().At(currentModel_);
+                    v.name_ = resource.path + resource.name;
+                    c->SetAttribute(info.name_, v);
+                }
+            }
+        }
+        break;
+        case VAR_RESOURCEREFLIST:
+        {
+            ResourceRefList v = c->GetAttribute(info.name_).GetResourceRefList();
+            // ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
+            currentMaterialList_.Resize(v.names_.Size());
+            int *currentMaterialList = currentMaterialList_.Buffer();
+            for (int i = 0; i < v.names_.Size(); i++)
+            {
+                if (v.type_ == StringHash("Material"))
+                {
+                    currentMaterialList[i] = FindMaterial(v.names_.At(i));
                     char comboName[32];
-					sprintf(comboName, "Material%i", i);
-					if (ImGui::Combo(comboName, &currentMaterialList[i], materialResourcesString_.CString()))
-					{
-						int pos = currentMaterialList[i];
-						ResourceFile resource = materialResources_.Values().At(pos);
-						v.names_[i] = resource.path + resource.name;
-					}
-				}
-			}
-			c->SetAttribute(info.name_, v);
-		}
-		break;
-		default:
-		{
-			ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
-		}
-		break;
-		}
-	}
+                    sprintf(comboName, "Material%i", i);
+                    if (ImGui::Combo(comboName, &currentMaterialList[i], materialResourcesString_.CString()))
+                    {
+                        int pos = currentMaterialList[i];
+                        ResourceFile resource = materialResources_.Values().At(pos);
+                        v.names_[i] = resource.path + resource.name;
+                    }
+                }
+            }
+            c->SetAttribute(info.name_, v);
+        }
+        break;
+        default:
+        {
+            ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
+        }
+        break;
+        }
+    }
 }
 
 void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
@@ -659,8 +659,10 @@ void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
             }
         }
     }
-
+    IntVector3 currentIndex = modelDebug->GetCurrentIndex();
+    ImGui::Text("total faces <%u>", modelDebug->GetFacesCount());
     ImGui::Text("selected faces <%i>", modelDebug->GetSelectedFaces().Size());
+    ImGui::Text("current face <%u> indexs <%u, %u, %u> mask <%u>", modelDebug->GetCurrentFace(), currentIndex.x_, currentIndex.y_, currentIndex.z_, modelDebug->GetCurrentMask());
     if(ImGui::Button("Save Model"))
     {
         modelDebug->SaveModel();
@@ -675,7 +677,7 @@ void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
                 StaticModel* staticModel = dynamic_cast<StaticModel*>(c);
                 if (staticModel)
                 {
-//					DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+//                    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
                     // staticModel->DrawDebugGeometry(debugRenderer, true);
 
                     Model* model = staticModel->GetModel();
@@ -737,28 +739,28 @@ void EditorWindow::DebugModelSubPart()
 
 int EditorWindow::FindModel(const String& name)
 {
-	int index = 0;
-	for (auto it = modelResources_.Begin(); it != modelResources_.End(); it++, index++)
-	{
-		ResourceFile resource = (*it).second_;
-		String s = resource.name;
-		if (name == s)
-			return index;
-	}
-	return -1;
+    int index = 0;
+    for (auto it = modelResources_.Begin(); it != modelResources_.End(); it++, index++)
+    {
+        ResourceFile resource = (*it).second_;
+        String s = resource.name;
+        if (name == s)
+            return index;
+    }
+    return -1;
 }
 
 int EditorWindow::FindMaterial(const String& name)
 {
-	int index = 0;
-	for (auto it = materialResources_.Begin(); it != materialResources_.End(); it++, index++)
-	{
-		ResourceFile resource = (*it).second_;
-		String s = resource.name;
-		if (name == s)
-			return index;
-	}
-	return -1;
+    int index = 0;
+    for (auto it = materialResources_.Begin(); it != materialResources_.End(); it++, index++)
+    {
+        ResourceFile resource = (*it).second_;
+        String s = resource.name;
+        if (name == s)
+            return index;
+    }
+    return -1;
 }
 
 }
