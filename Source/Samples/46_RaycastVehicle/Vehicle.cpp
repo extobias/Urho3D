@@ -58,7 +58,7 @@ Vehicle::Vehicle(Urho3D::Context* context)
     engineForce_ = 0.0f;
     brakingForce_ = 50.0f;
     vehicleSteering_ = 0.0f;
-    maxEngineForce_ = 2500.0f;
+    maxEngineForce_ = 750.0f;
     wheelRadius_ = 0.5f;
     suspensionRestLength_ = 0.6f;
     wheelWidth_ = 0.4f;
@@ -77,7 +77,7 @@ void Vehicle::Init()
     auto* vehicle = node_->CreateComponent<RaycastVehicle>();
     vehicle->Init();
     auto* hullBody = node_->GetComponent<RigidBody>();
-    hullBody->SetMass(800.0f);
+    hullBody->SetMass(200.0f);
     hullBody->SetLinearDamping(0.2f); // Some air resistance
     hullBody->SetAngularDamping(0.5f);
     hullBody->SetCollisionLayer(1);
@@ -132,8 +132,8 @@ void Vehicle::Init()
         pWheel->SetModel(cache->GetResource<Model>("Models/Cylinder.mdl"));
         pWheel->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
         pWheel->SetCastShadows(true);
-		pWheel->SetEnabled(false);
-        CreateEmitter(connectionPoints_[id]);
+        pWheel->SetEnabled(true);
+        // CreateEmitter(connectionPoints_[id]);
     }
     emittersCreated = true;
     vehicle->ResetWheels();
@@ -233,24 +233,27 @@ void Vehicle::PostUpdate(float timeStep)
     float planeAccel = Vector3(accel.x_, 0.0f, accel.z_).Length();
     for (int i = 0; i < vehicle->GetNumWheels(); i++)
     {
-        Node* emitter = particleEmitterNodeList_[i];
-        auto* particleEmitter = emitter->GetComponent<ParticleEmitter>();
-        if (vehicle->WheelIsGrounded(i) && (vehicle->GetWheelSkidInfoCumulative(i) < 0.9f || vehicle->GetBrake(i) > 2.0f ||
-            planeAccel > 15.0f))
+        if(i < particleEmitterNodeList_.Size())
         {
-            particleEmitterNodeList_[i]->SetWorldPosition(vehicle->GetContactPosition(i));
-            if (!particleEmitter->IsEmitting())
+            Node* emitter = particleEmitterNodeList_[i];
+            auto* particleEmitter = emitter->GetComponent<ParticleEmitter>();
+            if (vehicle->WheelIsGrounded(i) && (vehicle->GetWheelSkidInfoCumulative(i) < 0.9f || vehicle->GetBrake(i) > 2.0f ||
+                planeAccel > 15.0f))
             {
-                particleEmitter->SetEmitting(true);
+                particleEmitterNodeList_[i]->SetWorldPosition(vehicle->GetContactPosition(i));
+                if (!particleEmitter->IsEmitting())
+                {
+                    particleEmitter->SetEmitting(true);
+                }
+                //URHO3D_LOGDEBUG("GetWheelSkidInfoCumulative() = " +
+                //                String(vehicle->GetWheelSkidInfoCumulative(i)) + " " +
+                //                String(vehicle->GetMaxSideSlipSpeed()));
+                /* TODO: Add skid marks here */
             }
-            //URHO3D_LOGDEBUG("GetWheelSkidInfoCumulative() = " +
-            //                String(vehicle->GetWheelSkidInfoCumulative(i)) + " " +
-            //                String(vehicle->GetMaxSideSlipSpeed()));
-            /* TODO: Add skid marks here */
-        }
-        else if (particleEmitter->IsEmitting())
-        {
-            particleEmitter->SetEmitting(false);
+            else if (particleEmitter->IsEmitting())
+            {
+                particleEmitter->SetEmitting(false);
+            }
         }
     }
     prevVelocity_ = velocity;

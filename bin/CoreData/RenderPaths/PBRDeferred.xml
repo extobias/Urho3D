@@ -21,7 +21,7 @@
         <texture unit="normal" name="normal" />
         <texture unit="depth" name="depth" />
     </command>
-    <command type="scenepass" pass="postopaque" />
+<!--     <command type="scenepass" pass="postopaque" /> -->
     <command type="scenepass" pass="refract">
         <texture unit="environment" name="viewport" />
     </command>

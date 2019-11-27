@@ -18,7 +18,7 @@ MaterialTriangleMeshInterface::MaterialTriangleMeshInterface(Model* model,
     for (unsigned i = 0; i < numGeometries; ++i)
     {
         Geometry* geometry = model->GetGeometry(i, lodLevel);
-		if (!geometry)
+        if (!geometry)
         {
             URHO3D_LOGWARNING("Skipping null geometry for triangle mesh collision");
             continue;
@@ -65,21 +65,21 @@ MaterialTriangleMeshInterface::MaterialTriangleMeshInterface(Model* model,
         m_indexedMeshes.push_back(meshIndex);
 
         colorOffset_ = VertexBuffer::GetElementOffset(*elements, TYPE_INT, SEM_OBJECTINDEX);
-		if (colorOffset_ != M_MAX_UNSIGNED)
-		{
-			btMaterialProperties matProp;
-			matProp.m_numMaterials = 1; // TYPE_UBYTE4_NORM * 4 = 1 FLOAT
-			matProp.m_materialBase = vertexData;
-			matProp.m_materialStride = vertexSize;
-			matProp.m_materialType = PHY_FLOAT;
+        if (colorOffset_ != M_MAX_UNSIGNED)
+        {
+            btMaterialProperties matProp;
+            matProp.m_numMaterials = 1; // TYPE_UBYTE4_NORM * 4 = 1 FLOAT
+            matProp.m_materialBase = vertexData;
+            matProp.m_materialStride = vertexSize;
+            matProp.m_materialType = PHY_FLOAT;
 
-			matProp.m_numTriangles = indexCount / 3;
-			matProp.m_triangleMaterialsBase = &indexData[indexStart * indexSize];
-			matProp.m_triangleMaterialStride = 3 * indexSize;
-			addMaterialProperties(matProp);
+            matProp.m_numTriangles = indexCount / 3;
+            matProp.m_triangleMaterialsBase = &indexData[indexStart * indexSize];
+            matProp.m_triangleMaterialStride = 3 * indexSize;
+            addMaterialProperties(matProp);
 
-			totalTriangles += meshIndex.m_numTriangles;
-		}
+            totalTriangles += meshIndex.m_numTriangles;
+        }
     }
 
     // Bullet will not work properly with quantized AABB compression, if the triangle count is too large. Use a conservative

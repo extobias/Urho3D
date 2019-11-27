@@ -312,6 +312,7 @@ float Ray::HitDistance(const void* vertexData, unsigned vertexStride, const void
                 nearest = distance;
 
                 subObjectElementIndex = indexIndex;
+                // subObjectElementIndex = indices[0];
             }
             indices += 3;
             indexIndex += 3;

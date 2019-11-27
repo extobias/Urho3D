@@ -56,7 +56,7 @@ void VS()
         // vColor = vec4(gl_InstanceID * 0.2, gl_InstanceID * 0.2, gl_InstanceID * 0.2, 1.0);
         // gl_Position.y += gl_InstanceID * 0.1;
         vColor = iTexCoord7;
-        vColor.a = 0.1f;
+        vColor.a = 0.5f;
         // int selected = floatBitsToInt(iTexCoord7.x);
 //         if(gl_InstanceID == selected)
 //         {
