@@ -49,6 +49,8 @@ public:
 
     void SetScene(Scene* scene) override;
 
+    int buttons_;
+
 protected:
 
 

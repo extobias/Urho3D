@@ -152,76 +152,76 @@ void EditorWindow::Render(float timeStep)
     }
 
     // FIXME? manejar esto con eventos
+    int guizmoBtn = 0;
     if (guizmo_)
     {
         guizmo_->SetCurrentOperation(currentGizmoOperation);
         guizmo_->SetCurrentMode(currentGizmoMode);
         guizmo_->SetCurrentEditMode(mode_);
+        guizmoBtn = guizmo_->buttons_;
     }
 
     ImGui::Separator();
 
     int i = 0;
-    auto components = scene_->GetComponents();
-    for (Component* c : components)
+    static int nodeClicked = -1;
+
+    ImGui::Text("Node clicked <%i> selected <%u> guizmoBtn <%i>", nodeClicked, selectedNode_, guizmoBtn);
+    ImGui::SameLine();
+    if(ImGui::Button("\+Local"))
     {
-        bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s", c->GetTypeName().CString());
-        if (ImGui::IsItemClicked())
-        {
-            URHO3D_LOGERRORF("item selected <%i>", i);
-        }
-        if (isOpen)
-        {
-            // ImGui::Text("blah blah");
-            // ImGui::SameLine();
-            // if (ImGui::SmallButton("button")) {};
-
-            ImGui::TreePop();
-        }
-        i++;
+        scene_->CreateChild(String::EMPTY, LOCAL);
     }
-
-    ImGui::Separator();
+    ImGui::SameLine();
+    if(ImGui::Button("\+Replicated"))
+    {
+        scene_->CreateChild();
+    }
 
     ImGui::BeginGroup();
     ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
 
-    auto children = scene_->GetChildren();
-    for (Node* child : children)
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
+    if (nodeClicked == i)
+        nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+    String sceneName = scene_->GetName();
+    if (sceneName.Empty())
+        sceneName = "Scene";
+
+    bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - %i - %i", sceneName.CString(), scene_->GetID(), scene_->GetChildren().Size());
+    if (ImGui::IsItemClicked())
     {
-        bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i - %i", child->GetName().CString(), child->GetID(), child->GetChildren().Size());
-        if (ImGui::IsItemClicked())
+        nodeClicked = i;
+        // select node
+        if(mode_ == SELECT_OBJECT)
         {
-            // select node
-            if(mode_ == SELECT_OBJECT)
-            {
-                selectedNode_ = child->GetID();
+            selectedNode_ = scene_->GetID();
 
-                VariantMap eventData;
-                eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
+            VariantMap eventData;
+            eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
 
-                SendEvent(E_EDITOR_NODE_SELECTED, eventData);
-            }
-            else
-            {
-                URHO3D_LOGERRORF("mode <%i>", mode_);
-            }
+            SendEvent(E_EDITOR_NODE_SELECTED, eventData);
         }
-        if (isOpen)
+        else
         {
-            auto grantchidren = child->GetChildren();
-            for (Node* grantchild : grantchidren)
-                DrawChild(grantchild, i);
-
-            ImGui::TreePop();
+            URHO3D_LOGERRORF("mode <%i>", mode_);
         }
-        i++;
+    }
+    i++;
+    if (isOpen)
+    {
+        auto grantchidren = scene_->GetChildren();
+        for (Node* grantchild : grantchidren)
+            DrawChild(grantchild, i, nodeClicked);
+
+        ImGui::TreePop();
     }
 
     ImGui::EndChild();
     ImGui::EndGroup();
 
-    // ImGui::Separator();
+    ImGui::Separator();
 
     if (selectedNode_)
     {
@@ -237,27 +237,38 @@ void EditorWindow::Render(float timeStep)
             if(!camera)
                 return;
 
-            Matrix4 identity = Matrix4::IDENTITY;
-            Matrix4 projection = camera->GetProjection().Transpose();
-            Matrix4 view = camera->GetView().ToMatrix4().Transpose();
-            Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
-            // Matrix4 nodeTransform = Matrix4::IDENTITY.Transpose();
-            Matrix4 delta;
+            AttributeEdit(node);
 
-            const unsigned len = node->GetName().Length();
-            char name[512];
-            sprintf(name, node->GetName().CString());
-            ImGui::InputText("Name", name, node->GetName().Length());
+//            Matrix4 identity = Matrix4::IDENTITY;
+//            Matrix4 projection = camera->GetProjection().Transpose();
+//            Matrix4 view = camera->GetView().ToMatrix4().Transpose();
+//            Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
+//            // Matrix4 nodeTransform = Matrix4::IDENTITY.Transpose();
+//            Matrix4 delta;
 
-            float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-            ImGuizmo::DecomposeMatrixToComponents(&nodeTransform.m00_, matrixTranslation, matrixRotation, matrixScale);
-            bool modified = false;
-            ImGui::InputFloat3("Tr", matrixTranslation, 3);
-            ImGui::InputFloat3("Rt", matrixRotation, 3);
-            ImGui::InputFloat3("Sc", matrixScale, 3);
-            ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
+//            const unsigned len = node->GetName().Length();
+//            char name[512];
+//            sprintf(name, node->GetName().CString());
+//            ImGui::InputText("Name", name, node->GetName().Length());
 
-            node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
+//            float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+//            ImGuizmo::DecomposeMatrixToComponents(&nodeTransform.m00_, matrixTranslation, matrixRotation, matrixScale);
+//            bool modified = false;
+//            ImGui::InputFloat3("Tr", matrixTranslation, 3);
+//            ImGui::InputFloat3("Rt", matrixRotation, 3);
+//            ImGui::InputFloat3("Sc", matrixScale, 3);
+//            ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
+
+//            node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
+
+            // add component
+            if (ImGui::Button("Add component"))
+                ImGui::OpenPopup("new_component_popup");
+            if (ImGui::BeginPopup("new_component_popup"))
+            {
+                AddComponentMenu(node);
+                ImGui::EndPopup();
+            }
 
             // components
             ImGui::BeginGroup();
@@ -267,7 +278,9 @@ void EditorWindow::Render(float timeStep)
             for (Component* c : childComponents)
             {
                 // ImGui::Text("%s", c->GetTypeName().CString());
-                if (ImGui::CollapsingHeader(c->GetTypeName().CString()))
+                static bool headerOpen = true;
+                ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_DefaultOpen;
+                if (ImGui::CollapsingHeader(c->GetTypeName().CString(), &headerOpen, headerFlags))
                 {
                     AttributeEdit(c);
 
@@ -296,32 +309,36 @@ void EditorWindow::Render(float timeStep)
     ImGui::End();
 }
 
-void EditorWindow::DrawChild(Node* node, int& i)
+void EditorWindow::DrawChild(Node* node, int& i, int& nodeClicked)
 {
-    bool isOpen = ImGui::TreeNode((void*)(intptr_t)i, "%s - %i - %i", node->GetName().CString(), node->GetID(), node->GetChildren().Size());
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+    if (nodeClicked == i)
+        nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+    bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - %i - %i", node->GetName().CString(), node->GetID(), node->GetChildren().Size());
     if (ImGui::IsItemClicked())
     {
         selectedNode_ = node->GetID();
+        nodeClicked = i;
         if (guizmo_)
         {
             guizmo_->SetSelectedNode(selectedNode_);
             URHO3D_LOGERRORF("item selected <%i>", node->GetID());
         }
     }
+    i++;
     if (isOpen)
     {
         auto grantchidren = node->GetChildren();
         for (Node* grantchild : grantchidren)
-            DrawChild(grantchild, i);
+            DrawChild(grantchild, i, nodeClicked);
 
         ImGui::TreePop();
     }
-    i++;
 }
 
-void EditorWindow::AttributeEdit(Component* c)
+void EditorWindow::AttributeEdit(Serializable* c)
 {
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
     const Vector<AttributeInfo>* attr = c->GetAttributes();
     if(!attr)
         return;
@@ -387,8 +404,11 @@ void EditorWindow::AttributeEdit(Component* c)
             String v = c->GetAttribute(info.name_).GetString();
             char buffer[512];
             strncpy(buffer, v.CString(), v.Length());
-            ImGui::InputText(info.name_.CString(), buffer, 512);
-            c->SetAttribute(info.name_, buffer);
+            buffer[v.Length()] = '\0';
+            if (ImGui::InputText(info.name_.CString(), buffer, 512))
+            {
+                c->SetAttribute(info.name_, buffer);
+            }
         }
         break;
         case VAR_COLOR:
@@ -396,8 +416,10 @@ void EditorWindow::AttributeEdit(Component* c)
             float col[4];
             Color color = c->GetAttribute(info.name_).GetColor();
             memcpy(col, color.Data(), sizeof(col));
-            ImGui::ColorEdit4(info.name_.CString(), (float*)&col);
-            c->SetAttribute(info.name_, Color(col));
+            if (ImGui::ColorEdit4(info.name_.CString(), (float*)&col))
+            {
+                c->SetAttribute(info.name_, Color(col));
+            }
         }
         break;
         case VAR_VECTOR3:
@@ -405,8 +427,10 @@ void EditorWindow::AttributeEdit(Component* c)
             float v[3];
             Vector3 value = c->GetAttribute(info.name_).GetVector3();
             memcpy(v, value.Data(), sizeof(v));
-            ImGui::InputFloat3(info.name_.CString(), (float*)&v);
-            c->SetAttribute(info.name_, Vector3(v));
+            if (ImGui::InputFloat3(info.name_.CString(), (float*)&v))
+            {
+                c->SetAttribute(info.name_, Vector3(v));
+            }
         }
         break;
         case VAR_RESOURCEREF:
@@ -458,6 +482,7 @@ void EditorWindow::AttributeEdit(Component* c)
             // ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
             currentMaterialList_.Resize(v.names_.Size());
             int *currentMaterialList = currentMaterialList_.Buffer();
+            bool changed = false;
             for (int i = 0; i < v.names_.Size(); i++)
             {
                 if (v.type_ == StringHash("Material"))
@@ -470,10 +495,15 @@ void EditorWindow::AttributeEdit(Component* c)
                         int pos = currentMaterialList[i];
                         ResourceFile resource = materialResources_.Values().At(pos);
                         v.names_[i] = resource.path + resource.name;
+
+                        changed = true;
                     }
                 }
             }
-            c->SetAttribute(info.name_, v);
+            if (changed)
+            {
+                c->SetAttribute(info.name_, v);
+            }
         }
         break;
         default:
@@ -481,6 +511,42 @@ void EditorWindow::AttributeEdit(Component* c)
             ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
         }
         break;
+        }
+    }
+}
+
+void EditorWindow::AddComponentMenu(Node* node)
+{
+    const HashMap<String, Vector<StringHash> >& objectCat = context_->GetObjectCategories();
+    Vector<String> components;
+
+    auto it = objectCat.Begin();
+    for(; it != objectCat.End(); it++)
+    {
+        if (ImGui::BeginMenu(it->first_.CString()))
+        {
+            const HashMap<StringHash, SharedPtr<ObjectFactory> >& factories = context_->GetObjectFactories();
+            const Vector<StringHash>& factoryHashes = it->second_;
+            components.Reserve(factoryHashes.Size());
+
+            for (unsigned j = 0; j < factoryHashes.Size(); ++j)
+            {
+                HashMap<StringHash, SharedPtr<ObjectFactory> >::ConstIterator k = factories.Find(factoryHashes[j]);
+                if (k != factories.End())
+                    components.Push(k->second_->GetTypeName());
+            }
+
+            Vector<String>::ConstIterator subIt = components.Begin();
+            unsigned i = 0;
+            for (; subIt != components.End(); subIt++, i++)
+            {
+                if (ImGui::MenuItem(subIt->CString()))
+                {
+                    URHO3D_LOGERRORF("menu selected <%s>", subIt->CString());
+                    node->CreateComponent(factoryHashes.At(i));
+                }
+            }
+            ImGui::EndMenu();
         }
     }
 }
