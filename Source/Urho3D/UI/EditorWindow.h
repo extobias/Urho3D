@@ -52,7 +52,9 @@ public:
     void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
 private:
-    void AttributeEdit(Component* c);
+    void AttributeEdit(Serializable *c);
+
+    void AddComponentMenu(Node *node);
 
     void EditParticleEmitter(ParticleEmitter* emitter);
 
@@ -64,7 +66,7 @@ private:
 
     int FindMaterial(const String& name);
 
-    void DrawChild(Node* node, int &i);
+    void DrawChild(Node* node, int &i, int &nodeClicked);
 
     Node* cameraNode_;
 

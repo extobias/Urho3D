@@ -144,7 +144,7 @@ void StaticScene::CreateScene()
     effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
     effect_->SetEmitterSize(Vector3::ONE);
     particleEmitter->SetEffect(effect_);
-    // particleEmitter->SetEmitting(false);
+    particleEmitter->SetEmitting(false);
 
     const unsigned NUM_OBJECTS = 0;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
@@ -176,18 +176,18 @@ void StaticScene::CreateScene()
     meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
     meshNode->SetScale(0.005f);
     StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-    Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
+    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
-    meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
+    // meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
 
+    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
+    editorModel_->SetModel(meshModel);
+    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
 
     // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
 //    meshShape = meshNode->CreateComponent<CollisionShape>();
 //    meshShape->SetTriangleMesh(meshModel);
-    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
-    editorModel_->SetModel(meshModel);
-    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     // Create a scene node for the camera, which we will move around
@@ -205,7 +205,7 @@ void StaticScene::CreateScene()
 
     // CreateDepthTexture();
     Graphics* graphics = GetSubsystem<Graphics>();
-    graphics->Maximize();
+    // graphics->Maximize();
 
     rearCameraNode_ = scene_->CreateChild("RearCamera");
     rearCameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));

@@ -19,7 +19,7 @@
 namespace Urho3D
 {
 
-extern const char* SUBSYSTEM_CATEGORY;
+extern const char* GEOMETRY_CATEGORY;
 
 static float cubeVertices[] = {
   // front
@@ -86,9 +86,11 @@ EditorModelDebug::EditorModelDebug(Context* context) :
     geometryFaces_->SetIndexBuffer(indexBufferFaces_);
 
     batches_.Resize(2);
+    // original model vertices
     batches_[0].geometry_ = geometry_;
     batches_[0].geometryType_ = GEOM_INSTANCED;
 
+    // debug triangle info and world's transform for each vertices
     batches_[1].geometry_ = geometryFaces_;
     batches_[1].geometryType_ = GEOM_INSTANCED;
 }
@@ -97,7 +99,7 @@ EditorModelDebug::~EditorModelDebug() = default;
 
 void EditorModelDebug::RegisterObject(Context* context)
 {
-    context->RegisterFactory<EditorModelDebug>(SUBSYSTEM_CATEGORY);
+    context->RegisterFactory<EditorModelDebug>(GEOMETRY_CATEGORY);
 
     URHO3D_ACCESSOR_ATTRIBUTE("Is Enabled", IsEnabled, SetEnabled, bool, true, AM_DEFAULT);
     URHO3D_ENUM_ATTRIBUTE("Vertex Mask Type", vertexMaskType_, VertexCollisionMaskNames, DEFAULT_VERTEX_COLLISION_MASK_TYPE, AM_DEFAULT);
@@ -201,7 +203,7 @@ void EditorModelDebug::UpdateBatches(const FrameInfo& frame)
         memcpy(instanceData + s * sizeof(Vector4), color.ToVector4().Data(), sizeof(Vector4));
     }
 
-    CalcMatrixFaces();
+    // CalcMatrixFaces();
 
     UpdateFacesColor();
 
@@ -276,6 +278,7 @@ unsigned EditorModelDebug::GetFacesCount() const
 
 void EditorModelDebug::SetModel(Model* model)
 {
+
     if (model == model_)
         return;
 
@@ -297,6 +300,9 @@ void EditorModelDebug::SetModel(Model* model)
        CreateVertexInstances();
 
        CreateFaceInstances();
+
+       // ResourceCache* cache = GetSubsystem<ResourceCache>();
+       // SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     }
 }
 
@@ -338,19 +344,19 @@ void EditorModelDebug::SelectFaces(const PODVector<IntVector2>& faces)
 
 void EditorModelDebug::AddSelectedFaces(const PODVector<IntVector2>& faces)
 {
-    selectedFaces_.Clear();
+    // selectedFaces_.Clear();
 
     for(unsigned i = 0; i < faces.Size(); i++)
     {
-        if(!selectedFaces_.Contains(faces[i]))
-        {
+//        if(!selectedFaces_.Contains(faces[i]))
+//        {
             selectedFaces_.Push(faces[i]);
-        }
+//        }
     }
 
-    UpdateVertexFaces();
+//    UpdateVertexFaces();
 
-    ApplyVertexCollisionMask();
+//    ApplyVertexCollisionMask();
 
     DebugList(selectedFaces_);
 }
@@ -381,7 +387,8 @@ void EditorModelDebug::DrawFaces(const PODVector<IntVector2>& faces)
     unsigned char* indexData = indexBuffer->GetShadowData();
 
     // FIXME here isn't required to lock, its only for reading
-    unsigned char* dstData = static_cast<unsigned char*>(vertexBuffer->Lock(0, vertexBuffer->GetVertexCount(), true));
+//    unsigned char* dstData = static_cast<unsigned char*>(vertexBuffer->Lock(0, vertexBuffer->GetVertexCount(), true));
+    unsigned char* dstData = vertexBuffer->GetShadowDataShared();
     if(!dstData)
         return;
 
@@ -435,7 +442,7 @@ void EditorModelDebug::DrawFaces(const PODVector<IntVector2>& faces)
             }
         }
     }
-    vertexBuffer->Unlock();
+    // vertexBuffer->Unlock();
 
     //debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);
 }
@@ -452,11 +459,11 @@ void EditorModelDebug::UpdateVertexFaces()
     // unsigned indexSize = indexBuffer->GetIndexSize();
     unsigned char* indexData = indexBuffer->GetShadowData();
 
-        const Vector<Vector<SharedPtr<Geometry> > >& geoms = model_->GetGeometries();
+    const Vector<Vector<SharedPtr<Geometry> > >& geoms = model_->GetGeometries();
 
-    unsigned char* dstData = static_cast<unsigned char*>(vertexBuffer->Lock(0, vertexBuffer->GetVertexCount(), true));
-    if(!dstData)
-        return;
+//    unsigned char* dstData = static_cast<unsigned char*>(vertexBuffer->Lock(0, vertexBuffer->GetVertexCount(), true));
+//    if(!dstData)
+//        return;
 
     for(unsigned i = 0; i < selectedFaces_.Size(); i++)
     {
@@ -475,7 +482,7 @@ void EditorModelDebug::UpdateVertexFaces()
             }
         }
     }
-    vertexBuffer->Unlock();
+    // vertexBuffer->Unlock();
 }
 
 void EditorModelDebug::ApplyVertexCollisionMask()
@@ -831,6 +838,9 @@ void EditorModelDebug::CreateFaceInstances()
 
 void EditorModelDebug::UpdateFacesColor()
 {
+    if(!model_)
+        return;
+
     const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
     IndexBuffer* indexBuffer = ib.At(0);
 
@@ -852,6 +862,9 @@ void EditorModelDebug::UpdateFacesColor()
 
 void EditorModelDebug::CalcMatrixFaces()
 {
+    if(!model_)
+        return;
+
     const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
     IndexBuffer* indexBuffer = ib.At(0);
 
@@ -876,7 +889,7 @@ void EditorModelDebug::CalcMatrixFaces()
         // float vertexScale = node_->GetScale().x_;
         Matrix3x4 transform = node_->GetTransform();
         Vector3 nodeTrans = transform.Translation();
-        nodeTrans += Vector3(0.0f, 0.25f, 0.0f);
+        nodeTrans += Vector3(0.0f, 0.01f, 0.0f);
         transform.SetTranslation(nodeTrans);
 
         Vector<Vector3> r = GetFacePoints(i);

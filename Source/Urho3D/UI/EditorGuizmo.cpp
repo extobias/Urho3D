@@ -128,8 +128,11 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
 
 /// EditorGuizmo
 EditorGuizmo::EditorGuizmo(Context* context) :
-	ImGuiElement(context)
+    ImGuiElement(context),
+    buttons_(0)
 {
+    SetDragDropMode(DD_DISABLED);
+
     SubscribeToEvent(E_EDITOR_NODE_SELECTED, URHO3D_HANDLER(EditorGuizmo, HandleNodeSelected));
 }
 
@@ -137,7 +140,7 @@ EditorGuizmo::~EditorGuizmo() = default;
 
 void EditorGuizmo::RegisterObject(Context* context)
 {
-	context->RegisterFactory<EditorGuizmo>(UI_CATEGORY);
+    context->RegisterFactory<EditorGuizmo>(UI_CATEGORY);
 }
 
 void EditorGuizmo::Render(float timeStep)
@@ -255,25 +258,30 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
     else
         SetFocusMode(FM_NOTFOCUSABLE);
 
+    // URHO3D_LOGERRORF("EditorGuizmo::OnHover");
+
     Node* node = scene_->GetNode(selectedNode_);
     if(currentEditMode_ == SELECT_VERTEX && node)
     {
         PODVector<IntVector2> faces = SelectVertex(position);
         EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
-        for(unsigned i = 0; i < faces.Size(); i++)
-        {
-            if (debugModel)
-            {
-                debugModel->DrawFaces(faces);
-            }
-        }
+//        for(unsigned i = 0; i < faces.Size(); i++)
+//        {
+//            // URHO3D_LOGERRORF("selected vertex face <%i, %i>", faces.At(i).x_, faces.At(i).y_);
+//            if (debugModel)
+//            {
+//                debugModel->DrawFaces(faces);
+//            }
+//        }
 
-        Input* input = GetSubsystem<Input>();
-        if (input->GetMouseButtonDown(MOUSEB_LEFT))
+        buttons_ = buttons;
+        if (buttons & MOUSEB_LEFT)
         {
+            // URHO3D_LOGERRORF("selected vertex face");
             if (debugModel)
             {
-                debugModel->AddSelectedFaces(faces);
+                // debugModel->AddSelectedFaces(faces);
+                debugModel->DrawFaces(faces);
             }
         }
     }
@@ -301,10 +309,10 @@ Ray EditorGuizmo::GetCameraRay()
         return Ray();
 
     Camera* camera = cameraNode->GetComponent<Camera>();
-//	float x = float(cursorPos.x_ - rect.Left()) / rect.Width();
-//	float y = float(cursorPos.y_ - rect.Top()) / rect.Height();
+//    float x = float(cursorPos.x_ - rect.Left()) / rect.Width();
+//    float y = float(cursorPos.y_ - rect.Top()) / rect.Height();
     IntVector2 screenPos = GetScreenPosition();
-	// URHO3D_LOGERRORF("editorgizmo.getcameraray: pos <%f, %f>", x, y);
+    // URHO3D_LOGERRORF("editorgizmo.getcameraray: pos <%f, %f>", x, y);
     return camera->GetScreenRay(screenPos.x_, screenPos.y_);
 }
 
