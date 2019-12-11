@@ -111,7 +111,7 @@ void StaticScene::CreateScene()
     planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
     // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
     planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-    planeNode->SetEnabled(true);
+    planeNode->SetEnabled(false);
 
     // light
     Node* lightNode = scene_->CreateChild("DirectionalLight");
@@ -176,6 +176,7 @@ void StaticScene::CreateScene()
     meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
     meshNode->SetScale(0.005f);
     StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
+    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
     Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
@@ -205,7 +206,7 @@ void StaticScene::CreateScene()
 
     // CreateDepthTexture();
     Graphics* graphics = GetSubsystem<Graphics>();
-    // graphics->Maximize();
+    graphics->Maximize();
 
     rearCameraNode_ = scene_->CreateChild("RearCamera");
     rearCameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));

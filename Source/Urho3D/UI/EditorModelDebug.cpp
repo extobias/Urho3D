@@ -197,9 +197,9 @@ void EditorModelDebug::UpdateBatches(const FrameInfo& frame)
     }
 
     color = Color::RED;
-    for(unsigned i = 0; i < selected_.Size(); i++)
+    for(unsigned i = 0; i < selectedIndex_.Size(); i++)
     {
-        int s = selected_[i];
+        int s = selectedIndex_[i];
         memcpy(instanceData + s * sizeof(Vector4), color.ToVector4().Data(), sizeof(Vector4));
     }
 
@@ -252,7 +252,7 @@ void EditorModelDebug::OnSetAttribute(const AttributeInfo& attr, const Variant& 
     URHO3D_LOGERRORF("editordebug attrset: name <%s> value <%i>", attr.name_.CString(), src.GetInt());
 
     selectedFaces_.Clear();
-    selected_.Clear();
+    selectedIndex_.Clear();
 }
 
 void EditorModelDebug::SetModelAttr(const ResourceRef& value)
@@ -301,8 +301,8 @@ void EditorModelDebug::SetModel(Model* model)
 
        CreateFaceInstances();
 
-       // ResourceCache* cache = GetSubsystem<ResourceCache>();
-       // SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+        SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     }
 }
 
@@ -320,7 +320,7 @@ void EditorModelDebug::SetBoundingBox(const BoundingBox& box)
 
 void EditorModelDebug::SelectVertex(const Frustum& frustum)
 {
-    // selected_.Clear();
+    // selectedIndex_.Clear();
     for (unsigned i = 0; i < numWorldTransforms_; ++i)
     {
         // Initial test using AABB
@@ -329,9 +329,9 @@ void EditorModelDebug::SelectVertex(const Frustum& frustum)
 
         if (frustum.IsInside(transformedBoundingBox) > INTERSECTS)
         {
-            if(!selected_.Contains(i))
+            if(!selectedIndex_.Contains(i))
             {
-                selected_.Push(i);
+                selectedIndex_.Push(i);
             }
         }
     }
@@ -344,21 +344,21 @@ void EditorModelDebug::SelectFaces(const PODVector<IntVector2>& faces)
 
 void EditorModelDebug::AddSelectedFaces(const PODVector<IntVector2>& faces)
 {
-    // selectedFaces_.Clear();
+    selectedFaces_.Clear();
 
     for(unsigned i = 0; i < faces.Size(); i++)
     {
-//        if(!selectedFaces_.Contains(faces[i]))
-//        {
+        if(!selectedFaces_.Contains(faces[i]))
+        {
             selectedFaces_.Push(faces[i]);
-//        }
+        }
     }
 
-//    UpdateVertexFaces();
+    UpdateFacesIndexes();
 
-//    ApplyVertexCollisionMask();
+    ApplyVertexCollisionMask();
 
-    DebugList(selectedFaces_);
+    // DebugList(selectedFaces_);
 }
 
 void EditorModelDebug::DrawFaces(const PODVector<IntVector2>& faces)
@@ -447,7 +447,7 @@ void EditorModelDebug::DrawFaces(const PODVector<IntVector2>& faces)
     //debugRenderer->AddTriangleMesh(&vertexData[0], vertexSize, &indexData[0], indexSize, geom->GetIndexStart(), geom->GetIndexCount(), transform, color);
 }
 
-void EditorModelDebug::UpdateVertexFaces()
+void EditorModelDebug::UpdateFacesIndexes()
 {
     const Vector<SharedPtr<VertexBuffer> >& vb = model_->GetVertexBuffers();
     const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
@@ -475,9 +475,9 @@ void EditorModelDebug::UpdateVertexFaces()
             unsigned short* index = ((unsigned short*)&indexData[0]) + g->GetIndexStart() + face.y_;
             for(unsigned j = 0; j < 3; j++)
             {
-                if(!selected_.Contains(index[j]))
+                if(!selectedIndex_.Contains(index[j]))
                 {
-                    selected_.Push(index[j]);
+                    selectedIndex_.Push(index[j]);
                 }
             }
         }
@@ -488,7 +488,6 @@ void EditorModelDebug::UpdateVertexFaces()
 void EditorModelDebug::ApplyVertexCollisionMask()
 {
     const Vector<SharedPtr<VertexBuffer> >& vb = model_->GetVertexBuffers();
-    URHO3D_LOGERRORF("applyattr <%i>", vb.Size());
 
     VertexBuffer* vertexBuffer = vb.At(0);
     const PODVector<VertexElement>& ve = vertexBuffer->GetElements();
@@ -505,9 +504,9 @@ void EditorModelDebug::ApplyVertexCollisionMask()
         unsigned vertexSize = vertexBuffer->GetVertexSize();
         unsigned size = ELEMENT_TYPESIZES[vertexElement->type_];
         // for(unsigned i = 0; i < vertexBuffer->GetVertexCount(); i++)
-        for(unsigned i = 0; i < selected_.Size(); i++)
+        for(unsigned i = 0; i < selectedIndex_.Size(); i++)
         {
-            unsigned int s = selected_[i];
+            unsigned int s = selectedIndex_[i];
 //            unsigned int val = *((unsigned int*)&dstData[s * vertexSize + vertexElement->offset_]);
 //            val = val | GetCollisionMask(vertexMaskType_);
             unsigned val = GetCollisionMask(vertexMaskType_);
@@ -595,6 +594,39 @@ void EditorModelDebug::SaveModel()
         URHO3D_LOGERRORF("file saved name <%s>", fileName.CString());
     else
         URHO3D_LOGERRORF("error saving name <%s>", fileName.CString());
+}
+
+void EditorModelDebug::SelectAll()
+{
+    const Vector<SharedPtr<VertexBuffer> >& vb = model_->GetVertexBuffers();
+    const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
+
+    // VertexBuffer* vertexBuffer = vb.At(0);
+    // unsigned vertexSize = vertexBuffer->GetVertexSize();
+
+    IndexBuffer* indexBuffer = ib.At(0);
+    unsigned indexCount = indexBuffer->GetIndexCount();
+    // unsigned indexSize = indexBuffer->GetIndexSize();
+    unsigned char* indexData = indexBuffer->GetShadowData();
+    if(!indexData)
+        return;
+
+    // const Vector<Vector<SharedPtr<Geometry> > >& geoms = model_->GetGeometries();
+
+    selectedIndex_.Clear();
+    for(unsigned i = 0; i < indexCount; i++)
+    {
+        unsigned short* index = ((unsigned short*)&indexData[0]) + i;
+        // for(unsigned j = 0; j < 3; j++)
+        {
+            // if(!selectedIndex_.Contains(index[0]))
+            {
+                selectedIndex_.Push(index[0]);
+            }
+        }
+    }
+
+    ApplyVertexCollisionMask();
 }
 
 void EditorModelDebug::OnWorldBoundingBoxUpdate()

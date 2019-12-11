@@ -1356,23 +1356,23 @@ void UI::ProcessHover(const IntVector2& windowCursorPos, MouseButtonFlags button
 
         // Hover effect
         // If a drag is going on, transmit hover only to the element being dragged, unless it's a drop target
-//        if (element && element->IsEnabled())
-//        {
-//            if (dragElement == element || dragDropTest)
-//            {
-//                element->OnHover(element->ScreenToElement(cursorPos), cursorPos, buttons, qualifiers, cursor);
+        if (element && element->IsEnabled())
+        {
+            if (dragElement == element || dragDropTest)
+            {
+                element->OnHover(element->ScreenToElement(cursorPos), cursorPos, buttons, qualifiers, cursor);
 
-//                // Begin hover event
-//                if (!hoveredElements_.Contains(element))
-//                {
-//                    SendDragOrHoverEvent(E_HOVERBEGIN, element, cursorPos, IntVector2::ZERO, nullptr);
-//                    // Exit if element is destroyed by the event handling
-//                    if (!element)
-//                        return;
-//                }
-//                hoveredElements_[element] = true;
-//            }
-//        }
+                // Begin hover event
+                if (!hoveredElements_.Contains(element))
+                {
+                    SendDragOrHoverEvent(E_HOVERBEGIN, element, cursorPos, IntVector2::ZERO, nullptr);
+                    // Exit if element is destroyed by the event handling
+                    if (!element)
+                        return;
+                }
+                hoveredElements_[element] = true;
+            }
+        }
 
         // Drag and drop test
         if (dragDropTest)
@@ -1403,7 +1403,7 @@ void UI::ProcessHover(const IntVector2& windowCursorPos, MouseButtonFlags button
     // If no drag is going on, transmit hover event.
     if (element && element->IsEnabled())
     {
-        // if (dragElementsCount_ == 0)
+        if (dragElementsCount_ == 0)
         {
             element->OnHover(element->ScreenToElement(cursorPos), cursorPos, buttons, qualifiers, cursor);
 

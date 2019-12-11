@@ -134,6 +134,8 @@ EditorGuizmo::EditorGuizmo(Context* context) :
     SetDragDropMode(DD_DISABLED);
 
     SubscribeToEvent(E_EDITOR_NODE_SELECTED, URHO3D_HANDLER(EditorGuizmo, HandleNodeSelected));
+
+    SubscribeToEvent(E_MOUSEMOVE, URHO3D_HANDLER(EditorGuizmo, HandleMouseMove));
 }
 
 EditorGuizmo::~EditorGuizmo() = default;
@@ -251,7 +253,61 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
 
 void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor)
 {
-    ImGuiElement::OnHover(position, screenPosition, buttons, qualifiers, cursor);
+//    ImGuiElement::OnHover(position, screenPosition, buttons, qualifiers, cursor);
+
+//    if(ImGuizmo::IsOver())
+//        SetFocusMode(FM_FOCUSABLE);
+//    else
+//        SetFocusMode(FM_NOTFOCUSABLE);
+
+//    // URHO3D_LOGERRORF("EditorGuizmo::OnHover");
+
+//    Node* node = scene_->GetNode(selectedNode_);
+//    if(currentEditMode_ == SELECT_VERTEX && node)
+//    {
+//        PODVector<IntVector2> faces = SelectVertex(position);
+//        EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+////        for(unsigned i = 0; i < faces.Size(); i++)
+////        {
+////            // URHO3D_LOGERRORF("selected vertex face <%i, %i>", faces.At(i).x_, faces.At(i).y_);
+////            if (debugModel)
+////            {
+////                debugModel->DrawFaces(faces);
+////            }
+////        }
+
+//        buttons_ = buttons;
+//        if (buttons & MOUSEB_LEFT)
+//        {
+//            // URHO3D_LOGERRORF("selected vertex face");
+//            if (debugModel)
+//            {
+//                // debugModel->AddSelectedFaces(faces);
+//                debugModel->DrawFaces(faces);
+//            }
+//        }
+//    }
+}
+
+void EditorGuizmo::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
+{
+    selectedNode_ = eventData[P_EDITOR_NODE_SELECTED].GetUInt();
+
+    // selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
+    // hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
+}
+
+void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
+{
+    using namespace MouseMove;
+
+    MouseButtonFlags mouseButtons = MouseButtonFlags(eventData[P_BUTTONS].GetUInt());
+    QualifierFlags qualifiers = QualifierFlags(eventData[P_QUALIFIERS].GetUInt());
+    IntVector2 DeltaP = IntVector2(eventData[P_DX].GetInt(), eventData[P_DY].GetInt());
+    IntVector2 screenPosition = IntVector2(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
+    IntVector2 position = ScreenToElement(screenPosition);
+
+    ImGuiElement::OnHover(position, screenPosition, mouseButtons, qualifiers, nullptr);
 
     if(ImGuizmo::IsOver())
         SetFocusMode(FM_FOCUSABLE);
@@ -274,25 +330,17 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
 //            }
 //        }
 
-        buttons_ = buttons;
-        if (buttons & MOUSEB_LEFT)
+        buttons_ = mouseButtons;
+        // if (mouseButtons & MOUSEB_LEFT)
         {
             // URHO3D_LOGERRORF("selected vertex face");
             if (debugModel)
             {
-                // debugModel->AddSelectedFaces(faces);
-                debugModel->DrawFaces(faces);
+                debugModel->AddSelectedFaces(faces);
+                // debugModel->DrawFaces(faces);
             }
         }
     }
-}
-
-void EditorGuizmo::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
-{
-    selectedNode_ = eventData[P_EDITOR_NODE_SELECTED].GetUInt();
-
-    // selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
-    // hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
 }
 
 void EditorGuizmo::SetScene(Scene* scene)
@@ -498,7 +546,7 @@ PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
 
 void EditorGuizmo::CreateBrush()
 {
-    Node* brushNode = scene_->CreateChild("BrushNode", LOCAL);
+    Node* brushNode = scene_->CreateTemporaryChild("BrushNode", LOCAL);
     brush_ = new EditorBrush(context_, brushNode);
 }
 

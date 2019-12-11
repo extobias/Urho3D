@@ -163,6 +163,17 @@ void EditorWindow::Render(float timeStep)
 
     ImGui::Separator();
 
+    if(ImGui::Button("Save scene"))
+    {
+        String fileNameWrite = "SaveTest";
+        File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileNameWrite + ".xml", FILE_WRITE);
+        SharedPtr<XMLFile> xml(new XMLFile(context_));
+        scene_->SaveXML(fileWrite);
+    }
+
+    // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
+    // ImGui::PlotLines("Lines", );
+
     int i = 0;
     static int nodeClicked = -1;
 
@@ -430,6 +441,27 @@ void EditorWindow::AttributeEdit(Serializable* c)
             if (ImGui::InputFloat3(info.name_.CString(), (float*)&v))
             {
                 c->SetAttribute(info.name_, Vector3(v));
+            }
+        }
+        break;
+        case VAR_VECTOR4:
+        {
+            float v[4];
+            Vector4 value = c->GetAttribute(info.name_).GetVector4();
+            memcpy(v, value.Data(), sizeof(v));
+            if (ImGui::InputFloat4(info.name_.CString(), (float*)&v))
+            {
+                c->SetAttribute(info.name_, Vector3(v));
+            }
+        }
+        case VAR_QUATERNION:
+        {
+            float q[4];
+            Quaternion value = c->GetAttribute(info.name_).GetQuaternion();
+            memcpy(q, value.Data(), sizeof(q));
+            if (ImGui::InputFloat4(info.name_.CString(), (float*)&q))
+            {
+                c->SetAttribute(info.name_, Quaternion(q));
             }
         }
         break;
@@ -729,9 +761,14 @@ void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
     ImGui::Text("total faces <%u>", modelDebug->GetFacesCount());
     ImGui::Text("selected faces <%i>", modelDebug->GetSelectedFaces().Size());
     ImGui::Text("current face <%u> indexs <%u, %u, %u> mask <%u>", modelDebug->GetCurrentFace(), currentIndex.x_, currentIndex.y_, currentIndex.z_, modelDebug->GetCurrentMask());
-    if(ImGui::Button("Save Model"))
+    if (ImGui::Button("Save Model"))
     {
         modelDebug->SaveModel();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Select all"))
+    {
+        modelDebug->SelectAll();
     }
 
     if(addIndex > -1 && vertexIndex > -1)
