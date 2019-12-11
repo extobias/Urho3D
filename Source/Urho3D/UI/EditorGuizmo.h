@@ -47,6 +47,8 @@ public:
 
     void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
+    void HandleMouseMove(StringHash eventType, VariantMap& eventData);
+
     void SetScene(Scene* scene) override;
 
     int buttons_;

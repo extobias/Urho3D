@@ -54,19 +54,21 @@ public:
 
     void DrawFaces(const PODVector<IntVector2>& faces);
 
-    const PODVector<int>& GetSelectedVertex() const { return selected_; }
+    const PODVector<int>& GetSelectedVertex() const { return selectedIndex_; }
 
     const PODVector<IntVector2>& GetSelectedFaces() const { return selectedFaces_; }
 
     Model* GetModel() const { return model_; }
 
-    void UpdateVertexFaces();
+    void UpdateFacesIndexes();
 
     void ApplyVertexCollisionMask();
 
     void AddVertexElement(unsigned vertexIndex, unsigned vertexElementIndex);
 
     void SaveModel();
+
+    void SelectAll();
 
     void SetModelAttr(const ResourceRef& value);
 
@@ -110,7 +112,7 @@ protected:
 
     PODVector<Vector3> vertexOffset_;
 
-    PODVector<int> selected_;
+    PODVector<int> selectedIndex_;
 
     PODVector<IntVector2> selectedFaces_;
 
