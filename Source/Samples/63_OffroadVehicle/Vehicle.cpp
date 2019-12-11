@@ -884,6 +884,11 @@ void Vehicle::DebugDraw(const Color &color)
         dbgRenderer->AddBoundingBox(bbox, mat34, color);
         dbgRenderer->AddLine(posWS, posWS + node_->GetUp(), color);
         dbgRenderer->AddLine(posWS, posWS + node_->GetRight(), color);
+
+        for ( int i = 0; i < raycastVehicle_->GetNumWheels(); ++i )
+        {
+            wheelTrackList_[i]->DebugRender(dbgRenderer, Color::GREEN);
+        }
     }
 }
 

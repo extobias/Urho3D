@@ -68,7 +68,7 @@ URHO3D_DEFINE_APPLICATION_MAIN(VehicleDemo)
 //=============================================================================
 VehicleDemo::VehicleDemo(Context* context) :
     Sample(context)
-    , drawDebug_(false)
+    , drawDebug_(true)
     , springVelocity_(0.0f)
 {
     // Register factory and attributes for the Vehicle component so it can be created via CreateComponent, and loaded / saved
