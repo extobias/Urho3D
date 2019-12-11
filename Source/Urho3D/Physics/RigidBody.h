@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2016 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,8 +19,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-
-/// \file
 
 #pragma once
 
@@ -55,22 +53,24 @@ class URHO3D_API RigidBody : public Component, public btMotionState
 
 public:
     /// Construct.
-    explicit RigidBody(Context* context);
+    RigidBody(Context* context);
     /// Destruct. Free the rigid body and geometries.
-    ~RigidBody() override;
+    virtual ~RigidBody();
     /// Register object factory.
     static void RegisterObject(Context* context);
 
+    /// Handle attribute write access.
+    virtual void OnSetAttribute(const AttributeInfo& attr, const Variant& src);
     /// Apply attribute changes that can not be applied immediately. Called after scene load or a network update.
-    void ApplyAttributes() override;
+    virtual void ApplyAttributes();
     /// Handle enabled/disabled state change.
-    void OnSetEnabled() override;
+    virtual void OnSetEnabled();
     /// Return initial world transform to Bullet.
-    void getWorldTransform(btTransform& worldTrans) const override;
+    virtual void getWorldTransform(btTransform& worldTrans) const;
     /// Update world transform from Bullet.
-    void setWorldTransform(const btTransform& worldTrans) override;
+    virtual void setWorldTransform(const btTransform& worldTrans);
     /// Visualize the component as debug geometry.
-    void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+    virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest);
 
     /// Set mass. Zero mass makes the body static.
     void SetMass(float mass);
@@ -89,13 +89,13 @@ public:
     /// Set linear velocity damping factor.
     void SetLinearDamping(float damping);
     /// Set angular velocity.
-    void SetAngularVelocity(const Vector3& velocity);
+    void SetAngularVelocity(const Vector3& angularVelocity);
     /// Set angular degrees of freedom. Use 1 to enable an axis or 0 to disable. Default is all axes enabled (1, 1, 1).
     void SetAngularFactor(const Vector3& factor);
     /// Set angular velocity deactivation threshold.
     void SetAngularRestThreshold(float threshold);
     /// Set angular velocity damping factor.
-    void SetAngularDamping(float damping);
+    void SetAngularDamping(float factor);
     /// Set friction coefficient.
     void SetFriction(float friction);
     /// Set anisotropic friction.
@@ -230,7 +230,7 @@ public:
 
     /// Apply new world transform after a simulation step. Called internally.
     void ApplyWorldTransform(const Vector3& newWorldPosition, const Quaternion& newWorldRotation);
-    /// Update mass and inertia to the Bullet rigid body. Readd body to world if necessary: if was in world and the Bullet collision shape to use changed.
+    /// Update mass and inertia to the Bullet rigid body.
     void UpdateMass();
     /// Update gravity parameters to the Bullet rigid body.
     void UpdateGravity();
@@ -247,23 +247,22 @@ public:
 
 protected:
     /// Handle node being assigned.
-    void OnNodeSet(Node* node) override;
+    virtual void OnNodeSet(Node* node);
     /// Handle scene being assigned.
-    void OnSceneSet(Scene* scene) override;
+    virtual void OnSceneSet(Scene* scene);
     /// Handle node transform being dirtied.
-    void OnMarkedDirty(Node* node) override;
+    virtual void OnMarkedDirty(Node* node);
+    // Lumak: changed this to protected and virtual
+    /// Create the rigid body, or re-add to the physics world with changed flags. Calls UpdateMass().
+    virtual void AddBodyToWorld();
 
 private:
-    /// Create the rigid body, or re-add to the physics world with changed flags. Calls UpdateMass().
-    void AddBodyToWorld();
     /// Remove the rigid body from the physics world.
     void RemoveBodyFromWorld();
     /// Handle SmoothedTransform target position update.
     void HandleTargetPosition(StringHash eventType, VariantMap& eventData);
     /// Handle SmoothedTransform target rotation update.
     void HandleTargetRotation(StringHash eventType, VariantMap& eventData);
-    /// Mark body dirty.
-    void MarkBodyDirty() { readdBody_ = true; }
 
     /// Bullet rigid body.
     UniquePtr<btRigidBody> body_;

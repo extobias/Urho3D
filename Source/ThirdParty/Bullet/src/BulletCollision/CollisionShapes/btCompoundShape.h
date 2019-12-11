@@ -172,6 +172,11 @@ public:
 	///fills the dataBuffer and returns the struct name (and 0 on failure)
 	virtual	const char*	serialize(void* dataBuffer, btSerializer* serializer) const;
 
+    // Lumak: added methods to get AABB
+    btVector3& getLocalAabbMin()             { return m_localAabbMin; }
+    btVector3& getLocalAabbMax()             { return m_localAabbMax; }
+    const btVector3& getLocalAabbMin() const { return m_localAabbMin; }
+    const btVector3& getLocalAabbMax() const { return m_localAabbMax; }
 
 };
 

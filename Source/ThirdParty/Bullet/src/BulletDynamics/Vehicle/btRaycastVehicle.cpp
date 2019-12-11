@@ -151,7 +151,8 @@ void btRaycastVehicle::resetSuspension()
 
 void	btRaycastVehicle::updateWheelTransformsWS(btWheelInfo& wheel , bool interpolatedTransform)
 {
-	wheel.m_raycastInfo.m_isInContact = false;
+    // Lumak: bug
+	//wheel.m_raycastInfo.m_isInContact = false;
 
 	btTransform chassisTrans = getChassisWorldTransform();
 	if (interpolatedTransform && (getRigidBody()->getMotionState()))
@@ -187,6 +188,9 @@ btScalar btRaycastVehicle::rayCast(btWheelInfo& wheel)
 	void* object = m_vehicleRaycaster->castRay(source,target,rayResults);
 
 	wheel.m_raycastInfo.m_groundObject = 0;
+
+    // Lumak: init inContact
+	wheel.m_raycastInfo.m_isInContact = false;
 
 	if (object)
 	{
@@ -522,8 +526,8 @@ btScalar calcRollingFriction(btWheelContactPoint& contactPoint)
 
 
 
-
-btScalar sideFrictionStiffness2 = btScalar(1.0);
+// Lumak: make sideFrictionStiffness2 a member variable of btWheelInfo (adjustable at runtime)
+//btScalar sideFrictionStiffness2 = btScalar(1.0);
 void	btRaycastVehicle::updateFriction(btScalar	timeStep)
 {
 
@@ -585,7 +589,9 @@ void	btRaycastVehicle::updateFriction(btScalar	timeStep)
 							  *groundObject, wheelInfo.m_raycastInfo.m_contactPointWS,
 							  btScalar(0.), m_axle[i],m_sideImpulse[i],timeStep);
 
-					m_sideImpulse[i] *= sideFrictionStiffness2;
+                    // Lumak: changed from global to member variable
+					//m_sideImpulse[i] *= sideFrictionStiffness2;
+                    m_sideImpulse[i] *= wheelInfo.m_sideFrictionStiffness;
 						
 				}
 				
