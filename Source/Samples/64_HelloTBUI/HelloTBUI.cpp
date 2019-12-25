@@ -43,20 +43,6 @@
 
 URHO3D_DEFINE_APPLICATION_MAIN(HelloTBUI)
 
-class CheckPointWindow : public TBWindow, public Object
-{
-	URHO3D_OBJECT(CheckPointWindow, Object)
-public:
-
-	TBOBJECT_SUBCLASS(CheckPointWindow, TBWindow)
-
-	CheckPointWindow(TBWidget* root, Context* context) 
-		: Object(context)
-	{};
-
-	~CheckPointWindow() {};
-};
-
 HelloTBUI::HelloTBUI(Context* context) :
     Sample(context),
     uiRoot_(GetSubsystem<UI>()->GetRoot()),
@@ -75,42 +61,79 @@ void HelloTBUI::Start()
     // Load XML file containing default UI style sheet
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
-	Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
 
+    int windowWidth = g->GetWidth();
+    int windowHeight = g->GetHeight();
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
-    uiRoot_->SetSize(800, 600);
+    // uiRoot_->SetLayout(LM_HORIZONTAL);
 
-	//ImGuiElement* imgui = new ImGuiElement(context_);
-	//ImGuiElement::RegisterObject(context_);
-	//imgui->SetPosition(0, 0);
-	//imgui->SetSize(800, 600);
+    //ImGuiElement* imgui = new ImGuiElement(context_);
+    //ImGuiElement::RegisterObject(context_);
+    //imgui->SetPosition(0, 0);
+    //imgui->SetSize(800, 600);
 
-	// ImGuiElement* imgui2 = new ImGuiElement(context_);
-	// imgui->AddChild(imgui2);
+    // ImGuiElement* imgui2 = new ImGuiElement(context_);
+    // imgui->AddChild(imgui2);
 
-	//uiRoot_->AddChild(imgui);
+    //uiRoot_->AddChild(imgui);
 
-	//ToolTip* toolTip = new ToolTip(context_);
-	//imgui->AddChild(toolTip);
+    //ToolTip* toolTip = new ToolTip(context_);
+    //imgui->AddChild(toolTip);
+
+    TBUIElement::RegisterObject(context_);
 
     tbelement = new TBUIElement(context_);
-    TBUIElement::RegisterObject(context_);
-    tbelement->SetPosition(0, 0);
+    // tbelement->SetEnableAnchor(true);
+    tbelement->LoadResources();
 
-	// tbelement->SetSize(g->GetWidth(), g->GetHeight());
-    tbelement->SetBoxSize(g->GetWidth(), g->GetHeight());
-    tbelement->SetAlignment(HA_CENTER, VA_BOTTOM);
+    tbelement->SetPosition(0, 0);
+    tbelement->SetSize(windowWidth / 2, windowHeight);
+    tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
 
     TBRootWidget* stateUI = new TBRootWidget(context_);
     stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-    tbelement->AddStateWidget(stateUI, true);
-    tbelement->LoadResources();
+    // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
+    tbelement->AddStateWidget(stateUI, true, true);
     tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
 
-    uiRoot_->AddChild(tbelement);
+    tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
+    tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
+    // tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
 
-	SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
+    TBUIElement* tbelement2 = new TBUIElement(context_);
+    // tbelement2->LoadResources();
+    tbelement2->SetPosition(windowWidth / 2, 0);
+    tbelement2->SetSize(windowWidth / 4, windowHeight);
+    // tbelement2->SetAlignment(HA_RIGHT, VA_BOTTOM);
+
+    TBRootWidget* stateUI2 = new TBRootWidget(context_);
+    stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
+    tbelement2->AddStateWidget(stateUI2, true);
+    tbelement2->LoadWidgets(stateUI2, "Data/TB/layout/debug_screen.txt");
+
+    uiRoot_->AddChild(tbelement);
+    uiRoot_->AddChild(tbelement2);
+
+//    Button* button = new Button(context_);
+//    button->SetStyleAuto();
+//    button->SetName("BUTTON 1");
+//    Text* text = new Text(context_);
+//    text->SetText("|BUTTON 1|");
+//    button->AddChild(text);
+//    button->SetMinHeight(24);
+
+//    Button* button2 = new Button(context_);
+//    button2->SetStyleAuto();
+//    button2->SetName("BUTTON 2");
+
+//    uiRoot_->AddChild(button);
+//    uiRoot_->AddChild(button2);
+
+    uiRoot_->SetSize(windowWidth, windowHeight);
+
+    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
 
     // Initialize Window
     // InitWindow();
@@ -127,19 +150,19 @@ void HelloTBUI::Start()
 
 void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 {
-	int key = eventData[KeyDown::P_KEY].GetInt();
+    int key = eventData[KeyDown::P_KEY].GetInt();
 
-	if (key == KEY_F1)
-		GetSubsystem<Console>()->Toggle();
+    if (key == KEY_F1)
+        GetSubsystem<Console>()->Toggle();
 
-	if (key == KEY_F4)
-	{
+    if (key == KEY_F4)
+    {
 #ifdef TB_RUNTIME_DEBUG_INFO
-		ShowDebugInfoSettingsWindow(tbelement->GetRoot());
+        ShowDebugInfoSettingsWindow(tbelement->GetRoot());
 #else
-		URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
+        URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
 #endif
-	}
+    }
 }
 
 void HelloTBUI::InitControls()
@@ -177,7 +200,7 @@ void HelloTBUI::InitWindow()
 
     // Set Window size and layout settings
     window_->SetMinWidth(684);
-	window_->SetPosition(0,0);
+    window_->SetPosition(0,0);
     window_->SetLayout(LM_VERTICAL, 6, IntRect(6, 6, 6, 6));
     window_->SetAlignment(HA_CENTER, VA_CENTER);
     window_->SetName("Window");

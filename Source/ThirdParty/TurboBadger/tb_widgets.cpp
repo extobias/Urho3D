@@ -1644,7 +1644,8 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
 			ev.key = key;
 			ev.special_key = special_key;
 			ev.modifierkeys = modifierkeys;
-			handled = focused_widget->InvokeEvent(ev);
+            // handled = focused_widget->InvokeEvent(ev);
+            focused_widget->InvokeEvent(ev);
 		}
 	}
 

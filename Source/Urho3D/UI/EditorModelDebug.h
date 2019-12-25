@@ -36,6 +36,8 @@ public:
 
     void UpdateBatches(const FrameInfo& frame) override;
 
+    void UpdateGeometry(const FrameInfo& frame) override;
+
     void ApplyAttributes() override;
 
     void OnSetAttribute(const AttributeInfo& attr, const Variant& src) override;
