@@ -41,6 +41,7 @@ void tb_core_shutdown()
 	delete g_image_manager;
 #endif
 	delete g_widgets_reader;
+    g_widgets_reader = nullptr;
 	delete g_tb_skin;
 	delete g_font_manager;
 	delete g_tb_lng;

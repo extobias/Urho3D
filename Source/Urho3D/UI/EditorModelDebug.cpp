@@ -5,11 +5,11 @@
 #include "../Graphics/Drawable.h"
 #include "../Graphics/DebugRenderer.h"
 #include "../Graphics/Geometry.h"
+#include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
 #include "../Graphics/Model.h"
 #include "../Graphics/OctreeQuery.h"
 #include "../Scene/Scene.h"
-#include "../Graphics/VertexBuffer.h"
 #include "../IO/File.h"
 #include "../IO/FileSystem.h"
 #include "../IO/Log.h"
@@ -220,6 +220,11 @@ void EditorModelDebug::UpdateBatches(const FrameInfo& frame)
 
 //        // worldTransformsFaces_[i].SetTranslation(Vector3(0.0f, 1.0f, 0.0f));
 //    }
+}
+
+void EditorModelDebug::UpdateGeometry(const FrameInfo& frame)
+{
+    URHO3D_LOGERRORF("editordebug applyattr: <%u>", vertexMaskType_);
 }
 
 void EditorModelDebug::ApplyAttributes()
