@@ -255,6 +255,7 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
     ver[2].u = m_uu;
     ver[2].v = m_vv;
     ver[2].col = color;
+
     ver[1].x = (float) dst_rect.x;
     ver[1].y = (float) dst_rect.y;
     ver[1].u = m_u;

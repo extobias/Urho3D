@@ -106,7 +106,7 @@ void TBRendererUrho3D::BeginPaint(int render_target_w, int render_target_h)
     // URHO3D_LOGERRORF("---------- begin paint -----------");
     TBRendererBatcher::BeginPaint(render_target_w, render_target_h);
 
-    // clipRect_.Set(clipRect_.x + 200, clipRect_.y, render_target_w + 200, render_target_h);
+    // clipRect_.Set(clipRect_.x, clipRect_.y, render_target_w, render_target_h);
 }
 
 void TBRendererUrho3D::EndPaint()
@@ -130,13 +130,10 @@ TBBitmap *TBRendererUrho3D::CreateBitmap(int width, int height, uint32 *data)
 // TB render batch call.
 void TBRendererUrho3D::RenderBatch(TBRendererBatcher::Batch *batch)
 {
-    // URHO3D_LOGERRORF("  ---------- render batch <%u> vertex count <%u> -----------", batch->batch_id, batch->vertex_count);
-
     TBBitmapUrho3D* bitmap = (TBBitmapUrho3D*)(batch->bitmap);
     SharedPtr<Texture2D> dummy;
     SharedPtr<Texture2D> texture = bitmap ? bitmap->GetTexture() : dummy;
 
-    // clipRect_.x = 200;
     IntRect scissor(clipRect_.x, clipRect_.y, clipRect_.x + clipRect_.w, clipRect_.y + clipRect_.h);
     UIBatch uiBatch(0, BLEND_ALPHA, scissor, texture, &vertexData_);
 
@@ -147,6 +144,7 @@ void TBRendererUrho3D::RenderBatch(TBRendererBatcher::Batch *batch)
     unsigned vertexSize = VERTEX_SIZE * batch->vertex_count;
     uiBatch.vertexStart_ = vertexData_.Size();
     uiBatch.vertexEnd_ = uiBatch.vertexStart_ + vertexSize;
+
     vertexData_.Resize(uiBatch.vertexStart_ + vertexSize);
     float* dest = &(vertexData_.At(uiBatch.vertexStart_));
 
@@ -169,8 +167,6 @@ void TBRendererUrho3D::RenderBatch(TBRendererBatcher::Batch *batch)
 void TBRendererUrho3D::SetClipRect(const TBRect &rect)
 {
     clipRect_ = rect;
-    // TBRect r(m_clip_rect.x, m_clip_rect.y, m_clip_rect.w, m_clip_rect.h);
-    // clipRect_ = r;
 }
 
 void TBRendererUrho3D::Clear()
@@ -225,12 +221,6 @@ TBUIElement::~TBUIElement()
         delete renderer_;
         renderer_ = nullptr;
     }
-
-    //if(root_)
-    //{
-    //    delete root_;
-    //    root_ = nullptr;
-    //}
 }
 
 void TBUIElement::RegisterObject(Context* context)
@@ -309,10 +299,17 @@ void TBUIElement::Clear()
 
 void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, const IntRect& currentScissor)
 {
+    float colorStep = 359.0f / renderer_->GetBatchSize();
+    Color color;
+
     for(int i = 0; i < renderer_->GetBatchSize(); i++)
     {
         UIBatch& batch = renderer_->GetBatch(i);
         batch.element_ = this;
+//        batch.scissor_.top_ += screenPosition_.y_;
+//        batch.scissor_.left_ += screenPosition_.x_ - 500;
+        // batch.scissor_.bottom_ += screenPosition_.y_;
+
         unsigned batchStart = batch.vertexStart_;
         unsigned batchEnd = batch.vertexEnd_;
         unsigned batchSize = batch.vertexEnd_ - batch.vertexStart_;
@@ -324,28 +321,36 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
         vertexData.Resize(newSize);
         float* dest = &(vertexData.At(begin));
 
-        batch.vertexStart_ = begin;
-        batch.vertexEnd_ = vertexData.Size();
+        // batch.vertexStart_ = begin;
+        // batch.vertexEnd_ = vertexData.Size();
 
-        float* src = &(batch.vertexData_->At(batchStart));
-        PODVector<float>* ptrVec = batch.vertexData_;
-        //URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
-        memcpy(&vertexData[batch.vertexStart_], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
+        // float* src = &(batch.vertexData_->At(batchStart));
+        // PODVector<float>* ptrVec = batch.vertexData_;
+        // URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
+        // memcpy(&vertexData[begin], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
         //memcpy(dest, src, batchSize * sizeof(float));
 
-        //unsigned offset = 0;
-  //      for(int j = batchStart; j < batchEnd; j += VERTEX_SIZE, offset += VERTEX_SIZE)
-  //      {
-        //    // URHO3D_LOGERRORF(" vertex <%u>", j);
+        unsigned offset = 0;
+        #define VER_COL(r, g, b, a) (((a)<<24) + ((b)<<16) + ((g)<<8) + r)
+        for(unsigned j = batchStart; j < batchEnd; j += VERTEX_SIZE)
+        {
+//            dest[offset + 0] += screenPosition_.x_;
+//            dest[offset + 1] += screenPosition_.y_;
 
-  //          dest[offset + 0] = batch.vertexData_->At(j + 0);
-  //          dest[offset + 1] = batch.vertexData_->At(j + 1);
-  //          dest[offset + 2] = batch.vertexData_->At(j + 2);
-  //          float col   = batch.vertexData_->At(j + 3);
-  //          ((unsigned&)dest[offset + 3]) = (unsigned&)col;
-  //          dest[offset + 4] = batch.vertexData_->At(j + 4);
-  //          dest[offset + 5] = batch.vertexData_->At(j + 5);
-  //      }
+//            dest[offset + 0] = batch.vertexData_->At(j + 0) + screenPosition_.x_;
+//            dest[offset + 1] = batch.vertexData_->At(j + 1) + screenPosition_.y_;
+            dest[offset + 0] = batch.vertexData_->At(j + 0);
+            dest[offset + 1] = batch.vertexData_->At(j + 1);
+            dest[offset + 2] = batch.vertexData_->At(j + 2);
+            float col   = batch.vertexData_->At(j + 3);
+            color.FromHSL(colorStep * i, 100.0f, 50.0f);
+            // unsigned col = color.ToUInt();
+            ((unsigned&)dest[offset + 3]) = (unsigned&)col;
+            dest[offset + 4] = batch.vertexData_->At(j + 4);
+            dest[offset + 5] = batch.vertexData_->At(j + 5);
+
+            offset += VERTEX_SIZE;
+        }
 
         UIBatch::AddOrMerge(batch, batches);
     }
@@ -421,31 +426,33 @@ int TBUIElement::FindKeyMap(int key)
     return TB_KEY_UNDEFINED;
 }
 
-void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition,
-                                    int button, int buttons, int qualifiers, Cursor* cursor)
+void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
 {
     root_->InvokePointerDown(position.x_, position.y_, 0, GetModifierKeys(), ShouldEmulateTouchEvent());
 }
 
-void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& screenPosition,
-                                int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
+void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
 {
     root_->InvokePointerUp(position.x_, position.y_, GetModifierKeys(), ShouldEmulateTouchEvent());
 }
 
-//void TBUIElement::OnWheel(int delta, int buttons, int qualifiers)
 void TBUIElement::OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers)
 {
-    // URHO3D_LOGERRORF("tbuielement.onwheel: mouse <%i, %i> delta <%i>", mouse_x, mouse_y, delta);
     root_->InvokeWheel(mouse_x, mouse_y, 0, -delta, GetModifierKeys());
 }
 
 void TBUIElement::OnPositionSet(const IntVector2& newPosition)
 {
-    root_->SetPosition(TBPoint(newPosition.x_, newPosition.y_));
+    int posx = newPosition.x_;
+    int posy = newPosition.y_;
 
-    TBRect rect = renderer_->GetClipRect();
-    renderer_->SetClipRect(TBRect(newPosition.x_, newPosition.y_, newPosition.x_ + rect.w, newPosition.y_ + rect.h));
+    root_->SetPosition(TBPoint(posx, posy));
+
+//    TBRect rect = renderer_->GetClipRect();
+//    renderer_->SetClipRect(TBRect(posx, posy, posx + rect.w, posy + rect.h));
+
+    // Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    // renderer_->SetClipRect(TBRect(0, 0, g->GetWidth(), g->GetHeight()));
 }
 
 void TBUIElement::OnResize(const IntVector2& newSize, const IntVector2& delta)
@@ -456,6 +463,13 @@ void TBUIElement::OnResize(const IntVector2& newSize, const IntVector2& delta)
 bool TBUIElement::IsWithinScissor(const IntRect& currentScissor)
 {
     return true;
+}
+
+const IntVector2& TBUIElement::GetScreenPosition() const
+{
+    UIElement::GetScreenPosition();
+    root_->SetPosition(TBPoint(screenPosition_.x_, screenPosition_.y_));
+    return screenPosition_;
 }
 
 void TBUIElement::Update(float timeStep)
@@ -474,6 +488,7 @@ void TBUIElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
 {
     Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
 
+    //renderer_->BeginPaint(GetWidth(), GetHeight());
     // renderer_->BeginPaint(root_->GetRect().w, root_->GetRect().h);
     renderer_->BeginPaint(g->GetWidth(), g->GetHeight());
 
@@ -496,12 +511,9 @@ void TBUIElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
 
 void TBUIElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
 {
-    using namespace ScreenMode;
-    int w = eventData[P_WIDTH].GetInt();
-    int h = eventData[P_HEIGHT].GetInt();
-
-//    root_->SetSize(w, h);
-//    SetSize(w, h);
+//    using namespace ScreenMode;
+//    int w = eventData[P_WIDTH].GetInt();
+//    int h = eventData[P_HEIGHT].GetInt();
 }
 
 void TBUIElement::HandleFocused(StringHash /*eventType*/, VariantMap& eventData)
@@ -540,8 +552,8 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 {
     auto event = static_cast<SDL_Event*>(args[SDLRawInput::P_SDLEVENT].Get<void*>());
 
-    if (event->type != SDL_MOUSEMOTION && event->type != SDL_CONTROLLERAXISMOTION && event->type != SDL_JOYAXISMOTION)
-        URHO3D_LOGERRORF("tbuielement.handleeventraw: event <%i>", event->type);
+//    if (event->type != SDL_MOUSEMOTION && event->type != SDL_CONTROLLERAXISMOTION && event->type != SDL_JOYAXISMOTION)
+//        URHO3D_LOGERRORF("tbuielement.handleeventraw: event <%i>", event->type);
 
     // intercept mouse event to move window and not forwarding to scene
     if (event->type == SDL_MOUSEMOTION)
