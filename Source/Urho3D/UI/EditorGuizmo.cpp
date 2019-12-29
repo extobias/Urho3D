@@ -333,7 +333,6 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
         buttons_ = mouseButtons;
         // if (mouseButtons & MOUSEB_LEFT)
         {
-            // URHO3D_LOGERRORF("selected vertex face");
             if (debugModel)
             {
                 debugModel->AddSelectedFaces(faces);
