@@ -22,8 +22,15 @@
 
 #include <Urho3D/Core/CoreEvents.h>
 #include <Urho3D/Engine/Engine.h>
+#include <Urho3D/Graphics/AnimatedModel.h>
+#include <Urho3D/Graphics/Animation.h>
+#include <Urho3D/Graphics/AnimationState.h>
 #include <Urho3D/Graphics/Graphics.h>
+#include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/Texture2D.h>
+#include <Urho3D/Graphics/Octree.h>
+#include <Urho3D/Graphics/Renderer.h>
+#include <Urho3D/Graphics/Zone.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/UI/Button.h>
@@ -67,7 +74,7 @@ void HelloTBUI::Start()
     int windowHeight = g->GetHeight();
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
-    // uiRoot_->SetLayout(LM_HORIZONTAL);
+    uiRoot_->SetLayout(LM_FREE);
 
     //ImGuiElement* imgui = new ImGuiElement(context_);
     //ImGuiElement::RegisterObject(context_);
@@ -84,52 +91,70 @@ void HelloTBUI::Start()
 
     TBUIElement::RegisterObject(context_);
 
-    tbelement = new TBUIElement(context_);
-    // tbelement->SetEnableAnchor(true);
-    tbelement->LoadResources();
+    if(1)
+    {
+        tbelement = new TBUIElement(context_);
+        // tbelement->SetEnableAnchor(true);
+        tbelement->LoadResources();
 
-    tbelement->SetPosition(0, 0);
-    tbelement->SetSize(windowWidth / 2, windowHeight);
-    tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
+        // tbelement->SetPosition(0, 0);
+        // tbelement->SetSize(windowWidth / 2, windowHeight);
+        tbelement->SetMinSize(windowWidth / 2, windowHeight);
+        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-    TBRootWidget* stateUI = new TBRootWidget(context_);
-    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-    // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
-    tbelement->AddStateWidget(stateUI, true, true);
-    tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
+        TBRootWidget* stateUI = new TBRootWidget(context_);
+        stateUI->SetGravity(WIDGET_GRAVITY_ALL);
+        // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
+        tbelement->AddStateWidget(stateUI, true, true);
+        tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
 
-    tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
-    tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
-    // tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
+        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
+        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
+        // tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
+        uiRoot_->AddChild(tbelement);
 
-    TBUIElement* tbelement2 = new TBUIElement(context_);
-    // tbelement2->LoadResources();
-    tbelement2->SetPosition(windowWidth / 2, 0);
-    tbelement2->SetSize(windowWidth / 4, windowHeight);
-    // tbelement2->SetAlignment(HA_RIGHT, VA_BOTTOM);
+        TBUIElement* tbelement2 = new TBUIElement(context_);
+        // tbelement2->SetEnableAnchor(true);
+        // tbelement2->LoadResources();
+        // tbelement2->SetPosition(windowWidth / 2, 0);
+        // tbelement2->SetPosition(512, 0);
+        tbelement2->SetMinSize(windowWidth / 4, windowHeight);
+        tbelement2->SetAlignment(HA_RIGHT, VA_TOP);
 
-    TBRootWidget* stateUI2 = new TBRootWidget(context_);
-    stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
-    tbelement2->AddStateWidget(stateUI2, true);
-    tbelement2->LoadWidgets(stateUI2, "Data/TB/layout/debug_screen.txt");
+        TBRootWidget* stateUI2 = new TBRootWidget(context_);
+        stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
+        tbelement2->AddStateWidget(stateUI2, true);
+        tbelement2->LoadWidgets(stateUI2, "Data/TB/layout/debug_screen.txt");
 
-    uiRoot_->AddChild(tbelement);
-    uiRoot_->AddChild(tbelement2);
+        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
+        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
 
-//    Button* button = new Button(context_);
-//    button->SetStyleAuto();
-//    button->SetName("BUTTON 1");
-//    Text* text = new Text(context_);
-//    text->SetText("|BUTTON 1|");
-//    button->AddChild(text);
-//    button->SetMinHeight(24);
+        uiRoot_->AddChild(tbelement2);
+    }
+    else
+    {
+        Button* button = new Button(context_);
+        // button->SetEnableAnchor(true);
+        button->SetStyleAuto();
+        button->SetName("BUTTON 1");
+        Text* text = new Text(context_);
+        text->SetText("|BUTTON 1|");
+        button->AddChild(text);
+        button->SetMinHeight(24);
+        button->SetMinWidth(124);
+        button->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-//    Button* button2 = new Button(context_);
-//    button2->SetStyleAuto();
-//    button2->SetName("BUTTON 2");
+//        Button* button2 = new Button(context_);
+//        // button2->SetEnableAnchor(true);
+//        button2->SetStyleAuto();
+//        button2->SetName("BUTTON 2");
+//        button2->SetMinHeight(24);
+//        button2->SetMinWidth(124);
+//        button2->SetAlignment(HA_LEFT, VA_TOP);
 
-//    uiRoot_->AddChild(button);
-//    uiRoot_->AddChild(button2);
+        uiRoot_->AddChild(button);
+//        uiRoot_->AddChild(button2);
+    }
 
     uiRoot_->SetSize(windowWidth, windowHeight);
 
@@ -144,8 +169,93 @@ void HelloTBUI::Start()
     // Create a draggable Fish
     // CreateDraggableFish();
 
+    CreateScene();
     // Set the mouse mode to use in the sample
     Sample::InitMouseMode(MM_FREE);
+}
+
+void HelloTBUI::CreateScene()
+{
+    auto* cache = GetSubsystem<ResourceCache>();
+
+    scene_ = new Scene(context_);
+
+    // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
+    // Also create a DebugRenderer component so that we can draw debug geometry
+    scene_->CreateComponent<Octree>();
+    scene_->CreateComponent<DebugRenderer>();
+
+    // Create scene node & StaticModel component for showing a static plane
+    Node* planeNode = scene_->CreateChild("Plane");
+    planeNode->SetScale(Vector3(50.0f, 1.0f, 50.0f));
+    auto* planeObject = planeNode->CreateComponent<StaticModel>();
+    planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
+    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+
+    // Create a Zone component for ambient lighting & fog control
+    Node* zoneNode = scene_->CreateChild("Zone");
+    auto* zone = zoneNode->CreateComponent<Zone>();
+    zone->SetBoundingBox(BoundingBox(-1000.0f, 1000.0f));
+    zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
+    zone->SetFogColor(Color(0.4f, 0.5f, 0.8f));
+    zone->SetFogStart(100.0f);
+    zone->SetFogEnd(300.0f);
+
+    // Create a directional light to the world. Enable cascaded shadows on it
+    Node* lightNode = scene_->CreateChild("DirectionalLight");
+    lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
+    auto* light = lightNode->CreateComponent<Light>();
+    light->SetLightType(LIGHT_DIRECTIONAL);
+    light->SetCastShadows(true);
+    light->SetColor(Color(0.5f, 0.5f, 0.5f));
+    light->SetShadowBias(BiasParameters(0.00025f, 0.5f));
+    // Set cascade splits at 10, 50 and 200 world units, fade shadows out at 80% of maximum shadow distance
+    light->SetShadowCascade(CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f));
+
+    // Create animated models
+    const unsigned NUM_MODELS = 30;
+    const float MODEL_MOVE_SPEED = 2.0f;
+    const float MODEL_ROTATE_SPEED = 100.0f;
+    const BoundingBox bounds(Vector3(-20.0f, 0.0f, -20.0f), Vector3(20.0f, 0.0f, 20.0f));
+
+    for (unsigned i = 0; i < NUM_MODELS; ++i)
+    {
+        Node* modelNode = scene_->CreateChild("Jill");
+        modelNode->SetPosition(Vector3(Random(40.0f) - 20.0f, 0.0f, Random(40.0f) - 20.0f));
+        modelNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+
+        auto* modelObject = modelNode->CreateComponent<AnimatedModel>();
+        modelObject->SetModel(cache->GetResource<Model>("Models/Kachujin/Kachujin.mdl"));
+        modelObject->SetMaterial(cache->GetResource<Material>("Models/Kachujin/Materials/Kachujin.xml"));
+        modelObject->SetCastShadows(true);
+
+        // Create an AnimationState for a walk animation. Its time position will need to be manually updated to advance the
+        // animation, The alternative would be to use an AnimationController component which updates the animation automatically,
+        // but we need to update the model's position manually in any case
+        auto* walkAnimation = cache->GetResource<Animation>("Models/Kachujin/Kachujin_Walk.ani");
+
+        AnimationState* state = modelObject->AddAnimationState(walkAnimation);
+        // The state would fail to create (return null) if the animation was not found
+        if (state)
+        {
+            // Enable full blending weight and looping
+            state->SetWeight(1.0f);
+            state->SetLooped(true);
+            state->SetTime(Random(walkAnimation->GetLength()));
+        }
+
+        // Create our custom Mover component that will move & animate the model during each frame's update
+        // auto* mover = modelNode->CreateComponent<Mover>();
+        // mover->SetParameters(MODEL_MOVE_SPEED, MODEL_ROTATE_SPEED, bounds);
+    }
+
+    // Create the camera. Limit far clip distance to match the fog
+    cameraNode_ = scene_->CreateChild("Camera");
+    auto* camera = cameraNode_->CreateComponent<Camera>();
+    camera->SetFarClip(300.0f);
+
+    // Set an initial position for the camera scene node above the plane
+    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
 }
 
 void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)

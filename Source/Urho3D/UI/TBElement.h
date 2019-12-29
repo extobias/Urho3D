@@ -157,6 +157,8 @@ public:
     void Update(float timeStep) override;
 
     bool IsWithinScissor(const IntRect& currentScissor) override;
+
+    const IntVector2& GetScreenPosition() const override;
     
     void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
 
