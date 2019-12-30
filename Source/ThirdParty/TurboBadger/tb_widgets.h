@@ -936,7 +936,7 @@ public:
 
 	bool InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS modifierkeys, bool touch);
 	bool InvokePointerUp(int x, int y, MODIFIER_KEYS modifierkeys, bool touch);
-	void InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool touch);
+        bool InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool touch);
 	void InvokePointerCancel();
 
 	/** Invoke touch events with ref_id set as the given id.

@@ -1411,7 +1411,7 @@ void TBWidget::MaybeInvokeLongClickOrContextMenu(bool touch)
 	}
 }
 
-void TBWidget::InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool touch)
+bool TBWidget::InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool touch)
 {
 	SetHoveredWidget(GetWidgetAt(x, y, true), touch);
 
@@ -1425,11 +1425,12 @@ void TBWidget::InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool 
 		TBWidgetEvent ev(EVENT_TYPE_POINTER_MOVE, x, y, touch, modifierkeys);
 
 		if (target->InvokeEvent(ev))
-			return;
+            return true;
 
 		// The move event was not handled, so handle panning of scrollable widgets.
 		HandlePanningOnMove(x, y);
 	}
+    return false;
 }
 
 void TBWidget::HandlePanningOnMove(int x, int y)
@@ -1540,7 +1541,10 @@ bool TBWidget::InvokeTouchUp(int x, int y, uint32 id, MODIFIER_KEYS modifierkeys
 void TBWidget::InvokeTouchMove(int x, int y, uint32 id, MODIFIER_KEYS modifierkeys)
 {
 	if (id == 0)
-		return InvokePointerMove(x, y, modifierkeys, true);
+    {
+        InvokePointerMove(x, y, modifierkeys, true);
+        return;
+    }
 
 	TOUCH_INFO *ti = GetTouchInfo(id);
 	if (!ti)
