@@ -16,8 +16,9 @@ class TBTabLayout : public TBLayout
 {
 public:
 	// For safe typecasting
-	TBOBJECT_SUBCLASS(TBTabLayout, TBLayout);
+    TBOBJECT_SUBCLASS(TBTabLayout, TBLayout)
 
+    TBTabLayout(TBCore* core) : TBLayout (core) {}
 	virtual void OnChildAdded(TBWidget *child);
 	virtual PreferredSize OnCalculatePreferredContentSize(const SizeConstraints &constraints);
 };
@@ -30,7 +31,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBTabContainer, TBWidget);
 
-	TBTabContainer();
+    TBTabContainer(TBCore* core);
 	~TBTabContainer();
 
 	/** Set along which axis the content should layouted.

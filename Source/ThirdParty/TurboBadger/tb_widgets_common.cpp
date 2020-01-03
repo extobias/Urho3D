@@ -26,7 +26,7 @@ void TBWidgetString::ValidatCachedSize(TBWidget *widget)
 	if (!m_height || fd != m_fd)
 	{
 		m_fd = fd;
-		TBFontFace *font = g_font_manager->GetFontFace(fd);
+        TBFontFace *font = widget->core_->font_manager_->GetFontFace(fd);
 		m_width = font->GetStringWidth(m_text);
 		m_height = font->GetHeight();
 	}
@@ -96,8 +96,9 @@ void TBWidgetString::Paint(TBWidget *widget, const TBRect &rect, const TBColor &
 /** This value on m_cached_text_width means it needs to be updated again. */
 #define UPDATE_TEXT_WIDTH_CACHE -1
 
-TBTextField::TBTextField()
-	: m_cached_text_width(UPDATE_TEXT_WIDTH_CACHE)
+TBTextField::TBTextField(TBCore *core)
+    : TBWidget (core)
+    , m_cached_text_width(UPDATE_TEXT_WIDTH_CACHE)
 	, m_squeezable(false)
 {
 	SetSkinBg(TBIDC("TBTextField"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
@@ -154,8 +155,11 @@ void TBTextField::OnPaint(const PaintProps &paint_props)
 const int auto_click_first_delay = 500;
 const int auto_click_repeat_delay = 100;
 
-TBButton::TBButton()
-	: m_auto_repeat_click(false)
+TBButton::TBButton(TBCore *core)
+    : TBWidget (core)
+    , m_layout(core)
+    , m_textfield(core)
+    , m_auto_repeat_click(false)
 	, m_toggle_mode(false)
 {
 	SetIsFocusable(true);
@@ -283,7 +287,10 @@ void TBButton::ButtonLayout::OnChildRemove(TBWidget *child)
 
 // == TBClickLabel ==========================================================================================
 
-TBClickLabel::TBClickLabel()
+TBClickLabel::TBClickLabel(TBCore* core)
+    : TBWidget (core)
+    , m_textfield(core)
+    , m_layout(core)
 {
 	AddChild(&m_layout);
 	m_layout.AddChild(&m_textfield);
@@ -340,7 +347,8 @@ PreferredSize TBSkinImage::OnCalculatePreferredSize(const SizeConstraints &const
 
 // == TBSeparator ===========================================
 
-TBSeparator::TBSeparator()
+TBSeparator::TBSeparator(TBCore *core)
+    : TBWidget (core)
 {
 	SetSkinBg(TBIDC("TBSeparator"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 	SetState(WIDGET_STATE_DISABLED, true);
@@ -352,8 +360,9 @@ TBSeparator::TBSeparator()
 // FIX: Make it post messages only if visible
 const int spin_speed = 1000/30; ///< How fast should the spinner animation animate.
 
-TBProgressSpinner::TBProgressSpinner()
-	: m_value(0)
+TBProgressSpinner::TBProgressSpinner(TBCore *core)
+    : TBWidget (core)
+    , m_value(0)
 	, m_frame(0)
 {
 	SetSkinBg(TBIDC("TBProgressSpinner"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
@@ -388,13 +397,13 @@ void TBProgressSpinner::OnPaint(const PaintProps &paint_props)
 {
 	if (IsRunning())
 	{
-		TBSkinElement *e = g_tb_skin->GetSkinElement(m_skin_fg);
+        TBSkinElement *e = core_->tb_skin_->GetSkinElement(m_skin_fg);
 		if (e && e->bitmap)
 		{
 			int size = e->bitmap->Height();
 			int num_frames = e->bitmap->Width() / e->bitmap->Height();
 			int current_frame = m_frame % num_frames;
-			g_renderer->DrawBitmap(GetPaddingRect(), TBRect(current_frame * size, 0, size, size), e->bitmap);
+            core_->renderer_->DrawBitmap(GetPaddingRect(), TBRect(current_frame * size, 0, size, size), e->bitmap);
 		}
 	}
 }
@@ -409,8 +418,9 @@ void TBProgressSpinner::OnMessageReceived(TBMessage *msg)
 
 // == TBRadioCheckBox =======================================
 
-TBRadioCheckBox::TBRadioCheckBox()
-	: m_value(0)
+TBRadioCheckBox::TBRadioCheckBox(TBCore* core)
+    : TBWidget (core)
+    , m_value(0)
 {
 	SetIsFocusable(true);
 	SetClickByKey(true);
@@ -469,8 +479,10 @@ bool TBRadioCheckBox::OnEvent(const TBWidgetEvent &ev)
 
 // == TBScrollBar =======================================
 
-TBScrollBar::TBScrollBar()
-	: m_axis(AXIS_Y) ///< Make SetAxis below always succeed and set the skin
+TBScrollBar::TBScrollBar(TBCore *core)
+    : TBWidget (core)
+    , m_handle(core)
+    , m_axis(AXIS_Y) ///< Make SetAxis below always succeed and set the skin
 	, m_value(0)
 	, m_min(0)
 	, m_max(1)
@@ -615,8 +627,10 @@ void TBScrollBar::OnResized(int old_w, int old_h)
 
 // == TBSlider ============================================
 
-TBSlider::TBSlider()
-	: m_axis(AXIS_Y) ///< Make SetAxis below always succeed and set the skin
+TBSlider::TBSlider(TBCore *core)
+    : TBWidget (core)
+    , m_handle(core)
+    , m_axis(AXIS_Y) ///< Make SetAxis below always succeed and set the skin
 	, m_value(0)
 	, m_min(0)
 	, m_max(1)
@@ -746,14 +760,16 @@ void TBSlider::OnResized(int old_w, int old_h)
 
 // == TBContainer ===================================
 
-TBContainer::TBContainer()
+TBContainer::TBContainer(TBCore *core)
+    : TBWidget (core)
 {
 	SetSkinBg(TBIDC("TBContainer"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 }
 
 // == TBMover =======================================
 
-TBMover::TBMover()
+TBMover::TBMover(TBCore *core)
+    : TBWidget (core)
 {
 	SetSkinBg(TBIDC("TBMover"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 }
@@ -782,7 +798,8 @@ bool TBMover::OnEvent(const TBWidgetEvent &ev)
 
 // == TBResizer =======================================
 
-TBResizer::TBResizer()
+TBResizer::TBResizer(TBCore* core)
+    : TBWidget (core)
 {
 	SetSkinBg(TBIDC("TBResizer"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 }
@@ -821,7 +838,8 @@ bool TBResizer::OnEvent(const TBWidgetEvent &ev)
 
 // == TBDimmer =======================================
 
-TBDimmer::TBDimmer()
+TBDimmer::TBDimmer(TBCore* core)
+    : TBWidget (core)
 {
 	SetSkinBg(TBIDC("TBDimmer"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 	SetGravity(WIDGET_GRAVITY_ALL);

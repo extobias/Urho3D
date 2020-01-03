@@ -59,7 +59,7 @@ public:
 
 	/** Open the given font file with this renderer and return a new TBFontFace with it.
 		return nullptr if the file can't be opened by this renderer. */
-	virtual TBFontFace *Create(TBFontManager *font_manager, const char *filename,
+    virtual TBFontFace *Create(TBCore* core, TBFontManager *font_manager, const char *filename,
 								const TBFontDescription &font_desc) = 0;
 
 	virtual bool RenderGlyph(TBFontGlyphData *data, UCS4 cp) = 0;
@@ -87,7 +87,7 @@ public:
 class TBFontGlyphCache : private TBRendererListener
 {
 public:
-	TBFontGlyphCache();
+    TBFontGlyphCache(TBCore* core);
 	~TBFontGlyphCache();
 
 	/** Get the glyph or nullptr if it is not in the cache. */
@@ -109,6 +109,7 @@ public:
 	virtual void OnContextLost();
 	virtual void OnContextRestored();
 private:
+    TBCore* core_;
 	void DropGlyphFragment(TBFontGlyph *glyph);
 	TBBitmapFragmentManager m_frag_manager;
 	TBHashTableAutoDeleteOf<TBFontGlyph> m_glyphs;
@@ -142,7 +143,7 @@ private:
 class TBFontFace
 {
 public:
-	TBFontFace(TBFontGlyphCache *glyph_cache, TBFontRenderer *renderer, const TBFontDescription &font_desc);
+    TBFontFace(TBCore* core, TBFontGlyphCache *glyph_cache, TBFontRenderer *renderer, const TBFontDescription &font_desc);
 	~TBFontFace();
 
 	/** Render all glyphs needed to display the string. */
@@ -182,6 +183,7 @@ public:
 	    when calling DrawString. Very usefull to add a shadow effect to a font. */
 	void SetBackgroundFont(TBFontFace *font, const TBColor &col, int xofs, int yofs);
 private:
+    TBCore* core_;
 	TBID GetHashId(UCS4 cp) const;
 	TBFontGlyph *GetGlyph(UCS4 cp, bool render_if_needed);
 	TBFontGlyph *CreateAndCacheGlyph(const TBID &hash_id, UCS4 cp);
@@ -236,7 +238,7 @@ private:
 class TBFontManager
 {
 public:
-	TBFontManager();
+    TBFontManager(TBCore* core);
 	~TBFontManager();
 
 	/** Add a renderer so fonts supported by the renderer can be created. Ownership of the
@@ -272,6 +274,7 @@ public:
 	/** Return the glyph cache used for fonts created by this font manager. */
 	TBFontGlyphCache *GetGlyphCache() { return &m_glyph_cache; }
 private:
+    TBCore* core_;
 	TBHashTableAutoDeleteOf<TBFontInfo> m_font_info;
 	TBHashTableAutoDeleteOf<TBFontFace> m_fonts;
 	TBLinkListAutoDeleteOf<TBFontRenderer> m_font_renderers;

@@ -13,8 +13,9 @@ namespace tb {
 
 // == TBMessageWindow =======================================================================================
 
-TBMessageWindow::TBMessageWindow(TBWidget *target, TBID id)
-	: m_target(target)
+TBMessageWindow::TBMessageWindow(TBCore* core, TBWidget *target, TBID id)
+    : TBWindow (core)
+    , m_target(target)
 {
 	TBWidgetListener::AddGlobalListener(this);
 	SetID(id);
@@ -47,7 +48,7 @@ bool TBMessageWindow::Show(const char *title, const char *message, TBMessageWind
 							"		TBSkinImage: id: 2\n"
 							"		TBEditField: multiline: 1, readonly: 1, id: 1\n"
 							"	TBLayout: distribution-position: right bottom, id: 3\n";
-	if (!g_widgets_reader->LoadData(GetContentRoot(), source))
+    if (!core_->widgets_reader_->LoadData(GetContentRoot(), source))
 		return false;
 
 	SetText(title);
@@ -87,7 +88,7 @@ bool TBMessageWindow::Show(const char *title, const char *message, TBMessageWind
 	// Create background dimmer
 	if (settings->dimmer)
 	{
-		if (TBDimmer *dimmer = new TBDimmer)
+        if (TBDimmer *dimmer = new TBDimmer(core_))
 		{
 			root->AddChild(dimmer);
 			m_dimmer.Set(dimmer);
@@ -106,10 +107,10 @@ void TBMessageWindow::AddButton(TBID id, bool focused)
 	TBLayout *layout = GetWidgetByIDAndType<TBLayout>(3);
 	if (!layout)
 		return;
-	if (TBButton *btn = new TBButton)
+    if (TBButton *btn = new TBButton(core_))
 	{
 		btn->SetID(id);
-		btn->SetText(g_tb_lng->GetString(btn->GetID()));
+        btn->SetText(core_->tb_lng_->GetString(btn->GetID()));
 		layout->AddChild(btn);
 		if (focused)
 			btn->SetFocus(WIDGET_FOCUS_REASON_UNKNOWN);

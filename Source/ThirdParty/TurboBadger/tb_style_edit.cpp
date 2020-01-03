@@ -672,7 +672,7 @@ void TBTextProps::Pop()
 
 TBFontFace *TBTextProps::GetFont() const
 {
-	return g_font_manager->GetFontFace(data->font_desc);
+    return core_->font_manager_->GetFontFace(data->font_desc);
 }
 
 // ============================================================================
@@ -1379,8 +1379,10 @@ bool TBTextFragment::GetAllowBreakAfter(const TBBlock *block) const
 
 // ============================================================================
 
-TBStyleEdit::TBStyleEdit()
-	: listener(nullptr)
+TBStyleEdit::TBStyleEdit(TBCore *core)
+    : core_(core)
+    , text_props(core)
+    , listener(nullptr)
 	, content_factory(&default_content_factory)
 	, syntax_highlighter(nullptr)
 	, layout_width(0)
@@ -1401,8 +1403,8 @@ TBStyleEdit::TBStyleEdit()
 	selection.styledit = this;
 	TMPDEBUG(packed.show_whitespace = true);
 
-	font_desc = g_font_manager->GetDefaultFontDescription();
-	font = g_font_manager->GetFontFace(font_desc);
+    font_desc = core_->font_manager_->GetDefaultFontDescription();
+    font = core_->font_manager_->GetFontFace(font_desc);
 
 #ifdef TB_TARGET_WINDOWS
 	packed.win_style_br = 1;
@@ -1442,7 +1444,7 @@ void TBStyleEdit::SetFont(const TBFontDescription &font_desc)
 	if (this->font_desc == font_desc)
 		return;
 	this->font_desc = font_desc;
-	font = g_font_manager->GetFontFace(font_desc);
+    font = core_->font_manager_->GetFontFace(font_desc);
 	Reformat(true);
 }
 

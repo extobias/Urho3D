@@ -39,17 +39,25 @@ freely, subject to the following restrictions:
 
 namespace tb {
 
+
 class TBRenderer;
 class TBSkin;
 class TBWidgetsReader;
 class TBLanguage;
 class TBFontManager;
+class TBImageManager;
 
-extern TBRenderer *g_renderer;
-extern TBSkin *g_tb_skin;
-extern TBWidgetsReader *g_widgets_reader;
-extern TBLanguage *g_tb_lng;
-extern TBFontManager *g_font_manager;
+struct TBCore {
+
+// static TBCore* g_core;
+//static TBCore* tb_core_instance();
+
+TBRenderer *renderer_;
+TBSkin *tb_skin_;
+TBWidgetsReader *widgets_reader_;
+TBLanguage *tb_lng_;
+TBFontManager *font_manager_;
+TBImageManager *image_manager_ = nullptr;
 
 /** Initialize turbo badger. Call this before using any turbo badger API. */
 bool tb_core_init(TBRenderer *renderer);
@@ -60,6 +68,15 @@ void tb_core_shutdown();
 /** Returns true if turbo badger is initialized. */
 bool tb_core_is_initialized();
 
+};
+
+//#define g_renderer TBCore::tb_core_instance()->renderer_
+//#define g_tb_skin TBCore::tb_core_instance()->tb_skin_
+//#define g_widgets_reader TBCore::tb_core_instance()->widgets_reader_
+//#define g_tb_lng TBCore::tb_core_instance()->tb_lng_
+//#define g_font_manager TBCore::tb_core_instance()->font_manager_
+
+//#define tb_core_is_initialized TBCore::tb_core_instance()->tb_core_is
 } // namespace tb
 
 #endif // TB_CORE_H

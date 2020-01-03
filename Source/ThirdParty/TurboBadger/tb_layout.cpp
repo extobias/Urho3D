@@ -12,8 +12,9 @@ namespace tb {
 
 // == TBLayout ==========================================================================
 
-TBLayout::TBLayout(AXIS axis)
-	: m_axis(axis)
+TBLayout::TBLayout(TBCore* core, AXIS axis)
+    : TBWidget (core)
+    , m_axis(axis)
 	, m_spacing(SPACING_FROM_SKIN)
 	, m_overflow(0)
 	, m_overflow_scroll(0)
@@ -216,7 +217,7 @@ int TBLayout::CalculateSpacing()
 
 		assert(SPACING_FROM_SKIN == SKIN_VALUE_NOT_SPECIFIED);
 		if (spacing == SPACING_FROM_SKIN /*|| spacing == SKIN_VALUE_NOT_SPECIFIED*/)
-			spacing = g_tb_skin->GetDefaultSpacing();
+            spacing = core_->tb_skin_->GetDefaultSpacing();
 	}
 	return spacing;
 }
@@ -441,9 +442,9 @@ void TBLayout::OnPaintChildren(const PaintProps &paint_props)
 			clip_rect = clip_rect.Expand(fluff, m_overflow_scroll == 0 ? fluff : 0,
 										fluff, m_overflow_scroll == m_overflow ? fluff : 0);
 
-		old_clip_rect = g_renderer->SetClipRect(clip_rect, true);
+        old_clip_rect = core_->renderer_->SetClipRect(clip_rect, true);
 
-		TB_IF_DEBUG_SETTING(LAYOUT_CLIPPING, g_tb_skin->PaintRect(clip_rect, TBColor(255, 0, 0, 200), 1));
+        TB_IF_DEBUG_SETTING(LAYOUT_CLIPPING, core_->tb_skin_->PaintRect(clip_rect, TBColor(255, 0, 0, 200), 1));
 	}
 
 	// Paint children
@@ -459,7 +460,7 @@ void TBLayout::OnPaintChildren(const PaintProps &paint_props)
 		else
 			skin_y = TBIDC("TBLayout.fadeout_y");
 
-		DrawEdgeFadeout(padding_rect, skin_x, skin_y,
+        DrawEdgeFadeout(core_, padding_rect, skin_x, skin_y,
 			m_overflow_scroll,
 			m_overflow_scroll,
 			m_overflow - m_overflow_scroll,
@@ -468,7 +469,7 @@ void TBLayout::OnPaintChildren(const PaintProps &paint_props)
 
 	// Restore clipping
 	if (m_overflow)
-		g_renderer->SetClipRect(old_clip_rect, false);
+        core_->renderer_->SetClipRect(old_clip_rect, false);
 }
 
 void TBLayout::OnProcess()

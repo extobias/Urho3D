@@ -75,17 +75,19 @@ private:
 
 // == TBWidget::PaintProps ==============================================================
 
-TBWidget::PaintProps::PaintProps()
+TBWidget::PaintProps::PaintProps(TBCore* core)
+ : core_(core)
 {
 	// Set the default properties, used for the root widgets
 	// calling InvokePaint. The base values for all inheritance.
-	text_color = g_tb_skin->GetDefaultTextColor();
+    text_color = core_->tb_skin_->GetDefaultTextColor();
 }
 
 // == TBWidget ==========================================================================
 
-TBWidget::TBWidget()
-	: m_parent(nullptr)
+TBWidget::TBWidget(TBCore* core)
+    : core_(core)
+    , m_parent(nullptr)
 	, m_opacity(1.f)
 	, m_state(WIDGET_STATE_NONE)
 	, m_gravity(WIDGET_GRAVITY_DEFAULT)
@@ -433,7 +435,7 @@ TBSkinElement *TBWidget::GetSkinBgElement()
 {
 	TBWidgetSkinConditionContext context(this);
 	WIDGET_STATE state = GetAutoState();
-	return g_tb_skin->GetSkinElementStrongOverride(m_skin_bg, static_cast<SKIN_STATE>(state), context);
+    return core_->tb_skin_->GetSkinElementStrongOverride(m_skin_bg, static_cast<SKIN_STATE>(state), context);
 }
 
 TBWidget *TBWidget::FindScrollableWidget(bool scroll_x, bool scroll_y)
@@ -809,9 +811,9 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 	// Translate renderer with child translation
 	int child_translation_x, child_translation_y;
 	GetChildTranslation(child_translation_x, child_translation_y);
-	g_renderer->Translate(child_translation_x, child_translation_y);
+    core_->renderer_->Translate(child_translation_x, child_translation_y);
 
-	TBRect clip_rect = g_renderer->GetClipRect();
+    TBRect clip_rect = core_->renderer_->GetClipRect();
 
 	// Invoke paint on all children that are in the current visible rect.
 	for (TBWidget *child = GetFirstChild(); child; child = child->GetNext())
@@ -830,16 +832,16 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 			{
 				// Update the renderer with the widgets opacity
 				WIDGET_STATE state = child->GetAutoState();
-				float old_opacity = g_renderer->GetOpacity();
+                float old_opacity = core_->renderer_->GetOpacity();
 				float opacity = old_opacity * child->CalculateOpacityInternal(state, skin_element);
 				if (opacity > 0)
 				{
-					g_renderer->SetOpacity(opacity);
+                    core_->renderer_->SetOpacity(opacity);
 
 					TBWidgetSkinConditionContext context(child);
-					g_tb_skin->PaintSkinOverlay(child->m_rect, skin_element, static_cast<SKIN_STATE>(state), context);
+                    core_->tb_skin_->PaintSkinOverlay(child->m_rect, skin_element, static_cast<SKIN_STATE>(state), context);
 
-					g_renderer->SetOpacity(old_opacity);
+                    core_->renderer_->SetOpacity(old_opacity);
 				}
 			}
 		}
@@ -855,7 +857,7 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 		{
 			WIDGET_STATE state = focused_widget->GetAutoState();
 			if (state & SKIN_STATE_FOCUSED)
-				g_tb_skin->PaintSkin(focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
+                core_->tb_skin_->PaintSkin(focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
             else
             {
 //                fprintf(stderr, "widget <%s> state <%u> focused <%u>\n",
@@ -864,7 +866,7 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 		}
 	}
 
-	g_renderer->Translate(-child_translation_x, -child_translation_y);
+    core_->renderer_->Translate(-child_translation_x, -child_translation_y);
 }
 
 void TBWidget::OnResized(int old_w, int old_h)
@@ -1169,7 +1171,7 @@ float TBWidget::CalculateOpacityInternal(WIDGET_STATE state, TBSkinElement *skin
 	if (skin_element)
 		opacity *= skin_element->opacity;
 	if (state & WIDGET_STATE_DISABLED)
-		opacity *= g_tb_skin->GetDefaultDisabledOpacity();
+        opacity *= core_->tb_skin_->GetDefaultDisabledOpacity();
 	return Clamp(opacity, 0.f, 1.f);
 }
 
@@ -1184,26 +1186,26 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
 	TBSkinElement *skin_element = GetSkinBgElement();
 
 	// Multiply current opacity with widget opacity, skin opacity and state opacity.
-	float old_opacity = g_renderer->GetOpacity();
+    float old_opacity = core_->renderer_->GetOpacity();
 	float opacity = old_opacity * CalculateOpacityInternal(state, skin_element);
 	if (opacity == 0)
 		return;
 	
 	// FIX: This does not give the correct result! Must use a new render target!
-	g_renderer->SetOpacity(opacity);
+    core_->renderer_->SetOpacity(opacity);
 
 	int trns_x = m_rect.x, trns_y = m_rect.y;
-	g_renderer->Translate(trns_x, trns_y);
+    core_->renderer_->Translate(trns_x, trns_y);
 
 	// Paint background skin
 	TBRect local_rect(0, 0, m_rect.w, m_rect.h);
 	
 // 	TBDebugPrint("TBWidget.InvokePaint: rect <%u,%u,%u,%u>\n", local_rect.x, local_rect.y, local_rect.w, local_rect.h);
 	TBWidgetSkinConditionContext context(this);
-	TBSkinElement *used_element = g_tb_skin->PaintSkin(local_rect, skin_element, static_cast<SKIN_STATE>(state), context);
+    TBSkinElement *used_element = core_->tb_skin_->PaintSkin(local_rect, skin_element, static_cast<SKIN_STATE>(state), context);
 	assert(!!used_element == !!skin_element);
 
-    TB_IF_DEBUG_SETTING(LAYOUT_BOUNDS, g_tb_skin->PaintRect(local_rect, TBColor(255, 255, 0, 50), 1));
+    // TB_IF_DEBUG_SETTING(LAYOUT_BOUNDS, core_->tb_skin_->PaintRect(local_rect, TBColor(255, 255, 0, 50), 1));
 
 	// Inherit properties from parent if not specified in the used skin for this widget.
 	PaintProps paint_props = parent_paint_props;
@@ -1214,13 +1216,13 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
 	OnPaint(paint_props);
 
 	if (used_element)
-		g_renderer->Translate(used_element->content_ofs_x, used_element->content_ofs_y);
+        core_->renderer_->Translate(used_element->content_ofs_x, used_element->content_ofs_y);
 
 	// Paint children
 	OnPaintChildren(paint_props);
 
 #ifdef TB_RUNTIME_DEBUG_INFO
-	if (TB_DEBUG_SETTING(LAYOUT_PS_DEBUGGING))
+    // if (TB_DEBUG_SETTING(LAYOUT_PS_DEBUGGING))
 	{
 		// Layout debug painting. Paint recently layouted widgets with red and
 		// recently measured widgets with yellow.
@@ -1229,22 +1231,22 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
 		const double now = TBSystem::GetTimeMS();
 		if (now < last_layout_time + debug_time)
 		{
-			g_tb_skin->PaintRect(local_rect, TBColor(255, 30, 30, 200), 1);
+            core_->tb_skin_->PaintRect(local_rect, TBColor(255, 30, 30, 200), 1);
 			Invalidate();
 		}
 		if (now < last_measure_time + debug_time)
 		{
-			g_tb_skin->PaintRect(local_rect.Shrink(1, 1), TBColor(255, 255, 30, 200), 1);
+            core_->tb_skin_->PaintRect(local_rect.Shrink(1, 1), TBColor(255, 255, 30, 200), 1);
 			Invalidate();
 		}
 	}
 #endif // TB_RUNTIME_DEBUG_INFO
 
 	if (used_element)
-		g_renderer->Translate(-used_element->content_ofs_x, -used_element->content_ofs_y);
+        core_->renderer_->Translate(-used_element->content_ofs_x, -used_element->content_ofs_y);
 
-	g_renderer->Translate(-trns_x, -trns_y);
-	g_renderer->SetOpacity(old_opacity);
+    core_->renderer_->Translate(-trns_x, -trns_y);
+    core_->renderer_->SetOpacity(old_opacity);
 }
 
 bool TBWidget::InvokeEvent(TBWidgetEvent &ev)
@@ -1654,7 +1656,7 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
 	}
 
 	// Move focus between widgets
-	if (down && !handled && special_key == TB_KEY_TAB)
+    if (down && !handled && special_key == TB_KEY_TAB)
 	{
 		handled = MoveFocus(!(modifierkeys & TB_SHIFT));
 
@@ -1787,9 +1789,9 @@ bool TBWidget::SetFontDescription(const TBFontDescription &font_desc)
 		return true;
 
 	// Set the font description only if we have a matching font, or succeed creating one.
-	if (g_font_manager->HasFontFace(font_desc))
+    if (core_->font_manager_->HasFontFace(font_desc))
 		m_font_desc = font_desc;
-	else if (g_font_manager->CreateFontFace(font_desc))
+    else if (core_->font_manager_->CreateFontFace(font_desc))
 		m_font_desc = font_desc;
 	else
 		return false;
@@ -1817,12 +1819,12 @@ TBFontDescription TBWidget::GetCalculatedFontDescription() const
 			return tmp->m_font_desc;
 		tmp = tmp->m_parent;
 	}
-	return g_font_manager->GetDefaultFontDescription();
+    return core_->font_manager_->GetDefaultFontDescription();
 }
 
 TBFontFace *TBWidget::GetFont() const
 {
-	return g_font_manager->GetFontFace(GetCalculatedFontDescription());
+    return core_->font_manager_->GetFontFace(GetCalculatedFontDescription());
 }
 
 } // namespace tb

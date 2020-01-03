@@ -9,6 +9,7 @@
 #include "tb_linklist.h"
 #include "tb_list.h"
 #include "tb_value.h"
+#include "tb_id.h"
 
 namespace tb {
 
@@ -97,7 +98,7 @@ public:
 	/** Create the item representation widget(s). By default, it will create
 		a TBTextField for string-only items, and other types for items that
 		also has image or submenu. */
-	virtual TBWidget *CreateItemWidget(int index, TBSelectItemViewer *viewer);
+    virtual TBWidget *CreateItemWidget(int index, TBSelectItemViewer *viewer, TBCore* core);
 
 	/** Get the number of items */
 	virtual int GetNumItems() = 0;
@@ -131,9 +132,9 @@ public:
 	virtual TBID GetItemImage(int index)				{ return GetItem(index)->skin_image; }
 	virtual TBID GetItemID(int index)					{ return GetItem(index)->id; }
 	virtual int GetNumItems()							{ return m_items.GetNumItems(); }
-	virtual TBWidget *CreateItemWidget(int index, TBSelectItemViewer *viewer)
+    virtual TBWidget *CreateItemWidget(int index, TBSelectItemViewer *viewer, TBCore* core)
 	{
-		if (TBWidget *widget = TBSelectItemSource::CreateItemWidget(index, viewer))
+        if (TBWidget *widget = TBSelectItemSource::CreateItemWidget(index, viewer, core))
 		{
 			T *item = m_items[index];
 			widget->SetID(item->id);

@@ -10,8 +10,13 @@ namespace tb {
 
 // == TBWindow ==========================================================================
 
-TBWindow::TBWindow()
-	: m_settings(WINDOW_SETTINGS_DEFAULT)
+TBWindow::TBWindow(TBCore* core)
+    : TBWidget (core)
+    , m_close_button(core)
+    , m_mover(core)
+    , m_resizer(core)
+    , m_textfield(core)
+    , m_settings(WINDOW_SETTINGS_DEFAULT)
 {
 	SetSkinBg(TBIDC("TBWindow"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 	AddChild(&m_mover);
