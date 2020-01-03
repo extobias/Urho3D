@@ -11,7 +11,8 @@ namespace tb {
 
 // == TBSectionHeader =====================================
 
-TBSectionHeader::TBSectionHeader()
+TBSectionHeader::TBSectionHeader(TBCore *core)
+    : TBButton (core)
 {
 	SetSkinBg(TBIDC("TBSectionHeader"));
 	SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_RIGHT);
@@ -35,8 +36,12 @@ bool TBSectionHeader::OnEvent(const TBWidgetEvent &ev)
 
 // == TBSectionHeader =====================================
 
-TBSection::TBSection()
-	: m_pending_scroll(false)
+TBSection::TBSection(TBCore *core)
+    : TBWidget (core)
+    , m_layout(core)
+    , m_header(core)
+    , m_toggle_container(core)
+    , m_pending_scroll(false)
 {
 	SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_RIGHT);
 
@@ -87,8 +92,9 @@ PreferredSize TBSection::OnCalculatePreferredSize(const SizeConstraints &constra
 
 // == TBToggleContainer ===================================
 
-TBToggleContainer::TBToggleContainer()
-	: m_toggle(TOGGLE_NOTHING)
+TBToggleContainer::TBToggleContainer(TBCore *core)
+    : TBWidget (core)
+    , m_toggle(TOGGLE_NOTHING)
 	, m_invert(false)
 	, m_value(0)
 {

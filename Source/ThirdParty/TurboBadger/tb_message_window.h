@@ -45,7 +45,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBMessageWindow, TBWindow);
 
-	TBMessageWindow(TBWidget *target, TBID id);
+    TBMessageWindow(TBCore* core, TBWidget *target, TBID id);
 	virtual ~TBMessageWindow();
 
 	bool Show(const char *title, const char *message, TBMessageWindowSettings *settings = nullptr);

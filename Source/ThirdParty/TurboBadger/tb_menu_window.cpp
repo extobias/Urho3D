@@ -12,6 +12,7 @@ namespace tb {
 
 TBMenuWindow::TBMenuWindow(TBWidget *target, TBID id)
 	: TBPopupWindow(target)
+    , m_select_list(target->core_)
 {
 	SetID(id);
 	SetSkinBg(TBIDC("TBMenuWindow"), WIDGET_INVOKE_INFO_NO_CALLBACKS);

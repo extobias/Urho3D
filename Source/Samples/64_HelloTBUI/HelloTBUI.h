@@ -49,7 +49,7 @@ public:
     HelloTBUI(Context* context);
 
     /// Setup after engine initialization and before running the main loop.
-    virtual void Start();
+    void Start() override;
 
 protected:
     /// Return XML patch instructions for screen joystick layout for a specific sample app, if any.
@@ -70,6 +70,8 @@ private:
     void CreateDraggableFish();
 
     void CreateScene();
+
+    void SetupViewport();
     /// Handle drag begin for the fish button.
     void HandleDragBegin(StringHash eventType, VariantMap& eventData);
     /// Handle drag move for the fish button.

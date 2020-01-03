@@ -14,42 +14,57 @@
 
 namespace tb {
 
-TBRenderer *g_renderer = nullptr;
-TBSkin *g_tb_skin = nullptr;
-TBWidgetsReader *g_widgets_reader = nullptr;
-TBLanguage *g_tb_lng = nullptr;
-TBFontManager *g_font_manager = nullptr;
+//static TBRenderer *g_renderer = nullptr;
+//static TBSkin *g_tb_skin = nullptr;
+//static TBWidgetsReader *g_widgets_reader = nullptr;
+//static TBLanguage *g_tb_lng = nullptr;
+//static TBFontManager *tb::g_font_manager = nullptr;
 
-bool tb_core_init(TBRenderer *renderer)
+//TBCore* TBCore::g_core = nullptr;
+
+//TBCore* TBCore::tb_core_instance()
+//{
+//    if (!g_core)
+//    {
+//        g_core = new TBCore;
+//    }
+//    return g_core;
+//}
+
+bool TBCore::tb_core_init(TBRenderer *renderer)
 {
 	TBDebugPrint("Initiating Turbo Badger - version %s\n", TB_VERSION_STR);
-	g_renderer = renderer;
-	g_tb_lng = new TBLanguage;
-	g_font_manager = new TBFontManager();
-	g_tb_skin = new TBSkin();
-	g_widgets_reader = TBWidgetsReader::Create();
+    renderer_ = renderer;
+    tb_lng_ = new TBLanguage;
+    font_manager_ = new TBFontManager(this);
+    tb_skin_ = new TBSkin(this);
+    widgets_reader_ = TBWidgetsReader::Create(this);
 #ifdef TB_IMAGE
-	g_image_manager = new TBImageManager();
+    image_manager_ = new TBImageManager(this);
 #endif
+
+    g_tb_debug.settings[TBDebugInfo::LAYOUT_BOUNDS] = true;
+//    g_tb_debug.settings[TBDebugInfo::LAYOUT_PS_DEBUGGING] = true;
+
 	return true;
 }
 
-void tb_core_shutdown()
+void TBCore::tb_core_shutdown()
 {
 	TBAnimationManager::AbortAllAnimations();
 #ifdef TB_IMAGE
-	delete g_image_manager;
+    delete image_manager_;
 #endif
-	delete g_widgets_reader;
-    g_widgets_reader = nullptr;
-	delete g_tb_skin;
-	delete g_font_manager;
-	delete g_tb_lng;
+    delete widgets_reader_;
+    widgets_reader_ = nullptr;
+    delete tb_skin_;
+    delete font_manager_;
+    delete tb_lng_;
 }
 
-bool tb_core_is_initialized()
+bool TBCore::tb_core_is_initialized()
 {
-	return g_widgets_reader ? true : false;
+    return widgets_reader_ ? true : false;
 }
 
 } // namespace tb

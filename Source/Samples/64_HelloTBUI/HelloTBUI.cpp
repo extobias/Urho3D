@@ -75,6 +75,7 @@ void HelloTBUI::Start()
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
     uiRoot_->SetLayout(LM_FREE);
+    uiRoot_->SetSize(windowWidth, windowHeight);
 
     //ImGuiElement* imgui = new ImGuiElement(context_);
     //ImGuiElement::RegisterObject(context_);
@@ -91,40 +92,52 @@ void HelloTBUI::Start()
 
     TBUIElement::RegisterObject(context_);
 
-    if(1)
+    if (1)
     {
         tbelement = new TBUIElement(context_);
         // tbelement->SetEnableAnchor(true);
         tbelement->LoadResources();
 
-        // tbelement->SetPosition(0, 0);
+         tbelement->SetPosition(0, 0);
         // tbelement->SetSize(windowWidth / 2, windowHeight);
-        tbelement->SetMinSize(windowWidth / 2, windowHeight);
-        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
+        tbelement->SetMinSize(windowWidth / 2, windowHeight / 2);
+        tbelement->SetVerticalAlignment(VA_BOTTOM);
+//        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-        TBRootWidget* stateUI = new TBRootWidget(context_);
-        stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-        // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
-        tbelement->AddStateWidget(stateUI, true, true);
-        tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
+//        TBRootWidget* stateUI = new TBRootWidget(context_);
+//        stateUI->SetGravity(WIDGET_GRAVITY_ALL);
+//        // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
+//        tbelement->AddStateWidget(stateUI, true, true);
+        tbelement->LoadWidgets("Data/TB/layout/debug_screen.txt");
+
+        NavMapping keyMap, qualMap;
+        keyMap.Insert(KEY_W, TB_KEY_TAB);
+        keyMap.Insert(KEY_S, TB_KEY_TAB);
+        keyMap.Insert(KEY_A, TB_KEY_TAB);
+        keyMap.Insert(KEY_D, TB_KEY_TAB);
+        qualMap.Insert(KEY_W, TB_SHIFT);
+        qualMap.Insert(KEY_A, TB_SHIFT);
+        tbelement->SetNavMapping(keyMap, qualMap);
 
         tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
         tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
-        // tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
+//         tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
         uiRoot_->AddChild(tbelement);
 
         TBUIElement* tbelement2 = new TBUIElement(context_);
+        tbelement2->SetName("main_menu");
         // tbelement2->SetEnableAnchor(true);
-        // tbelement2->LoadResources();
+        tbelement2->LoadResources();
         // tbelement2->SetPosition(windowWidth / 2, 0);
-        // tbelement2->SetPosition(512, 0);
-        tbelement2->SetMinSize(windowWidth / 4, windowHeight);
-        tbelement2->SetAlignment(HA_RIGHT, VA_TOP);
+        tbelement2->SetPosition(windowHeight/ 2, 0);
+        tbelement2->SetMinSize(windowWidth / 4, windowHeight/ 2);
+//        tbelement2->SetVerticalAlignment(VA_TOP);
+//        tbelement2->SetAlignment(HA_RIGHT, VA_TOP);
 
-        TBRootWidget* stateUI2 = new TBRootWidget(context_);
-        stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
-        tbelement2->AddStateWidget(stateUI2, true);
-        tbelement2->LoadWidgets(stateUI2, "Data/TB/layout/debug_screen.txt");
+//        TBRootWidget* stateUI2 = new TBRootWidget(context_);
+//        stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
+//        tbelement2->AddStateWidget(stateUI2, true);
+        tbelement2->LoadWidgets("Data/TB/layout/debug_screen.txt");
 
         tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
         tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
@@ -156,8 +169,6 @@ void HelloTBUI::Start()
 //        uiRoot_->AddChild(button2);
     }
 
-    uiRoot_->SetSize(windowWidth, windowHeight);
-
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
 
     // Initialize Window
@@ -170,6 +181,8 @@ void HelloTBUI::Start()
     // CreateDraggableFish();
 
     CreateScene();
+
+    SetupViewport();
     // Set the mouse mode to use in the sample
     Sample::InitMouseMode(MM_FREE);
 }
@@ -255,7 +268,7 @@ void HelloTBUI::CreateScene()
     camera->SetFarClip(300.0f);
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
+    cameraNode_->SetPosition(Vector3(-5.0f, 0.0f, 0.0f));
 }
 
 void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
@@ -268,7 +281,7 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
     if (key == KEY_F4)
     {
 #ifdef TB_RUNTIME_DEBUG_INFO
-        ShowDebugInfoSettingsWindow(tbelement->GetRoot());
+        // ShowDebugInfoSettingsWindow(tbelement->GetRoot());
 #else
         URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
 #endif
@@ -380,6 +393,15 @@ void HelloTBUI::CreateDraggableFish()
     SubscribeToEvent(draggableFish, E_DRAGBEGIN, URHO3D_HANDLER(HelloTBUI, HandleDragBegin));
     SubscribeToEvent(draggableFish, E_DRAGMOVE, URHO3D_HANDLER(HelloTBUI, HandleDragMove));
     SubscribeToEvent(draggableFish, E_DRAGEND, URHO3D_HANDLER(HelloTBUI, HandleDragEnd));
+}
+
+void HelloTBUI::SetupViewport()
+{
+    auto* renderer = GetSubsystem<Renderer>();
+
+    // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
+    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
+    renderer->SetViewport(0, viewport);
 }
 
 void HelloTBUI::HandleDragBegin(StringHash eventType, VariantMap& eventData)

@@ -36,7 +36,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBWindow, TBWidget);
 
-	TBWindow();
+    TBWindow(TBCore* core);
 	virtual ~TBWindow();
 
 	/** Close this window.

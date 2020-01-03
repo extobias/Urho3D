@@ -43,6 +43,8 @@ enum EDIT_TYPE {
 class TBEditFieldContentFactory : public TBTextFragmentContentFactory
 {
 public:
+    TBCore* core_;
+    TBEditFieldContentFactory(TBCore* core): core_(core) {}
 	class TBEditField *editfield;
 	virtual int GetContent(const char *text);
 	virtual TBTextFragmentContent *CreateFragmentContent(const char *text, int text_len);
@@ -55,7 +57,7 @@ class TBEditFieldScrollRoot : public TBWidget
 {
 private: // May only be used by TBEditField.
 	friend class TBEditField;
-	TBEditFieldScrollRoot() {}
+    TBEditFieldScrollRoot(TBCore* core): TBWidget(core) {}
 public:
 	virtual void OnPaintChildren(const PaintProps &paint_props);
 	virtual void GetChildTranslation(int &x, int &y) const;
@@ -76,7 +78,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBEditField, TBWidget)
 
-	TBEditField();
+    TBEditField(TBCore* core);
 	~TBEditField();
 
 	/** Get the visible rect (the GetPaddingRect() minus any scrollbars) */

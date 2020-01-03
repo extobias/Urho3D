@@ -21,6 +21,7 @@ using namespace Urho3D;
 
 namespace Urho3D
 {
+
 class TBRendererUrho3D;
 class TBUIElement;
 
@@ -35,13 +36,21 @@ static const StringHash P_BUTTON_TEXT("button_text");
 static const StringHash P_WIDGET_ID("widget_id");
 static const StringHash P_WIDGET_VALUE("widget_value");
 
+class NavMapping
+{
+public:
+    void Insert(int first, int second) { mapKey_.Insert(Pair<int, int>(first, second)); }
+
+    HashMap<int, int> mapKey_;
+};
+
 class TBRootWidget : public TBWidget, public TBWidgetListener, public Object
 {
     URHO3D_OBJECT(TBRootWidget, Object)
 
 public:
 
-    TBRootWidget(Context* context);
+    TBRootWidget(Context* context, TBCore* core);
     
     virtual bool OnEvent(const TBWidgetEvent &ev) override;
 
@@ -131,7 +140,9 @@ public:
     
     void AddStateWidget(TBWidget* stateWidget, bool bottom = false, bool fullscreen = true);
 
-    void LoadWidgets(TBWidget* stateWidget, String filename);
+    void LoadWidgets(TBWidget* stateWidget, const String& filename);
+
+    void LoadWidgets(const String& filename);
 
     void LoadResources();
 
@@ -172,7 +183,11 @@ public:
 
     void HandleRawEvent(StringHash eventType, VariantMap& args);
 
-    TBRootWidget* GetRoot() const { return root_; }
+    void SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap);
+
+    TBRootWidget* root_;
+
+    static bool resourcesLoaded;
 
 private:
 
@@ -182,11 +197,15 @@ private:
 
     int FindKeyMap(int key);
 
-    TBRootWidget* root_;
+    int FindQualMap(int key);
+
+    TBCore* core_;
 
     TBRendererUrho3D* renderer_;
 
     HashMap<int, int> mapKey_;
+
+    HashMap<int, int> mapQual_;
 };
 
 

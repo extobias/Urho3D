@@ -82,7 +82,7 @@ private:
 class TBImageManager : private TBRendererListener
 {
 public:
-	TBImageManager();
+    TBImageManager(TBCore* core);
 	~TBImageManager();
 
 	/** Return a image object for the given filename.
@@ -99,6 +99,7 @@ public:
 	virtual void OnContextLost();
 	virtual void OnContextRestored();
 private:
+    TBCore* core_;
 	TBBitmapFragmentManager m_frag_manager;
 	TBHashTableOf<TBImageRep> m_image_rep_hash;
 
@@ -107,7 +108,7 @@ private:
 };
 
 /** The global TBImageManager. */
-extern TBImageManager *g_image_manager;
+// extern TBImageManager *g_image_manager;
 
 } // namespace tb
 

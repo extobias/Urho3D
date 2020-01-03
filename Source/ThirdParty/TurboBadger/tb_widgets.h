@@ -363,7 +363,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBWidget, TBTypedObject);
 
-	TBWidget();
+        TBWidget(TBCore* core);
 	virtual ~TBWidget();
 
 	/** Set the rect for this widget in its parent. The rect is relative to the parent widget.
@@ -642,8 +642,9 @@ public:
 	class PaintProps
 	{
 	public:
-		PaintProps();
+        PaintProps(TBCore* core);
 
+        TBCore* core_;
 		/** Text color as specified in the skin element, or inherited from parent. */
 		TBColor text_color;
 	};
@@ -988,6 +989,10 @@ public:
 	/** Get the TBFontFace for this widget from the current font description (calculated
 		by GetCalculatedFontDescription) */
 	TBFontFace *GetFont() const;
+
+        TBCore* core_;
+protected:
+
 
 private:
 	friend class TBWidgetListener;	///< It does iteration of m_listeners for us.

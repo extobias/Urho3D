@@ -57,7 +57,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBTextField, TBWidget);
 
-	TBTextField();
+    TBTextField(TBCore* core);
 
 	/** Set the text of the text field. */
 	virtual bool SetText(const char *text);
@@ -96,7 +96,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBButton, TBWidget);
 
-	TBButton();
+    TBButton(TBCore* core);
 	~TBButton();
 
 	/** Set along which axis the content should layouted (If the button has more content than the text) */
@@ -141,6 +141,8 @@ protected:
 	bool CanToggle() { return m_toggle_mode || GetGroupID(); }
 	class ButtonLayout : public TBLayout
 	{
+    public:
+        ButtonLayout(TBCore* core) : TBLayout(core) {}
 		virtual void OnChildAdded(TBWidget *child);
 		virtual void OnChildRemove(TBWidget *child);
 	};
@@ -160,7 +162,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBClickLabel, TBWidget);
 
-	TBClickLabel();
+    TBClickLabel(TBCore* core);
 	~TBClickLabel();
 
 	/** Set along which axis the content should layouted (If the label has more content than the text) */
@@ -192,8 +194,8 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSkinImage, TBWidget);
 
-	TBSkinImage() {}
-	TBSkinImage(const TBID &skin_bg) { SetSkinBg(skin_bg); }
+    TBSkinImage(TBCore* core) : TBWidget(core) {}
+    TBSkinImage(TBCore* core, const TBID &skin_bg): TBWidget(core) { SetSkinBg(skin_bg); }
 
 	virtual PreferredSize OnCalculatePreferredSize(const SizeConstraints &constraints);
 };
@@ -206,7 +208,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSeparator, TBWidget);
 
-	TBSeparator();
+    TBSeparator(TBCore* core);
 };
 
 /** TBProgressSpinner is a animation that is running while its value is 1.
@@ -217,7 +219,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBProgressSpinner, TBWidget);
 
-	TBProgressSpinner();
+    TBProgressSpinner(TBCore* core);
 
 	/** Return true if the animation is running. */
 	bool IsRunning() { return m_value > 0; }
@@ -248,9 +250,9 @@ class TBRadioCheckBox : public TBWidget
 {
 public:
 	// For safe typecasting
-	TBOBJECT_SUBCLASS(TBRadioCheckBox, TBWidget);
+    TBOBJECT_SUBCLASS(TBRadioCheckBox, TBWidget)
 
-	TBRadioCheckBox();
+    TBRadioCheckBox(TBCore* core);
 
 	virtual void SetValue(int value);
 	virtual int GetValue() { return m_value; }
@@ -272,7 +274,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBCheckBox, TBRadioCheckBox);
 
-	TBCheckBox() { SetSkinBg(TBIDC("TBCheckBox"), WIDGET_INVOKE_INFO_NO_CALLBACKS); }
+    TBCheckBox(TBCore* core) : TBRadioCheckBox(core) { SetSkinBg(TBIDC("TBCheckBox"), WIDGET_INVOKE_INFO_NO_CALLBACKS); }
 };
 
 /** TBRadioButton is a button which unselects other radiobuttons of the same
@@ -284,7 +286,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBRadioButton, TBRadioCheckBox);
 
-	TBRadioButton() { SetSkinBg(TBIDC("TBRadioButton"), WIDGET_INVOKE_INFO_NO_CALLBACKS); }
+    TBRadioButton(TBCore* core) : TBRadioCheckBox(core) { SetSkinBg(TBIDC("TBRadioButton"), WIDGET_INVOKE_INFO_NO_CALLBACKS); }
 };
 
 /** TBScrollBar is a scroll bar in the given axis. */
@@ -295,7 +297,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBScrollBar, TBWidget);
 
-	TBScrollBar();
+    TBScrollBar(TBCore* core);
 	~TBScrollBar();
 
 	/** Set along which axis the scrollbar should scroll */
@@ -350,7 +352,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSlider, TBWidget);
 
-	TBSlider();
+    TBSlider(TBCore * core);
 	~TBSlider();
 
 	/** Set along which axis the scrollbar should scroll */
@@ -392,7 +394,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBContainer, TBWidget);
 
-	TBContainer();
+    TBContainer(TBCore* core);
 };
 
 /** TBMover is moving its parent widget when dragged. */
@@ -402,7 +404,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBMover, TBWidget);
 
-	TBMover();
+    TBMover(TBCore* core);
 
 	virtual bool OnEvent(const TBWidgetEvent &ev);
 };
@@ -414,7 +416,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBResizer, TBWidget);
 
-	TBResizer();
+    TBResizer(TBCore* core);
 	virtual WIDGET_HIT_STATUS GetHitStatus(int x, int y);
 	virtual bool OnEvent(const TBWidgetEvent &ev);
 };
@@ -426,7 +428,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBDimmer, TBWidget);
 
-	TBDimmer();
+    TBDimmer(TBCore* core);
 
 	virtual void OnAdded();
 };

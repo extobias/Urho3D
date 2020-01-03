@@ -112,14 +112,16 @@ bool TBSkinCondition::GetCondition(TBSkinConditionContext &context) const
 
 // == TBSkin ================================================================
 
-TBSkin::TBSkin()
-	: m_listener(nullptr)
+TBSkin::TBSkin(TBCore* core)
+    : core_(core)
+    , m_frag_manager(core)
+    , m_listener(nullptr)
 	, m_color_frag(nullptr)
 	, m_default_disabled_opacity(0.3f)
 	, m_default_placeholder_opacity(0.2f)
 	, m_default_spacing(0)
 {
-	g_renderer->AddListener(this);
+    core_->renderer_->AddListener(this);
 
 	// Avoid filtering artifacts at edges when we draw fragments stretched.
 	m_frag_manager.SetAddBorder(true);
@@ -295,7 +297,7 @@ bool TBSkin::ReloadBitmapsInternal()
 
 TBSkin::~TBSkin()
 {
-	g_renderer->RemoveListener(this);
+    core_->renderer_->RemoveListener(this);
 }
 
 TBSkinElement *TBSkin::GetSkinElement(const TBID &skin_id) const
@@ -381,8 +383,8 @@ TBSkinElement *TBSkin::PaintSkin(const TBRect &dst_rect, TBSkinElement *element,
 	}
 
 	// Paint ugly rectangles on invalid skin elements in debug builds.
-	TB_IF_DEBUG(if (paint_error_highlight) g_tb_skin->PaintRect(dst_rect.Expand(1, 1), TBColor(255, 205, 0), 1));
-	TB_IF_DEBUG(if (paint_error_highlight) g_tb_skin->PaintRect(dst_rect.Shrink(1, 1), TBColor(255, 0, 0), 1));
+    TB_IF_DEBUG(if (paint_error_highlight) core_->tb_skin_->PaintRect(dst_rect.Expand(1, 1), TBColor(255, 205, 0), 1));
+    TB_IF_DEBUG(if (paint_error_highlight) core_->tb_skin_->PaintRect(dst_rect.Shrink(1, 1), TBColor(255, 0, 0), 1));
 
 	element->is_painting = false;
 	return return_element;
@@ -464,7 +466,7 @@ void TBSkin::PaintRect(const TBRect &dst_rect, const TBColor &color, int thickne
 void TBSkin::PaintRectFill(const TBRect &dst_rect, const TBColor &color)
 {
 	if (!dst_rect.IsEmpty())
-		g_renderer->DrawBitmapColored(dst_rect, TBRect(), color, m_color_frag);
+        core_->renderer_->DrawBitmapColored(dst_rect, TBRect(), color, m_color_frag);
 }
 
 void TBSkin::PaintElementBGColor(const TBRect &dst_rect, TBSkinElement *element)
@@ -483,13 +485,13 @@ void TBSkin::PaintElementImage(const TBRect &dst_rect, TBSkinElement *element)
 	rect.Set(rect.x + element->img_ofs_x + (rect.w - src_rect.w) * element->img_position_x / 100,
 			rect.y + element->img_ofs_y + (rect.h - src_rect.h) * element->img_position_y / 100,
 			src_rect.w, src_rect.h);
-	g_renderer->DrawBitmap(rect, GetFlippedRect(src_rect, element), element->bitmap);
+    core_->renderer_->DrawBitmap(rect, GetFlippedRect(src_rect, element), element->bitmap);
 }
 
 void TBSkin::PaintElementTile(const TBRect &dst_rect, TBSkinElement *element)
 {
 	TBRect rect = dst_rect.Expand(element->expand, element->expand);
-	g_renderer->DrawBitmapTile(rect, element->bitmap->GetBitmap());
+    core_->renderer_->DrawBitmapTile(rect, element->bitmap->GetBitmap());
 }
 
 void TBSkin::PaintElementStretchImage(const TBRect &dst_rect, TBSkinElement *element)
@@ -498,7 +500,7 @@ void TBSkin::PaintElementStretchImage(const TBRect &dst_rect, TBSkinElement *ele
 		return;
 	TBRect rect = dst_rect.Expand(element->expand, element->expand);
 	TBRect src_rect = GetFlippedRect(TBRect(0, 0, element->bitmap->Width(), element->bitmap->Height()), element);
-	g_renderer->DrawBitmap(rect, src_rect, element->bitmap);
+    core_->renderer_->DrawBitmap(rect, src_rect, element->bitmap);
 }
 
 void TBSkin::PaintElementStretchBox(const TBRect &dst_rect, TBSkinElement *element, bool fill_center)
@@ -526,28 +528,28 @@ void TBSkin::PaintElementStretchBox(const TBRect &dst_rect, TBSkinElement *eleme
 		dst_cut_h = -dst_cut_h;
 
 	// Corners
-	g_renderer->DrawBitmap(TBRect(rect.x, rect.y, dst_cut_w, dst_cut_h), TBRect(0, 0, cut, cut), element->bitmap);
-	g_renderer->DrawBitmap(TBRect(rect.x + rect.w - dst_cut_w, rect.y, dst_cut_w, dst_cut_h), TBRect(bw - cut, 0, cut, cut), element->bitmap);
-	g_renderer->DrawBitmap(TBRect(rect.x, rect.y + rect.h - dst_cut_h, dst_cut_w, dst_cut_h), TBRect(0, bh - cut, cut, cut), element->bitmap);
-	g_renderer->DrawBitmap(TBRect(rect.x + rect.w - dst_cut_w, rect.y + rect.h - dst_cut_h, dst_cut_w, dst_cut_h), TBRect(bw - cut, bh - cut, cut, cut), element->bitmap);
+    core_->renderer_->DrawBitmap(TBRect(rect.x, rect.y, dst_cut_w, dst_cut_h), TBRect(0, 0, cut, cut), element->bitmap);
+    core_->renderer_->DrawBitmap(TBRect(rect.x + rect.w - dst_cut_w, rect.y, dst_cut_w, dst_cut_h), TBRect(bw - cut, 0, cut, cut), element->bitmap);
+    core_->renderer_->DrawBitmap(TBRect(rect.x, rect.y + rect.h - dst_cut_h, dst_cut_w, dst_cut_h), TBRect(0, bh - cut, cut, cut), element->bitmap);
+    core_->renderer_->DrawBitmap(TBRect(rect.x + rect.w - dst_cut_w, rect.y + rect.h - dst_cut_h, dst_cut_w, dst_cut_h), TBRect(bw - cut, bh - cut, cut, cut), element->bitmap);
 
 	// Left & right edge
 	if (has_left_right_edges)
 	{
-		g_renderer->DrawBitmap(TBRect(rect.x, rect.y + dst_cut_h, dst_cut_w, rect.h - dst_cut_h * 2), TBRect(0, cut, cut, bh - cut * 2), element->bitmap);
-		g_renderer->DrawBitmap(TBRect(rect.x + rect.w - dst_cut_w, rect.y + dst_cut_h, dst_cut_w, rect.h - dst_cut_h * 2), TBRect(bw - cut, cut, cut, bh - cut * 2), element->bitmap);
+        core_->renderer_->DrawBitmap(TBRect(rect.x, rect.y + dst_cut_h, dst_cut_w, rect.h - dst_cut_h * 2), TBRect(0, cut, cut, bh - cut * 2), element->bitmap);
+        core_->renderer_->DrawBitmap(TBRect(rect.x + rect.w - dst_cut_w, rect.y + dst_cut_h, dst_cut_w, rect.h - dst_cut_h * 2), TBRect(bw - cut, cut, cut, bh - cut * 2), element->bitmap);
 	}
 
 	// Top & bottom edge
 	if (has_top_bottom_edges)
 	{
-		g_renderer->DrawBitmap(TBRect(rect.x + dst_cut_w, rect.y, rect.w - dst_cut_w * 2, dst_cut_h), TBRect(cut, 0, bw - cut * 2, cut), element->bitmap);
-		g_renderer->DrawBitmap(TBRect(rect.x + dst_cut_w, rect.y + rect.h - dst_cut_h, rect.w - dst_cut_w * 2, dst_cut_h), TBRect(cut, bh - cut, bw - cut * 2, cut), element->bitmap);
+        core_->renderer_->DrawBitmap(TBRect(rect.x + dst_cut_w, rect.y, rect.w - dst_cut_w * 2, dst_cut_h), TBRect(cut, 0, bw - cut * 2, cut), element->bitmap);
+        core_->renderer_->DrawBitmap(TBRect(rect.x + dst_cut_w, rect.y + rect.h - dst_cut_h, rect.w - dst_cut_w * 2, dst_cut_h), TBRect(cut, bh - cut, bw - cut * 2, cut), element->bitmap);
 	}
 
 	// Center
 	if (fill_center && has_top_bottom_edges && has_left_right_edges)
-		g_renderer->DrawBitmap(TBRect(rect.x + dst_cut_w, rect.y + dst_cut_h, rect.w - dst_cut_w * 2, rect.h - dst_cut_h * 2), TBRect(cut, cut, bw - cut * 2, bh - cut * 2), element->bitmap);
+        core_->renderer_->DrawBitmap(TBRect(rect.x + dst_cut_w, rect.y + dst_cut_h, rect.w - dst_cut_w * 2, rect.h - dst_cut_h * 2), TBRect(cut, cut, bw - cut * 2, bh - cut * 2), element->bitmap);
 }
 
 #ifdef TB_RUNTIME_DEBUG_INFO

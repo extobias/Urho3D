@@ -22,7 +22,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSelectList, TBWidget);
 
-	TBSelectList();
+    TBSelectList(TBCore* core);
 	~TBSelectList();
 
 	/** Get the default item source for this widget. This source can be used to add
@@ -114,7 +114,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSelectDropdown, TBButton);
 
-	TBSelectDropdown();
+    TBSelectDropdown(TBCore* core);
 	~TBSelectDropdown();
 
 	/** Get the default item source for this widget. This source can be used to add

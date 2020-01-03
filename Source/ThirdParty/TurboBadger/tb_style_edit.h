@@ -151,7 +151,7 @@ public:
 		TBColor text_color;
 		bool underline;
 	};
-	TBTextProps() {}
+    TBTextProps(TBCore* core) : core_(core) {}
 
 	void Reset(const TBFontDescription &font_desc, const TBColor &text_color);
 	Data *Push();
@@ -160,6 +160,7 @@ public:
 	/** Get the font face from the current font description. */
 	TBFontFace *GetFont() const;
 public:
+    TBCore* core_;
 	int next_index;
 	TBListOf<Data> list;
 	Data base;
@@ -364,7 +365,7 @@ public:
 class TBStyleEdit
 {
 public:
-	TBStyleEdit();
+    TBStyleEdit(TBCore* core);
 	virtual ~TBStyleEdit();
 
 	void SetListener(TBStyleEditListener *listener);
@@ -431,6 +432,7 @@ public:
 	int32 GetOverflowX() const { return MAX(content_width - layout_width, 0); }
 	int32 GetOverflowY() const { return MAX(content_height - layout_height, 0); }
 public:
+    TBCore* core_;
 	TBStyleEditListener *listener;
 	TBTextFragmentContentFactory default_content_factory;
 	TBTextFragmentContentFactory *content_factory;

@@ -283,7 +283,7 @@ public:
 class TBSkin : private TBRendererListener
 {
 public:
-	TBSkin();
+    TBSkin(TBCore* core);
 	virtual ~TBSkin();
 
 	/** Set the listener for this skin. */
@@ -387,6 +387,7 @@ public:
 	virtual void OnContextLost();
 	virtual void OnContextRestored();
 private:
+    TBCore* core_;
 	friend class TBSkinElement;
 	TBSkinListener *m_listener;
 	TBHashTableAutoDeleteOf<TBSkinElement> m_elements;	///< All skin elements for this skin.

@@ -35,13 +35,12 @@ static const int KEY_QUAL_OFFSET = 0x8000;
  - el Context global no es una buena idea.
  - crear tantas texturas tampoco es buena idea.
  - el teclado tiene que andar en android
-        - la solucion es medio chota
+- la solucion es medio chota (en gral)
  */
-
 
 // Register tbbf font renderer
 #ifdef TB_FONT_RENDERER_TBBF
-    void register_tbbf_font_renderer();
+    void register_tbbf_font_renderer(TBCore* core);
 //    register_tbbf_font_renderer();
 #endif
 
@@ -52,6 +51,57 @@ namespace Urho3D
 {
 
 extern const char* UI_CATEGORY;
+
+/*------------ TBRootWidget ------------*/
+TBRootWidget::TBRootWidget(Context* context, TBCore* core)
+    : TBWidget (core)
+    , Object(context)
+{
+}
+
+bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
+{
+    if(ev.type == EVENT_TYPE_CLICK)
+    {
+        VariantMap eventData;
+        eventData[P_BUTTON_ID] = ev.target->GetID();
+        eventData[P_BUTTON_TEXT] = ev.target->GetText().CStr();
+
+        TBEditField *edit = TBSafeCast<TBEditField>(ev.target);
+        if(edit && !edit->GetReadOnly())
+            GetSubsystem<Input>()->SetScreenKeyboardVisible(true);
+
+        SendEvent(E_TBUI_BUTTON_RELEASED, eventData);
+
+        return true;
+    }
+    else if(ev.type == EVENT_TYPE_CHANGED)
+    {
+        VariantMap eventData;
+        eventData[P_WIDGET_ID] =  ev.target->GetID();
+        eventData[P_WIDGET_VALUE] = ev.target->GetValueDouble();
+
+        SendEvent(E_TBUI_WIDGET_CHANGED, eventData);
+        return true;
+    }
+
+    return false;
+}
+
+void TBRootWidget::OnWidgetFocusChanged(TBWidget *widget, bool focused)
+{
+    URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: widget <%s> edit focus <%u>", widget->GetID().debug_string.CStr(), focused);
+    // esto es para desplegar el teclado en android
+    // cuando un editfield obtiene el foco
+    if (TBEditField *edit = TBSafeCast<TBEditField>(widget))
+    {
+        // URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: edit focus <%u>", focused);
+        if (!edit->GetReadOnly())
+        {
+            GetSubsystem<Input>()->SetScreenKeyboardVisible(focused);
+        }
+    }
+}
 
 /*------------ TBBitmapUrho3D ------------*/
 TBBitmapUrho3D::TBBitmapUrho3D(TBRendererUrho3D* renderer)
@@ -103,16 +153,14 @@ TBRendererUrho3D::~TBRendererUrho3D()
 
 void TBRendererUrho3D::BeginPaint(int render_target_w, int render_target_h)
 {
-    // URHO3D_LOGERRORF("---------- begin paint -----------");
     TBRendererBatcher::BeginPaint(render_target_w, render_target_h);
 
-    // clipRect_.Set(clipRect_.x, clipRect_.y, render_target_w, render_target_h);
+    clipRect_.Set(clipRect_.x, clipRect_.y, render_target_w, render_target_h);
 }
 
 void TBRendererUrho3D::EndPaint()
 {
     TBRendererBatcher::EndPaint();
-    // URHO3D_LOGERRORF("---------- end paint -----------");
 }
 
 TBBitmap *TBRendererUrho3D::CreateBitmap(int width, int height, uint32 *data)
@@ -175,6 +223,8 @@ void TBRendererUrho3D::Clear()
     vertexData_.Clear();
 }
 
+bool TBUIElement::resourcesLoaded = false;
+
 /*------------ TBElement ------------*/
 TBUIElement::TBUIElement(Context* context)
     : UIElement(context)
@@ -185,13 +235,15 @@ TBUIElement::TBUIElement(Context* context)
     SetFocusMode(FM_FOCUSABLE);
 
     renderer_ = new TBRendererUrho3D();
-    if (!tb_core_is_initialized())
+//    if (!tb_core_is_initialized())
     {
-        tb_core_init(renderer_);
+        core_ = new TBCore();
+        core_->tb_core_init(renderer_);
     }
 
-    root_ = new TBRootWidget(context);
+    root_ = new TBRootWidget(context, core_);
     root_->SetAutoFocusState(true);
+    root_->SetZ(WIDGET_Z_TOP);
 
     CreateKeyMap();
 
@@ -203,7 +255,7 @@ TBUIElement::TBUIElement(Context* context)
 //    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(TBUIElement, HandleKeyDown));
 //    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
 
-    SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
+//    SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
 
 //    SubscribeToEvent(this, E_FOCUSED, URHO3D_HANDLER(TBUIElement, HandleFocused));
 //    SubscribeToEvent(this, E_DEFOCUSED, URHO3D_HANDLER(LineEdit, HandleDefocused));
@@ -211,9 +263,10 @@ TBUIElement::TBUIElement(Context* context)
 
 TBUIElement::~TBUIElement()
 {
-    if (tb_core_is_initialized())
+    // if (tb_core_is_initialized())
     {
-        tb_core_shutdown();
+        core_->tb_core_shutdown();
+        delete core_;
     }
 
     if(renderer_)
@@ -247,9 +300,23 @@ void TBUIElement::AddStateWidget(TBWidget* stateWidget, bool bottom, bool fullsc
     root_->AddChild(stateWidget, bottom ? WIDGET_Z_BOTTOM : WIDGET_Z_TOP);
 }
 
-void TBUIElement::LoadWidgets(TBWidget* stateWidget, String filename)
+void TBUIElement::LoadWidgets(TBWidget* stateWidget, const String& filename)
 {
-    if(!g_widgets_reader->LoadFile(stateWidget, filename.CString()))
+    if(!core_->widgets_reader_->LoadFile(stateWidget, filename.CString()))
+    {
+        URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
+    }
+}
+
+void TBUIElement::LoadWidgets(const String& filename)
+{
+//    TBRootWidget* stateUI = new TBRootWidget(context_);
+//    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
+//    // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
+//    AddStateWidget(stateUI, true, true);
+
+    root_->SetGravity(WIDGET_GRAVITY_ALL);
+    if(!core_->widgets_reader_->LoadFile(root_, filename.CString()))
     {
         URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
     }
@@ -257,39 +324,44 @@ void TBUIElement::LoadWidgets(TBWidget* stateWidget, String filename)
 
 void TBUIElement::LoadResources()
 {
+    if (TBUIElement::resourcesLoaded)
+        return;
+
     TBWidgetListener::AddGlobalListener(root_);
 
-    if(!g_tb_lng->Load("Data/TB/language/lng_en.tb.txt"))
+    if(!core_->tb_lng_->Load("Data/TB/language/lng_en.tb.txt"))
     {
         URHO3D_LOGINFO("cannot load language");
     }
 
     // Load the default skin, and override skin that contains the graphics specific to the demo.
     // , "Data/TB/demo_skin/skin.tb.txt")
-    if(!g_tb_skin->Load("Data/TB/skin/skin.tb.txt", "Data/TB/skin/skin.sk.txt"))
+    if(!core_->tb_skin_->Load("Data/TB/skin/skin.tb.txt", "Data/TB/skin/skin.sk.txt"))
         URHO3D_LOGINFO("cannot load skin");
 
 #ifdef TB_FONT_RENDERER_TBBF
-    register_tbbf_font_renderer();
+    register_tbbf_font_renderer(core_);
 #endif
 
     // Add a font to the font manager.
-    g_font_manager->AddFontInfo("Data/TB/font/segoe_white_with_shadow.tb.txt", "Segoe");
-    g_font_manager->AddFontInfo("Data/TB/font/neon.tb.txt", "Neon");
+    core_->font_manager_->AddFontInfo("Data/TB/font/segoe_white_with_shadow.tb.txt", "Segoe");
+    core_->font_manager_->AddFontInfo("Data/TB/font/neon.tb.txt", "Neon");
 
     // Set the default font description for widgets to one of the fonts we just added
     TBFontDescription fd;
     fd.SetID(TBIDC("Segoe"));
-    fd.SetSize(g_tb_skin->GetDimensionConverter()->DpToPx(14));
-    g_font_manager->SetDefaultFontDescription(fd);
+    fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(14));
+    core_->font_manager_->SetDefaultFontDescription(fd);
 
     // Create the font now.
-    TBFontFace *font = g_font_manager->CreateFontFace(g_font_manager->GetDefaultFontDescription());
+    TBFontFace *font = core_->font_manager_->CreateFontFace(core_->font_manager_->GetDefaultFontDescription());
 
     // Give the root widget a background skin
     root_->SetSkinBg("background_solid");
 
     TBWidgetsAnimationManager::Init();
+
+    TBUIElement::resourcesLoaded = true;
 }
 
 void TBUIElement::Clear()
@@ -426,6 +498,15 @@ int TBUIElement::FindKeyMap(int key)
     return TB_KEY_UNDEFINED;
 }
 
+int TBUIElement::FindQualMap(int key)
+{
+    auto it = mapQual_.Find(key);
+    if (it != mapQual_.End())
+        return it->second_;
+
+    return TB_KEY_UNDEFINED;
+}
+
 void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
 {
     root_->InvokePointerDown(position.x_, position.y_, 0, GetModifierKeys(), ShouldEmulateTouchEvent());
@@ -486,13 +567,13 @@ void TBUIElement::Update(float timeStep)
 
 void TBUIElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
 {
-    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    Graphics* g = GetSubsystem<Graphics>();
 
     //renderer_->BeginPaint(GetWidth(), GetHeight());
     // renderer_->BeginPaint(root_->GetRect().w, root_->GetRect().h);
     renderer_->BeginPaint(g->GetWidth(), g->GetHeight());
 
-    root_->InvokePaint(TBWidget::PaintProps());
+    root_->InvokePaint(TBWidget::PaintProps(core_));
 
     if (TBAnimationManager::HasAnimationsRunning())
     {
@@ -530,6 +611,12 @@ void TBUIElement::HandleKeyDown(StringHash eventType, VariantMap &eventData)
 
     int tbModifier = FindKeyMap(KEY_QUAL_OFFSET + qualifiers);
     int tbSpecial = FindKeyMap(key);
+
+    // asign qualifier to remapped key
+    int qualMod = FindQualMap(key);
+    if (qualMod != TB_KEY_UNDEFINED)
+        tbModifier = qualMod;
+
     if (tbSpecial != TB_KEY_UNDEFINED)
         key = TB_KEY_UNDEFINED;
 
@@ -561,20 +648,33 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
         int x = event->motion.x;
         int y = event->motion.y;
 
+        if(!IsInside(IntVector2(x, y), true))
+        {
+            return;
+        }
         mouse_x = x;
         mouse_y = y;
 
-        TBWidget *widget;
-        if (widget = root_->GetWidgetAt(x, y, true))
+        TBWidget *widget; 
+        // TB needs coords in element space
+        IntVector2 elemPos = ScreenToElement(IntVector2(x, y));
+        if (widget = root_->GetWidgetAt(elemPos.x_, elemPos.y_, true))
         {
-            // root_->InvokePointerMove(x, y, GetModifierKeys(), ShouldEmulateTouchEvent());
-            widget->ConvertFromRoot(x, y);
-            TBWidgetEvent ev(EVENT_TYPE_POINTER_MOVE, x, y, ShouldEmulateTouchEvent(), GetModifierKeys());
-            if (widget->InvokeEvent(ev))
+            if (root_->InvokePointerMove(elemPos.x_, elemPos.y_, GetModifierKeys(), ShouldEmulateTouchEvent()))
             {
                 args[SDLRawInput::P_CONSUMED] = true;
                 return;
             }
+            // pass event directly to target widet only to get if event is consumed
+//            x = elemPos.x_;
+//            y = elemPos.y_;
+//            widget->ConvertFromRoot(x, y);
+//            TBWidgetEvent ev(EVENT_TYPE_POINTER_MOVE, x, y, ShouldEmulateTouchEvent());
+//            if (widget->InvokeEvent(ev))
+//            {
+//                args[SDLRawInput::P_CONSUMED] = true;
+//                return;
+//            }
         }
     }
     else if (event->type == SDL_CONTROLLERDEVICEADDED || event->type == SDL_JOYDEVICEADDED)
@@ -660,51 +760,33 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
     //}
 }
 
-TBRootWidget::TBRootWidget(Context* context)
-    : Urho3D::Object(context)
+void TBUIElement::SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap)
 {
-}
-
-bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
-{
-    if(ev.type == EVENT_TYPE_CLICK)
+    auto it = keyMap.mapKey_.Begin();
+    for (; it != keyMap.mapKey_.End(); it++)
     {
-        Urho3D::VariantMap eventData;
-        eventData[P_BUTTON_ID] = ev.target->GetID();
-        eventData[P_BUTTON_TEXT] = ev.target->GetText().CStr();
-
-        TBEditField *edit = TBSafeCast<TBEditField>(ev.target);
-        if(edit && !edit->GetReadOnly())
-            GetSubsystem<Input>()->SetScreenKeyboardVisible(true);
-
-        SendEvent(E_TBUI_BUTTON_RELEASED, eventData);
-
-        return true;
-    }
-    else if(ev.type == EVENT_TYPE_CHANGED)
-    {
-        Urho3D::VariantMap eventData;
-        eventData[P_WIDGET_ID] =  ev.target->GetID();
-        eventData[P_WIDGET_VALUE] = ev.target->GetValueDouble();
-
-        SendEvent(E_TBUI_WIDGET_CHANGED, eventData);
-        return true;
-    }
-
-    return false;
-}
-
-void TBRootWidget::OnWidgetFocusChanged(TBWidget *widget, bool focused)
-{
-    URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: widget <%s> edit focus <%u>", widget->GetID().debug_string.CStr(), focused);
-    // esto es para desplegar el teclado en android
-    // cuando un editfield obtiene el foco
-    if (TBEditField *edit = TBSafeCast<TBEditField>(widget))
-    {
-        // URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: edit focus <%u>", focused);
-        if (!edit->GetReadOnly())
+        auto it1 = mapKey_.Find(it->first_);
+        if (it1 != mapKey_.End())
         {
-            GetSubsystem<Input>()->SetScreenKeyboardVisible(focused);
+             it1->second_ = it->second_;
+        }
+        else
+        {
+            mapKey_.Insert(Pair<int, int>(it->first_, it->second_));
+        }
+    }
+
+    auto qit = qualMap.mapKey_.Begin();
+    for (; qit != qualMap.mapKey_.End(); qit++)
+    {
+        auto it1 = mapQual_.Find(qit->first_);
+        if (it1 != mapQual_.End())
+        {
+             it1->second_ = qit->second_;
+        }
+        else
+        {
+            mapQual_.Insert(Pair<int, int>(qit->first_, qit->second_));
         }
     }
 }

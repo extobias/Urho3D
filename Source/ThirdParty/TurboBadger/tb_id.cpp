@@ -21,7 +21,7 @@ void TBID::Set(uint32 newid)
 {
 	id = newid;
 	debug_string.Clear();
-	if (!is_adding && tb_core_is_initialized())
+    if (!is_adding)
 	{
 		if (!all_id_hash.Get(id))
 		{
@@ -36,7 +36,7 @@ void TBID::Set(const TBID &newid)
 {
 	id = newid;
 	TB_IF_DEBUG(debug_string.Set(newid.debug_string));
-	if (!is_adding && tb_core_is_initialized())
+    if (!is_adding)
 	{
 		if (TBID *other_id = all_id_hash.Get(id))
 		{
@@ -57,7 +57,7 @@ void TBID::Set(const char *string)
 {
 	id = TBGetHash(string);
 	TB_IF_DEBUG(debug_string.Set(string));
-	if (!is_adding && tb_core_is_initialized())
+    if (!is_adding)
 	{
 		if (TBID *other_id = all_id_hash.Get(id))
 		{

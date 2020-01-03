@@ -121,19 +121,21 @@ TBFontGlyph::TBFontGlyph(const TBID &hash_id, UCS4 cp)
 
 // == TBFontGlyphCache ============================================================================
 
-TBFontGlyphCache::TBFontGlyphCache()
+TBFontGlyphCache::TBFontGlyphCache(TBCore* core)
+    : core_(core)
+    , m_frag_manager(core)
 {
 	// Only use one map for the font face. The glyph cache will start forgetting
 	// glyphs that haven't been used for a while if the map gets full.
 	m_frag_manager.SetNumMapsLimit(1);
 	m_frag_manager.SetDefaultMapSize(TB_GLYPH_CACHE_WIDTH, TB_GLYPH_CACHE_HEIGHT);
 
-	g_renderer->AddListener(this);
+    core_->renderer_->AddListener(this);
 }
 
 TBFontGlyphCache::~TBFontGlyphCache()
 {
-	g_renderer->RemoveListener(this);
+    core_->renderer_->RemoveListener(this);
 }
 
 TBFontGlyph *TBFontGlyphCache::GetGlyph(const TBID &hash_id, UCS4 cp)
@@ -236,8 +238,8 @@ void TBFontGlyphCache::OnContextRestored()
 
 // ================================================================================================
 
-TBFontFace::TBFontFace(TBFontGlyphCache *glyph_cache, TBFontRenderer *renderer, const TBFontDescription &font_desc)
-	: m_glyph_cache(glyph_cache), m_font_renderer(renderer), m_font_desc(font_desc), m_bgFont(nullptr), m_bgX(0), m_bgY(0)
+TBFontFace::TBFontFace(TBCore* core, TBFontGlyphCache *glyph_cache, TBFontRenderer *renderer, const TBFontDescription &font_desc)
+    : core_(core), m_glyph_cache(glyph_cache), m_font_renderer(renderer), m_font_desc(font_desc), m_bgFont(nullptr), m_bgX(0), m_bgY(0)
 {
 	if (m_font_renderer)
 		m_metrics = m_font_renderer->GetMetrics();
@@ -370,7 +372,7 @@ void TBFontFace::DrawString(int x, int y, const TBColor &color, const char *str,
 		m_bgFont->DrawString(x+m_bgX, y+m_bgY, m_bgColor, str, len);
 
 	if (m_font_renderer)
-		g_renderer->BeginBatchHint(TBRenderer::BATCH_HINT_DRAW_BITMAP_FRAGMENT);
+        core_->renderer_->BeginBatchHint(TBRenderer::BATCH_HINT_DRAW_BITMAP_FRAGMENT);
 
 	int i = 0;
 	while (str[i] && i < len)
@@ -385,21 +387,21 @@ void TBFontFace::DrawString(int x, int y, const TBColor &color, const char *str,
 				TBRect dst_rect(x + glyph->metrics.x, y + glyph->metrics.y + GetAscent(), glyph->frag->Width(), glyph->frag->Height());
 				TBRect src_rect(0, 0, glyph->frag->Width(), glyph->frag->Height());
 				if (glyph->has_rgb)
-					g_renderer->DrawBitmap(dst_rect, src_rect, glyph->frag);
+                    core_->renderer_->DrawBitmap(dst_rect, src_rect, glyph->frag);
 				else
-					g_renderer->DrawBitmapColored(dst_rect, src_rect, color, glyph->frag);
+                    core_->renderer_->DrawBitmapColored(dst_rect, src_rect, color, glyph->frag);
 			}
 			x += glyph->metrics.advance;
 		}
 		else if (!m_font_renderer) // This is the test font. Use same glyph width as height and draw square.
 		{
-			g_tb_skin->PaintRect(TBRect(x, y, m_metrics.height / 3, m_metrics.height), color, 1);
+            core_->tb_skin_->PaintRect(TBRect(x, y, m_metrics.height / 3, m_metrics.height), color, 1);
 			x += m_metrics.height / 3 + 1;
 		}
 	}
 
 	if (m_font_renderer)
-		g_renderer->EndBatchHint();
+        core_->renderer_->EndBatchHint();
 }
 
 int TBFontFace::GetStringWidth(const char *str, int len)
@@ -428,7 +430,9 @@ void TBFontFace::Debug()
 
 // == TBFontManager ===============================================================================
 
-TBFontManager::TBFontManager()
+TBFontManager::TBFontManager(TBCore* core)
+    : core_(core)
+      , m_glyph_cache(core)
 {
 	// Add the test dummy font with empty name (Equals to ID 0)
 	AddFontInfo("-test-font-dummy-", "");
@@ -483,7 +487,7 @@ TBFontFace *TBFontManager::CreateFontFace(const TBFontDescription &font_desc)
 
 	if (fi->GetID() == 0) // Is this the test dummy font
 	{
-		if (TBFontFace *font = new TBFontFace(&m_glyph_cache, nullptr, font_desc))
+        if (TBFontFace *font = new TBFontFace(core_, &m_glyph_cache, nullptr, font_desc))
 		{
 			if (m_fonts.Add(font_desc.GetFontFaceID(), font))
 				return font;
@@ -495,7 +499,7 @@ TBFontFace *TBFontManager::CreateFontFace(const TBFontDescription &font_desc)
 	// Iterate through font renderers until we find one capable of creating a font for this file.
 	for (TBFontRenderer *fr = m_font_renderers.GetFirst(); fr; fr = fr->GetNext())
 	{
-		if (TBFontFace *font = fr->Create(this, fi->GetFilename(), font_desc))
+        if (TBFontFace *font = fr->Create(core_, this, fi->GetFilename(), font_desc))
 		{
 			if (m_fonts.Add(font_desc.GetFontFaceID(), font))
 				return font;

@@ -137,8 +137,9 @@ const char *TBNode::GetValueString(const char *request, const char *def)
 		if (node->GetValue().IsString())
 		{
 			const char *string = node->GetValue().GetString();
-			if (*string == '@' && *TBNode::GetNextNodeSeparator(string) == 0)
-				string = g_tb_lng->GetString(string + 1);
+            // FIXME here also :/
+//			if (*string == '@' && *TBNode::GetNextNodeSeparator(string) == 0)
+//				string = g_tb_lng->GetString(string + 1);
 			return string;
 		}
 		return node->GetValue().GetString();

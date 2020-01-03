@@ -76,13 +76,13 @@ void TBScrollContainerRoot::OnPaintChildren(const PaintProps &paint_props)
 												sc->m_scrollbar_x.CanScrollPositive() ? 0 : fluff,
 												sc->m_scrollbar_y.CanScrollPositive() ? 0 : fluff);
 
-	TBRect old_clip_rect = g_renderer->SetClipRect(clip_rect, true);
+    TBRect old_clip_rect = core_->renderer_->SetClipRect(clip_rect, true);
 
-	TB_IF_DEBUG_SETTING(LAYOUT_CLIPPING, g_tb_skin->PaintRect(clip_rect, TBColor(255, 0, 0, 200), 1));
+    TB_IF_DEBUG_SETTING(LAYOUT_CLIPPING, core_->tb_skin_->PaintRect(clip_rect, TBColor(255, 0, 0, 200), 1));
 
 	TBWidget::OnPaintChildren(paint_props);
 
-	g_renderer->SetClipRect(old_clip_rect, false);
+    core_->renderer_->SetClipRect(old_clip_rect, false);
 }
 
 void TBScrollContainerRoot::GetChildTranslation(int &x, int &y) const
@@ -94,8 +94,12 @@ void TBScrollContainerRoot::GetChildTranslation(int &x, int &y) const
 
 // == TBScrollContainer =======================================
 
-TBScrollContainer::TBScrollContainer()
-	: m_adapt_to_content_size(false)
+TBScrollContainer::TBScrollContainer(TBCore *core)
+    : TBWidget (core)
+    , m_root(core)
+    , m_scrollbar_x(core)
+    , m_scrollbar_y(core)
+    , m_adapt_to_content_size(false)
 	, m_adapt_content_size(false)
 	, m_layout_is_invalid(false)
 	, m_mode(SCROLL_MODE_X_Y)

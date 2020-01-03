@@ -31,9 +31,10 @@ public:
 	TBOBJECT_SUBCLASS(DebugSettingsWindow, TBWindow);
 
 	DebugSettingsWindow(TBWidget *root)
+        : TBWindow(root->core_)
 	{
 		SetText("Debug settings");
-		g_widgets_reader->LoadData(this,
+        core_->widgets_reader_->LoadData(this,
 			"TBLayout: axis: y, distribution: available, position: left\n"
 			"	TBLayout: id: 'container', axis: y, size: available\n"
 			"	TBTextField: text: 'Event output:'\n"
@@ -64,12 +65,12 @@ public:
 
 	void AddCheckbox(TBDebugInfo::SETTING setting, const char *str)
 	{
-		TBCheckBox *check = new TBCheckBox();
+        TBCheckBox *check = new TBCheckBox(core_);
 		check->SetValue(g_tb_debug.settings[setting]);
 		check->data.SetInt(setting);
 		check->SetID(TBIDC("check"));
 
-		TBClickLabel *label = new TBClickLabel();
+        TBClickLabel *label = new TBClickLabel(core_);
 		label->SetText(str);
 		label->GetContentRoot()->AddChild(check, WIDGET_Z_BOTTOM);
 
@@ -91,22 +92,22 @@ public:
 	virtual void OnPaint(const PaintProps &paint_props)
 	{
 		// Draw stuff to the right of the debug window
-		g_renderer->Translate(GetRect().w, 0);
+        core_->renderer_->Translate(GetRect().w, 0);
 
 		// Draw skin bitmap fragments
 		if (TB_DEBUG_SETTING(RENDER_SKIN_BITMAP_FRAGMENTS))
-			g_tb_skin->Debug();
+            core_->tb_skin_->Debug();
 
 		// Draw font glyph fragments (the font of the hovered widget)
 		if (TB_DEBUG_SETTING(RENDER_FONT_BITMAP_FRAGMENTS))
 		{
 			TBWidget *widget = TBWidget::hovered_widget ? TBWidget::hovered_widget : TBWidget::focused_widget;
-			g_font_manager->GetFontFace(widget ?
+            core_->font_manager_->GetFontFace(widget ?
 										widget->GetCalculatedFontDescription() :
-										g_font_manager->GetDefaultFontDescription())->Debug();
+                                        core_->font_manager_->GetDefaultFontDescription())->Debug();
 		}
 
-		g_renderer->Translate(-GetRect().w, 0);
+        core_->renderer_->Translate(-GetRect().w, 0);
 	}
 
 	TBStr GetIDString(const TBID &id)

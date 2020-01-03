@@ -159,8 +159,9 @@ void TBSpaceAllocator::FreeSpace(Space *space)
 
 // == TBBitmapFragmentMap ===================================================================================
 
-TBBitmapFragmentMap::TBBitmapFragmentMap()
-	: m_bitmap_w(0)
+TBBitmapFragmentMap::TBBitmapFragmentMap(TBCore* core)
+    : core_(core)
+    , m_bitmap_w(0)
 	, m_bitmap_h(0)
 	, m_bitmap_data(nullptr)
 	, m_bitmap(nullptr)
@@ -378,7 +379,7 @@ bool TBBitmapFragmentMap::ValidateBitmap()
 		if (m_bitmap)
 			m_bitmap->SetData(m_bitmap_data);
 		else
-			m_bitmap = g_renderer->CreateBitmap(m_bitmap_w, m_bitmap_h, m_bitmap_data);
+            m_bitmap = core_->renderer_->CreateBitmap(m_bitmap_w, m_bitmap_h, m_bitmap_data);
 		m_need_update = false;
 	}
 	return m_bitmap ? true : false;
@@ -393,8 +394,9 @@ void TBBitmapFragmentMap::DeleteBitmap()
 
 // == TBBitmapFragmentManager =============================================================================
 
-TBBitmapFragmentManager::TBBitmapFragmentManager()
-	: m_num_maps_limit(0)
+TBBitmapFragmentManager::TBBitmapFragmentManager(TBCore* core)
+    : core_(core)
+    , m_num_maps_limit(0)
 	, m_add_border(false)
 	, m_default_map_w(512)
 	, m_default_map_h(512)
@@ -455,7 +457,7 @@ TBBitmapFragment *TBBitmapFragmentManager::CreateNewFragment(const TBID &id, boo
 			po2w = TBGetNearestPowerOfTwo(data_w);
 			po2h = TBGetNearestPowerOfTwo(data_h);
 		}
-		TBBitmapFragmentMap *fm = new TBBitmapFragmentMap();
+        TBBitmapFragmentMap *fm = new TBBitmapFragmentMap(core_);
 		if (fm && fm->Init(po2w, po2h))
 		{
 			m_fragment_maps.Add(fm);
@@ -478,7 +480,7 @@ void TBBitmapFragmentManager::FreeFragment(TBBitmapFragment *frag)
 {
 	if (frag)
 	{
-		g_renderer->FlushBitmapFragment(frag);
+        core_->renderer_->FlushBitmapFragment(frag);
 
 		TBBitmapFragmentMap *map = frag->m_map;
 		frag->m_map->FreeFragmentSpace(frag);
@@ -549,7 +551,7 @@ void TBBitmapFragmentManager::Debug()
 	{
 		TBBitmapFragmentMap *fm = m_fragment_maps[i];
 		if (TBBitmap *bitmap = fm->GetBitmap())
-			g_renderer->DrawBitmap(TBRect(x, 0, fm->m_bitmap_w, fm->m_bitmap_h), TBRect(0, 0, fm->m_bitmap_w, fm->m_bitmap_h), bitmap);
+            core_->renderer_->DrawBitmap(TBRect(x, 0, fm->m_bitmap_w, fm->m_bitmap_h), TBRect(0, 0, fm->m_bitmap_w, fm->m_bitmap_h), bitmap);
 		x += fm->m_bitmap_w + 5;
 	}
 }

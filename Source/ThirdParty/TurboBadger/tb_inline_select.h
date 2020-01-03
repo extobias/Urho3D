@@ -25,7 +25,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBInlineSelect, TBWidget);
 
-	TBInlineSelect();
+    TBInlineSelect(TBCore* core);
 	~TBInlineSelect();
 
 	/** Set along which axis the content should layouted. */

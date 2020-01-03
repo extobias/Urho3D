@@ -24,10 +24,10 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBImageWidget, TBWidget);
 
-	TBImageWidget() {}
+    TBImageWidget(TBCore* core) : TBWidget(core) {}
 
 	void SetImage(const TBImage &image) { m_image = image; }
-	void SetImage(const char *filename) { m_image = g_image_manager->GetImage(filename); }
+    void SetImage(const char *filename) { m_image = core_->image_manager_->GetImage(filename); }
 
 	virtual PreferredSize OnCalculatePreferredContentSize(const SizeConstraints &constraints);
 

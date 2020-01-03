@@ -65,12 +65,12 @@ public:
 	class classname##WidgetFactory : public tb::TBWidgetFactory \
 	{ \
 	public: \
-		classname##WidgetFactory() \
+        classname##WidgetFactory() \
 			: tb::TBWidgetFactory(#classname, sync_type) { Register(); } \
 		virtual ~classname##WidgetFactory() {} \
 		virtual tb::TBWidget *Create(tb::INFLATE_INFO *info) \
 		{ \
-			classname *widget = new classname(); \
+            classname *widget = new classname(info->reader->core_); \
 			if (widget) { \
 				widget->GetContentRoot()->SetZInflate(add_child_z); \
 				ReadCustomProps(widget, info); \
@@ -139,13 +139,14 @@ public:
 class TBWidgetsReader
 {
 public:
-	static TBWidgetsReader *Create();
+    static TBWidgetsReader *Create(TBCore* core);
+    TBWidgetsReader(TBCore* core) : core_(core) {}
 	~TBWidgetsReader();
 
 	/** Add a widget factory. Does not take ownership of the factory.
 		The easiest way to add factories for custom widget types, is using the
 		TB_WIDGET_FACTORY macro that automatically register it during startup. */
-	bool AddFactory(TBWidgetFactory *wf) { factories.AddLast(wf); return true; }
+    bool AddFactory(TBWidgetFactory *wf) { factories.AddLast(wf); return true; }
 	void RemoveFactory(TBWidgetFactory *wf) { factories.Remove(wf); }
 
 	/** Set the id from the given node. */
@@ -155,10 +156,15 @@ public:
 	bool LoadData(TBWidget *target, const char *data);
 	bool LoadData(TBWidget *target, const char *data, int data_len);
 	void LoadNodeTree(TBWidget *target, TBNode *node);
+
+    TBCore* core_;
+
 private:
+    static TBWidgetsReader* wr_;
 	bool Init();
 	bool CreateWidget(TBWidget *target, TBNode *node);
 	TBLinkListOf<TBWidgetFactory> factories;
+
 };
 
 } // namespace tb

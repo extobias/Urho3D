@@ -24,7 +24,7 @@ class TBScrollContainerRoot : public TBWidget
 {
 private: // May only be used by TBScrollContainer.
 	friend class TBScrollContainer;
-	TBScrollContainerRoot() {}
+    TBScrollContainerRoot(TBCore* core) : TBWidget (core) {}
 public:
 	virtual void OnPaintChildren(const PaintProps &paint_props);
 	virtual void GetChildTranslation(int &x, int &y) const;
@@ -56,7 +56,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBScrollContainer, TBWidget);
 
-	TBScrollContainer();
+    TBScrollContainer(TBCore* core);
 	~TBScrollContainer();
 
 	/** Set to true if the preferred size of this container should adapt to the preferred

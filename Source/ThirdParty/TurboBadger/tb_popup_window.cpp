@@ -73,7 +73,8 @@ TBRect TBPopupAlignment::GetAlignedRect(TBWidget *popup, TBWidget *target) const
 // == TBPopupWindow =========================================================================================
 
 TBPopupWindow::TBPopupWindow(TBWidget *target)
-	: m_target(target)
+    : TBWindow (target->core_)
+    , m_target(target)
 {
 	TBWidgetListener::AddGlobalListener(this);
 	SetSkinBg(TBIDC("TBPopupWindow"), WIDGET_INVOKE_INFO_NO_CALLBACKS);

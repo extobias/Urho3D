@@ -35,8 +35,12 @@ PreferredSize TBTabLayout::OnCalculatePreferredContentSize(const SizeConstraints
 
 // == TBTabContainer ====================================================================
 
-TBTabContainer::TBTabContainer()
-	: m_need_page_update(true)
+TBTabContainer::TBTabContainer(TBCore *core)
+    : TBWidget (core)
+    , m_content_root(core)
+    , m_root_layout(core)
+    , m_tab_layout(core)
+    , m_need_page_update(true)
 	, m_current_page(0)
 	, m_align(TB_ALIGN_TOP)
 {

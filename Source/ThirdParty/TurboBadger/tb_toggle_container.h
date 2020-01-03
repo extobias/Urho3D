@@ -19,9 +19,9 @@ class TBToggleContainer : public TBWidget
 {
 public:
 	// For safe typecasting
-	TBOBJECT_SUBCLASS(TBToggleContainer, TBWidget);
+    TBOBJECT_SUBCLASS(TBToggleContainer, TBWidget)
 
-	TBToggleContainer();
+    TBToggleContainer(TBCore* core);
 
 	/** Defines what should toggle when the value changes. */
 	enum TOGGLE {
@@ -64,7 +64,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSectionHeader, TBButton);
 
-	TBSectionHeader();
+    TBSectionHeader(TBCore* core);
 
 	virtual bool OnEvent(const TBWidgetEvent &ev);
 };
@@ -86,7 +86,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBSection, TBWidget);
 
-	TBSection();
+    TBSection(TBCore* core);
 	~TBSection();
 
 	TBLayout *GetLayout() { return &m_layout; }
