@@ -55,8 +55,11 @@ void TBCore::tb_core_shutdown()
 #ifdef TB_IMAGE
     delete image_manager_;
 #endif
-    delete widgets_reader_;
-    widgets_reader_ = nullptr;
+    if (widgets_reader_)
+    {
+        delete widgets_reader_;
+        widgets_reader_ = nullptr;
+    }
     delete tb_skin_;
     delete font_manager_;
     delete tb_lng_;

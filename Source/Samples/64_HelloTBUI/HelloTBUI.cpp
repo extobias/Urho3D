@@ -98,49 +98,40 @@ void HelloTBUI::Start()
         // tbelement->SetEnableAnchor(true);
         tbelement->LoadResources();
 
-         tbelement->SetPosition(0, 0);
-        // tbelement->SetSize(windowWidth / 2, windowHeight);
-        tbelement->SetMinSize(windowWidth / 2, windowHeight / 2);
-        tbelement->SetVerticalAlignment(VA_BOTTOM);
+        tbelement->SetPosition(windowWidth / 2, 0);
+        tbelement->SetMinSize(windowWidth / 2, windowHeight);
+//        tbelement->SetVerticalAlignment(VA_BOTTOM);
 //        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-//        TBRootWidget* stateUI = new TBRootWidget(context_);
-//        stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-//        // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
-//        tbelement->AddStateWidget(stateUI, true, true);
         tbelement->LoadWidgets("Data/TB/layout/debug_screen.txt");
 
-        NavMapping keyMap, qualMap;
-        keyMap.Insert(KEY_W, TB_KEY_TAB);
-        keyMap.Insert(KEY_S, TB_KEY_TAB);
-        keyMap.Insert(KEY_A, TB_KEY_TAB);
-        keyMap.Insert(KEY_D, TB_KEY_TAB);
-        qualMap.Insert(KEY_W, TB_SHIFT);
-        qualMap.Insert(KEY_A, TB_SHIFT);
-        tbelement->SetNavMapping(keyMap, qualMap);
+//        NavMapping keyMap, qualMap;
+//        keyMap.Insert(KEY_W, TB_KEY_TAB);
+//        keyMap.Insert(KEY_S, TB_KEY_TAB);
+//        keyMap.Insert(KEY_A, TB_KEY_TAB);
+//        keyMap.Insert(KEY_D, TB_KEY_TAB);
+//        qualMap.Insert(KEY_W, TB_SHIFT);
+//        qualMap.Insert(KEY_A, TB_SHIFT);
+//        tbelement->SetNavMapping(keyMap, qualMap);
 
-        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
-        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
-//         tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
+//        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
+//        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
         uiRoot_->AddChild(tbelement);
 
         TBUIElement* tbelement2 = new TBUIElement(context_);
         tbelement2->SetName("main_menu");
         // tbelement2->SetEnableAnchor(true);
         tbelement2->LoadResources();
-        // tbelement2->SetPosition(windowWidth / 2, 0);
-        tbelement2->SetPosition(windowHeight/ 2, 0);
+        tbelement2->SetPosition(0, 0);
+//        tbelement2->SetPosition(windowHeight/ 2, 0);
         tbelement2->SetMinSize(windowWidth / 4, windowHeight/ 2);
-//        tbelement2->SetVerticalAlignment(VA_TOP);
-//        tbelement2->SetAlignment(HA_RIGHT, VA_TOP);
+//        tbelement2->SetVerticalAlignment(VA_BOTTOM);
+        //tbelement2->SetAlignment(HA_LEFT, VA_TOP);
 
-//        TBRootWidget* stateUI2 = new TBRootWidget(context_);
-//        stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
-//        tbelement2->AddStateWidget(stateUI2, true);
-        tbelement2->LoadWidgets("Data/TB/layout/debug_screen.txt");
+        tbelement2->LoadWidgets("Data/TB/layout/client_name_test.txt");
 
-        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
-        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
+//        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
+//        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
 
         uiRoot_->AddChild(tbelement2);
     }
@@ -275,17 +266,19 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 {
     int key = eventData[KeyDown::P_KEY].GetInt();
 
-    if (key == KEY_F1)
-        GetSubsystem<Console>()->Toggle();
+//    if (key == KEY_F1)
+//        GetSubsystem<Console>()->Toggle();
 
     if (key == KEY_F4)
     {
 #ifdef TB_RUNTIME_DEBUG_INFO
-        // ShowDebugInfoSettingsWindow(tbelement->GetRoot());
+        ShowDebugInfoSettingsWindow(tbelement->root_);
 #else
         URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
 #endif
     }
+
+    Sample::HandleKeyDown(eventType, eventData);
 }
 
 void HelloTBUI::InitControls()

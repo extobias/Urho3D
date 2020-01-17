@@ -91,7 +91,7 @@ void Sample::Start()
     SetWindowTitleAndIcon();
 
     // Create console and debug HUD
-    // CreateConsoleAndDebugHud();
+    CreateConsoleAndDebugHud();
 
     // Subscribe key down event
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Sample, HandleKeyDown));

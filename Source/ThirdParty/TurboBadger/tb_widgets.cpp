@@ -818,8 +818,11 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 	// Invoke paint on all children that are in the current visible rect.
 	for (TBWidget *child = GetFirstChild(); child; child = child->GetNext())
 	{
-		if (clip_rect.Intersects(child->m_rect))
+        if (clip_rect.Intersects(child->m_rect))
 			child->InvokePaint(paint_props);
+        //else
+        // if (!clip_rect.Intersects(child->m_rect))
+//            TBDebugPrint("child not painted rect <%i, %i, %i, %i>\n", clip_rect.x, clip_rect.y, clip_rect.w, clip_rect.h);
 	}
 
 	// Invoke paint of overlay elements on all children that are in the current visible rect.
@@ -1205,7 +1208,7 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
     TBSkinElement *used_element = core_->tb_skin_->PaintSkin(local_rect, skin_element, static_cast<SKIN_STATE>(state), context);
 	assert(!!used_element == !!skin_element);
 
-    // TB_IF_DEBUG_SETTING(LAYOUT_BOUNDS, core_->tb_skin_->PaintRect(local_rect, TBColor(255, 255, 0, 50), 1));
+    TB_IF_DEBUG_SETTING(LAYOUT_BOUNDS, core_->tb_skin_->PaintRect(local_rect, TBColor(255, 255, 0, 50), 1));
 
 	// Inherit properties from parent if not specified in the used skin for this widget.
 	PaintProps paint_props = parent_paint_props;
