@@ -18,8 +18,8 @@ class TBNode;
 
 /** INFLATE_INFO contains info passed to TBWidget::OnInflate during resource loading. */
 struct INFLATE_INFO {
-	INFLATE_INFO(TBWidgetsReader *reader, TBWidget *target, TBNode *node, TBValue::TYPE sync_type)
-		: reader(reader), target(target), node(node), sync_type(sync_type) {}
+    INFLATE_INFO(TBWidgetsReader *reader, TBWidget *target, TBNode *node, TBValue::TYPE sync_type, TBCore* core = nullptr)
+        : reader(reader), target(target), node(node), sync_type(sync_type), core(core) {}
 	TBWidgetsReader *reader;
 
 	/** The widget that that will be parent to the inflated widget. */
@@ -28,6 +28,8 @@ struct INFLATE_INFO {
 	TBNode *node;
 	/** The data type that should be synchronized through TBWidgetValue. */
 	TBValue::TYPE sync_type;
+
+    TBCore* core;
 };
 
 /** TBWidgetFactory creates a widget from a TBNode. */
@@ -70,7 +72,7 @@ public:
 		virtual ~classname##WidgetFactory() {} \
 		virtual tb::TBWidget *Create(tb::INFLATE_INFO *info) \
 		{ \
-            classname *widget = new classname(info->reader->core_); \
+            classname *widget = new classname(info->core); \
 			if (widget) { \
 				widget->GetContentRoot()->SetZInflate(add_child_z); \
 				ReadCustomProps(widget, info); \

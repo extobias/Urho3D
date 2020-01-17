@@ -292,17 +292,17 @@ void TBTabContainer::OnInflate(const INFLATE_INFO &info)
 		TBLayout *tab_layout = GetTabLayout();
 		info.reader->LoadNodeTree(tab_layout, tabs);
 
-		INFLATE_INFO inflate_info(info.reader, tab_layout->GetContentRoot(), tabs, TBValue::TYPE_NULL);
+        INFLATE_INFO inflate_info(info.reader, tab_layout->GetContentRoot(), tabs, TBValue::TYPE_NULL, core_);
 		tab_layout->OnInflate(inflate_info);
 	}
 	if (TBNode *tabs = info.node->GetNode("content"))
 	{
-		INFLATE_INFO inflate_info(info.reader, GetContentRoot(), tabs, TBValue::TYPE_NULL);
-		GetContentRoot()->OnInflate(inflate_info);
+        INFLATE_INFO inflate_info(info.reader, GetContentRoot(), tabs, TBValue::TYPE_NULL, core_);
+        GetContentRoot()->OnInflate(inflate_info);
 	}
 	if (TBNode *tabs = info.node->GetNode("root"))
 	{
-		INFLATE_INFO inflate_info(info.reader, &m_root_layout, tabs, TBValue::TYPE_NULL);
+        INFLATE_INFO inflate_info(info.reader, &m_root_layout, tabs, TBValue::TYPE_NULL, core_);
 		m_root_layout.OnInflate(inflate_info);
 	}
 }
@@ -452,7 +452,7 @@ TBWidgetsReader *TBWidgetsReader::Create(TBCore* core)
         }
         wr_ = w_reader;
     }
-
+    wr_->core_ = core;
     // return w_reader;
     return wr_;
 }
@@ -521,8 +521,8 @@ bool TBWidgetsReader::CreateWidget(TBWidget *target, TBNode *node)
 	if (!wc)
 		return false;
 
-	// Create the widget
-	INFLATE_INFO info(this, target->GetContentRoot(), node, wc->sync_type);
+    // Create the widget
+    INFLATE_INFO info(this, target->GetContentRoot(), node, wc->sync_type, core_);
 	TBWidget *new_widget = wc->Create(&info);
 	if (!new_widget)
 		return false;

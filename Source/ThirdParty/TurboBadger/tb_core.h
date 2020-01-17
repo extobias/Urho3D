@@ -39,7 +39,6 @@ freely, subject to the following restrictions:
 
 namespace tb {
 
-
 class TBRenderer;
 class TBSkin;
 class TBWidgetsReader;

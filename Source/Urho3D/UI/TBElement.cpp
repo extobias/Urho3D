@@ -144,6 +144,7 @@ void TBBitmapUrho3D::SetData(uint32 *data)
 
 /*------------ TBRendererUrho3D ------------*/
 TBRendererUrho3D::TBRendererUrho3D()
+    : TBRendererBatcher()
 {
 }
 
@@ -324,8 +325,8 @@ void TBUIElement::LoadWidgets(const String& filename)
 
 void TBUIElement::LoadResources()
 {
-    if (TBUIElement::resourcesLoaded)
-        return;
+//    if (TBUIElement::resourcesLoaded)
+//        return;
 
     TBWidgetListener::AddGlobalListener(root_);
 
@@ -359,7 +360,7 @@ void TBUIElement::LoadResources()
     // Give the root widget a background skin
     root_->SetSkinBg("background_solid");
 
-    TBWidgetsAnimationManager::Init();
+    // TBWidgetsAnimationManager::Init();
 
     TBUIElement::resourcesLoaded = true;
 }
