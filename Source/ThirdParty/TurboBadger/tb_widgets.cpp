@@ -20,17 +20,17 @@
 namespace tb {
 
 //static data
-TBWidget *TBWidget::hovered_widget = nullptr;
-TBWidget *TBWidget::captured_widget = nullptr;
-TBWidget *TBWidget::focused_widget = nullptr;
-int TBWidget::pointer_down_widget_x = 0;
-int TBWidget::pointer_down_widget_y = 0;
-int TBWidget::pointer_move_widget_x = 0;
-int TBWidget::pointer_move_widget_y = 0;
-bool TBWidget::cancel_click = false;
-bool TBWidget::update_widget_states = true;
-bool TBWidget::update_skin_states = true;
-bool TBWidget::show_focus_state = false;
+//TBWidget *TBWidget::core_->hovered_widget = nullptr;
+//TBWidget *TBWidget::core_->captured_widget = nullptr;
+//TBWidget *TBWidget::core_->focused_widget = nullptr;
+//int TBWidget::core_->core_->update_widget_states = 0;
+//int TBWidget::core_->pointer_down_widget_y = 0;
+//int TBWidget::core_->pointer_move_widget_x = 0;
+//int TBWidget::core_->pointer_move_widget_y = 0;
+//bool TBWidget::core_->cancel_click = false;
+//bool TBWidget::core_->update_widget_states = true;
+//bool TBWidget::update_skin_states = true;
+//bool TBWidget::show_focus_state = false;
 
 static TBHashTableAutoDeleteOf<TBWidget::TOUCH_INFO> s_touch_info;
 
@@ -108,21 +108,21 @@ TBWidget::~TBWidget()
 	m_packed.is_dying = true;
 
 	// Unreference from pointer capture
-	if (this == hovered_widget)
-		hovered_widget = nullptr;
-	if (this == captured_widget)
-		captured_widget = nullptr;
-	if (this == focused_widget)
-		focused_widget = nullptr;
+    if (this == core_->hovered_widget)
+        core_->hovered_widget = nullptr;
+    if (this == core_->captured_widget)
+        core_->captured_widget = nullptr;
+    if (this == core_->focused_widget)
+        core_->focused_widget = nullptr;
 
 	// Unreference from touch info
 	TBHashTableIteratorOf<TOUCH_INFO> it(&s_touch_info);
 	while (TOUCH_INFO *ti = it.GetNextContent())
 	{
-		if (this == ti->hovered_widget)
-			ti->hovered_widget = nullptr;
-		if (this == ti->captured_widget)
-			ti->captured_widget = nullptr;
+        if (this == ti->hovered_widget)
+            ti->hovered_widget = nullptr;
+        if (this == ti->captured_widget)
+            ti->captured_widget = nullptr;
 	}
 
 	TBWidgetListener::InvokeWidgetDelete(this);
@@ -164,13 +164,13 @@ void TBWidget::Invalidate()
 
 void TBWidget::InvalidateStates()
 {
-	update_widget_states = true;
+    core_->update_widget_states = true;
 	InvalidateSkinStates();
 }
 
 void TBWidget::InvalidateSkinStates()
 {
-	update_skin_states = true;
+    core_->update_skin_states = true;
 }
 
 void TBWidget::Die()
@@ -236,15 +236,15 @@ void TBWidget::SetState(WIDGET_STATE state, bool on)
 WIDGET_STATE TBWidget::GetAutoState() const
 {
 	WIDGET_STATE state = m_state;
-	bool add_pressed_state = !cancel_click && this == captured_widget && this == hovered_widget;
+    bool add_pressed_state = !core_->cancel_click && this == core_->captured_widget && this == core_->hovered_widget;
 	if (add_pressed_state)
 		state |= WIDGET_STATE_PRESSED;
-	if (this == hovered_widget && (!m_packed.no_automatic_hover_state || add_pressed_state))
+    if (this == core_->hovered_widget && (!m_packed.no_automatic_hover_state || add_pressed_state))
 		state |= WIDGET_STATE_HOVERED;
-	if (this == focused_widget && show_focus_state)
+    if (this == core_->focused_widget && core_->show_focus_state)
 		state |= WIDGET_STATE_FOCUSED;
 #ifdef TB_ALWAYS_SHOW_EDIT_FOCUS
-	else if (this == focused_widget && IsOfType<TBEditField>())
+    else if (this == core_->focused_widget && IsOfType<TBEditField>())
 		state |= WIDGET_STATE_FOCUSED;
 #endif
 	return state;
@@ -253,11 +253,11 @@ WIDGET_STATE TBWidget::GetAutoState() const
 //static
 void TBWidget::SetAutoFocusState(bool on)
 {
-	if (show_focus_state == on)
+    if (core_->show_focus_state == on)
 		return;
-	show_focus_state = on;
-	if (focused_widget)
-		focused_widget->Invalidate();
+    core_->show_focus_state = on;
+    if (core_->focused_widget)
+        core_->focused_widget->Invalidate();
 }
 
 void TBWidget::SetOpacity(float opacity)
@@ -365,7 +365,7 @@ void TBWidget::RemoveChild(TBWidget *child, WIDGET_INVOKE_INFO info)
 	{
 		// If we're not being deleted and delete the focused widget, try
 		// to keep the focus in this widget by moving it to the next widget.
-		if (!m_packed.is_dying && child == focused_widget)
+        if (!m_packed.is_dying && child == core_->focused_widget)
 			m_parent->MoveFocus(true);
 
 		OnChildRemove(child);
@@ -563,7 +563,7 @@ void TBWidget::ScrollIntoView(const TBRect &rect)
 
 bool TBWidget::SetFocus(WIDGET_FOCUS_REASON reason, WIDGET_INVOKE_INFO info)
 {
-	if (focused_widget == this)
+    if (core_->focused_widget == this)
 		return true;
 	if (GetDisabled() || !GetIsFocusable() || !GetVisibilityCombined() || GetIsDying())
 		return false;
@@ -579,14 +579,14 @@ bool TBWidget::SetFocus(WIDGET_FOCUS_REASON reason, WIDGET_INVOKE_INFO info)
 			return true;
 	}
 
-	if (focused_widget)
+    if (core_->focused_widget)
 	{
-		focused_widget->Invalidate();
-		focused_widget->InvalidateSkinStates();
+        core_->focused_widget->Invalidate();
+        core_->focused_widget->InvalidateSkinStates();
 	}
 
-	TBWidgetSafePointer old_focus(focused_widget);
-	focused_widget = this;
+    TBWidgetSafePointer old_focus(core_->focused_widget);
+    core_->focused_widget = this;
 
 	Invalidate();
 	InvalidateSkinStates();
@@ -611,10 +611,10 @@ bool TBWidget::SetFocus(WIDGET_FOCUS_REASON reason, WIDGET_INVOKE_INFO info)
 		}
 		if (old_focus.Get())
 			TBWidgetListener::InvokeWidgetFocusChanged(old_focus.Get(), false);
-		if (focused_widget && focused_widget == this)
-			focused_widget->OnFocusChanged(true);
-		if (focused_widget && focused_widget == this)
-			TBWidgetListener::InvokeWidgetFocusChanged(focused_widget, true);
+        if (core_->focused_widget && core_->focused_widget == this)
+            core_->focused_widget->OnFocusChanged(true);
+        if (core_->focused_widget && core_->focused_widget == this)
+            TBWidgetListener::InvokeWidgetFocusChanged(core_->focused_widget, true);
 	}
 	return true;
 }
@@ -634,7 +634,7 @@ bool TBWidget::SetFocusRecursive(WIDGET_FOCUS_REASON reason)
 
 bool TBWidget::MoveFocus(bool forward)
 {
-	TBWidget *origin = focused_widget;
+    TBWidget *origin = core_->focused_widget;
 	if (!origin)
 		origin = this;
 
@@ -852,19 +852,19 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 
 	// Draw generic focus skin if the focused widget is one of the children, and the skin
 	// doesn't have a skin state for focus which would already be painted.
-	if (focused_widget && focused_widget->m_parent == this)
+    if (core_->focused_widget && core_->focused_widget->m_parent == this)
 	{
-		TBWidgetSkinConditionContext context(focused_widget);
-		TBSkinElement *skin_element = focused_widget->GetSkinBgElement();
+        TBWidgetSkinConditionContext context(core_->focused_widget);
+        TBSkinElement *skin_element = core_->focused_widget->GetSkinBgElement();
 		if (!skin_element || !skin_element->HasState(SKIN_STATE_FOCUSED, context))
 		{
-			WIDGET_STATE state = focused_widget->GetAutoState();
+            WIDGET_STATE state = core_->focused_widget->GetAutoState();
 			if (state & SKIN_STATE_FOCUSED)
-                core_->tb_skin_->PaintSkin(focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
+                core_->tb_skin_->PaintSkin(core_->focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
             else
             {
 //                fprintf(stderr, "widget <%s> state <%u> focused <%u>\n",
-//                        focused_widget->GetID().debug_string.CStr(), state, SKIN_STATE_FOCUSED);
+//                        core_->focused_widget->GetID().debug_string.CStr(), state, SKIN_STATE_FOCUSED);
             }
 		}
 	}
@@ -1124,9 +1124,9 @@ void TBWidget::InvokeProcess()
 
 void TBWidget::InvokeSkinUpdatesInternal(bool force_update)
 {
-	if (!update_skin_states && !force_update)
+    if (!core_->update_skin_states && !force_update)
 		return;
-	update_skin_states = false;
+    core_->update_skin_states = false;
 
 	// Check if the skin we get is different from what we expect. That might happen
 	// if the skin has some strong override dependant a condition that has changed.
@@ -1158,9 +1158,9 @@ void TBWidget::InvokeProcessInternal()
 
 void TBWidget::InvokeProcessStates(bool force_update)
 {
-	if (!update_widget_states && !force_update)
+    if (!core_->update_widget_states && !force_update)
 		return;
-	update_widget_states = false;
+    core_->update_widget_states = false;
 
 	OnProcessStates();
 
@@ -1312,36 +1312,36 @@ void TBWidget::StopLongClickTimer()
 
 bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS modifierkeys, bool touch)
 {
-	if (!captured_widget)
+    if (!core_->captured_widget)
 	{
 		SetCapturedWidget(GetWidgetAt(x, y, true));
-		SetHoveredWidget(captured_widget, touch);
+        SetHoveredWidget(core_->captured_widget, touch);
 		//captured_button = button;
 
 		// Hide focus when we use the pointer, if it's not on the focused widget.
-		if (focused_widget != captured_widget)
-			SetAutoFocusState(false);
+//		if (core_->focused_widget != core_->captured_widget)
+//			SetAutoFocusState(false);
 
 		// Start long click timer. Only for touch events for now.
-		if (touch && captured_widget && captured_widget->GetWantLongClick())
-			captured_widget->StartLongClickTimer(touch);
+        if (touch && core_->captured_widget && core_->captured_widget->GetWantLongClick())
+            core_->captured_widget->StartLongClickTimer(touch);
 
 		// Get the closest parent window and bring it to the top
-		TBWindow *window = captured_widget ? captured_widget->GetParentWindow() : nullptr;
+        TBWindow *window = core_->captured_widget ? core_->captured_widget->GetParentWindow() : nullptr;
 		if (window)
 			window->Activate();
 	}
-	if (captured_widget)
+    if (core_->captured_widget)
 	{
 		// Check if there's any started scroller that should be stopped.
-		TBWidget *tmp = captured_widget;
+        TBWidget *tmp = core_->captured_widget;
 		while (tmp)
 		{
 			if (tmp->m_scroller && tmp->m_scroller->IsStarted())
 			{
 				// When we touch down to stop a scroller, we don't
 				// want the touch to end up causing a click.
-				cancel_click = true;
+                core_->cancel_click = true;
 				tmp->m_scroller->Stop();
 				break;
 			}
@@ -1350,7 +1350,7 @@ bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS mo
 
 		// Focus the captured widget or the closest
 		// focusable parent if it isn't focusable.
-		TBWidget *focus_target = captured_widget;
+        TBWidget *focus_target = core_->captured_widget;
 		while (focus_target)
 		{
 			if (focus_target->SetFocus(WIDGET_FOCUS_REASON_POINTER))
@@ -1358,14 +1358,14 @@ bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS mo
 			focus_target = focus_target->m_parent;
 		}
 	}
-	if (captured_widget)
+    if (core_->captured_widget)
 	{
-		captured_widget->ConvertFromRoot(x, y);
-		pointer_move_widget_x = pointer_down_widget_x = x;
-		pointer_move_widget_y = pointer_down_widget_y = y;
+        core_->captured_widget->ConvertFromRoot(x, y);
+        core_->pointer_move_widget_x = core_->update_widget_states = x;
+        core_->pointer_move_widget_y = core_->pointer_down_widget_y = y;
 		TBWidgetEvent ev(EVENT_TYPE_POINTER_DOWN, x, y, touch, modifierkeys);
 		ev.count = click_count;
-		captured_widget->InvokeEvent(ev);
+        core_->captured_widget->InvokeEvent(ev);
 
 		// Return true when captured instead of InvokeEvent result. If a widget is
 		// hit is more interesting for callers than if the event was handled or not.
@@ -1376,16 +1376,16 @@ bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS mo
 
 bool TBWidget::InvokePointerUp(int x, int y, MODIFIER_KEYS modifierkeys, bool touch)
 {
-	if (captured_widget)
+    if (core_->captured_widget)
 	{
-		captured_widget->ConvertFromRoot(x, y);
+        core_->captured_widget->ConvertFromRoot(x, y);
 		TBWidgetEvent ev_up(EVENT_TYPE_POINTER_UP, x, y, touch, modifierkeys);
 		TBWidgetEvent ev_click(EVENT_TYPE_CLICK, x, y, touch, modifierkeys);
-		captured_widget->InvokeEvent(ev_up);
-		if (!cancel_click && captured_widget && captured_widget->GetHitStatus(x, y))
-			captured_widget->InvokeEvent(ev_click);
-		if (captured_widget) // && button == captured_button
-			captured_widget->ReleaseCapture();
+        core_->captured_widget->InvokeEvent(ev_up);
+        if (!core_->cancel_click && core_->captured_widget && core_->captured_widget->GetHitStatus(x, y))
+            core_->captured_widget->InvokeEvent(ev_click);
+        if (core_->captured_widget) // && button == captured_button
+            core_->captured_widget->ReleaseCapture();
 
 		// Return true when captured instead of InvokeEvent result. If a widget is
 		// hit is more interesting for callers than if the event was handled or not.
@@ -1397,22 +1397,22 @@ bool TBWidget::InvokePointerUp(int x, int y, MODIFIER_KEYS modifierkeys, bool to
 void TBWidget::MaybeInvokeLongClickOrContextMenu(bool touch)
 {
 	StopLongClickTimer();
-	if (captured_widget == this &&
-		!cancel_click &&
-		captured_widget->GetHitStatus(pointer_move_widget_x, pointer_move_widget_y))
+    if (core_->captured_widget == this &&
+        !core_->cancel_click &&
+        core_->captured_widget->GetHitStatus(core_->pointer_move_widget_x, core_->pointer_move_widget_y))
 	{
 		// Invoke long click
-		TBWidgetEvent ev_long_click(EVENT_TYPE_LONG_CLICK, pointer_move_widget_x, pointer_move_widget_y, touch, TB_MODIFIER_NONE);
-		bool handled = captured_widget->InvokeEvent(ev_long_click);
+        TBWidgetEvent ev_long_click(EVENT_TYPE_LONG_CLICK, core_->pointer_move_widget_x, core_->pointer_move_widget_y, touch, TB_MODIFIER_NONE);
+        bool handled = core_->captured_widget->InvokeEvent(ev_long_click);
 		if (!handled)
 		{
 			// Long click not handled so invoke a context menu event instead
-			TBWidgetEvent ev_context_menu(EVENT_TYPE_CONTEXT_MENU, pointer_move_widget_x, pointer_move_widget_y, touch, TB_MODIFIER_NONE);
-			handled = captured_widget->InvokeEvent(ev_context_menu);
+            TBWidgetEvent ev_context_menu(EVENT_TYPE_CONTEXT_MENU, core_->pointer_move_widget_x, core_->pointer_move_widget_y, touch, TB_MODIFIER_NONE);
+            handled = core_->captured_widget->InvokeEvent(ev_context_menu);
 		}
 		// If any event was handled, suppress click when releasing pointer.
 		if (handled)
-			cancel_click = true;
+            core_->cancel_click = true;
 	}
 }
 
@@ -1420,12 +1420,12 @@ bool TBWidget::InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool 
 {
 	SetHoveredWidget(GetWidgetAt(x, y, true), touch);
 
-	TBWidget *target = captured_widget ? captured_widget : hovered_widget;
+    TBWidget *target = core_->captured_widget ? core_->captured_widget : core_->hovered_widget;
 	if (target)
 	{
 		target->ConvertFromRoot(x, y);
-		pointer_move_widget_x = x;
-		pointer_move_widget_y = y;
+        core_->pointer_move_widget_x = x;
+        core_->pointer_move_widget_y = y;
 
 		TBWidgetEvent ev(EVENT_TYPE_POINTER_MOVE, x, y, touch, modifierkeys);
 
@@ -1440,24 +1440,24 @@ bool TBWidget::InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool 
 
 void TBWidget::HandlePanningOnMove(int x, int y)
 {
-	if (!captured_widget)
+    if (!core_->captured_widget)
 		return;
 
 	// Check pointer movement
-	const int dx = pointer_down_widget_x - x;
-	const int dy = pointer_down_widget_y - y;
+    const int dx = core_->update_widget_states - x;
+    const int dy = core_->pointer_down_widget_y - y;
 	const int threshold = TBSystem::GetPanThreshold();
 	const bool maybe_start_panning_x = ABS(dx) >= threshold;
 	const bool maybe_start_panning_y = ABS(dy) >= threshold;
 
 	// Do panning, or attempt starting panning (we don't know if any widget is scrollable yet)
-	if (captured_widget->m_packed.is_panning || maybe_start_panning_x || maybe_start_panning_y)
+    if (core_->captured_widget->m_packed.is_panning || maybe_start_panning_x || maybe_start_panning_y)
 	{
 		// The threshold is met for not invoking any long click
-		captured_widget->StopLongClickTimer();
+        core_->captured_widget->StopLongClickTimer();
 
 		int start_compensation_x = 0, start_compensation_y = 0;
-		if (!captured_widget->m_packed.is_panning)
+        if (!core_->captured_widget->m_packed.is_panning)
 		{
 			// When we start panning, deduct the extra distance caused by the
 			// start threshold from the delta so we don't start with a sudden jump.
@@ -1469,33 +1469,33 @@ void TBWidget::HandlePanningOnMove(int x, int y)
 		}
 
 		// Get any active scroller and feed it with pan actions.
-		TBScroller *scroller = captured_widget->GetReadyScroller(dx != 0, dy != 0);
+        TBScroller *scroller = core_->captured_widget->GetReadyScroller(dx != 0, dy != 0);
 		if (!scroller)
 			return;
 
 		int old_translation_x = 0, old_translation_y = 0;
-		captured_widget->GetScrollRoot()->GetChildTranslation(old_translation_x, old_translation_y);
+        core_->captured_widget->GetScrollRoot()->GetChildTranslation(old_translation_x, old_translation_y);
 
 		if (scroller->OnPan(dx + start_compensation_x, dy + start_compensation_y))
 		{
 			// Scroll delta changed, so we are now panning!
-			captured_widget->m_packed.is_panning = true;
-			cancel_click = true;
+            core_->captured_widget->m_packed.is_panning = true;
+            core_->cancel_click = true;
 
 			// If the captured widget (or its scroll root) has panned, we have to compensate the
 			// pointer down coordinates so we won't accumulate the difference the following pan.
 			int new_translation_x = 0, new_translation_y = 0;
-			captured_widget->GetScrollRoot()->GetChildTranslation(new_translation_x, new_translation_y);
-			pointer_down_widget_x += new_translation_x - old_translation_x + start_compensation_x;
-			pointer_down_widget_y += new_translation_y - old_translation_y + start_compensation_y;
+            core_->captured_widget->GetScrollRoot()->GetChildTranslation(new_translation_x, new_translation_y);
+            core_->update_widget_states += new_translation_x - old_translation_x + start_compensation_x;
+            core_->pointer_down_widget_y += new_translation_y - old_translation_y + start_compensation_y;
 		}
 	}
 }
 
 void TBWidget::InvokePointerCancel()
 {
-	if (captured_widget)
-		captured_widget->ReleaseCapture();
+    if (core_->captured_widget)
+        core_->captured_widget->ReleaseCapture();
 }
 
 bool TBWidget::InvokeTouchDown(int x, int y, uint32 id, int click_count, MODIFIER_KEYS modifierkeys)
@@ -1507,20 +1507,20 @@ bool TBWidget::InvokeTouchDown(int x, int y, uint32 id, int click_count, MODIFIE
 	if (!ti)
 		return false;
 
-	if (!ti->captured_widget)
-		ti->captured_widget = GetWidgetAt(x, y, true);
-	if (ti->captured_widget && !ti->captured_widget->GetState(WIDGET_STATE_DISABLED))
-		ti->hovered_widget = ti->captured_widget;
+    if (!ti->captured_widget)
+        ti->captured_widget = GetWidgetAt(x, y, true);
+    if (ti->captured_widget && !ti->captured_widget->GetState(WIDGET_STATE_DISABLED))
+        ti->hovered_widget = ti->captured_widget;
 
-	if (ti->captured_widget)
+    if (ti->captured_widget)
 	{
-		ti->captured_widget->ConvertFromRoot(x, y);
+        ti->captured_widget->ConvertFromRoot(x, y);
 		ti->move_widget_x = ti->down_widget_x = x;
 		ti->move_widget_y = ti->down_widget_y = y;
 		TBWidgetEvent ev(EVENT_TYPE_TOUCH_DOWN, x, y, true, modifierkeys);
 		ev.count = click_count;
 		ev.ref_id = id;
-		ti->captured_widget->InvokeEvent(ev);
+        ti->captured_widget->InvokeEvent(ev);
 		return true;
 	}
 	return false;
@@ -1531,12 +1531,12 @@ bool TBWidget::InvokeTouchUp(int x, int y, uint32 id, MODIFIER_KEYS modifierkeys
 	if (id == 0)
 		return InvokePointerUp(x, y, modifierkeys, true);
 	TOUCH_INFO *ti = GetTouchInfo(id);
-	if (ti && ti->captured_widget)
+    if (ti && ti->captured_widget)
 	{
-		ti->captured_widget->ConvertFromRoot(x, y);
+        ti->captured_widget->ConvertFromRoot(x, y);
 		TBWidgetEvent ev(EVENT_TYPE_TOUCH_UP, x, y, true, modifierkeys);
 		ev.ref_id = id;
-		ti->captured_widget->InvokeEvent(ev);
+        ti->captured_widget->InvokeEvent(ev);
 		DeleteTouchInfo(id);
 		return true;
 	}
@@ -1555,15 +1555,15 @@ void TBWidget::InvokeTouchMove(int x, int y, uint32 id, MODIFIER_KEYS modifierke
 	if (!ti)
 		return;
 
-	ti->hovered_widget = GetWidgetAt(x, y, true);
-	if (ti->captured_widget)
+    ti->hovered_widget = GetWidgetAt(x, y, true);
+    if (ti->captured_widget)
 	{
-		ti->captured_widget->ConvertFromRoot(x, y);
+        ti->captured_widget->ConvertFromRoot(x, y);
 		ti->move_widget_x = x;
 		ti->move_widget_y = y;
 		TBWidgetEvent ev(EVENT_TYPE_TOUCH_MOVE, x, y, true, modifierkeys);
 		ev.ref_id = id;
-		if (ti->captured_widget->InvokeEvent(ev))
+        if (ti->captured_widget->InvokeEvent(ev))
 			return;
 	}
 }
@@ -1576,11 +1576,11 @@ void TBWidget::InvokeTouchCancel(uint32 id)
 	TOUCH_INFO *ti = GetTouchInfo(id);
 	if (ti)
 	{
-		if (ti->captured_widget)
+        if (ti->captured_widget)
 		{
 			TBWidgetEvent ev(EVENT_TYPE_TOUCH_CANCEL, 0, 0, true);
 			ev.ref_id = id;
-			ti->captured_widget->InvokeEvent(ev);
+            ti->captured_widget->InvokeEvent(ev);
 		}
 		DeleteTouchInfo(id);
 	}
@@ -1590,12 +1590,12 @@ bool TBWidget::InvokeWheel(int x, int y, int delta_x, int delta_y, MODIFIER_KEYS
 {
 	SetHoveredWidget(GetWidgetAt(x, y, true), true);
 
-	TBWidget *target = captured_widget ? captured_widget : hovered_widget;
+    TBWidget *target = core_->captured_widget ? core_->captured_widget : core_->hovered_widget;
 	if (target)
 	{
 		target->ConvertFromRoot(x, y);
-		pointer_move_widget_x = x;
-		pointer_move_widget_y = y;
+        core_->pointer_move_widget_x = x;
+        core_->pointer_move_widget_y = y;
 		TBWidgetEvent ev(EVENT_TYPE_WHEEL, x, y, true, modifierkeys);
 		ev.delta_x = delta_x;
 		ev.delta_y = delta_y;
@@ -1612,12 +1612,12 @@ bool TBWidget::InvokeWheel(int x, int y, int delta_x, int delta_y, MODIFIER_KEYS
 bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down)
 {
 	bool handled = false;
-	if (focused_widget)
+    if (core_->focused_widget)
 	{
 		// Emulate a click on the focused widget when pressing space or enter
-		if (!modifierkeys && focused_widget->GetClickByKey() &&
-			!focused_widget->GetDisabled() &&
-			!focused_widget->GetIsDying() &&
+        if (!modifierkeys && core_->focused_widget->GetClickByKey() &&
+            !core_->focused_widget->GetDisabled() &&
+            !core_->focused_widget->GetIsDying() &&
 			(special_key == TB_KEY_ENTER || key == ' '))
 		{
 			// Set the pressed state while the key is down, if it
@@ -1626,7 +1626,7 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
 			static bool had_pressed_state = false;
 			if (down && check_pressed_state)
 			{
-				had_pressed_state = focused_widget->GetState(WIDGET_STATE_PRESSED);
+                had_pressed_state = core_->focused_widget->GetState(WIDGET_STATE_PRESSED);
 				check_pressed_state = false;
 			}
 			if (!down)
@@ -1634,15 +1634,15 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
 
 			if (!had_pressed_state)
 			{
-				focused_widget->SetState(WIDGET_STATE_PRESSED, down);
-				focused_widget->m_packed.has_key_pressed_state = down;
+                core_->focused_widget->SetState(WIDGET_STATE_PRESSED, down);
+                core_->focused_widget->m_packed.has_key_pressed_state = down;
 			}
 
 			// Invoke the click event
 			if (!down)
 			{
 				TBWidgetEvent ev(EVENT_TYPE_CLICK, m_rect.w / 2, m_rect.h / 2, true);
-				focused_widget->InvokeEvent(ev);
+                core_->focused_widget->InvokeEvent(ev);
 			}
 			handled = true;
 		}
@@ -1653,8 +1653,8 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
 			ev.key = key;
 			ev.special_key = special_key;
 			ev.modifierkeys = modifierkeys;
-            // handled = focused_widget->InvokeEvent(ev);
-            focused_widget->InvokeEvent(ev);
+            // handled = core_->focused_widget->InvokeEvent(ev);
+            core_->focused_widget->InvokeEvent(ev);
 		}
 	}
 
@@ -1672,7 +1672,7 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
 
 void TBWidget::ReleaseCapture()
 {
-	if (this == captured_widget)
+    if (this == core_->captured_widget)
 		SetCapturedWidget(nullptr);
 }
 
@@ -1717,72 +1717,72 @@ void TBWidget::ConvertFromRoot(int &x, int &y) const
 // static
 void TBWidget::SetHoveredWidget(TBWidget *widget, bool touch)
 {
-	if (TBWidget::hovered_widget == widget)
+    if (TBWidget::core_->hovered_widget == widget)
 		return;
 	if (widget && widget->GetState(WIDGET_STATE_DISABLED))
 		return;
 
 	// We may apply hover state automatically so the widget might need to be updated.
-	if (TBWidget::hovered_widget)
+    if (TBWidget::core_->hovered_widget)
 	{
-		TBWidget::hovered_widget->Invalidate();
-		TBWidget::hovered_widget->InvalidateSkinStates();
+        TBWidget::core_->hovered_widget->Invalidate();
+        TBWidget::core_->hovered_widget->InvalidateSkinStates();
 	}
 
-	TBWidget::hovered_widget = widget;
+    TBWidget::core_->hovered_widget = widget;
 
-	if (TBWidget::hovered_widget)
+    if (TBWidget::core_->hovered_widget)
 	{
-		TBWidget::hovered_widget->Invalidate();
-		TBWidget::hovered_widget->InvalidateSkinStates();
+        TBWidget::core_->hovered_widget->Invalidate();
+        TBWidget::core_->hovered_widget->InvalidateSkinStates();
 
 		// Cursor based movement should set hover state automatically, but touch
 		// events should not (since touch doesn't really move unless pressed).
-		TBWidget::hovered_widget->m_packed.no_automatic_hover_state = touch;
+        TBWidget::core_->hovered_widget->m_packed.no_automatic_hover_state = touch;
 	}
 }
 
 // static
 void TBWidget::SetCapturedWidget(TBWidget *widget)
 {
-	if (TBWidget::captured_widget == widget)
+    if (core_->captured_widget == widget)
 		return;
 	if (widget && widget->GetState(WIDGET_STATE_DISABLED))
 		return;
 
-	if (TBWidget::captured_widget)
+    if (core_->captured_widget)
 	{
 		// Stop panning when capture change (most likely changing to nullptr because of InvokePointerUp)
 		// Notify any active scroller so it may begin scrolling.
-		if (TBScroller *scroller = TBWidget::captured_widget->FindStartedScroller())
+        if (TBScroller *scroller = core_->captured_widget->FindStartedScroller())
 		{
-			if (TBWidget::captured_widget->m_packed.is_panning)
+            if (core_->captured_widget->m_packed.is_panning)
 				scroller->OnPanReleased();
 			else
 				scroller->Stop();
 		}
-		TBWidget::captured_widget->m_packed.is_panning = false;
+        core_->captured_widget->m_packed.is_panning = false;
 
 		// We apply pressed state automatically so the widget might need to be updated.
-		TBWidget::captured_widget->Invalidate();
-		TBWidget::captured_widget->InvalidateSkinStates();
+        core_->captured_widget->Invalidate();
+        core_->captured_widget->InvalidateSkinStates();
 
-		TBWidget::captured_widget->StopLongClickTimer();
+        core_->captured_widget->StopLongClickTimer();
 	}
-	cancel_click = false;
+    core_->cancel_click = false;
 
-	TBWidget *old_capture = TBWidget::captured_widget;
+    TBWidget *old_capture = core_->captured_widget;
 
-	TBWidget::captured_widget = widget;
+    core_->captured_widget = widget;
 
 	if (old_capture)
 		old_capture->OnCaptureChanged(false);
 
-	if (TBWidget::captured_widget)
+    if (core_->captured_widget)
 	{
-		TBWidget::captured_widget->Invalidate();
-		TBWidget::captured_widget->InvalidateSkinStates();
-		TBWidget::captured_widget->OnCaptureChanged(true);
+        core_->captured_widget->Invalidate();
+        core_->captured_widget->InvalidateSkinStates();
+        core_->captured_widget->OnCaptureChanged(true);
 	}
 }
 
