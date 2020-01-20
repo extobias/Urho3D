@@ -128,7 +128,7 @@ void HelloTBUI::Start()
 //        tbelement2->SetVerticalAlignment(VA_BOTTOM);
         //tbelement2->SetAlignment(HA_LEFT, VA_TOP);
 
-        tbelement2->LoadWidgets("Data/TB/layout/client_name_test.txt");
+        tbelement2->LoadWidgets("Data/TB/layout/debug_screen.txt");
 
 //        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
 //        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));

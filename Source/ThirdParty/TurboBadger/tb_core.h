@@ -58,6 +58,18 @@ TBLanguage *tb_lng_;
 TBFontManager *font_manager_;
 TBImageManager *image_manager_ = nullptr;
 
+TBWidget *hovered_widget = nullptr;
+TBWidget *captured_widget = nullptr;
+TBWidget *focused_widget = nullptr;
+int pointer_down_widget_x = 0;
+int pointer_down_widget_y = 0;
+int pointer_move_widget_x = 0;
+int pointer_move_widget_y = 0;
+bool cancel_click = false;
+bool update_widget_states = true;
+bool update_skin_states = true;
+bool show_focus_state = false;
+
 /** Initialize turbo badger. Call this before using any turbo badger API. */
 bool tb_core_init(TBRenderer *renderer);
 

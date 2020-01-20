@@ -394,8 +394,8 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
         vertexData.Resize(newSize);
         float* dest = &(vertexData.At(begin));
 
-        // batch.vertexStart_ = begin;
-        // batch.vertexEnd_ = vertexData.Size();
+         batch.vertexStart_ = begin;
+         batch.vertexEnd_ = newSize;
 
         // float* src = &(batch.vertexData_->At(batchStart));
         // PODVector<float>* ptrVec = batch.vertexData_;
