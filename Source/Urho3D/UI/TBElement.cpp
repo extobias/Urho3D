@@ -184,7 +184,7 @@ void TBRendererUrho3D::RenderBatch(TBRendererBatcher::Batch *batch)
     SharedPtr<Texture2D> texture = bitmap ? bitmap->GetTexture() : dummy;
 
     IntRect scissor(clipRect_.x, clipRect_.y, clipRect_.x + clipRect_.w, clipRect_.y + clipRect_.h);
-    UIBatch uiBatch(0, BLEND_ALPHA, scissor, texture, &vertexData_);
+    UIBatch uiBatch(nullptr, BLEND_ALPHA, scissor, texture, &vertexData_);
 
     // color 4 unsigned byte (o 1 float)
     // uv coord 2 float
@@ -391,14 +391,9 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
         vertexData.Resize(newSize);
         float* dest = &(vertexData.At(begin));
 
-<<<<<<< Updated upstream
-         batch.vertexStart_ = begin;
-         batch.vertexEnd_ = newSize;
-=======
         // change vertex start/end on each tbuielement
-        batch.vertexStart_ = begin;
-        batch.vertexEnd_ = newSize;
->>>>>>> Stashed changes
+//        batch.vertexStart_ = begin;
+//        batch.vertexEnd_ = newSize;
 
         // float* src = &(batch.vertexData_->At(batchStart));
         // PODVector<float>* ptrVec = batch.vertexData_;

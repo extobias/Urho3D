@@ -74,7 +74,7 @@ void HelloTBUI::Start()
     int windowHeight = g->GetHeight();
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
-    uiRoot_->SetLayout(LM_FREE);
+    uiRoot_->SetLayout(LM_HORIZONTAL);
     uiRoot_->SetSize(windowWidth, windowHeight);
 
     //ImGuiElement* imgui = new ImGuiElement(context_);
@@ -103,7 +103,7 @@ void HelloTBUI::Start()
 //        tbelement->SetVerticalAlignment(VA_BOTTOM);
 //        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-        tbelement->LoadWidgets("Data/TB/layout/debug_screen.txt");
+        tbelement->LoadWidgets("Data/TB/layout/client_name_test.txt");
 
 //        NavMapping keyMap, qualMap;
 //        keyMap.Insert(KEY_W, TB_KEY_TAB);
@@ -118,22 +118,20 @@ void HelloTBUI::Start()
         tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
         uiRoot_->AddChild(tbelement);
 
-        TBUIElement* tbelement2 = new TBUIElement(context_);
-        tbelement2->SetName("main_menu");
-        // tbelement2->SetEnableAnchor(true);
-        tbelement2->LoadResources();
-        tbelement2->SetPosition(0, 0);
-//        tbelement2->SetPosition(windowHeight/ 2, 0);
-        tbelement2->SetMinSize(windowWidth / 4, windowHeight/ 2);
-//        tbelement2->SetVerticalAlignment(VA_BOTTOM);
-        //tbelement2->SetAlignment(HA_LEFT, VA_TOP);
+//        TBUIElement* tbelement2 = new TBUIElement(context_);
+//        tbelement2->SetName("main_menu");
+//        tbelement2->LoadResources();
+//        tbelement2->SetPosition(0, 0);
+//        tbelement2->SetMinSize(windowWidth / 4, windowHeight/ 2);
+////        tbelement2->SetVerticalAlignment(VA_BOTTOM);
+////        tbelement2->SetAlignment(HA_LEFT, VA_TOP);
 
-        tbelement2->LoadWidgets("Data/TB/layout/debug_screen.txt");
+//        tbelement2->LoadWidgets("Data/TB/layout/debug_screen.txt");
 
-        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
-        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
+//        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
+//        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
 
-        uiRoot_->AddChild(tbelement2);
+//        uiRoot_->AddChild(tbelement2);
     }
     else
     {
