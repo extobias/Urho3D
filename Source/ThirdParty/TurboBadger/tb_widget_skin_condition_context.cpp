@@ -70,9 +70,15 @@ bool TBWidgetSkinConditionContext::GetCondition(TBWidget *widget, const TBSkinCo
 	case TBSkinCondition::PROPERTY_HOVER:
         return widget->core_->hovered_widget && widget->IsAncestorOf(widget->core_->hovered_widget);
 	case TBSkinCondition::PROPERTY_CAPTURE:
+<<<<<<< Updated upstream
         return widget->core_->captured_widget && widget->IsAncestorOf(widget->core_->captured_widget);
 	case TBSkinCondition::PROPERTY_FOCUS:
         return widget->core_->focused_widget && widget->IsAncestorOf(widget->core_->focused_widget);
+=======
+		return TBWidget::captured_widget && widget->IsAncestorOf(TBWidget::captured_widget);
+    case TBSkinCondition::PROPERTY_FOCUS:
+        return TBWidget::focused_widget && widget->IsAncestorOf(TBWidget::focused_widget);
+>>>>>>> Stashed changes
 	case TBSkinCondition::PROPERTY_CUSTOM:
 		return widget->GetCustomSkinCondition(info);
 	}

@@ -451,8 +451,12 @@ public:
 	/** Set if the state WIDGET_STATE_FOCUSED should be set automatically for the focused widget.
 		This value is set to true when moving focus by keyboard, and set to off when clicking
 		with the pointer. */
+<<<<<<< Updated upstream
     //static void SetAutoFocusState(bool on);
     void SetAutoFocusState(bool on);
+=======
+    static void SetAutoFocusState(bool on);
+>>>>>>> Stashed changes
 
 	/** Set opacity for this widget and its children from 0.0 - 1.0.
 		If opacity is 0 (invisible), the widget won't receive any input. */
@@ -1044,6 +1048,7 @@ public:
 #endif // TB_RUNTIME_DEBUG_INFO
 
 	// TBWidget related globals
+<<<<<<< Updated upstream
 //	static TBWidget *hovered_widget;	///< The currently hovered widget, or nullptr.
 //	static TBWidget *captured_widget;	///< The currently captured widget, or nullptr.
 //	static TBWidget *focused_widget;	///< The currently focused widget, or nullptr.
@@ -1055,6 +1060,19 @@ public:
 //	static bool update_widget_states;	///< true if something has called InvalidateStates() and it still hasn't been updated.
 //	static bool update_skin_states;		///< true if something has called InvalidateStates() and skin still hasn't been updated.
 //	static bool show_focus_state;		///< true if the focused state should be painted automatically.
+=======
+	static TBWidget *hovered_widget;	///< The currently hovered widget, or nullptr.
+	static TBWidget *captured_widget;	///< The currently captured widget, or nullptr.
+    static TBWidget *focused_widget;	///< The currently focused widget, or nullptr.
+	static int pointer_down_widget_x;	///< Pointer x position on down event, relative to the captured widget.
+	static int pointer_down_widget_y;	///< Pointer y position on down event, relative to the captured widget.
+	static int pointer_move_widget_x;	///< Pointer x position on last pointer event, relative to the captured widget (if any) or hovered widget.
+	static int pointer_move_widget_y;	///< Pointer y position on last pointer event, relative to the captured widget (if any) or hovered widget.
+	static bool cancel_click;			///< true if the pointer up event should not generate a click event.
+	static bool update_widget_states;	///< true if something has called InvalidateStates() and it still hasn't been updated.
+	static bool update_skin_states;		///< true if something has called InvalidateStates() and skin still hasn't been updated.
+	static bool show_focus_state;		///< true if the focused state should be painted automatically.
+>>>>>>> Stashed changes
 	struct TOUCH_INFO {
 		TBWidget *hovered_widget;		///< The currently hovered widget, or nullptr.
 		TBWidget *captured_widget;		///< The currently captured widget, or nullptr.

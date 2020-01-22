@@ -114,8 +114,8 @@ void HelloTBUI::Start()
 //        qualMap.Insert(KEY_A, TB_SHIFT);
 //        tbelement->SetNavMapping(keyMap, qualMap);
 
-//        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
-//        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
+        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
+        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
         uiRoot_->AddChild(tbelement);
 
         TBUIElement* tbelement2 = new TBUIElement(context_);
@@ -130,8 +130,8 @@ void HelloTBUI::Start()
 
         tbelement2->LoadWidgets("Data/TB/layout/debug_screen.txt");
 
-//        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
-//        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
+        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
+        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
 
         uiRoot_->AddChild(tbelement2);
     }
