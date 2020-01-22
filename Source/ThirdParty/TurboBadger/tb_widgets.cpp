@@ -820,9 +820,6 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 	{
         if (clip_rect.Intersects(child->m_rect))
 			child->InvokePaint(paint_props);
-        //else
-        // if (!clip_rect.Intersects(child->m_rect))
-//            TBDebugPrint("child not painted rect <%i, %i, %i, %i>\n", clip_rect.x, clip_rect.y, clip_rect.w, clip_rect.h);
 	}
 
 	// Invoke paint of overlay elements on all children that are in the current visible rect.
@@ -852,6 +849,7 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 
 	// Draw generic focus skin if the focused widget is one of the children, and the skin
 	// doesn't have a skin state for focus which would already be painted.
+<<<<<<< Updated upstream
     if (core_->focused_widget && core_->focused_widget->m_parent == this)
 	{
         TBWidgetSkinConditionContext context(core_->focused_widget);
@@ -861,13 +859,24 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
             WIDGET_STATE state = core_->focused_widget->GetAutoState();
 			if (state & SKIN_STATE_FOCUSED)
                 core_->tb_skin_->PaintSkin(core_->focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
+=======
+    if (focused_widget && focused_widget->m_parent == this)
+    {
+        TBWidgetSkinConditionContext context(focused_widget);
+        TBSkinElement *skin_element = focused_widget->GetSkinBgElement();
+        if (!skin_element || !skin_element->HasState(SKIN_STATE_FOCUSED, context))
+        {
+            WIDGET_STATE state = focused_widget->GetAutoState();
+            if (state & SKIN_STATE_FOCUSED)
+                core_->tb_skin_->PaintSkin(focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
+>>>>>>> Stashed changes
             else
             {
 //                fprintf(stderr, "widget <%s> state <%u> focused <%u>\n",
 //                        core_->focused_widget->GetID().debug_string.CStr(), state, SKIN_STATE_FOCUSED);
             }
-		}
-	}
+        }
+    }
 
     core_->renderer_->Translate(-child_translation_x, -child_translation_y);
 }
@@ -1319,7 +1328,11 @@ bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS mo
 		//captured_button = button;
 
 		// Hide focus when we use the pointer, if it's not on the focused widget.
+<<<<<<< Updated upstream
 //		if (core_->focused_widget != core_->captured_widget)
+=======
+//		if (focused_widget != captured_widget)
+>>>>>>> Stashed changes
 //			SetAutoFocusState(false);
 
 		// Start long click timer. Only for touch events for now.

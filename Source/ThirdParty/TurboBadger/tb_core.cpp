@@ -14,23 +14,6 @@
 
 namespace tb {
 
-//static TBRenderer *g_renderer = nullptr;
-//static TBSkin *g_tb_skin = nullptr;
-//static TBWidgetsReader *g_widgets_reader = nullptr;
-//static TBLanguage *g_tb_lng = nullptr;
-//static TBFontManager *tb::g_font_manager = nullptr;
-
-//TBCore* TBCore::g_core = nullptr;
-
-//TBCore* TBCore::tb_core_instance()
-//{
-//    if (!g_core)
-//    {
-//        g_core = new TBCore;
-//    }
-//    return g_core;
-//}
-
 bool TBCore::tb_core_init(TBRenderer *renderer)
 {
 	TBDebugPrint("Initiating Turbo Badger - version %s\n", TB_VERSION_STR);

@@ -48,9 +48,6 @@ class TBImageManager;
 
 struct TBCore {
 
-// static TBCore* g_core;
-//static TBCore* tb_core_instance();
-
 TBRenderer *renderer_;
 TBSkin *tb_skin_;
 TBWidgetsReader *widgets_reader_;
@@ -81,13 +78,6 @@ bool tb_core_is_initialized();
 
 };
 
-//#define g_renderer TBCore::tb_core_instance()->renderer_
-//#define g_tb_skin TBCore::tb_core_instance()->tb_skin_
-//#define g_widgets_reader TBCore::tb_core_instance()->widgets_reader_
-//#define g_tb_lng TBCore::tb_core_instance()->tb_lng_
-//#define g_font_manager TBCore::tb_core_instance()->font_manager_
-
-//#define tb_core_is_initialized TBCore::tb_core_instance()->tb_core_is
 } // namespace tb
 
 #endif // TB_CORE_H
