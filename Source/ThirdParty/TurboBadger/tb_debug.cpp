@@ -35,20 +35,20 @@ public:
 	{
 		SetText("Debug settings");
         core_->widgets_reader_->LoadData(this,
-			"TBLayout: axis: y, distribution: available, position: left\n"
-			"	TBLayout: id: 'container', axis: y, size: available\n"
-			"	TBTextField: text: 'Event output:'\n"
-			"	TBEditField: id: 'output', gravity: all, multiline: 1, wrap: 0\n"
-			"		lp: pref-height: 100dp");
+            "TBLayout: axis: y, distribution: available, position: left\n"
+            "	TBLayout: id: 'container', axis: y, size: available, debug: 1\n"
+            "	TBTextField: text: 'Event output:'\n"
+            "	TBEditField: id: 'output', gravity: all, multiline: 1, wrap: 0\n"
+            "		lp: pref-height: 100dp");
 
-		AddCheckbox(TBDebugInfo::LAYOUT_BOUNDS, "Layout bounds");
-		AddCheckbox(TBDebugInfo::LAYOUT_CLIPPING, "Layout clipping");
-		AddCheckbox(TBDebugInfo::LAYOUT_PS_DEBUGGING, "Layout size calculation");
-		AddCheckbox(TBDebugInfo::RENDER_BATCHES, "Render batches");
-		AddCheckbox(TBDebugInfo::RENDER_SKIN_BITMAP_FRAGMENTS, "Render skin bitmap fragments");
-		AddCheckbox(TBDebugInfo::RENDER_FONT_BITMAP_FRAGMENTS, "Render font bitmap fragments");
+        AddCheckbox(TBDebugInfo::LAYOUT_BOUNDS, "Layout bounds");
+        AddCheckbox(TBDebugInfo::LAYOUT_CLIPPING, "Layout clipping");
+        AddCheckbox(TBDebugInfo::LAYOUT_PS_DEBUGGING, "Layout size calculation");
+        AddCheckbox(TBDebugInfo::RENDER_BATCHES, "Render batches");
+        AddCheckbox(TBDebugInfo::RENDER_SKIN_BITMAP_FRAGMENTS, "Render skin bitmap fragments");
+        AddCheckbox(TBDebugInfo::RENDER_FONT_BITMAP_FRAGMENTS, "Render font bitmap fragments");
 
-		output = GetWidgetByIDAndType<TBEditField>(TBIDC("output"));
+        output = GetWidgetByIDAndType<TBEditField>(TBIDC("output"));
 
 		TBRect bounds(0, 0, root->GetRect().w, root->GetRect().h);
 		SetRect(GetResizeToFitContentRect().CenterIn(bounds).MoveIn(bounds).Clip(bounds));

@@ -49,6 +49,7 @@ class TBImageManager;
 struct TBCore {
 
 TBRenderer *renderer_;
+
 TBSkin *tb_skin_;
 TBWidgetsReader *widgets_reader_;
 TBLanguage *tb_lng_;

@@ -252,6 +252,10 @@ void TBLayout::OnInflate(const INFLATE_INFO &info)
 			ld = LAYOUT_DISTRIBUTION_POSITION_RIGHT_BOTTOM;
 		SetLayoutDistributionPosition(ld);
 	}
+    if (int debug = info.node->GetValueInt("debug", 0))
+    {
+        debugLayoutBound_ = debug;
+    }
 	TBWidget::OnInflate(info);
 }
 

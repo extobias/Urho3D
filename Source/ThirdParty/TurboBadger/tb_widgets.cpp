@@ -95,6 +95,7 @@ TBWidget::TBWidget(TBCore* core)
 	, m_scroller(nullptr)
 	, m_long_click_timer(nullptr)
 	, m_packed_init(0)
+    , debugLayoutBound_(0)
 {
 #ifdef TB_RUNTIME_DEBUG_INFO
 	last_measure_time = 0;
@@ -849,7 +850,6 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 
 	// Draw generic focus skin if the focused widget is one of the children, and the skin
 	// doesn't have a skin state for focus which would already be painted.
-<<<<<<< Updated upstream
     if (core_->focused_widget && core_->focused_widget->m_parent == this)
 	{
         TBWidgetSkinConditionContext context(core_->focused_widget);
@@ -859,17 +859,6 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
             WIDGET_STATE state = core_->focused_widget->GetAutoState();
 			if (state & SKIN_STATE_FOCUSED)
                 core_->tb_skin_->PaintSkin(core_->focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
-=======
-    if (focused_widget && focused_widget->m_parent == this)
-    {
-        TBWidgetSkinConditionContext context(focused_widget);
-        TBSkinElement *skin_element = focused_widget->GetSkinBgElement();
-        if (!skin_element || !skin_element->HasState(SKIN_STATE_FOCUSED, context))
-        {
-            WIDGET_STATE state = focused_widget->GetAutoState();
-            if (state & SKIN_STATE_FOCUSED)
-                core_->tb_skin_->PaintSkin(focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
->>>>>>> Stashed changes
             else
             {
 //                fprintf(stderr, "widget <%s> state <%u> focused <%u>\n",
@@ -1217,7 +1206,7 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
     TBSkinElement *used_element = core_->tb_skin_->PaintSkin(local_rect, skin_element, static_cast<SKIN_STATE>(state), context);
 	assert(!!used_element == !!skin_element);
 
-    TB_IF_DEBUG_SETTING(LAYOUT_BOUNDS, core_->tb_skin_->PaintRect(local_rect, TBColor(255, 255, 0, 50), 1));
+    TB_IF_DEBUG_SETTING(LAYOUT_BOUNDS, core_->tb_skin_->PaintRect(local_rect, TBColor(255, debugLayoutBound_ ? 0 : 255, 0, 50), 1));
 
 	// Inherit properties from parent if not specified in the used skin for this widget.
 	PaintProps paint_props = parent_paint_props;
@@ -1328,11 +1317,7 @@ bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS mo
 		//captured_button = button;
 
 		// Hide focus when we use the pointer, if it's not on the focused widget.
-<<<<<<< Updated upstream
 //		if (core_->focused_widget != core_->captured_widget)
-=======
-//		if (focused_widget != captured_widget)
->>>>>>> Stashed changes
 //			SetAutoFocusState(false);
 
 		// Start long click timer. Only for touch events for now.
