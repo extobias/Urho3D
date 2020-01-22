@@ -456,9 +456,21 @@ TBWidgetsReader *TBWidgetsReader::Create(TBCore* core)
         }
         wr_ = w_reader;
     }
+    // FIXME this doesn't ensure that core its valid, find another way
     wr_->core_ = core;
-    // return w_reader;
+
     return wr_;
+}
+
+bool TBWidgetsReader::IsValid()
+{
+    return wr_ != nullptr;
+}
+
+void TBWidgetsReader::Clean()
+{
+    delete wr_;
+    wr_ = nullptr;
 }
 
 bool TBWidgetsReader::Init()

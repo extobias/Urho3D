@@ -141,9 +141,12 @@ public:
 class TBWidgetsReader
 {
 public:
-    static TBWidgetsReader *Create(TBCore* core);
     TBWidgetsReader(TBCore* core) : core_(core) {}
 	~TBWidgetsReader();
+
+    static TBWidgetsReader *Create(TBCore* core);
+    static bool IsValid();
+    static void Clean();
 
 	/** Add a widget factory. Does not take ownership of the factory.
 		The easiest way to add factories for custom widget types, is using the
