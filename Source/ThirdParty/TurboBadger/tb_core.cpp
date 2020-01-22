@@ -38,10 +38,10 @@ void TBCore::tb_core_shutdown()
 #ifdef TB_IMAGE
     delete image_manager_;
 #endif
-    if (widgets_reader_)
+    //FIXME SharedPtr needed here
+    if (TBWidgetsReader::IsValid())
     {
-        delete widgets_reader_;
-        widgets_reader_ = nullptr;
+        TBWidgetsReader::Clean();
     }
     delete tb_skin_;
     delete font_manager_;

@@ -256,7 +256,7 @@ TBUIElement::TBUIElement(Context* context)
 //    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(TBUIElement, HandleKeyDown));
 //    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
 
-//    SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
+    SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
 
 //    SubscribeToEvent(this, E_FOCUSED, URHO3D_HANDLER(TBUIElement, HandleFocused));
 //    SubscribeToEvent(this, E_DEFOCUSED, URHO3D_HANDLER(LineEdit, HandleDefocused));
@@ -667,7 +667,8 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 
         TBWidget *widget; 
         // TB needs coords in element space
-        IntVector2 elemPos = ScreenToElement(IntVector2(x, y));
+//        IntVector2 elemPos = ScreenToElement(IntVector2(x, y));
+        IntVector2 elemPos = IntVector2(x, y);
         if (widget = root_->GetWidgetAt(elemPos.x_, elemPos.y_, true))
         {
             if (root_->InvokePointerMove(elemPos.x_, elemPos.y_, GetModifierKeys(), ShouldEmulateTouchEvent()))
