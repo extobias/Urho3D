@@ -34,8 +34,10 @@ public:
         : TBWindow(root->core_)
 	{
 		SetText("Debug settings");
+        // FIXME: update core before calling any load* function
+        core_->widgets_reader_->core_ = core_;
         core_->widgets_reader_->LoadData(this,
-            "TBLayout: axis: y, distribution: available, position: left\n"
+            "TBLayout: id: 'debug_window', axis: y, distribution: available, position: left\n"
             "	TBLayout: id: 'container', axis: y, size: available, debug: 1\n"
             "	TBTextField: text: 'Event output:'\n"
             "	TBEditField: id: 'output', gravity: all, multiline: 1, wrap: 0\n"

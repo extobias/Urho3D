@@ -317,6 +317,7 @@ void TBUIElement::LoadWidgets(const String& filename)
 //    AddStateWidget(stateUI, true, true);
 
     root_->SetGravity(WIDGET_GRAVITY_ALL);
+    core_->widgets_reader_->core_ = core_;
     if(!core_->widgets_reader_->LoadFile(root_, filename.CString()))
     {
         URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
@@ -392,48 +393,46 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
         float* dest = &(vertexData.At(begin));
 
         // change vertex start/end on each tbuielement
-//        batch.vertexStart_ = begin;
-//        batch.vertexEnd_ = newSize;
+        batch.vertexStart_ = begin;
+        batch.vertexEnd_ = newSize;
 
-        // float* src = &(batch.vertexData_->At(batchStart));
-        // PODVector<float>* ptrVec = batch.vertexData_;
-        // URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
-        memcpy(&vertexData[begin], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
-        //memcpy(dest, src, batchSize * sizeof(float));
+//        // float* src = &(batch.vertexData_->At(batchStart));
+//        // PODVector<float>* ptrVec = batch.vertexData_;
+//        // URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
+//        memcpy(&vertexData[begin], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
+//        //memcpy(dest, src, batchSize * sizeof(float));
 
-//        unsigned offset = 0;
-//        #define VER_COL(r, g, b, a) (((a)<<24) + ((b)<<16) + ((g)<<8) + r)
-//        for(unsigned j = batchStart; j < batchEnd; j += VERTEX_SIZE)
-//        {
-////            dest[offset + 0] += screenPosition_.x_;
-////            dest[offset + 1] += screenPosition_.y_;
+        unsigned offset = 0;
+        #define VER_COL(r, g, b, a) (((a)<<24) + ((b)<<16) + ((g)<<8) + r)
+        for(unsigned j = batchStart; j < batchEnd; j += VERTEX_SIZE)
+        {
+//            dest[offset + 0] += screenPosition_.x_;
+//            dest[offset + 1] += screenPosition_.y_;
 
-////            dest[offset + 0] = batch.vertexData_->At(j + 0) + screenPosition_.x_;
-////            dest[offset + 1] = batch.vertexData_->At(j + 1) + screenPosition_.y_;
-//            float v = batch.vertexData_->At(j + 0);
-//            dest[offset + 0] = v;
-//            v = batch.vertexData_->At(j + 1);
-//            dest[offset + 1] = v;
-//            v = batch.vertexData_->At(j + 2);
-//            dest[offset + 2] = v;
-//            v = batch.vertexData_->At(j + 3);
-//            ((unsigned&)dest[offset + 3]) = (unsigned&)v;
-//            v = batch.vertexData_->At(j + 4);
-//            dest[offset + 4] = v;
-//            v = batch.vertexData_->At(j + 5);
-//            dest[offset + 5] = v;
-////            dest[offset + 0] = batch.vertexData_->At(j + 0);
-////            dest[offset + 1] = batch.vertexData_->At(j + 1);
-////            dest[offset + 2] = batch.vertexData_->At(j + 2);
-////            float col   = batch.vertexData_->At(j + 3);
-////            color.FromHSL(colorStep * i, 100.0f, 50.0f);
-////            // unsigned col = color.ToUInt();
-////            ((unsigned&)dest[offset + 3]) = (unsigned&)col;
-////            dest[offset + 4] = batch.vertexData_->At(j + 4);
-////            dest[offset + 5] = batch.vertexData_->At(j + 5);
+            float v = batch.vertexData_->At(j + 0);
+            dest[offset + 0] = v;
+            v = batch.vertexData_->At(j + 1);
+            dest[offset + 1] = v;
+            v = batch.vertexData_->At(j + 2);
+            dest[offset + 2] = v;
+            v = batch.vertexData_->At(j + 3);
+            ((unsigned&)dest[offset + 3]) = (unsigned&)v;
+            v = batch.vertexData_->At(j + 4);
+            dest[offset + 4] = v;
+            v = batch.vertexData_->At(j + 5);
+            dest[offset + 5] = v;
+//            dest[offset + 0] = batch.vertexData_->At(j + 0);
+//            dest[offset + 1] = batch.vertexData_->At(j + 1);
+//            dest[offset + 2] = batch.vertexData_->At(j + 2);
+//            float col   = batch.vertexData_->At(j + 3);
+//            color.FromHSL(colorStep * i, 100.0f, 50.0f);
+//            // unsigned col = color.ToUInt();
+//            ((unsigned&)dest[offset + 3]) = (unsigned&)col;
+//            dest[offset + 4] = batch.vertexData_->At(j + 4);
+//            dest[offset + 5] = batch.vertexData_->At(j + 5);
 
-//            offset += VERTEX_SIZE;
-//        }
+            offset += VERTEX_SIZE;
+        }
 
         UIBatch::AddOrMerge(batch, batches);
     }
