@@ -59,6 +59,10 @@ TBRootWidget::TBRootWidget(Context* context, TBCore* core)
 {
 }
 
+//TBRootWidget::~TBRootWidget()
+//{
+//}
+
 bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
 {
     if(ev.type == EVENT_TYPE_CLICK)
@@ -264,11 +268,12 @@ TBUIElement::TBUIElement(Context* context)
 
 TBUIElement::~TBUIElement()
 {
-    // if (tb_core_is_initialized())
-    {
-        core_->tb_core_shutdown();
-        delete core_;
-    }
+//    delete root_;
+//    root_ = nullptr;
+
+    core_->tb_core_shutdown();
+    delete core_;
+    core_ = nullptr;
 
     if(renderer_)
     {
@@ -329,7 +334,7 @@ void TBUIElement::LoadResources()
 //    if (TBUIElement::resourcesLoaded)
 //        return;
 
-    TBWidgetListener::AddGlobalListener(root_);
+    TBWidgetListener::AddGlobalListener(core_, root_);
 
     if(!core_->tb_lng_->Load("Data/TB/language/lng_en.tb.txt"))
     {
@@ -553,7 +558,8 @@ void TBUIElement::OnResize(const IntVector2& newSize, const IntVector2& delta)
 
 bool TBUIElement::IsWithinScissor(const IntRect& currentScissor)
 {
-    return true;
+    /// \todo Implement properly, for now just checks visibility flag
+    return visible_;
 }
 
 const IntVector2& TBUIElement::GetScreenPosition() const

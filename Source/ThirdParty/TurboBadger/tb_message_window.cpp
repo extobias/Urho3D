@@ -17,13 +17,13 @@ TBMessageWindow::TBMessageWindow(TBCore* core, TBWidget *target, TBID id)
     : TBWindow (core)
     , m_target(target)
 {
-	TBWidgetListener::AddGlobalListener(this);
+    TBWidgetListener::AddGlobalListener(core_, this);
 	SetID(id);
 }
 
 TBMessageWindow::~TBMessageWindow()
 {
-	TBWidgetListener::RemoveGlobalListener(this);
+    TBWidgetListener::RemoveGlobalListener(core_, this);
 	if (TBWidget *dimmer = m_dimmer.Get())
 	{
 		dimmer->RemoveFromParent();

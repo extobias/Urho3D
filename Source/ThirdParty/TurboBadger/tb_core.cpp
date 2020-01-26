@@ -46,6 +46,10 @@ void TBCore::tb_core_shutdown()
     delete tb_skin_;
     delete font_manager_;
     delete tb_lng_;
+
+    hovered_widget = nullptr;
+    captured_widget = nullptr;
+    focused_widget = nullptr;
 }
 
 bool TBCore::tb_core_is_initialized()

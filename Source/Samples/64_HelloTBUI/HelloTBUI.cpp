@@ -103,22 +103,22 @@ void HelloTBUI::Start()
 //        tbelement->SetVerticalAlignment(VA_BOTTOM);
 //        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-        tbelement->LoadWidgets("Data/TB/layout/client_name_test.txt");
+        tbelement->LoadWidgets("Data/TB/layout/main_menu.txt");
 
-//        NavMapping keyMap, qualMap;
-//        keyMap.Insert(KEY_W, TB_KEY_TAB);
-//        keyMap.Insert(KEY_S, TB_KEY_TAB);
-//        keyMap.Insert(KEY_A, TB_KEY_TAB);
-//        keyMap.Insert(KEY_D, TB_KEY_TAB);
-//        qualMap.Insert(KEY_W, TB_SHIFT);
-//        qualMap.Insert(KEY_A, TB_SHIFT);
-//        tbelement->SetNavMapping(keyMap, qualMap);
+        NavMapping keyMap, qualMap;
+        keyMap.Insert(KEY_W, TB_KEY_TAB);
+        keyMap.Insert(KEY_S, TB_KEY_TAB);
+        keyMap.Insert(KEY_A, TB_KEY_TAB);
+        keyMap.Insert(KEY_D, TB_KEY_TAB);
+        qualMap.Insert(KEY_W, TB_SHIFT);
+        qualMap.Insert(KEY_A, TB_SHIFT);
+        tbelement->SetNavMapping(keyMap, qualMap);
 
         tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
         tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
         uiRoot_->AddChild(tbelement);
 
-        TBUIElement* tbelement2 = new TBUIElement(context_);
+        tbelement2 = new TBUIElement(context_);
         tbelement2->SetName("main_menu");
         tbelement2->LoadResources();
         tbelement2->SetPosition(0, 0);
@@ -126,7 +126,17 @@ void HelloTBUI::Start()
 //        tbelement2->SetVerticalAlignment(VA_BOTTOM);
 //        tbelement2->SetAlignment(HA_LEFT, VA_TOP);
 
-        tbelement2->LoadWidgets("Data/TB/layout/client_name_test.txt");
+        tbelement2->LoadWidgets("Data/TB/layout/main_menu.txt");
+        tbelement2->SetVisible(false);
+
+        NavMapping keyMap2, qualMap2;
+        keyMap2.Insert(KEY_UP, TB_KEY_TAB);
+        keyMap2.Insert(KEY_DOWN, TB_KEY_TAB);
+        keyMap2.Insert(KEY_LEFT, TB_KEY_TAB);
+        keyMap2.Insert(KEY_RIGHT, TB_KEY_TAB);
+        qualMap2.Insert(KEY_UP, TB_SHIFT);
+        qualMap2.Insert(KEY_LEFT, TB_SHIFT);
+        tbelement2->SetNavMapping(keyMap2, qualMap2);
 
         tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
         tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
@@ -414,6 +424,9 @@ void HelloTBUI::HandleDragEnd(StringHash eventType, VariantMap& eventData) // Fo
 
 void HelloTBUI::HandleClosePressed(StringHash eventType, VariantMap& eventData)
 {
+    tbelement->Remove();
+    tbelement2->Remove();
+
     if (GetPlatform() != "Web")
         engine_->Exit();
 }

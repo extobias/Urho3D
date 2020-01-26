@@ -95,6 +95,7 @@ private:
     IntVector2 dragBeginPosition_;
     
     TBUIElement* tbelement;
+    TBUIElement* tbelement2;
 };
 
 

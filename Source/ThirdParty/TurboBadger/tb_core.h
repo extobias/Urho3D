@@ -32,6 +32,10 @@ freely, subject to the following restrictions:
 #include "tb_hash.h"
 #include "tb_debug.h"
 
+#include "tb_widgets_listener.h"
+#include "tb_linklist.h"
+#include "animation/tb_widget_animation.h"
+
 #define TB_VERSION_MAJOR 0
 #define TB_VERSION_MINOR 1
 #define TB_VERSION_REVISION 1
@@ -66,6 +70,9 @@ bool cancel_click = false;
 bool update_widget_states = true;
 bool update_skin_states = true;
 bool show_focus_state = false;
+
+TBLinkListOf<TBWidgetListenerGlobalLink> g_listeners;
+TBWidgetsAnimationManager widgets_animation_manager;
 
 /** Initialize turbo badger. Call this before using any turbo badger API. */
 bool tb_core_init(TBRenderer *renderer);

@@ -76,14 +76,14 @@ TBPopupWindow::TBPopupWindow(TBWidget *target)
     : TBWindow (target->core_)
     , m_target(target)
 {
-	TBWidgetListener::AddGlobalListener(this);
+    TBWidgetListener::AddGlobalListener(core_, this);
 	SetSkinBg(TBIDC("TBPopupWindow"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 	SetSettings(WINDOW_SETTINGS_NONE);
 }
 
 TBPopupWindow::~TBPopupWindow()
 {
-	TBWidgetListener::RemoveGlobalListener(this);
+    TBWidgetListener::RemoveGlobalListener(core_, this);
 }
 
 bool TBPopupWindow::Show(const TBPopupAlignment &alignment)
