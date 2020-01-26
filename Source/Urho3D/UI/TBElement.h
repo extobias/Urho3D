@@ -50,8 +50,10 @@ class TBRootWidget : public TBWidget, public TBWidgetListener, public Object
 
 public:
 
+
     TBRootWidget(Context* context, TBCore* core);
-    
+//    virtual ~TBRootWidget();
+
     virtual bool OnEvent(const TBWidgetEvent &ev) override;
 
     virtual void OnWidgetFocusChanged(TBWidget *widget, bool focused) override;
@@ -134,7 +136,7 @@ public:
 
     TBUIElement(Context* context);
 
-    ~TBUIElement() override;
+    virtual ~TBUIElement() override;
 
     static void RegisterObject(Context* context);
     

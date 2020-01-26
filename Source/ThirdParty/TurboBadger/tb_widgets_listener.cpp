@@ -4,26 +4,33 @@
 // ================================================================================
 
 #include "tb_widgets_listener.h"
+#include "tb_widgets.h"
+#include "tb_core.h"
 
 namespace tb {
 
-TBLinkListOf<TBWidgetListenerGlobalLink> g_listeners;
+// TBLinkListOf<TBWidgetListenerGlobalLink> g_listeners;
+TBWidgetListenerGlobalLink::~TBWidgetListenerGlobalLink()
+{
+    if (linklist)
+        ((void)linklist);
+}
 
 // == TBWidgetListener ================================================================================
 
-void TBWidgetListener::AddGlobalListener(TBWidgetListener *listener)
+void TBWidgetListener::AddGlobalListener(TBCore* core, TBWidgetListener *listener)
 {
-	g_listeners.AddLast(listener);
+    core->g_listeners.AddLast(listener);
 }
 
-void TBWidgetListener::RemoveGlobalListener(TBWidgetListener *listener)
+void TBWidgetListener::RemoveGlobalListener(TBCore *core, TBWidgetListener *listener)
 {
-	g_listeners.Remove(listener);
+    core->g_listeners.Remove(listener);
 }
 
 void TBWidgetListener::InvokeWidgetDelete(TBWidget *widget)
 {
-	TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = g_listeners.IterateForward();
+    TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = widget->core_->g_listeners.IterateForward();
 	TBLinkListOf<TBWidgetListener>::Iterator local_i = widget->m_listeners.IterateForward();
 	while (TBWidgetListener *listener = local_i.GetAndStep())
 		listener->OnWidgetDelete(widget);
@@ -34,7 +41,7 @@ void TBWidgetListener::InvokeWidgetDelete(TBWidget *widget)
 bool TBWidgetListener::InvokeWidgetDying(TBWidget *widget)
 {
 	bool handled = false;
-	TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = g_listeners.IterateForward();
+    TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = widget->core_->g_listeners.IterateForward();
 	TBLinkListOf<TBWidgetListener>::Iterator local_i = widget->m_listeners.IterateForward();
 	while (TBWidgetListener *listener = local_i.GetAndStep())
 		handled |= listener->OnWidgetDying(widget);
@@ -45,7 +52,7 @@ bool TBWidgetListener::InvokeWidgetDying(TBWidget *widget)
 
 void TBWidgetListener::InvokeWidgetAdded(TBWidget *parent, TBWidget *child)
 {
-	TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = g_listeners.IterateForward();
+    TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = parent->core_->g_listeners.IterateForward();
 	TBLinkListOf<TBWidgetListener>::Iterator local_i = parent->m_listeners.IterateForward();
 	while (TBWidgetListener *listener = local_i.GetAndStep())
 		listener->OnWidgetAdded(parent, child);
@@ -55,7 +62,7 @@ void TBWidgetListener::InvokeWidgetAdded(TBWidget *parent, TBWidget *child)
 
 void TBWidgetListener::InvokeWidgetRemove(TBWidget *parent, TBWidget *child)
 {
-	TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = g_listeners.IterateForward();
+    TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = parent->core_->g_listeners.IterateForward();
 	TBLinkListOf<TBWidgetListener>::Iterator local_i = parent->m_listeners.IterateForward();
 	while (TBWidgetListener *listener = local_i.GetAndStep())
 		listener->OnWidgetRemove(parent, child);
@@ -65,7 +72,7 @@ void TBWidgetListener::InvokeWidgetRemove(TBWidget *parent, TBWidget *child)
 
 void TBWidgetListener::InvokeWidgetFocusChanged(TBWidget *widget, bool focused)
 {
-	TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = g_listeners.IterateForward();
+    TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = widget->core_->g_listeners.IterateForward();
 	TBLinkListOf<TBWidgetListener>::Iterator local_i = widget->m_listeners.IterateForward();
 	while (TBWidgetListener *listener = local_i.GetAndStep())
 		listener->OnWidgetFocusChanged(widget, focused);
@@ -73,17 +80,17 @@ void TBWidgetListener::InvokeWidgetFocusChanged(TBWidget *widget, bool focused)
 		static_cast<TBWidgetListener*>(link)->OnWidgetFocusChanged(widget, focused);
 }
 
-bool TBWidgetListener::InvokeWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev)
-{
-	bool handled = false;
-	TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = g_listeners.IterateForward();
-	TBLinkListOf<TBWidgetListener>::Iterator local_i = widget->m_listeners.IterateForward();
-	while (TBWidgetListener *listener = local_i.GetAndStep())
-		handled |= listener->OnWidgetInvokeEvent(widget, ev);
-	while (TBWidgetListenerGlobalLink *link = global_i.GetAndStep())
-		handled |= static_cast<TBWidgetListener*>(link)->OnWidgetInvokeEvent(widget, ev);
-	return handled;
-}
+//bool TBWidgetListener::InvokeWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev)
+//{
+//	bool handled = false;
+//    TBLinkListOf<TBWidgetListenerGlobalLink>::Iterator global_i = widget->core_->g_listeners.IterateForward();
+//	TBLinkListOf<TBWidgetListener>::Iterator local_i = widget->m_listeners.IterateForward();
+//	while (TBWidgetListener *listener = local_i.GetAndStep())
+//		handled |= listener->OnWidgetInvokeEvent(widget, ev);
+//	while (TBWidgetListenerGlobalLink *link = global_i.GetAndStep())
+//		handled |= static_cast<TBWidgetListener*>(link)->OnWidgetInvokeEvent(widget, ev);
+//	return handled;
+//}
 
 // == TBWidgetSafePointer ===================================================================================
 

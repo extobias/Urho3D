@@ -8,6 +8,7 @@
 
 #include "tb_widgets_listener.h"
 #include "animation/tb_animation.h"
+#include "tb_geometry.h"
 
 namespace tb {
 

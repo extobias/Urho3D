@@ -57,12 +57,12 @@ public:
 
 		root->AddChild(this);
 
-		TBWidgetListener::AddGlobalListener(this);
+        TBWidgetListener::AddGlobalListener(core_, this);
 	}
 
 	~DebugSettingsWindow()
 	{
-		TBWidgetListener::RemoveGlobalListener(this);
+        TBWidgetListener::RemoveGlobalListener(core_, this);
 	}
 
 	void AddCheckbox(TBDebugInfo::SETTING setting, const char *str)

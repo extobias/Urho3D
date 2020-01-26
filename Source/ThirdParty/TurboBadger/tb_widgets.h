@@ -6,7 +6,7 @@
 #ifndef TB_WIDGETS_H
 #define TB_WIDGETS_H
 
-#include "tb_core.h"
+//#include "tb_core.h"
 #include "tb_geometry.h"
 #include "tb_skin.h"
 #include "tb_linklist.h"
@@ -23,6 +23,7 @@ class TBScroller;
 class TBWidgetListener;
 class TBLongClickTimer;
 struct INFLATE_INFO;
+struct TBCore;
 
 // == Generic widget stuff =================================================
 
