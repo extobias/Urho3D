@@ -1863,6 +1863,9 @@ void Input::HandleSDLEvent(void* sdlEvent)
 {
     SDL_Event& evt = *static_cast<SDL_Event*>(sdlEvent);
 
+//    if (evt.type != SDL_MOUSEMOTION && evt.type != SDL_CONTROLLERAXISMOTION && evt.type != SDL_JOYAXISMOTION)
+//        URHO3D_LOGERRORF("tbuielement.handleeventraw: event <%i>", evt.type);
+
     // While not having input focus, skip key/mouse/touch/joystick events, except for the "click to focus" mechanism
     if (!inputFocus_ && evt.type >= SDL_KEYDOWN && evt.type <= SDL_MULTIGESTURE)
     {

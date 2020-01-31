@@ -189,9 +189,11 @@ public:
 
     TBRootWidget* root_;
 
-    static bool resourcesLoaded;
-
 private:
+
+    MODIFIER_KEYS GetModifierKeys();
+
+    bool ShouldEmulateTouchEvent();
 
     void HandleFocused(StringHash /*eventType*/, VariantMap& eventData);
 
@@ -208,6 +210,13 @@ private:
     HashMap<int, int> mapKey_;
 
     HashMap<int, int> mapQual_;
+
+    int mouse_x = 0;
+    int mouse_y = 0;
+    bool key_alt = false;
+    bool key_ctrl = false;
+    bool key_shift = false;
+    bool key_super = false;
 };
 
 

@@ -74,7 +74,7 @@ void HelloTBUI::Start()
     int windowHeight = g->GetHeight();
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
-    uiRoot_->SetLayout(LM_HORIZONTAL);
+//    uiRoot_->SetLayout(LM_HORIZONTAL);
     uiRoot_->SetSize(windowWidth, windowHeight);
 
     //ImGuiElement* imgui = new ImGuiElement(context_);
@@ -114,8 +114,8 @@ void HelloTBUI::Start()
         qualMap.Insert(KEY_A, TB_SHIFT);
         tbelement->SetNavMapping(keyMap, qualMap);
 
-        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
-        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
+//        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
+//        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
         uiRoot_->AddChild(tbelement);
 
         tbelement2 = new TBUIElement(context_);
@@ -138,8 +138,8 @@ void HelloTBUI::Start()
         qualMap2.Insert(KEY_LEFT, TB_SHIFT);
         tbelement2->SetNavMapping(keyMap2, qualMap2);
 
-        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
-        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
+//        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
+//        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
 
         uiRoot_->AddChild(tbelement2);
     }
