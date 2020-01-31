@@ -228,8 +228,6 @@ void TBRendererUrho3D::Clear()
     vertexData_.Clear();
 }
 
-bool TBUIElement::resourcesLoaded = false;
-
 /*------------ TBElement ------------*/
 TBUIElement::TBUIElement(Context* context)
     : UIElement(context)
@@ -268,6 +266,7 @@ TBUIElement::TBUIElement(Context* context)
 
 TBUIElement::~TBUIElement()
 {
+    // FIXME must delete? apparently is auto deleted by tb
 //    delete root_;
 //    root_ = nullptr;
 
@@ -366,9 +365,7 @@ void TBUIElement::LoadResources()
     // Give the root widget a background skin
     root_->SetSkinBg("background_solid");
 
-    // TBWidgetsAnimationManager::Init();
-
-    TBUIElement::resourcesLoaded = true;
+    TBWidgetsAnimationManager::Init();
 }
 
 void TBUIElement::Clear()
@@ -445,14 +442,7 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
     renderer_->Clear();
 }
 
-int mouse_x = 0;
-int mouse_y = 0;
-bool key_alt = false;
-bool key_ctrl = false;
-bool key_shift = false;
-bool key_super = false;
-
-MODIFIER_KEYS GetModifierKeys()
+MODIFIER_KEYS TBUIElement::GetModifierKeys()
 {
     MODIFIER_KEYS code = TB_MODIFIER_NONE;
     if (key_alt)    code |= TB_ALT;
@@ -462,7 +452,7 @@ MODIFIER_KEYS GetModifierKeys()
     return code;
 }
 
-static bool ShouldEmulateTouchEvent()
+bool TBUIElement::ShouldEmulateTouchEvent()
 {
     // Used to emulate that mouse events are touch events when alt, ctrl and shift are pressed.
     // This makes testing a lot easier when there is no touch screen around :)
@@ -694,55 +684,55 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 //            }
         }
     }
-    else if (event->type == SDL_CONTROLLERDEVICEADDED || event->type == SDL_JOYDEVICEADDED)
-    {
-        if (event->type == SDL_CONTROLLERDEVICEADDED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller added <%i>", event->cdevice.which);
-        }
-        else if (event->type == SDL_JOYDEVICEADDED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: joystick added <%i>", event->jdevice.which);
-        }
-    }
-    else if (event->type == SDL_CONTROLLERDEVICEREMOVED || event->type == SDL_JOYDEVICEREMOVED)
-    {
-        if (event->type == SDL_CONTROLLERDEVICEREMOVED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->cdevice.which);
-        }
-        else if (event->type == SDL_JOYDEVICEREMOVED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->jdevice.which);
-        }
-    }
-    else if (event->type == SDL_CONTROLLERDEVICEREMAPPED)
-    {
-        URHO3D_LOGERRORF("tbuielement.handleeventraw: controller remapped");
-    }
+//    else if (event->type == SDL_CONTROLLERDEVICEADDED || event->type == SDL_JOYDEVICEADDED)
+//    {
+//        if (event->type == SDL_CONTROLLERDEVICEADDED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller added <%i>", event->cdevice.which);
+//        }
+//        else if (event->type == SDL_JOYDEVICEADDED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: joystick added <%i>", event->jdevice.which);
+//        }
+//    }
+//    else if (event->type == SDL_CONTROLLERDEVICEREMOVED || event->type == SDL_JOYDEVICEREMOVED)
+//    {
+//        if (event->type == SDL_CONTROLLERDEVICEREMOVED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->cdevice.which);
+//        }
+//        else if (event->type == SDL_JOYDEVICEREMOVED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->jdevice.which);
+//        }
+//    }
+//    else if (event->type == SDL_CONTROLLERDEVICEREMAPPED)
+//    {
+//        URHO3D_LOGERRORF("tbuielement.handleeventraw: controller remapped");
+//    }
 
-    // FIXME this is navigation control, but should not have effect while focus is on
-    // edit alike field
-    if (event->type == SDL_JOYHATMOTION)
-    {
-        int key = 9;
-        SPECIAL_KEY special = TB_KEY_TAB;
+//    // FIXME this is navigation control, but should not have effect while focus is on
+//    // edit alike field
+//    if (event->type == SDL_JOYHATMOTION)
+//    {
+//        int key = 9;
+//        SPECIAL_KEY special = TB_KEY_TAB;
 
-        if (event->jhat.value & SDL_HAT_RIGHT)
-        {
-            root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
+//        if (event->jhat.value & SDL_HAT_RIGHT)
+//        {
+//            root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
 
-            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-            //    event->type, event->jhat, event->jaxis.value);
-        }
-        else if (event->jhat.value & SDL_HAT_LEFT)
-        {
-            root_->InvokeKey(key, special, TB_SHIFT, true);
+//            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+//            //    event->type, event->jhat, event->jaxis.value);
+//        }
+//        else if (event->jhat.value & SDL_HAT_LEFT)
+//        {
+//            root_->InvokeKey(key, special, TB_SHIFT, true);
 
-            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-            //    event->type, event->jhat, event->jaxis.value);
-        }
-    }
+//            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+//            //    event->type, event->jhat, event->jaxis.value);
+//        }
+//    }
 
     //if (event->type == SDL_JOYAXISMOTION)
     //{
