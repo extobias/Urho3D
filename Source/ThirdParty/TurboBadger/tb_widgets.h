@@ -125,16 +125,22 @@ public:
 	TBID ref_id;		///< Sometimes (when documented) events have a ref_id (The id that caused this event)
 	bool touch;			///< Set for pointer events. True if the event is a touch event (finger or pen on screen)
 						///< False if mouse or other cursor input.
+        int user_data; /// added
 
 	TBOBJECT_SUBCLASS(TBWidgetEvent, TBTypedObject);
 
 	TBWidgetEvent(EVENT_TYPE type) : target(nullptr), type(type), target_x(0), target_y(0), delta_x(0), delta_y(0), count(1),
 											key(0), special_key(TB_KEY_UNDEFINED), modifierkeys(TB_MODIFIER_NONE), touch(false) {}
 
-	TBWidgetEvent(EVENT_TYPE type, int x, int y, bool touch, MODIFIER_KEYS modifierkeys = TB_MODIFIER_NONE) :
+        TBWidgetEvent(EVENT_TYPE type, int x, int y, bool touch, MODIFIER_KEYS modifierkeys = TB_MODIFIER_NONE) :
 											target(nullptr), type(type), target_x(x), target_y(y), delta_x(0), delta_y(0),
 											count(1), key(0), special_key(TB_KEY_UNDEFINED), modifierkeys(modifierkeys),
-											touch(touch) {}
+                                                                                        touch(touch) {}
+
+        TBWidgetEvent(EVENT_TYPE type, int x, int y, bool touch, MODIFIER_KEYS modifierkeys, int userdata) :
+                                                                                        target(nullptr), type(type), target_x(x), target_y(y), delta_x(0), delta_y(0),
+                                                                                        count(1), key(0), special_key(TB_KEY_UNDEFINED), modifierkeys(modifierkeys),
+                                                                                        touch(touch), user_data(userdata) {}
 
 	/** The count value may be 1 to infinity. If you f.ex want to see which count it is for something
 		handling click and double click, call GetCountCycle(2). If you also handle triple click, call
@@ -955,7 +961,7 @@ public:
 
 	/** Invoke the EVENT_TYPE_KEY_DOWN and EVENT_TYPE_KEY_UP events on the currently focused widget.
 		This will also do some generic key handling, such as cycling focus on tab etc. */
-	bool InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down);
+        bool InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down, int userdata = -1);
 
 	/** A widget that receive a EVENT_TYPE_POINTER_DOWN event, will stay "captured" until EVENT_TYPE_POINTER_UP
 		is received. While captured, all EVENT_TYPE_POINTER_MOVE are sent to it. This method can force release the capture,

@@ -2071,7 +2071,8 @@ int UIElement::CalculateLayoutParentSize(const PODVector<int>& sizes, int begin,
 {
     int width = begin + end;
     if (sizes.Empty())
-        return width;
+        //return width;
+        return Max(size_.x_, width);
 
     for (unsigned i = 0; i < sizes.Size(); ++i)
     {

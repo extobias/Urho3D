@@ -70,6 +70,7 @@ bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
         VariantMap eventData;
         eventData[P_BUTTON_ID] = ev.target->GetID();
         eventData[P_BUTTON_TEXT] = ev.target->GetText().CStr();
+        eventData[P_CONTROLLER_ID] = ev.user_data;
 
         TBEditField *edit = TBSafeCast<TBEditField>(ev.target);
         if(edit && !edit->GetReadOnly())
@@ -94,7 +95,7 @@ bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
 
 void TBRootWidget::OnWidgetFocusChanged(TBWidget *widget, bool focused)
 {
-    URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: widget <%s> edit focus <%u>", widget->GetID().debug_string.CStr(), focused);
+    // URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: widget <%s> edit focus <%u>", widget->GetID().debug_string.CStr(), focused);
     // esto es para desplegar el teclado en android
     // cuando un editfield obtiene el foco
     if (TBEditField *edit = TBSafeCast<TBEditField>(widget))
@@ -250,7 +251,6 @@ TBUIElement::TBUIElement(Context* context)
 
     CreateKeyMap();
 
-    SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(TBUIElement, HandleScreenMode));
     SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(TBUIElement, HandlePostUpdate));
 
     SubscribeToEvent(E_BEGINFRAME, URHO3D_HANDLER(TBUIElement, HandleBeginFrame));
@@ -596,13 +596,6 @@ void TBUIElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
     root_->InvokeProcess();
 }
 
-void TBUIElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
-{
-//    using namespace ScreenMode;
-//    int w = eventData[P_WIDTH].GetInt();
-//    int h = eventData[P_HEIGHT].GetInt();
-}
-
 void TBUIElement::HandleFocused(StringHash /*eventType*/, VariantMap& eventData)
 {
     if (GetSubsystem<UI>()->GetUseScreenKeyboard())
@@ -798,6 +791,11 @@ void TBUIElement::SetNavMapping(const NavMapping& keyMap, const NavMapping& qual
     }
 }
 
+bool TBUIElement::InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata)
+{
+    return root_->InvokeKey(key, (SPECIAL_KEY)special, (MODIFIER_KEYS)modifier, down, userdata);
+}
+
 } // end namespace Urho3D
 
 namespace tb 
@@ -824,7 +822,7 @@ private:
 
 TBFile *TBFile::Open(const char *filename, TBFileMode mode)
 {
-    Urho3D::File *f = 0;
+    Urho3D::File *f = nullptr;
     String filepath = g_programDir + filename;
     // URHO3D_LOGINFOF("TBFile::Open: filepath <%s>", filepath.CString());
     switch (mode)
@@ -836,7 +834,7 @@ TBFile *TBFile::Open(const char *filename, TBFileMode mode)
             break;
     }
     if (!f)
-        return NULL;
+        return nullptr;
 
     TBUrho3DFile *tbf = new TBUrho3DFile(f);
     if(!tbf)

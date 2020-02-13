@@ -11,14 +11,6 @@
 using namespace tb;
 using namespace Urho3D;
 
-//namespace tb
-//{
-//class TBWidgetLister;
-//class TBWidget;
-//class TBBitmap;
-//class TBRendererBatcher;
-//}
-
 namespace Urho3D
 {
 
@@ -33,6 +25,7 @@ static const StringHash E_TBUI_JOYSTICK_REMOVE("TB_UI_JOYSTICK_REMOVE");
 
 static const StringHash P_BUTTON_ID("button_id");
 static const StringHash P_BUTTON_TEXT("button_text");
+static const StringHash P_CONTROLLER_ID("controller_id");
 static const StringHash P_WIDGET_ID("widget_id");
 static const StringHash P_WIDGET_VALUE("widget_value");
 
@@ -177,8 +170,6 @@ public:
 
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
-    void HandleScreenMode(StringHash eventType, VariantMap& eventData);
-
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
@@ -186,6 +177,8 @@ public:
     void HandleRawEvent(StringHash eventType, VariantMap& args);
 
     void SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap);
+
+    bool InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata = -1);
 
     TBRootWidget* root_;
 
