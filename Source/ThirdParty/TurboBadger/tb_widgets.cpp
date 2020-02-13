@@ -1611,7 +1611,7 @@ bool TBWidget::InvokeWheel(int x, int y, int delta_x, int delta_y, MODIFIER_KEYS
     return false;
 }
 
-bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down)
+bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down, int userdata)
 {
     bool handled = false;
     if (core_->focused_widget)
@@ -1643,7 +1643,7 @@ bool TBWidget::InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifie
             // Invoke the click event
             if (!down)
             {
-                TBWidgetEvent ev(EVENT_TYPE_CLICK, m_rect.w / 2, m_rect.h / 2, true);
+                TBWidgetEvent ev(EVENT_TYPE_CLICK, m_rect.w / 2, m_rect.h / 2, true, TB_MODIFIER_NONE, userdata);
                 core_->focused_widget->InvokeEvent(ev);
             }
             handled = true;
