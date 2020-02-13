@@ -193,6 +193,8 @@ private:
     /// Handle scene post-update event.
     void HandleScenePostUpdate(StringHash eventType, VariantMap& eventData);
 
+    void DebugDraw();
+
     /// Resize RibbonTrail vertex and index buffers.
     void UpdateBufferSize();
     /// Rewrite RibbonTrail vertex buffer.
