@@ -76,4 +76,7 @@ private:
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
+    void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+
+    bool paused_;
 };
