@@ -1,4 +1,5 @@
 TBLayout
+	distribution gravity
 	TBContainer
 		id load_container
 		TBLayout

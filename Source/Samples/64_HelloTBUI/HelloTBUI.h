@@ -96,6 +96,7 @@ private:
     
     TBUIElement* tbelement;
     TBUIElement* tbelement2;
+    TBUIElement* animTest_;
 };
 
 
