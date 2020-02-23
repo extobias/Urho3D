@@ -370,7 +370,7 @@ void StaticScene::MoveCamera(float timeStep)
     const float MOUSE_SENSITIVITY = 0.1f;
 
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    if (input->GetMouseButtonDown(MOUSEB_RIGHT))
+    if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
     {
         IntVector2 mouseMove = input->GetMouseMove();
         yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
