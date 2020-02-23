@@ -255,9 +255,6 @@ TBUIElement::TBUIElement(Context* context)
 
     SubscribeToEvent(E_BEGINFRAME, URHO3D_HANDLER(TBUIElement, HandleBeginFrame));
 
-//    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(TBUIElement, HandleKeyDown));
-//    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
-
     SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
 
 //    SubscribeToEvent(this, E_FOCUSED, URHO3D_HANDLER(TBUIElement, HandleFocused));
@@ -315,11 +312,6 @@ void TBUIElement::LoadWidgets(TBWidget* stateWidget, const String& filename)
 
 void TBUIElement::LoadWidgets(const String& filename)
 {
-//    TBRootWidget* stateUI = new TBRootWidget(context_);
-//    stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-//    // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
-//    AddStateWidget(stateUI, true, true);
-
     root_->SetGravity(WIDGET_GRAVITY_ALL);
     core_->widgets_reader_->core_ = core_;
     if(!core_->widgets_reader_->LoadFile(root_, filename.CString()))

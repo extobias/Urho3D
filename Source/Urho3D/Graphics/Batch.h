@@ -157,13 +157,17 @@ struct BatchGroup : public Batch
 
         unsigned char* buffer = static_cast<unsigned char*>(batch.instancingData_);
         if(!buffer)
+        {
             newInstance.instancingData_ = batch.instancingData_;
+        }
 
         for (unsigned i = 0; i < batch.numWorldTransforms_; ++i)
         {
             newInstance.worldTransform_ = &batch.worldTransform_[i];
             if(buffer)
+            {
                 newInstance.instancingData_ = buffer + sizeof(Vector4) * i;
+            }
 
             instances_.Push(newInstance);
         }
