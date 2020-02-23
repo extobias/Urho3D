@@ -47,6 +47,7 @@
 #include "HelloTBUI.h"
 
 #include <Urho3D/DebugNew.h>
+#include <animation/tb_widget_animation.h>
 
 URHO3D_DEFINE_APPLICATION_MAIN(HelloTBUI)
 
@@ -94,65 +95,12 @@ void HelloTBUI::Start()
 
     if (1)
     {
-        tbelement = new TBUIElement(context_);
-        // tbelement->SetEnableAnchor(true);
-        tbelement->LoadResources();
-
-        // tbelement->SetPosition(windowWidth / 2, 0);
-        // tbelement->SetMinSize(0, windowHeight);
-//        tbelement->SetVerticalAlignment(VA_BOTTOM);
-//        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
-
-        tbelement->LoadWidgets("Data/TB/layout/main_menu.txt");
-
-//        NavMapping keyMap, qualMap;
-//        keyMap.Insert(KEY_W, TB_KEY_TAB);
-//        keyMap.Insert(KEY_S, TB_KEY_TAB);
-//        keyMap.Insert(KEY_A, TB_KEY_TAB);
-//        keyMap.Insert(KEY_D, TB_KEY_TAB);
-//        qualMap.Insert(KEY_W, TB_SHIFT);
-//        qualMap.Insert(KEY_A, TB_SHIFT);
-//        tbelement->SetNavMapping(keyMap, qualMap);
-
-//        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
-//        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
-        uiRoot_->AddChild(tbelement);
-
-        tbelement2 = new TBUIElement(context_);
-        tbelement2->SetName("main_menu");
-        tbelement2->LoadResources();
-        // tbelement2->SetPosition(0, 0);
-        // tbelement2->SetMinSize(windowWidth / 2, windowHeight);
-//        tbelement2->SetVerticalAlignment(VA_BOTTOM);
-//        tbelement2->SetAlignment(HA_LEFT, VA_TOP);
-
-        tbelement2->LoadWidgets("Data/TB/layout/main_menu.txt");
-//        tbelement2->SetVisible(false);
-
-//        NavMapping keyMap2, qualMap2;
-//        keyMap2.Insert(KEY_UP, TB_KEY_TAB);
-//        keyMap2.Insert(KEY_DOWN, TB_KEY_TAB);
-//        keyMap2.Insert(KEY_LEFT, TB_KEY_TAB);
-//        keyMap2.Insert(KEY_RIGHT, TB_KEY_TAB);
-//        qualMap2.Insert(KEY_UP, TB_SHIFT);
-//        qualMap2.Insert(KEY_LEFT, TB_SHIFT);
-//        tbelement2->SetNavMapping(keyMap2, qualMap2);
-
-//        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
-//        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
-
-        uiRoot_->AddChild(tbelement2);
-
-        TBUIElement* tbelement3 = new TBUIElement(context_);
-        tbelement3->SetName("main_menu");
-        tbelement3->LoadResources();
-        // tbelement2->SetPosition(0, 0);
-        // tbelement2->SetMinSize(windowWidth / 2, windowHeight);
-//        tbelement2->SetVerticalAlignment(VA_BOTTOM);
-//        tbelement2->SetAlignment(HA_LEFT, VA_TOP);
-
-        tbelement3->LoadWidgets("Data/TB/layout/main_menu.txt");
-        uiRoot_->AddChild(tbelement3);
+        animTest_ = new TBUIElement(context_);
+        animTest_->LoadResources();
+        animTest_->LoadWidgets("Data/TB/layout/loading_screen.txt");
+        // animTest_->SetPosition(-windowWidth / 8, 0);
+        animTest_->SetSize(windowWidth / 2, windowHeight);
+        GetSubsystem<UI>()->GetRootModalElement()->AddChild(animTest_);
     }
     else
     {
@@ -295,6 +243,23 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 #else
         URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
 #endif
+    }
+
+    if (key == KEY_A)
+    {
+        // animTest_->core_->widgets_animation_manager::AbortAnimations();
+        // TBWidgetsAnimationManager::AbortAnimations(animTest_->root_);
+        ANIMATION_CURVE curve = ANIMATION_CURVE_BEZIER;
+        double duration = 1500;
+
+        TBContainer* cont = animTest_->root_->GetWidgetByIDAndType<TBContainer>(TBIDC("load_container"));
+        TBRect rect = cont->GetRect();
+
+        if (TBAnimationObject *anim = new TBWidgetAnimationRect(cont, rect.Offset(0, -rect.y - rect.h), rect))
+        {
+                TBAnimationManager::StartAnimation(anim, curve, duration);
+        }
+
     }
 
     Sample::HandleKeyDown(eventType, eventData);
