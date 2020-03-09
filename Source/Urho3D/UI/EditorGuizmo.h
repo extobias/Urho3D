@@ -82,8 +82,6 @@ private:
 
     Ray ray_;
 
-    Frustum selectFrustum_;
-
     Vector<Vector3> hitPositions_;
 
     SharedPtr<EditorBrush> brush_;
