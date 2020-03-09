@@ -283,7 +283,6 @@ unsigned EditorModelDebug::GetFacesCount() const
 
 void EditorModelDebug::SetModel(Model* model)
 {
-
     if (model == model_)
         return;
 
@@ -306,8 +305,8 @@ void EditorModelDebug::SetModel(Model* model)
 
        CreateFaceInstances();
 
-        ResourceCache* cache = GetSubsystem<ResourceCache>();
-        SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+       ResourceCache* cache = GetSubsystem<ResourceCache>();
+       SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     }
 }
 
