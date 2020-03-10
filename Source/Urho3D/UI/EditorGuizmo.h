@@ -70,6 +70,8 @@ private:
 
     void CreateBrush();
 
+    void CalculateHitPoint(const IntVector2 &position);
+
     unsigned selectedNode_;
 
     WeakPtr<Node> cameraNode_;
@@ -83,6 +85,8 @@ private:
     Ray ray_;
 
     Vector<Vector3> hitPositions_;
+
+    Vector3 hitPoint_;
 
     SharedPtr<EditorBrush> brush_;
 };

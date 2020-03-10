@@ -51,7 +51,10 @@ public:
 
     void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
+    String debugText_;
+
 private:
+
     void AttributeEdit(Serializable *c);
 
     void AddComponentMenu(Node *node);

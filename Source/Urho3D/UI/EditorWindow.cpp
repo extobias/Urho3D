@@ -30,7 +30,8 @@ EditorWindow::EditorWindow(Context* context) :
     ImGuiElement(context),
     guizmo_(nullptr),
     selectedNode_(0),
-    currentModel_(2)
+    currentModel_(2),
+    debugText_("")
 {
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     FileSystem dir(context_);
@@ -310,6 +311,10 @@ void EditorWindow::Render(float timeStep)
     }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    ImGui::Separator();
+
+    ImGui::Text("%s", debugText_.CString());
 
     ImVec2 windowPos = ImGui::GetWindowPos();
     SetPosition(windowPos.x, windowPos.y);
