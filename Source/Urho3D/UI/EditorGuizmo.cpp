@@ -130,7 +130,7 @@ void EditorBrush::Update(StaticModel* model, const IntVector2& position, float r
       float y = 0.01f;
 //      float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
       customGeometry_->DefineVertex(Vector3(x, y, z));
-      customGeometry_->DefineColor(Color(1, 1, 0));
+      customGeometry_->DefineColor(Color(1, 0, 0));
     }
     customGeometry_->Commit();
 
@@ -164,7 +164,7 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
     // Generate the circle
     customGeometry_->BeginGeometry(0, LINE_STRIP);
     customGeometry_->DefineVertex(Vector3::ZERO);
-    float step = 16;
+    float step = 360;
     for (unsigned i = 0; i < step + 4; i += 4)
     {
         float angle = i * 2 * M_PI / step;
@@ -174,7 +174,7 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
 
 //      float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
       customGeometry_->DefineVertex(Vector3(x, y, z));
-      customGeometry_->DefineColor(Color(1, 1, 0));
+      customGeometry_->DefineColor(Color(1, 0, 0));
     }
     // customGeometry_->DefineVertex(Vector3::ZERO);
     customGeometry_->Commit();
@@ -189,7 +189,7 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
 
 float EditorBrush::GetModelHeight(StaticModel* model, const Vector3& position, float x, float z)
 {
-
+    return 0.01f;
 }
 
 void EditorBrush::SetVisible(bool visible)
