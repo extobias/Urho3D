@@ -69,6 +69,7 @@ void StaticScene::Start()
 
     EditorWindow::RegisterObject(context_);
     ImGuiElement::RegisterObject(context_);
+    EditorGuizmo::RegisterObject(context_);
     EditorModelDebug::RegisterObject(context_);
 
     // Create the scene content
@@ -129,11 +130,11 @@ void StaticScene::CreateScene()
     light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
 
     // sky
-    //Node* skyNode = scene_->CreateChild("Sky");
-    //skyNode->SetScale(500.0f); // The scale actually does not matter
-    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
-    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+//    Node* skyNode = scene_->CreateChild("Sky");
+//    skyNode->SetScale(500.0f); // The scale actually does not matter
+//    Skybox* skybox = skyNode->CreateComponent<Skybox>();
+//    skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+//    skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
     // particles
     Node* emitterNode = scene_->CreateChild("Emitter");
@@ -176,11 +177,11 @@ void StaticScene::CreateScene()
     meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
     meshNode->SetScale(0.005f);
     StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
+//    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
     Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
     meshObject->SetModel(meshModel);
     meshObject->SetCastShadows(true);
-    // meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
+////     meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
 
     editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
     editorModel_->SetModel(meshModel);
@@ -204,9 +205,8 @@ void StaticScene::CreateScene()
     // Set an initial position for the front camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
-    // CreateDepthTexture();
     Graphics* graphics = GetSubsystem<Graphics>();
-    graphics->Maximize();
+//    graphics->Maximize();
 
     rearCameraNode_ = scene_->CreateChild("RearCamera");
     rearCameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
@@ -224,33 +224,6 @@ void StaticScene::CreateScene()
     //SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
     //surface->SetViewport(0, rttViewport);
     //surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
-}
-
-void StaticScene::CreateDepthTexture()
-{
-    Graphics* graphics = GetSubsystem<Graphics>();
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-
-    URHO3D_LOGERRORF("> > > > > > depth support <%u>", graphics->GetReadableDepthSupport());
-    // depth buffer texture
-    SharedPtr<Texture2D> renderTexture(new Texture2D(context_));
-    float div = 2.0f;
-    renderTexture->SetSize(graphics->GetWidth() / div, graphics->GetHeight() / div, Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
-    // renderTexture->SetFilterMode(FILTER_BILINEAR);
-    renderTexture->SetName("DepthBuffer");
-
-    cache->AddManualResource(renderTexture);
-
-    UI* ui = GetSubsystem<UI>();
-    Sprite* textSprite = ui->GetRoot()->CreateChild<Sprite>();
-
-    // textSprite->SetScale(256.0f / renderTexture->GetWidth());
-    textSprite->SetTexture(renderTexture);
-    textSprite->SetSize(renderTexture->GetWidth(), renderTexture->GetHeight());
-    textSprite->SetHotSpot(renderTexture->GetWidth(), renderTexture->GetHeight());
-    textSprite->SetAlignment(HA_RIGHT, VA_BOTTOM);
-    textSprite->SetOpacity(1.0f);
-    textSprite->SetVisible(true);
 }
 
 void StaticScene::CreateInstructions()
@@ -294,7 +267,6 @@ void StaticScene::SetupViewport()
 
     renderer->SetNumExtraInstancingBufferElements(1);
     renderer->SetMinInstances(1);
-
     renderer->SetNumViewports(2);
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen. We need to define the scene and the camera
@@ -306,9 +278,7 @@ void StaticScene::SetupViewport()
     //RenderPath* effectRenderPath = viewport->GetRenderPath();
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
-    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
-    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredRenderDepth.xml"));
-    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
+//     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
 
     effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
     //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
@@ -437,8 +407,8 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
 
-//    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-//    editorModel_->DrawDebugGeometry(debugRenderer, true);
+    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+    editorModel_->DrawDebugGeometry(debugRenderer, true);
 
     // UpdateRenderPath(timeStep);
 }
