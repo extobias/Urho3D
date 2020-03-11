@@ -44,7 +44,6 @@
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/UI/EditorWindow.h>
 #include <Urho3D/UI/EditorGuizmo.h>
-#include <Urho3D/UI/EditorModelDebug.h>
 #include <Urho3D/Physics/RigidBody.h>
 
 #include "StaticScene.h"
@@ -69,7 +68,7 @@ void StaticScene::Start()
 
     EditorWindow::RegisterObject(context_);
     ImGuiElement::RegisterObject(context_);
-    EditorModelDebug::RegisterObject(context_);
+    EditorGuizmo::RegisterObject(context_);
 
     // Create the scene content
     CreateScene();
@@ -111,7 +110,6 @@ void StaticScene::CreateScene()
     planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
     // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
     planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-    planeNode->SetEnabled(false);
 
     // light
     Node* lightNode = scene_->CreateChild("DirectionalLight");
@@ -146,7 +144,7 @@ void StaticScene::CreateScene()
     particleEmitter->SetEffect(effect_);
     particleEmitter->SetEmitting(false);
 
-    const unsigned NUM_OBJECTS = 0;
+    const unsigned NUM_OBJECTS = 5;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -172,25 +170,6 @@ void StaticScene::CreateScene()
 //    riderObject->SetCastShadows(true);
 //    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
-    Node* meshNode = scene_->CreateChild("Mesh");
-    meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    meshNode->SetScale(0.005f);
-    StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
-    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
-    meshObject->SetModel(meshModel);
-    meshObject->SetCastShadows(true);
-    // meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
-
-    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
-    editorModel_->SetModel(meshModel);
-    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
-
-    // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
-//    meshShape = meshNode->CreateComponent<CollisionShape>();
-//    meshShape->SetTriangleMesh(meshModel);
-    // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
-
     // Create a scene node for the camera, which we will move around
     // The camera will use default settings (1000 far clip distance, 45 degrees FOV, set aspect ratio automatically)
     cameraNode_ = scene_->CreateChild("Camera");
@@ -204,7 +183,7 @@ void StaticScene::CreateScene()
     // Set an initial position for the front camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
-    // CreateDepthTexture();
+    CreateDepthTexture();
     Graphics* graphics = GetSubsystem<Graphics>();
     graphics->Maximize();
 
@@ -220,10 +199,10 @@ void StaticScene::CreateScene()
     // if we wanted
     rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
 
-    //SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
-    //SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
-    //surface->SetViewport(0, rttViewport);
-    //surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+//    SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
+//    SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
+//    surface->SetViewport(0, rttViewport);
+//    surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
 }
 
 void StaticScene::CreateDepthTexture()
@@ -305,10 +284,9 @@ void StaticScene::SetupViewport()
 
     //RenderPath* effectRenderPath = viewport->GetRenderPath();
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
+//    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
     // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
-    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredRenderDepth.xml"));
-    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth2.xml"));
+     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepthWithCopy.xml"));
 
     effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
     //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
