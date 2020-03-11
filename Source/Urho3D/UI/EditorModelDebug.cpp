@@ -348,9 +348,9 @@ void EditorModelDebug::AddSelectedFaces(const PODVector<IntVector2>& faces)
 {
     selectedFaces_.Clear();
 
-    for(unsigned i = 0; i < faces.Size(); i++)
+    for (unsigned i = 0; i < faces.Size(); i++)
     {
-        if(!selectedFaces_.Contains(faces[i]))
+        if (!selectedFaces_.Contains(faces[i]))
         {
             selectedFaces_.Push(faces[i]);
         }
