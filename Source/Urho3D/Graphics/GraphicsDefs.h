@@ -389,6 +389,7 @@ extern URHO3D_API const StringHash VSP_LIGHTDIR;
 extern URHO3D_API const StringHash VSP_LIGHTPOS;
 extern URHO3D_API const StringHash VSP_NORMALOFFSETSCALE;
 extern URHO3D_API const StringHash VSP_MODEL;
+extern URHO3D_API const StringHash VSP_MODELINV;
 extern URHO3D_API const StringHash VSP_VIEW;
 extern URHO3D_API const StringHash VSP_VIEWINV;
 extern URHO3D_API const StringHash VSP_VIEWPROJ;

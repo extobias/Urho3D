@@ -2149,6 +2149,7 @@ void View::DrawFullscreenQuad(bool setIdentityProjection)
 #endif
 
         graphics_->SetShaderParameter(VSP_MODEL, model);
+        graphics_->SetShaderParameter(VSP_MODELINV, model.Inverse());
         graphics_->SetShaderParameter(VSP_VIEWPROJ, projection);
     }
     else
