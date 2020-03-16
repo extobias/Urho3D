@@ -21,6 +21,40 @@ namespace Urho3D
 
 extern const char* UI_CATEGORY;
 
+static float cubeVertices[] = {
+  // front
+  -1.0, -1.0,  1.0,
+   1.0, -1.0,  1.0,
+   1.0,  1.0,  1.0,
+  -1.0,  1.0,  1.0,
+  // back
+  -1.0, -1.0, -1.0,
+   1.0, -1.0, -1.0,
+   1.0,  1.0, -1.0,
+  -1.0,  1.0, -1.0
+};
+
+static short cubeIndex[] = {
+    // front
+    0, 1, 2,
+    2, 3, 0,
+    // right
+    1, 5, 6,
+    6, 2, 1,
+    // back
+    7, 6, 5,
+    5, 4, 7,
+    // left
+    4, 0, 3,
+    3, 7, 4,
+    // bottom
+    4, 5, 1,
+    1, 0, 4,
+    // top
+    3, 2, 6,
+    6, 7, 3
+};
+
 /// EditorBrush
 class URHO3D_API EditorBrush : public Component
 {
@@ -84,7 +118,7 @@ void EditorBrush::OnNodeSet(Node* node)
 
     customGeometry_ = node->CreateComponent<CustomGeometry>();
     customGeometry_->SetNumGeometries(1);
-    customGeometry_->SetMaterial(cache->GetResource<Material>("Materials/VColUnlit.xml"));
+    customGeometry_->SetMaterial(cache->GetResource<Material>("Materials/DeferredDecal.xml"));
     customGeometry_->SetOccludee(false);
     customGeometry_->SetEnabled(true);
 }
@@ -162,22 +196,38 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
     }
 
     // Generate the circle
-    customGeometry_->BeginGeometry(0, LINE_STRIP);
-    customGeometry_->DefineVertex(Vector3::ZERO);
-    float step = 360;
-    for (unsigned i = 0; i < step + 4; i += 4)
-    {
-        float angle = i * 2 * M_PI / step;
-        float x = size_ * Cos(angle / 0.0174532925);
-        float z = size_ * Sin(angle / 0.0174532925);
-        float y = GetModelHeight(model, position, x, z);
+    //    customGeometry_->BeginGeometry(0, LINE_STRIP);
+    //    customGeometry_->DefineVertex(Vector3::ZERO);
+    //    float step = 360;
+    //    for (unsigned i = 0; i < step + 4; i += 4)
+    //    {
+    //        float angle = i * 2 * M_PI / step;
+    //        float x = size_ * Cos(angle / 0.0174532925);
+    //        float z = size_ * Sin(angle / 0.0174532925);
+    //        float y = GetModelHeight(model, position, x, z);
 
-//      float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
-      customGeometry_->DefineVertex(Vector3(x, y, z));
-      customGeometry_->DefineColor(Color(1, 0, 0));
+    ////      float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
+    //      customGeometry_->DefineVertex(Vector3(x, y, z));
+    //      customGeometry_->DefineColor(Color(1, 0, 0));
+    //    }
+    //    customGeometry_->Commit();
+
+    // use cube as geom
+    unsigned indexLength = sizeof(cubeIndex) / sizeof(cubeIndex[0]);
+    customGeometry_->BeginGeometry(0, TRIANGLE_LIST);
+    for (unsigned j = 0; j < indexLength; j ++)
+    {
+        customGeometry_->DefineVertex(Vector3(cubeVertices + cubeIndex[j] * 3) * size_);
+        customGeometry_->DefineColor(Color(1, 0, 0));
     }
-    // customGeometry_->DefineVertex(Vector3::ZERO);
     customGeometry_->Commit();
+
+//    unsigned size = 8;
+//    for(unsigned j = 0; j < size; j++)
+//    {
+//        customGeometry_->DefineVertex(Vector3(cubeVertices + j * 3) * vertexScale_);
+//        customGeometry_->DefineColor(Color(1, 0, 0));
+//    }
 
     Octree* octree = node_->GetScene()->GetComponent<Octree>();
     if (octree && !addedToOctree_)
