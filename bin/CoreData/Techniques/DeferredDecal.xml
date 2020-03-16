@@ -1,0 +1,12 @@
+<technique vs="DeferredDecal" ps="DeferredDecal" vsdefines="VERTEXCOLOR" psdefines="VERTEXCOLOR" >
+<!--    <pass name="base" />
+   <pass name="litbase" psdefines="AMBIENT" />
+    <pass name="light" depthtest="equal" depthwrite="false" blend="add" />
+    <pass name="prepass" psdefines="PREPASS" />
+    <pass name="material" psdefines="MATERIAL" depthtest="equal" depthwrite="false" />
+    <pass name="deferred" psdefines="DEFERRED" />
+    <pass name="depth" vs="Depth" ps="Depth" />
+    <pass name="litalpha" depthwrite="false" depthtest="false" blend="alpha" />
+    <pass name="shadow" vs="Shadow" ps="Shadow" />-->
+    <pass name="postalpha" depthtest="false" depthwrite="false"/>
+</technique>
