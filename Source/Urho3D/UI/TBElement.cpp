@@ -536,6 +536,8 @@ void TBUIElement::OnPositionSet(const IntVector2& newPosition)
 void TBUIElement::OnResize(const IntVector2& newSize, const IntVector2& delta)
 {
     root_->SetSize(newSize.x_, newSize.y_);
+
+    MarkDirty();
 }
 
 bool TBUIElement::IsWithinScissor(const IntRect& currentScissor)
