@@ -112,7 +112,7 @@ void StaticScene::CreateScene()
     planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
     // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
     planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-    planeNode->SetEnabled(false);
+    planeNode->SetEnabled(true);
 
     // light
     Node* lightNode = scene_->CreateChild("DirectionalLight");
@@ -123,7 +123,7 @@ void StaticScene::CreateScene()
     light_->SetLightType(LIGHT_DIRECTIONAL);
     light_->SetRadius(10.0f);
     light_->SetFov(50.0f);
-    light_->SetBrightness(5000.0f);
+    light_->SetBrightness(25.0f);
     light_->SetUsePhysicalValues(true);
     light_->SetTemperature(6500.0f);
     light_->SetCastShadows(true);
@@ -285,7 +285,7 @@ void StaticScene::SetupViewport()
     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth.xml"));
 //     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
 
-    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
+//    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
     //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
 
     //effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));

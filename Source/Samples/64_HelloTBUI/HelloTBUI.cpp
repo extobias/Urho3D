@@ -95,12 +95,27 @@ void HelloTBUI::Start()
 
     if (1)
     {
-        animTest_ = new TBUIElement(context_);
-        animTest_->LoadResources();
-        animTest_->LoadWidgets("Data/TB/layout/loading_screen.txt");
-        // animTest_->SetPosition(-windowWidth / 8, 0);
-        animTest_->SetSize(windowWidth / 2, windowHeight);
-        GetSubsystem<UI>()->GetRootModalElement()->AddChild(animTest_);
+        // animation test
+//        animTest_ = new TBUIElement(context_);
+//        animTest_->LoadResources();
+//        animTest_->LoadWidgets("Data/TB/layout/loading_screen.txt");
+//        // animTest_->SetPosition(-windowWidth / 8, 0);
+//        animTest_->SetSize(windowWidth / 2, windowHeight);
+//        GetSubsystem<UI>()->GetRootModalElement()->AddChild(animTest_);
+
+        tbelement = new TBUIElement(context_);
+        tbelement->LoadResources();
+        tbelement->LoadWidgets("Data/TB/layout/game_stats.txt");
+        tbelement->SetPosition(0, 0);
+        tbelement->SetSize(windowWidth / 2, windowHeight);
+        GetSubsystem<UI>()->GetRoot()->AddChild(tbelement);
+
+        tbelement2= new TBUIElement(context_);
+        tbelement2->LoadResources();
+        tbelement2->LoadWidgets("Data/TB/layout/game_stats.txt");
+        tbelement2->SetPosition(windowWidth / 2, 0);
+        tbelement2->SetSize(windowWidth / 2, windowHeight);
+        GetSubsystem<UI>()->GetRoot()->AddChild(tbelement2);
     }
     else
     {
