@@ -96,69 +96,74 @@ void StaticScene::CreateScene()
 
     engine_->SetMaxFps(60.0f);
 
-    // zone
-    Node* zoneNode = scene_->CreateChild("Zone");
-    Zone* zone = zoneNode->CreateComponent<Zone>();
-    zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
-    zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
-    Node* zoneChild = zoneNode->CreateChild("ZoneChild");
+    SharedPtr<File> file = cache->GetFile("Scenes/pbremissive-test.xml");
 
-    // ground
-    Node* planeNode = scene_->CreateChild("Plane");
-    planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
-    StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
-    planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
-    // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    // GM->scene_.Reset();
+    scene_->LoadAsyncXML(file);
 
-    // light
-    Node* lightNode = scene_->CreateChild("DirectionalLight");
-    lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
-    lightNode->SetRotation(Quaternion(90.0f, Vector3::RIGHT));
-    // lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
-    light_ = lightNode->CreateComponent<Light>();
-    light_->SetLightType(LIGHT_DIRECTIONAL);
-    light_->SetRadius(10.0f);
-    light_->SetFov(50.0f);
-    light_->SetBrightness(5000.0f);
-    light_->SetUsePhysicalValues(true);
-    light_->SetTemperature(6500.0f);
-    light_->SetCastShadows(true);
-    light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+//    // zone
+//    Node* zoneNode = scene_->CreateChild("Zone");
+//    Zone* zone = zoneNode->CreateComponent<Zone>();
+//    zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
+//    zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
+//    Node* zoneChild = zoneNode->CreateChild("ZoneChild");
 
-    // sky
-    //Node* skyNode = scene_->CreateChild("Sky");
-    //skyNode->SetScale(500.0f); // The scale actually does not matter
-    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
-    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+//    // ground
+//    Node* planeNode = scene_->CreateChild("Plane");
+//    planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
+//    StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
+//    planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
+//    // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+//    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
 
-    // particles
-    Node* emitterNode = scene_->CreateChild("Emitter");
-    emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
-    auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
-    effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
-    effectMaterial_ = effect_->GetMaterial();
-    effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
-    effect_->SetEmitterSize(Vector3::ONE);
-    particleEmitter->SetEffect(effect_);
-    particleEmitter->SetEmitting(false);
+//    // light
+//    Node* lightNode = scene_->CreateChild("DirectionalLight");
+//    lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
+//    lightNode->SetRotation(Quaternion(90.0f, Vector3::RIGHT));
+//    // lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
+//    light_ = lightNode->CreateComponent<Light>();
+//    light_->SetLightType(LIGHT_DIRECTIONAL);
+//    light_->SetRadius(10.0f);
+//    light_->SetFov(50.0f);
+//    light_->SetBrightness(5000.0f);
+//    light_->SetUsePhysicalValues(true);
+//    light_->SetTemperature(6500.0f);
+//    light_->SetCastShadows(true);
+//    light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
 
-    const unsigned NUM_OBJECTS = 5;
-    for (unsigned i = 0; i < NUM_OBJECTS; ++i)
-    {
-        Node* mushroomNode = scene_->CreateChild("Mushroom");
-        // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
-        mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-        // mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
-        // mushroomNode->SetScale(0.5f + Random(2.0f));
-        mushroomNode->SetScale(1.0f);
-        StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
-        Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
-        mushroomObject->SetModel(mushroomModel);
-        mushroomObject->SetCastShadows(true);
-        mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
-    }
+//    // sky
+//    //Node* skyNode = scene_->CreateChild("Sky");
+//    //skyNode->SetScale(500.0f); // The scale actually does not matter
+//    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
+//    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+//    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+
+//    // particles
+//    Node* emitterNode = scene_->CreateChild("Emitter");
+//    emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+//    auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
+//    effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
+//    effectMaterial_ = effect_->GetMaterial();
+//    effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
+//    effect_->SetEmitterSize(Vector3::ONE);
+//    particleEmitter->SetEffect(effect_);
+//    particleEmitter->SetEmitting(false);
+
+//    const unsigned NUM_OBJECTS = 5;
+//    for (unsigned i = 0; i < NUM_OBJECTS; ++i)
+//    {
+//        Node* mushroomNode = scene_->CreateChild("Mushroom");
+//        // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
+//        mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+//        // mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+//        // mushroomNode->SetScale(0.5f + Random(2.0f));
+//        mushroomNode->SetScale(1.0f);
+//        StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
+//        Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
+//        mushroomObject->SetModel(mushroomModel);
+//        mushroomObject->SetCastShadows(true);
+//        mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+//    }
 
 //    Node* riderNode = scene_->CreateChild("Rider");
 //    // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
@@ -183,7 +188,7 @@ void StaticScene::CreateScene()
     // Set an initial position for the front camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
-    CreateDepthTexture();
+//    CreateDepthTexture();
     Graphics* graphics = GetSubsystem<Graphics>();
     graphics->Maximize();
 
@@ -271,8 +276,8 @@ void StaticScene::SetupViewport()
     Renderer* renderer = GetSubsystem<Renderer>();
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-    renderer->SetNumExtraInstancingBufferElements(1);
-    renderer->SetMinInstances(1);
+//    renderer->SetNumExtraInstancingBufferElements(1);/*
+//    renderer->SetMinInstances(1);*/
 
     renderer->SetNumViewports(2);
 
@@ -284,17 +289,17 @@ void StaticScene::SetupViewport()
 
     //RenderPath* effectRenderPath = viewport->GetRenderPath();
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-//    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferredHWDepth.xml"));
     // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
-     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepthWithCopy.xml"));
+//     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepthWithCopy.xml"));
 
-    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
-    //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
+//    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/BloomHDR.xml"));
+//    effectRenderPath->SetShaderParameter("BloomHDRMix", Vector2(1.2f, 1.2f));
 
-    //effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
+//    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
 
-    //effectRenderPath->SetEnabled("Bloom", true);
-    //effectRenderPath->SetEnabled("FXAA2", true);
+//    effectRenderPath->SetEnabled("BloomHDR", true);
+//    effectRenderPath->SetEnabled("FXAA2", true);
 
     viewport->SetRenderPath(effectRenderPath);
 
