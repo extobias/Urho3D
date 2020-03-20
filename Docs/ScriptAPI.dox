@@ -170,7 +170,6 @@ namespace Urho3D
 - %Button : int
 - %Buttons : int
 - %Qualifiers : int
-- %Clicks : int
 
 ### MouseButtonUp
 - %Button : int
@@ -453,10 +452,12 @@ namespace Urho3D
 - %Port : int
 
 ### NetworkNatMasterConnectionFailed
+- %Address : String
+- %Port : int
 
 ### NetworkNatMasterConnectionSucceeded
-
-### NetworkNatMasterDisconnected
+- %Address : String
+- %Port : int
 
 ## %Physics2D events
 
@@ -9642,7 +9643,7 @@ Methods:
 - void SetNATServerInfo(const String&, uint16)
 - bool SetPassword(const String&)
 - void StartNATClient() const
-- bool StartServer(uint16, uint = 128)
+- bool StartServer(uint16)
 - void StopServer()
 - void UnregisterAllRemoteEvents()
 - void UnregisterRemoteEvent(const String&) const
@@ -10862,7 +10863,6 @@ Methods:
 - float GetWheelDampingRelaxation(int)
 - Vector3 GetWheelDirection(int)
 - float GetWheelFrictionSlip(int)
-- float GetWheelMaxSuspensionForce(int)
 - Node@ GetWheelNode(int)
 - Vector3 GetWheelPosition(int)
 - float GetWheelRadius(int)
@@ -10910,7 +10910,6 @@ Methods:
 - void SetWheelDampingRelaxation(int, float)
 - void SetWheelDirection(int, Vector3)
 - void SetWheelFrictionSlip(int, float)
-- void SetWheelMaxSuspensionForce(int, float)
 - void SetWheelRadius(int, float)
 - void SetWheelRestLength(int, float)
 - void SetWheelRollInfluence(int, float)
@@ -16067,7 +16066,7 @@ Methods:
 - bool HasSubscribedToEvent(const String&)
 - Vector3 ScreenToWorldPoint(int, int, float) const
 - void SendEvent(const String&, VariantMap& = VariantMap ( ))
-- bool SetRenderPath(XMLFile@)
+- void SetRenderPath(XMLFile@)
 - IntVector2 WorldToScreenPoint(const Vector3&) const
 
 Properties:

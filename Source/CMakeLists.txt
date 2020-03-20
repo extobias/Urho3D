@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008-2020 the Urho3D project.
+# Copyright (c) 2008-2019 the Urho3D project.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -71,6 +71,7 @@ endif ()
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 foreach (TARGET ETCPACK FreeType LZ4 PugiXml rapidjson SDL StanHull STB)
 =======
 foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger)
@@ -81,6 +82,9 @@ foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger ImGu
 =======
 foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger imgui)
 >>>>>>> cambios varios
+=======
+foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger imgui)
+>>>>>>> commit despues de rebase
     add_subdirectory (ThirdParty/${TARGET})
 endforeach ()
 

@@ -21,12 +21,17 @@
 #
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Set CMake minimum version and CMake policy required by UrhoCommon module
 cmake_minimum_required (VERSION 3.10.2)
 =======
 # Set CMake minimum version and CMake policy required by UrhoCommon module 
 cmake_minimum_required (VERSION 3.2.3)
 >>>>>>> test
+=======
+# Set CMake minimum version and CMake policy required by UrhoCommon module 
+cmake_minimum_required (VERSION 3.2.3)
+>>>>>>> commit despues de rebase
 if (COMMAND cmake_policy)
     # Libraries linked via full path no longer produce linker search paths
     cmake_policy (SET CMP0003 NEW)
@@ -165,6 +170,8 @@ elseif (ARM_ABI_FLAGS)
     string (REGEX REPLACE .*- - CPU_NAME "${CPU_NAME}")
     string (TOUPPER "${CPU_NAME}" CPU_NAME)
     set (CPACK_SYSTEM_NAME ${CPACK_SYSTEM_NAME}${CPU_NAME})
+elseif (EMSCRIPTEN_WASM)
+    set (CPACK_SYSTEM_NAME ${CPACK_SYSTEM_NAME}-WASM)
 endif ()
 if (NOT DEFINED ENV{RELEASE_TAG})
     set (CPACK_SYSTEM_NAME ${CPACK_SYSTEM_NAME}-snapshot)
