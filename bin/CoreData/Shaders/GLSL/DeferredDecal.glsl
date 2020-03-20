@@ -6,7 +6,7 @@
 
 varying vec2 vTexCoord;
 varying vec4 vWorldPos;
-varying vec4 vScreenPos;
+varying vec2 vScreenPos;
 #ifdef VERTEXCOLOR
     varying vec4 vColor;
 #endif
@@ -20,12 +20,12 @@ void VS()
     vec3 worldPos = GetWorldPos(modelMatrix);
     gl_Position = GetClipPos(worldPos);
     vTexCoord = GetTexCoord(iTexCoord);
-    vScreenPos = gl_Position;
+    vScreenPos = GetScreenPosPreDiv(gl_Position);
     vWorldPos = vec4(worldPos, 1.0) * cView;
     // vWorldPos = vec4(worldPos, GetDepth(gl_Position));
     vModelMatrix = iModelMatrix;
-    // vModelInv = cModelInv;
-    vModdlInv = mat4(1.0);
+    vModelInv = cModelInv;
+    // vModelInv = mat4(1.0);
     vViewInv = cViewInv;
     
     #ifdef VERTEXCOLOR
@@ -35,36 +35,37 @@ void VS()
 
 void PS()
 {
-    vec2 resolution = vec2(1.0 / cGBufferInvSize.x, 1.0 / cGBufferInvSize.y);
-    vec2 screenPos = vScreenPos.xy / vScreenPos.w;
+    vec2 screenPos = vScreenPos.xy;
 //     vec2 texCoord = vec2(
 //         (1 + screenPos.x) / 2 + 0.5 / resolution.x,
 //         (1 - screenPos.y) / 2 + 0.5 / resolution.y
 //     );
     vec2 texCoord = vec2(
-        screenPos.x / resolution.x,
-        screenPos.y / resolution.y
+        screenPos.x * cGBufferInvSize.x,
+        screenPos.y * cGBufferInvSize.y
     );
     //Sample a value from the depth buffer
     // vec4 sampledDepth = texture2D(sDepthBuffer, texCoord);
-    float depth = ReconstructDepth(texture2D(sDepthBuffer, texCoord).r);
-//     float depth = DecodeDepth(sampledDepth.rgb);
+    float depth = ReconstructDepth(texture2D(sDepthBuffer, screenPos).r);
     
     vec3 viewRay = vWorldPos.xyz * (cFarClipPS / vWorldPos.z);
     vec3 viewPosition = viewRay * depth;
     
     vec3 worldPosition = (vec4(viewPosition, 1.0) * vViewInv).xyz;
-    // vec3 worldPosition = mul(float4(viewPosition, 1), InverseView).xyz;
     vec4 objectPosition = vec4(worldPosition, 1.0) * vModelInv;
     
-//     float posAbsX = abs(objectPosition.x);
-//     float posAbsY = abs(objectPosition.y);
-//     float posAbsZ = abs(objectPosition.z);
-//     if (posAbsX < 0.1 || posAbsY < 0.1 || posAbsZ < 0.1)
-//         discard;
+    float posAbsX = abs(objectPosition.x);
+    float posAbsY = abs(objectPosition.y);
+    float posAbsZ = abs(objectPosition.z);
+    if (posAbsX > 0.5 || posAbsY > 0.5 || posAbsZ > 0.5)
+        discard;
 
-    gl_FragColor = vec4(viewRay, 1.0);
-//     gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    vec4 diffColor = cMatDiffColor * texture2D(sDiffMap, vec2(objectPosition.x + 0.5, objectPosition.y + 0.5));
+    
+    if (diffColor.a < 0.5)
+        discard;
+        
+     gl_FragColor = diffColor;
     
     // Get material diffuse albedo
 //     #ifdef DIFFMAP

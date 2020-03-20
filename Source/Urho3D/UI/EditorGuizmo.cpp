@@ -119,7 +119,7 @@ void EditorBrush::OnNodeSet(Node* node)
     customGeometry_ = node->CreateComponent<CustomGeometry>();
     customGeometry_->SetNumGeometries(1);
     customGeometry_->SetMaterial(cache->GetResource<Material>("Materials/DeferredDecal.xml"));
-    customGeometry_->SetOccludee(false);
+    customGeometry_->SetOccludee(true);
     customGeometry_->SetEnabled(true);
 }
 
@@ -194,23 +194,6 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
     {
         URHO3D_LOGERRORF("editor not found!");
     }
-
-    // Generate the circle
-    //    customGeometry_->BeginGeometry(0, LINE_STRIP);
-    //    customGeometry_->DefineVertex(Vector3::ZERO);
-    //    float step = 360;
-    //    for (unsigned i = 0; i < step + 4; i += 4)
-    //    {
-    //        float angle = i * 2 * M_PI / step;
-    //        float x = size_ * Cos(angle / 0.0174532925);
-    //        float z = size_ * Sin(angle / 0.0174532925);
-    //        float y = GetModelHeight(model, position, x, z);
-
-    ////      float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
-    //      customGeometry_->DefineVertex(Vector3(x, y, z));
-    //      customGeometry_->DefineColor(Color(1, 0, 0));
-    //    }
-    //    customGeometry_->Commit();
 
     // use cube as geom
     unsigned indexLength = sizeof(cubeIndex) / sizeof(cubeIndex[0]);
