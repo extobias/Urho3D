@@ -31,7 +31,6 @@ Urho3D development, contributions and bugfixes by:
 - Danny Boisvert
 - Sergey Bosko
 - Lisandro Bruzzo
-- Steven Burns
 - Thomas Böhm
 - Carlo Carollo
 - Pete Chown
@@ -109,7 +108,6 @@ Urho3D development, contributions and bugfixes by:
 - Fastran
 - Firegorilla
 - Gordon-F
-- Igor Segalla
 - LordGolias
 - Lumak
 - Magic.Lixin
@@ -120,7 +118,6 @@ Urho3D development, contributions and bugfixes by:
 - OvermindDL1
 - Polynominal
 - PredatorMF
-- PsychoCircuitry
 - Scellow
 - Skrylar
 - SuperWangKai
@@ -157,9 +154,7 @@ Urho3D development, contributions and bugfixes by:
 - ninjastone
 - orefkov
 - pat2nav
-- pflat
 - proller
-- r-a-sattarov
 - raould
 - rasteron
 - reattiva
@@ -227,9 +222,8 @@ Urho3D uses the following third-party libraries:
 - stb_vorbis 1.13b (https://nothings.org)
 - tolua++ 1.0.93 (defunct - http://www.codenix.com/~tolua)
 - WebP (https://chromium.googlesource.com/webm/libwebp)
-- ETCPACK (https://github.com/Ericsson/ETCPACK)
 
-DXT / PVRTC decompression code based on the Squish library and the Oolong
+DXT / ETC1 / PVRTC decompression code based on the Squish library and the Oolong
 Engine.
 Jack and mushroom models from the realXtend project. (https://www.realxtend.org)
 Ninja model and terrain, water, smoke, flare and status bar textures from OGRE.
