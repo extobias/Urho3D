@@ -2153,7 +2153,10 @@ void View::DrawFullscreenQuad(bool setIdentityProjection)
         graphics_->SetShaderParameter(VSP_VIEWPROJ, projection);
     }
     else
+    {
         graphics_->SetShaderParameter(VSP_MODEL, Light::GetFullscreenQuadTransform(camera_));
+        graphics_->SetShaderParameter(VSP_MODELINV, Light::GetFullscreenQuadTransform(camera_).Inverse());
+    }
 
     graphics_->SetCullMode(CULL_NONE);
     graphics_->ClearTransformSources();
