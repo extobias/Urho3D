@@ -68,23 +68,7 @@ if (URHO3D_LIB_TYPE STREQUAL SHARED AND NOT WIN32 AND NOT ANDROID AND NOT IOS AN
 endif ()
 
 # Add targets
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-foreach (TARGET ETCPACK FreeType LZ4 PugiXml rapidjson SDL StanHull STB)
-=======
-foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger)
->>>>>>> turbobadger implementation
-=======
-foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger ImGui)
->>>>>>> imgui integration
-=======
-foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger imgui)
->>>>>>> cambios varios
-=======
-foreach (TARGET FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger imgui)
->>>>>>> commit despues de rebase
+foreach (TARGET ETCPACK FreeType LZ4 PugiXml rapidjson SDL StanHull STB TurboBadger imgui)
     add_subdirectory (ThirdParty/${TARGET})
 endforeach ()
 

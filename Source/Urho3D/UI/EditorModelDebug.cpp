@@ -591,6 +591,7 @@ void EditorModelDebug::SaveModel()
     // String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "MeshTest.mdl";
     URHO3D_LOGERRORF("file name <%s>", model_->GetName().CString());
     String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + model_->GetName() + "-collision";
+    
     File file(context_, fileName, FILE_WRITE);
     if (model_->Save(file))
         URHO3D_LOGERRORF("file saved name <%s>", fileName.CString());

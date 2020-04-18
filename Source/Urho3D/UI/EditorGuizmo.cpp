@@ -241,7 +241,6 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
 {
     using namespace MouseWheel;
     int delta = eventData[P_WHEEL].GetInt();
-
     size_ += delta / 10.0f;
     selectionImage_->SetSize(size_, size_);
 }
