@@ -1200,12 +1200,9 @@ ResourcePicker@ GetResourcePicker(StringHash resourceType)
 {
     for (uint i = 0; i < resourcePickers.length; ++i)
     {
-<<<<<<< HEAD
         // TODO: refactor to use dictionary instead
-        if (resourceType == resourcePickers[i].type)
-=======
+        // if (resourceType == resourcePickers[i].type)
         if (resourcePickers[i].type.value == resourceType.value)
->>>>>>> tbuielement wheel event corrected
             return resourcePickers[i];
     }
     return null;
