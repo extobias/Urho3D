@@ -26,7 +26,7 @@ bool TBCore::tb_core_init(TBRenderer *renderer)
     image_manager_ = new TBImageManager(this);
 #endif
 
-    g_tb_debug.settings[TBDebugInfo::LAYOUT_BOUNDS] = true;
+//    g_tb_debug.settings[TBDebugInfo::LAYOUT_BOUNDS] = true;
 //    g_tb_debug.settings[TBDebugInfo::LAYOUT_PS_DEBUGGING] = true;
 
 	return true;
