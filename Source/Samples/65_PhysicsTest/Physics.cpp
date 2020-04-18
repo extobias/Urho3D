@@ -305,7 +305,7 @@ void Physics::SetupViewport()
     renderer->SetViewport(0, viewport);
 
 	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-	effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/Deferred.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
 
 	viewport->SetRenderPath(effectRenderPath);
 }
