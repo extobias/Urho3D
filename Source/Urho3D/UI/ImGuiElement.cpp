@@ -76,10 +76,10 @@ ImGuiElement::ImGuiElement(Context* context)
     URHO3D_LOGINFOF("get data <%u, %u>", width, height);
 
     if (!texture_->SetSize(width, height, Graphics::GetRGBAFormat()))
-        URHO3D_LOGINFOF("tex <%p> error setsize!", texture_);
+        URHO3D_LOGINFOF("tex <%p> error setsize!", texture_.Get());
 
     if (!texture_->SetData(0, 0, 0, width, height, pixels))
-        URHO3D_LOGINFOF("tex <%p> error setdata!", texture_);
+        URHO3D_LOGINFOF("tex <%p> error setdata!", texture_.Get());
 
     texture_->SetAddressMode(COORD_U, ADDRESS_WRAP);
     texture_->SetAddressMode(COORD_V, ADDRESS_WRAP);
@@ -225,6 +225,9 @@ int ImGuiElement::FindKeyMap(int key)
 
 bool ImGuiElement::IsWithinScissor(const IntRect& currentScissor)
 {
+    if (!visible_)
+        return false;
+
     return true;
 }
 

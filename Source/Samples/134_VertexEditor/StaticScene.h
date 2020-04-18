@@ -30,6 +30,7 @@ namespace Urho3D
 
 class Node;
 class Scene;
+class EditorWindow;
 
 }
 
@@ -82,6 +83,8 @@ private:
     CollisionShape* meshShape;
     EditorModelDebug* editorModel_;
     SharedPtr<Node> rearCameraNode_;
+
+    SharedPtr<EditorWindow> editor_;
 
     float cameraDistance_;
 };

@@ -508,11 +508,11 @@ void EditorModelDebug::ApplyVertexCollisionMask()
         // for(unsigned i = 0; i < vertexBuffer->GetVertexCount(); i++)
         for(unsigned i = 0; i < selectedIndex_.Size(); i++)
         {
-            unsigned int s = selectedIndex_[i];
+            int s = selectedIndex_[i];
 //            unsigned int val = *((unsigned int*)&dstData[s * vertexSize + vertexElement->offset_]);
 //            val = val | GetCollisionMask(vertexMaskType_);
             unsigned val = GetCollisionMask(vertexMaskType_);
-            memcpy(&dstData[s * vertexSize + vertexElement->offset_], &val, size);
+            memcpy(&dstData[(unsigned)s * vertexSize + vertexElement->offset_], &val, size);
         }
         vertexBuffer->Unlock();
     }
@@ -590,7 +590,7 @@ void EditorModelDebug::SaveModel()
 
     // String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "MeshTest.mdl";
     URHO3D_LOGERRORF("file name <%s>", model_->GetName().CString());
-    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + model_->GetName();
+    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + model_->GetName() + "-collision";
     File file(context_, fileName, FILE_WRITE);
     if (model_->Save(file))
         URHO3D_LOGERRORF("file saved name <%s>", fileName.CString());

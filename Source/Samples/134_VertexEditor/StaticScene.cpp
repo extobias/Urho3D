@@ -147,7 +147,7 @@ void StaticScene::CreateScene()
     particleEmitter->SetEffect(effect_);
     particleEmitter->SetEmitting(false);
 
-    const unsigned NUM_OBJECTS = 0;
+    const unsigned NUM_OBJECTS = 1;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
         Node* mushroomNode = scene_->CreateChild("Mushroom");
@@ -173,19 +173,19 @@ void StaticScene::CreateScene()
 //    riderObject->SetCastShadows(true);
 //    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
-    Node* meshNode = scene_->CreateChild("Mesh");
-    meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    meshNode->SetScale(0.005f);
-    StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-//    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
-    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
-    meshObject->SetModel(meshModel);
-    meshObject->SetCastShadows(true);
+//    Node* meshNode = scene_->CreateChild("Mesh");
+//    meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+//    meshNode->SetScale(0.005f);
+//    StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
+////    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
+//    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
+//    meshObject->SetModel(meshModel);
+//    meshObject->SetCastShadows(true);
 ////     meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
 
-    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
-    editorModel_->SetModel(meshModel);
-    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+//    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
+//    editorModel_->SetModel(meshModel);
+//    editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
 
     // RigidBody* meshBody = meshNode->CreateComponent<RigidBody>();
 //    meshShape = meshNode->CreateComponent<CollisionShape>();
@@ -231,23 +231,24 @@ void StaticScene::CreateInstructions()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
 
-    EditorWindow* imgui = new EditorWindow(context_);
-    imgui->SetName("editor");
-    imgui->SetCameraNode(cameraNode_);
-    ui->GetRoot()->AddChild(imgui);
-    imgui->SetScene(scene_);
+    editor_ = new EditorWindow(context_);
+    editor_->SetName("editor");
+    editor_->SetCameraNode(cameraNode_);
+    ui->GetRootModalElement()->AddChild(editor_);
+    editor_->SetScene(scene_);
 
-    EditorGuizmo* guizmo = new EditorGuizmo(context_);
-    guizmo->SetName("guizmo");
-    guizmo->SetCameraNode(cameraNode_);
-    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
-    ui->GetRoot()->AddChild(guizmo);
-    guizmo->SetPosition(0, 0);
-    guizmo->SetScene(scene_);
+//    EditorGuizmo* guizmo = new EditorGuizmo(context_);
+//    guizmo->SetName("guizmo");
+//    guizmo->SetCameraNode(cameraNode_);
+//    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
+//    ui->GetRoot()->AddChild(guizmo);
+//    guizmo->SetPosition(0, 0);
+//    guizmo->SetScene(scene_);
 
-    imgui->BringToFront();
-    imgui->SetPriority(100);
-    imgui->SetGuizmo(guizmo);
+    editor_->BringToFront();
+    editor_->SetPriority(100);
+//    imgui->SetGuizmo(guizmo);
+    editor_->CreateGuizmo();
 
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
@@ -343,10 +344,12 @@ void StaticScene::MoveCamera(float timeStep)
     if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
     {
         IntVector2 mouseMove = input->GetMouseMove();
+
         yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
         pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
         pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
+        URHO3D_LOGERRORF("EditorWindow: mouse move <%i, %i> yaw pitch <%f, %f>", mouseMove.x_, mouseMove.y_, yaw_, pitch_);
         // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
         cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
     }
@@ -388,7 +391,7 @@ void StaticScene::MoveCamera(float timeStep)
 void StaticScene::SubscribeToEvents()
 {
     // Subscribe HandleUpdate() function for processing update events
-    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
+//    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
 
     // SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
 
@@ -407,8 +410,8 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
 
-    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-    editorModel_->DrawDebugGeometry(debugRenderer, true);
+//    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+//    editorModel_->DrawDebugGeometry(debugRenderer, true);
 
     // UpdateRenderPath(timeStep);
 }
@@ -498,6 +501,11 @@ void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
             effect_->SetMaxRotation(360.0f);
             effect_->SetMaxRotationSpeed(50.0f);
         }
+    }
+
+    if (key == KEY_F4)
+    {
+        editor_->SetVisible(!editor_->IsVisible());
     }
 
     Sample::HandleKeyDown(eventType, eventData);

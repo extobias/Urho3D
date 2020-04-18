@@ -139,7 +139,7 @@ void EditorBrush::Update(StaticModel* model, const IntVector2& position, float r
     float y = (float)position.y_ / g->GetHeight();
     Vector3 pos = camera->ScreenToWorldPoint(Vector3(x, y, z));
 
-    EditorWindow* editor = static_cast<EditorWindow*>(GetSubsystem<UI>()->GetRoot()->GetChild(String("editor"), false));
+    EditorWindow* editor = static_cast<EditorWindow*>(GetSubsystem<UI>()->GetRootModalElement()->GetChild(String("editor"), false));
     if (editor)
     {
         char str[256];
@@ -149,7 +149,7 @@ void EditorBrush::Update(StaticModel* model, const IntVector2& position, float r
     }
     else
     {
-        URHO3D_LOGERRORF("editor not found!");
+        URHO3D_LOGERRORF("EditorBrush::Update: editor not found!");
     }
 
     node_->SetPosition(pos);
@@ -182,7 +182,7 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
         return;
 
     node_->SetPosition(position);
-    EditorWindow* editor = static_cast<EditorWindow*>(GetSubsystem<UI>()->GetRoot()->GetChild(String("editor"), false));
+    EditorWindow* editor = static_cast<EditorWindow*>(GetSubsystem<UI>()->GetRootModalElement()->GetChild(String("editor"), false));
     if (editor)
     {
         char str[256];
@@ -192,7 +192,7 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
     }
     else
     {
-        URHO3D_LOGERRORF("editor not found!");
+        URHO3D_LOGERRORF("EditorBrush::Update: editor not found!");
     }
 
     // use cube as geom
@@ -241,7 +241,7 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
 {
     using namespace MouseWheel;
     int delta = eventData[P_WHEEL].GetInt();
-    URHO3D_LOGERRORF("HandleWheelMouse <%i>", delta);
+
     size_ += delta / 10.0f;
     selectionImage_->SetSize(size_, size_);
 }
