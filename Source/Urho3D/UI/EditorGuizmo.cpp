@@ -449,6 +449,9 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 
         if (mouseButtons & MOUSEB_LEFT)
         {
+            PODVector<IntVector2> faces = SelectVertex(position);
+            EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+
             if (debugModel)
             {
                 debugModel->AddSelectedFaces(faces);
