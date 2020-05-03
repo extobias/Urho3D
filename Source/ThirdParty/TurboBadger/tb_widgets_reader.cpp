@@ -94,7 +94,7 @@ void TBWidget::OnInflate(const INFLATE_INFO &info)
 		LayoutParams layout_params;
 		if (GetLayoutParams())
 			layout_params = *GetLayoutParams();
-		const TBDimensionConverter *dc = g_tb_skin->GetDimensionConverter();
+        const TBDimensionConverter *dc = core_->tb_skin_->GetDimensionConverter();
 		if (const char *str = lp->GetValueString("width", nullptr))
 			layout_params.SetWidth(dc->GetPxFromString(str, LayoutParams::UNSPECIFIED));
 		if (const char *str = lp->GetValueString("height", nullptr))
@@ -124,7 +124,7 @@ void TBWidget::OnInflate(const INFLATE_INFO &info)
 		TBFontDescription fd = GetCalculatedFontDescription();
 		if (const char *size = font->GetValueString("size", nullptr))
 		{
-			int new_size = g_tb_skin->GetDimensionConverter()->GetPxFromString(size, fd.GetSize());
+            int new_size = core_->tb_skin_->GetDimensionConverter()->GetPxFromString(size, fd.GetSize());
 			fd.SetSize(new_size);
 		}
 		if (const char *name = font->GetValueString("name", nullptr))
@@ -136,7 +136,7 @@ void TBWidget::OnInflate(const INFLATE_INFO &info)
 
 	if (TBNode *rect_node = info.node->GetNode("rect"))
 	{
-		const TBDimensionConverter *dc = g_tb_skin->GetDimensionConverter();
+        const TBDimensionConverter *dc = core_->tb_skin_->GetDimensionConverter();
 		TBValue &val = rect_node->GetValue();
 		if (val.GetArrayLength() == 4)
 		{
@@ -179,7 +179,7 @@ void TBEditField::OnInflate(const INFLATE_INFO &info)
 	SetWrapping(info.node->GetValueInt("wrap", GetWrapping()) ? true : false);
 	SetAdaptToContentSize(info.node->GetValueInt("adapt-to-content", GetAdaptToContentSize()) ? true : false);
 	if (const char *virtual_width = info.node->GetValueString("virtual-width", nullptr))
-		SetVirtualWidth(g_tb_skin->GetDimensionConverter()->GetPxFromString(virtual_width, GetVirtualWidth()));
+        SetVirtualWidth(core_->tb_skin_->GetDimensionConverter()->GetPxFromString(virtual_width, GetVirtualWidth()));
 	if (const char *text = info.node->GetValueString("placeholder", nullptr))
 		SetPlaceholderText(text);
 	if (const char *text_align = info.node->GetValueString("text-align", nullptr))
@@ -205,7 +205,7 @@ TB_WIDGET_FACTORY(TBLayout, TBValue::TYPE_NULL, WIDGET_Z_TOP) {}
 void TBLayout::OnInflate(const INFLATE_INFO &info)
 {
 	if (const char *spacing = info.node->GetValueString("spacing", nullptr))
-		SetSpacing(g_tb_skin->GetDimensionConverter()->GetPxFromString(spacing, SPACING_FROM_SKIN));
+        SetSpacing(core_->tb_skin_->GetDimensionConverter()->GetPxFromString(spacing, SPACING_FROM_SKIN));
 	SetGravity(WIDGET_GRAVITY_ALL);
 	if (const char *size = info.node->GetValueString("size", nullptr))
 	{
@@ -252,6 +252,10 @@ void TBLayout::OnInflate(const INFLATE_INFO &info)
 			ld = LAYOUT_DISTRIBUTION_POSITION_RIGHT_BOTTOM;
 		SetLayoutDistributionPosition(ld);
 	}
+    if (int debug = info.node->GetValueInt("debug", 0))
+    {
+        debugLayoutBound_ = debug;
+    }
 	TBWidget::OnInflate(info);
 }
 
@@ -292,17 +296,17 @@ void TBTabContainer::OnInflate(const INFLATE_INFO &info)
 		TBLayout *tab_layout = GetTabLayout();
 		info.reader->LoadNodeTree(tab_layout, tabs);
 
-		INFLATE_INFO inflate_info(info.reader, tab_layout->GetContentRoot(), tabs, TBValue::TYPE_NULL);
+        INFLATE_INFO inflate_info(info.reader, tab_layout->GetContentRoot(), tabs, TBValue::TYPE_NULL, core_);
 		tab_layout->OnInflate(inflate_info);
 	}
 	if (TBNode *tabs = info.node->GetNode("content"))
 	{
-		INFLATE_INFO inflate_info(info.reader, GetContentRoot(), tabs, TBValue::TYPE_NULL);
-		GetContentRoot()->OnInflate(inflate_info);
+        INFLATE_INFO inflate_info(info.reader, GetContentRoot(), tabs, TBValue::TYPE_NULL, core_);
+        GetContentRoot()->OnInflate(inflate_info);
 	}
 	if (TBNode *tabs = info.node->GetNode("root"))
 	{
-		INFLATE_INFO inflate_info(info.reader, &m_root_layout, tabs, TBValue::TYPE_NULL);
+        INFLATE_INFO inflate_info(info.reader, &m_root_layout, tabs, TBValue::TYPE_NULL, core_);
 		m_root_layout.OnInflate(inflate_info);
 	}
 }
@@ -438,22 +442,41 @@ void TBWidgetFactory::Register()
 }
 
 // == TBWidgetsReader ===================================
+TBWidgetsReader* TBWidgetsReader::wr_ = nullptr;
 
-TBWidgetsReader *TBWidgetsReader::Create()
+TBWidgetsReader *TBWidgetsReader::Create(TBCore* core)
 {
-	TBWidgetsReader *w_reader = new TBWidgetsReader;
-	if (!w_reader || !w_reader->Init())
-	{
-		delete w_reader;
-		return nullptr;
-	}
-	return w_reader;
+    if (!wr_)
+    {
+        TBWidgetsReader *w_reader = new TBWidgetsReader(core);
+        if (!w_reader || !w_reader->Init())
+        {
+            delete w_reader;
+            return nullptr;
+        }
+        wr_ = w_reader;
+    }
+    // FIXME this doesn't ensure that core its valid, find another way
+    wr_->core_ = core;
+
+    return wr_;
+}
+
+bool TBWidgetsReader::IsValid()
+{
+    return wr_ != nullptr;
+}
+
+void TBWidgetsReader::Clean()
+{
+    delete wr_;
+    wr_ = nullptr;
 }
 
 bool TBWidgetsReader::Init()
 {
 	for (TBWidgetFactory *wf = g_registered_factories; wf; wf = wf->next_registered_wf)
-		if (!AddFactory(wf))
+        if (!AddFactory(wf))
 			return false;
 	return true;
 }
@@ -514,8 +537,8 @@ bool TBWidgetsReader::CreateWidget(TBWidget *target, TBNode *node)
 	if (!wc)
 		return false;
 
-	// Create the widget
-	INFLATE_INFO info(this, target->GetContentRoot(), node, wc->sync_type);
+    // Create the widget
+    INFLATE_INFO info(this, target->GetContentRoot(), node, wc->sync_type, core_);
 	TBWidget *new_widget = wc->Create(&info);
 	if (!new_widget)
 		return false;

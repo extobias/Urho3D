@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -2149,10 +2149,14 @@ void View::DrawFullscreenQuad(bool setIdentityProjection)
 #endif
 
         graphics_->SetShaderParameter(VSP_MODEL, model);
+        graphics_->SetShaderParameter(VSP_MODELINV, model.Inverse());
         graphics_->SetShaderParameter(VSP_VIEWPROJ, projection);
     }
     else
+    {
         graphics_->SetShaderParameter(VSP_MODEL, Light::GetFullscreenQuadTransform(camera_));
+        graphics_->SetShaderParameter(VSP_MODELINV, Light::GetFullscreenQuadTransform(camera_).Inverse());
+    }
 
     graphics_->SetCullMode(CULL_NONE);
     graphics_->ClearTransformSources();

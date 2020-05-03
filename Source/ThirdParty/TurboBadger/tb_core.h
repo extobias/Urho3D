@@ -32,6 +32,10 @@ freely, subject to the following restrictions:
 #include "tb_hash.h"
 #include "tb_debug.h"
 
+#include "tb_widgets_listener.h"
+#include "tb_linklist.h"
+#include "animation/tb_widget_animation.h"
+
 #define TB_VERSION_MAJOR 0
 #define TB_VERSION_MINOR 1
 #define TB_VERSION_REVISION 1
@@ -44,12 +48,31 @@ class TBSkin;
 class TBWidgetsReader;
 class TBLanguage;
 class TBFontManager;
+class TBImageManager;
 
-extern TBRenderer *g_renderer;
-extern TBSkin *g_tb_skin;
-extern TBWidgetsReader *g_widgets_reader;
-extern TBLanguage *g_tb_lng;
-extern TBFontManager *g_font_manager;
+struct TBCore {
+
+TBRenderer *renderer_;
+TBSkin *tb_skin_;
+TBWidgetsReader *widgets_reader_;
+TBLanguage *tb_lng_;
+TBFontManager *font_manager_;
+TBImageManager *image_manager_ = nullptr;
+
+TBWidget *hovered_widget = nullptr;
+TBWidget *captured_widget = nullptr;
+TBWidget *focused_widget = nullptr;
+int pointer_down_widget_x = 0;
+int pointer_down_widget_y = 0;
+int pointer_move_widget_x = 0;
+int pointer_move_widget_y = 0;
+bool cancel_click = false;
+bool update_widget_states = true;
+bool update_skin_states = true;
+bool show_focus_state = false;
+
+TBLinkListOf<TBWidgetListenerGlobalLink> g_listeners;
+TBWidgetsAnimationManager widgets_animation_manager;
 
 /** Initialize turbo badger. Call this before using any turbo badger API. */
 bool tb_core_init(TBRenderer *renderer);
@@ -59,6 +82,8 @@ void tb_core_shutdown();
 
 /** Returns true if turbo badger is initialized. */
 bool tb_core_is_initialized();
+
+};
 
 } // namespace tb
 

@@ -171,8 +171,6 @@ void EditorModelDebug::ProcessRayQuery(const RayOctreeQuery& query, PODVector<Ra
             result.subObject_ = i;
             result.subObjectElementIndex_ = subObjectElementIndex;
             results.Push(result);
-
-            URHO3D_LOGERRORF("hit node <%s> subObject <%i> subObjectElementIndex <%i>", node_->GetName().CString(), i, subObjectElementIndex);
         }
     }
 }
@@ -283,7 +281,6 @@ unsigned EditorModelDebug::GetFacesCount() const
 
 void EditorModelDebug::SetModel(Model* model)
 {
-
     if (model == model_)
         return;
 
@@ -306,8 +303,8 @@ void EditorModelDebug::SetModel(Model* model)
 
        CreateFaceInstances();
 
-        ResourceCache* cache = GetSubsystem<ResourceCache>();
-        SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+       ResourceCache* cache = GetSubsystem<ResourceCache>();
+       SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     }
 }
 
@@ -351,9 +348,9 @@ void EditorModelDebug::AddSelectedFaces(const PODVector<IntVector2>& faces)
 {
     selectedFaces_.Clear();
 
-    for(unsigned i = 0; i < faces.Size(); i++)
+    for (unsigned i = 0; i < faces.Size(); i++)
     {
-        if(!selectedFaces_.Contains(faces[i]))
+        if (!selectedFaces_.Contains(faces[i]))
         {
             selectedFaces_.Push(faces[i]);
         }
@@ -511,11 +508,11 @@ void EditorModelDebug::ApplyVertexCollisionMask()
         // for(unsigned i = 0; i < vertexBuffer->GetVertexCount(); i++)
         for(unsigned i = 0; i < selectedIndex_.Size(); i++)
         {
-            unsigned int s = selectedIndex_[i];
+            int s = selectedIndex_[i];
 //            unsigned int val = *((unsigned int*)&dstData[s * vertexSize + vertexElement->offset_]);
 //            val = val | GetCollisionMask(vertexMaskType_);
             unsigned val = GetCollisionMask(vertexMaskType_);
-            memcpy(&dstData[s * vertexSize + vertexElement->offset_], &val, size);
+            memcpy(&dstData[(unsigned)s * vertexSize + vertexElement->offset_], &val, size);
         }
         vertexBuffer->Unlock();
     }
@@ -593,7 +590,8 @@ void EditorModelDebug::SaveModel()
 
     // String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "MeshTest.mdl";
     URHO3D_LOGERRORF("file name <%s>", model_->GetName().CString());
-    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + model_->GetName();
+    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + model_->GetName() + "-collision";
+    
     File file(context_, fileName, FILE_WRITE);
     if (model_->Save(file))
         URHO3D_LOGERRORF("file saved name <%s>", fileName.CString());

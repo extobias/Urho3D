@@ -6,18 +6,22 @@
 #ifndef TB_WIDGETSLISTENER_H
 #define TB_WIDGETSLISTENER_H
 
-#include "tb_core.h"
 #include "tb_linklist.h"
-#include "tb_widgets.h"
+//#include "tb_widgets.h"
 
 namespace tb {
 
 class TBWidget;
+struct TBCore;
 
 /** TBWidgetListenerGlobalLink should never be created or subclassed anywhere except
 	in TBWidgetListener. It's only purpose is to add a extra typed link for
 	TBWidgetListener, since it needs to be added in multiple lists. */
-class TBWidgetListenerGlobalLink : public TBLinkOf<TBWidgetListenerGlobalLink> { };
+class TBWidgetListenerGlobalLink : public TBLinkOf<TBWidgetListenerGlobalLink>
+{
+public:
+    ~TBWidgetListenerGlobalLink();
+};
 
 /** TBWidgetListener listens to some callbacks from TBWidget.
 	It may either listen to all widgets globally, or one specific widget.
@@ -29,8 +33,8 @@ class TBWidgetListener : public TBLinkOf<TBWidgetListener>, public TBWidgetListe
 {
 public:
 	/** Add a listener to all widgets. */
-	static void AddGlobalListener(TBWidgetListener *listener);
-	static void RemoveGlobalListener(TBWidgetListener *listener);
+    static void AddGlobalListener(TBCore *core, TBWidgetListener *listener);
+    static void RemoveGlobalListener(TBCore *core, TBWidgetListener *listener);
 
 	/** Called when widget is being deleted (in its destructor, so virtual functions are already gone). */
 	virtual void OnWidgetDelete(TBWidget *widget) {}
@@ -58,7 +62,7 @@ public:
 	/** Called when a event is about to be invoked on a widget. This make it possible
 		to intercept events before they are handled, and block it (by returning true).
 		Note, if returning true, other global listeners will still also be notified. */
-	virtual bool OnWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev) { return false; }
+//    virtual bool OnWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev) { return false; }
 private:
 	friend class TBWidget;
 	static void InvokeWidgetDelete(TBWidget *widget);
@@ -66,7 +70,7 @@ private:
 	static void InvokeWidgetAdded(TBWidget *parent, TBWidget *child);
 	static void InvokeWidgetRemove(TBWidget *parent, TBWidget *child);
 	static void InvokeWidgetFocusChanged(TBWidget *widget, bool focused);
-	static bool InvokeWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev);
+//    static bool InvokeWidgetInvokeEvent(TBWidget *widget, const TBWidgetEvent &ev);
 };
 
 /** TBWidgetSafePointer keeps a pointer to a widget that will be set to

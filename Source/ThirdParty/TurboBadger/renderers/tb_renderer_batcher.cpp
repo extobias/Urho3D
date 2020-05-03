@@ -180,6 +180,9 @@ void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rec
 void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, TBBitmapFragment *bitmap_fragment)
 {
 // 	TBDebugPrint("TBRendererBatcher::DrawBitmapColored fragment bitmap <%p,%p>\n", bitmap_fragment, bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME));
+    if (!bitmap_fragment)
+        return;
+
     if (TBBitmap *bitmap = bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME))
     {
         uint32 a = (color.a * m_opacity) / 255;

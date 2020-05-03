@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -63,10 +63,13 @@ void Sample::Setup()
     engineParameters_[EP_HEADLESS]     = false;
     engineParameters_[EP_SOUND]        = false;
 
-	engineParameters_[EP_WINDOW_WIDTH] = 1024;
-	engineParameters_[EP_WINDOW_HEIGHT] = 468;
-	engineParameters_[EP_WINDOW_RESIZABLE] = true;
-    // engineParameters_[EP_FORCE_GL2] = true;
+    engineParameters_[EP_WINDOW_WIDTH] = 1480;
+    engineParameters_[EP_WINDOW_HEIGHT] = 568;
+    engineParameters_[EP_WINDOW_RESIZABLE] = true;
+    engineParameters_[EP_WINDOW_POSITION_X] = 300;
+    engineParameters_[EP_WINDOW_POSITION_Y] = 50;
+
+//     engineParameters_[EP_FORCE_GL2] = true;
 
     // Construct a search path to find the resource prefix with two entries:
     // The first entry is an empty path which will be substituted with program/bin directory -- this entry is for binary when it is still in build tree
@@ -91,7 +94,7 @@ void Sample::Start()
     SetWindowTitleAndIcon();
 
     // Create console and debug HUD
-    // CreateConsoleAndDebugHud();
+    CreateConsoleAndDebugHud();
 
     // Subscribe key down event
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Sample, HandleKeyDown));

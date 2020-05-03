@@ -1,5 +1,6 @@
 #include "../UI/EditorWindow.h"
 
+#include "../Core/CoreEvents.h"
 #include "../Graphics/Graphics.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
@@ -12,11 +13,14 @@
 #include "../Graphics/StaticModel.h"
 #include "../Graphics/DebugRenderer.h"
 #include "../Graphics/Geometry.h"
+#include "../Input/Input.h"
 #include "../IO/Log.h"
 #include "../IO/FileSystem.h"
 #include "../Math/Polyhedron.h"
 #include "../Resource/ResourceCache.h"
 #include "../UI/EditorGuizmo.h"
+#include "../UI/UI.h"
+
 #include "../UI/EditorModelDebug.h"
 
 #include "imgui.h"
@@ -29,9 +33,18 @@ extern const char* UI_CATEGORY;
 EditorWindow::EditorWindow(Context* context) :
     ImGuiElement(context),
     guizmo_(nullptr),
+    cameraNode_(nullptr),
     selectedNode_(0),
-    currentModel_(2)
+    currentModel_(2),
+    debugText_(""),
+    yaw_(0.0f),
+    pitch_(0.0f)
 {
+    for (int i = 0; i < 4; i++)
+    {
+        plotVarsOffset_[i] = 0;
+    }
+
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     FileSystem dir(context_);
 
@@ -76,7 +89,7 @@ EditorWindow::EditorWindow(Context* context) :
     {
         Vector<ResourceFile> list = resources_[keys.At(i)];
         // URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
-        for (int l = 0; l < list.Size(); l++)
+        for (unsigned l = 0; l < list.Size(); l++)
         {
             ResourceFile file = list.At(l);
             String modelsFilter("mdl");
@@ -102,6 +115,8 @@ EditorWindow::EditorWindow(Context* context) :
     materialResourcesString_.Append('\0');
 
     SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
+
+    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
 }
 
 EditorWindow::~EditorWindow() = default;
@@ -111,14 +126,123 @@ void EditorWindow::RegisterObject(Context* context)
     context->RegisterFactory<EditorWindow>(UI_CATEGORY);
 }
 
+void EditorWindow::SetCameraNode(Node* node)
+{
+    cameraNode_ = node;
+
+    if (guizmo_)
+        guizmo_->SetCameraNode(node);
+}
+
 void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
 {
     selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
-
-    // URHO3D_LOGERRORF("editwindow: node selected <%i>", selectedNode_);
-
     selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
     hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
+
+    // URHO3D_LOGERRORF("editwindow: node selected <%i>", selectedNode_);
+}
+
+void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
+{
+    ImGuiElement::HandlePostUpdate(eventType, eventData);
+
+    if (!visible_)
+        return;
+
+    using namespace Update;
+
+    // Take the frame time step, which is stored as a float
+    float timeStep = eventData[P_TIMESTEP].GetFloat();
+
+    // Move the camera, scale movement with time step
+    MoveCamera(timeStep);
+}
+
+void EditorWindow::MoveCamera(float timeStep)
+{
+    // Do not move if the UI has a focused element (the console)
+    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
+    if (focusElement)
+        return;
+
+    Input* input = GetSubsystem<Input>();
+
+    // Movement speed as world units per second
+    float MOVE_SPEED = 1.0f;
+    // Mouse sensitivity as degrees per pixel
+    const float MOUSE_SENSITIVITY = 0.1f;
+
+    // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
+    if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
+    {
+        IntVector2 mouseMove = input->GetMouseMove();
+
+        yaw_ += (float)MOUSE_SENSITIVITY * mouseMove.x_;
+        pitch_ += (float)MOUSE_SENSITIVITY * mouseMove.y_;
+        pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+
+        // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
+    else
+    {
+//        Quaternion camRot = cameraNode_->GetRotation();
+//        pitch_ = camRot.PitchAngle();
+//        yaw_ = camRot.YawAngle();
+
+//        cameraDistance_ += input->GetMouseMoveWheel();
+
+//        Vector3 lookAt = cameraNode_->GetDirection(); // pos - rot * Vector3(0.0f, 0.0f, -3.0f);
+//        Quaternion dir(yaw_, Vector3::UP);
+//        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
+
+//        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
+
+//        cameraNode_->SetPosition(cameraTargetPos);
+    }
+
+    if (input->GetKeyDown(KEY_SHIFT))
+        MOVE_SPEED *= 50.0f;
+    // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
+    // Use the Translate() function (default local space) to move relative to the node's orientation.
+    if (input->GetKeyDown(KEY_W))
+        cameraNode_->Translate(Vector3::FORWARD * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_S))
+        cameraNode_->Translate(Vector3::BACK * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_A))
+        cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_D))
+        cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_E))
+        cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_Q))
+        cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
+}
+
+void EditorWindow::CreateGuizmo()
+{
+    guizmo_ = new EditorGuizmo(context_);
+    guizmo_->SetName("guizmo");
+    guizmo_->SetFocusMode(FM_NOTFOCUSABLE);
+    guizmo_->SetPosition(0, 0);
+
+    if (scene_)
+        guizmo_->SetScene(scene_);
+
+    if (parent_)
+        parent_->AddChild(guizmo_);
+
+    if (cameraNode_)
+        guizmo_->SetCameraNode(cameraNode_);
+}
+
+void EditorWindow::SetVisible(bool visible)
+{
+    UIElement::SetVisible(visible);
+
+    if (guizmo_)
+        guizmo_->SetVisible(visible);
 }
 
 void EditorWindow::Render(float timeStep)
@@ -310,6 +434,19 @@ void EditorWindow::Render(float timeStep)
     }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+    ImGui::Separator();
+
+    ImGui::Text("%s", debugText_.CString());
+
+    ImGui::Separator();
+
+    for(int i = 0; i < 4; i++)
+    {
+        char buf[32];
+        sprintf(buf, "var-%i-%.2f", i, plotVars_[i][99]);
+        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -10000.0f, 10000.0f, ImVec2(0, 60));
+    }
 
     ImVec2 windowPos = ImGui::GetWindowPos();
     SetPosition(windowPos.x, windowPos.y);

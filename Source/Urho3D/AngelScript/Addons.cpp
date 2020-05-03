@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -2330,8 +2330,8 @@ void RegisterDictionary(asIScriptEngine *engine)
     engine->RegisterObjectMethod("DictionaryValue", "DictionaryValue &opAssign(const ?&in)", asFUNCTION(CScriptDictValue_opAssign_gen), asCALL_GENERIC);
     engine->RegisterObjectMethod("DictionaryValue", "void opCast(?&out)", asFUNCTION(CScriptDictValue_opCast_gen), asCALL_GENERIC);
     engine->RegisterObjectMethod("DictionaryValue", "void opConv(?&out)", asFUNCTION(CScriptDictValue_opCast_gen), asCALL_GENERIC);
-    engine->RegisterObjectMethod("Dictionary", "void Set(const String &in, const ?&in)", asFUNCTION(CScriptDictionarySet_Generic), asCALL_GENERIC);
-    engine->RegisterObjectMethod("Dictionary", "bool Get(const String &in, ?&out) const", asFUNCTION(CScriptDictionaryGet_Generic), asCALL_GENERIC);
+    engine->RegisterObjectMethod("Dictionary", "void Set(const String &in, const ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC);
+    engine->RegisterObjectMethod("Dictionary", "bool Get(const String &in, ?&out) const", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC);
 #endif
 }
 

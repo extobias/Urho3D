@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -157,13 +157,17 @@ struct BatchGroup : public Batch
 
         unsigned char* buffer = static_cast<unsigned char*>(batch.instancingData_);
         if(!buffer)
+        {
             newInstance.instancingData_ = batch.instancingData_;
+        }
 
         for (unsigned i = 0; i < batch.numWorldTransforms_; ++i)
         {
             newInstance.worldTransform_ = &batch.worldTransform_[i];
             if(buffer)
+            {
                 newInstance.instancingData_ = buffer + sizeof(Vector4) * i;
+            }
 
             instances_.Push(newInstance);
         }
@@ -279,7 +283,7 @@ public:
     StringHash psExtraDefinesHash_;
 };
 
-/// Queue for shadow map draw calls
+/// Queue for shadow map draw calls.
 struct ShadowBatchQueue
 {
     /// Shadow map camera.
@@ -303,9 +307,9 @@ struct LightBatchQueue
     bool negative_;
     /// Shadow map depth texture.
     Texture2D* shadowMap_;
-    /// Lit geometry draw calls, base (replace blend mode)
+    /// Lit geometry draw calls, base (replace blend mode).
     BatchQueue litBaseBatches_;
-    /// Lit geometry draw calls, non-base (additive)
+    /// Lit geometry draw calls, non-base (additive).
     BatchQueue litBatches_;
     /// Shadow map split queues.
     Vector<ShadowBatchQueue> shadowSplits_;

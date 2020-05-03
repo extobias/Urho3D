@@ -4,6 +4,7 @@
 // ================================================================================
 
 #include "tb_geometry.h"
+#include "tb_types.h"
 #include <assert.h>
 
 namespace tb {

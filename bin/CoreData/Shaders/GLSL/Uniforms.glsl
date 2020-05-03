@@ -23,6 +23,7 @@ uniform vec4 cLightPos;
 uniform vec3 cLightDir;
 uniform vec4 cNormalOffsetScale;
 uniform mat4 cModel;
+uniform mat4 cModelInv;
 uniform mat4 cView;
 uniform mat4 cViewInv;
 uniform mat4 cViewProj;

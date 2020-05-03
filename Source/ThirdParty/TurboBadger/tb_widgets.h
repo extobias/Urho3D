@@ -6,7 +6,7 @@
 #ifndef TB_WIDGETS_H
 #define TB_WIDGETS_H
 
-#include "tb_core.h"
+//#include "tb_core.h"
 #include "tb_geometry.h"
 #include "tb_skin.h"
 #include "tb_linklist.h"
@@ -23,6 +23,7 @@ class TBScroller;
 class TBWidgetListener;
 class TBLongClickTimer;
 struct INFLATE_INFO;
+struct TBCore;
 
 // == Generic widget stuff =================================================
 
@@ -124,16 +125,22 @@ public:
 	TBID ref_id;		///< Sometimes (when documented) events have a ref_id (The id that caused this event)
 	bool touch;			///< Set for pointer events. True if the event is a touch event (finger or pen on screen)
 						///< False if mouse or other cursor input.
+        int user_data; /// added
 
 	TBOBJECT_SUBCLASS(TBWidgetEvent, TBTypedObject);
 
 	TBWidgetEvent(EVENT_TYPE type) : target(nullptr), type(type), target_x(0), target_y(0), delta_x(0), delta_y(0), count(1),
 											key(0), special_key(TB_KEY_UNDEFINED), modifierkeys(TB_MODIFIER_NONE), touch(false) {}
 
-	TBWidgetEvent(EVENT_TYPE type, int x, int y, bool touch, MODIFIER_KEYS modifierkeys = TB_MODIFIER_NONE) :
+        TBWidgetEvent(EVENT_TYPE type, int x, int y, bool touch, MODIFIER_KEYS modifierkeys = TB_MODIFIER_NONE) :
 											target(nullptr), type(type), target_x(x), target_y(y), delta_x(0), delta_y(0),
 											count(1), key(0), special_key(TB_KEY_UNDEFINED), modifierkeys(modifierkeys),
-											touch(touch) {}
+                                                                                        touch(touch) {}
+
+        TBWidgetEvent(EVENT_TYPE type, int x, int y, bool touch, MODIFIER_KEYS modifierkeys, int userdata) :
+                                                                                        target(nullptr), type(type), target_x(x), target_y(y), delta_x(0), delta_y(0),
+                                                                                        count(1), key(0), special_key(TB_KEY_UNDEFINED), modifierkeys(modifierkeys),
+                                                                                        touch(touch), user_data(userdata) {}
 
 	/** The count value may be 1 to infinity. If you f.ex want to see which count it is for something
 		handling click and double click, call GetCountCycle(2). If you also handle triple click, call
@@ -363,7 +370,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBWidget, TBTypedObject);
 
-	TBWidget();
+    TBWidget(TBCore* core);
 	virtual ~TBWidget();
 
 	/** Set the rect for this widget in its parent. The rect is relative to the parent widget.
@@ -451,7 +458,8 @@ public:
 	/** Set if the state WIDGET_STATE_FOCUSED should be set automatically for the focused widget.
 		This value is set to true when moving focus by keyboard, and set to off when clicking
 		with the pointer. */
-	static void SetAutoFocusState(bool on);
+    //static void SetAutoFocusState(bool on);
+    void SetAutoFocusState(bool on);
 
 	/** Set opacity for this widget and its children from 0.0 - 1.0.
 		If opacity is 0 (invisible), the widget won't receive any input. */
@@ -561,7 +569,7 @@ public:
 
 		Returns true if successfully focused, or if set as last focus in its window. */
 	bool SetFocus(WIDGET_FOCUS_REASON reason, WIDGET_INVOKE_INFO info = WIDGET_INVOKE_INFO_NORMAL);
-	bool GetIsFocused() const { return focused_widget == this; }
+    bool GetIsFocused() const { return core_->focused_widget == this; }
 
 	/** Call SetFocus on all children and their children, until a widget is found that accepts it.
 		Returns true if some child was successfully focused. */
@@ -642,8 +650,9 @@ public:
 	class PaintProps
 	{
 	public:
-		PaintProps();
+        PaintProps(TBCore* core);
 
+        TBCore* core_;
 		/** Text color as specified in the skin element, or inherited from parent. */
 		TBColor text_color;
 	};
@@ -936,7 +945,7 @@ public:
 
 	bool InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS modifierkeys, bool touch);
 	bool InvokePointerUp(int x, int y, MODIFIER_KEYS modifierkeys, bool touch);
-	void InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool touch);
+    bool InvokePointerMove(int x, int y, MODIFIER_KEYS modifierkeys, bool touch);
 	void InvokePointerCancel();
 
 	/** Invoke touch events with ref_id set as the given id.
@@ -952,7 +961,7 @@ public:
 
 	/** Invoke the EVENT_TYPE_KEY_DOWN and EVENT_TYPE_KEY_UP events on the currently focused widget.
 		This will also do some generic key handling, such as cycling focus on tab etc. */
-	bool InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down);
+        bool InvokeKey(int key, SPECIAL_KEY special_key, MODIFIER_KEYS modifierkeys, bool down, int userdata = -1);
 
 	/** A widget that receive a EVENT_TYPE_POINTER_DOWN event, will stay "captured" until EVENT_TYPE_POINTER_UP
 		is received. While captured, all EVENT_TYPE_POINTER_MOVE are sent to it. This method can force release the capture,
@@ -988,6 +997,10 @@ public:
 	/** Get the TBFontFace for this widget from the current font description (calculated
 		by GetCalculatedFontDescription) */
 	TBFontFace *GetFont() const;
+
+        TBCore* core_;
+protected:
+
 
 private:
 	friend class TBWidgetListener;	///< It does iteration of m_listeners for us.
@@ -1038,17 +1051,17 @@ public:
 #endif // TB_RUNTIME_DEBUG_INFO
 
 	// TBWidget related globals
-	static TBWidget *hovered_widget;	///< The currently hovered widget, or nullptr.
-	static TBWidget *captured_widget;	///< The currently captured widget, or nullptr.
-	static TBWidget *focused_widget;	///< The currently focused widget, or nullptr.
-	static int pointer_down_widget_x;	///< Pointer x position on down event, relative to the captured widget.
-	static int pointer_down_widget_y;	///< Pointer y position on down event, relative to the captured widget.
-	static int pointer_move_widget_x;	///< Pointer x position on last pointer event, relative to the captured widget (if any) or hovered widget.
-	static int pointer_move_widget_y;	///< Pointer y position on last pointer event, relative to the captured widget (if any) or hovered widget.
-	static bool cancel_click;			///< true if the pointer up event should not generate a click event.
-	static bool update_widget_states;	///< true if something has called InvalidateStates() and it still hasn't been updated.
-	static bool update_skin_states;		///< true if something has called InvalidateStates() and skin still hasn't been updated.
-	static bool show_focus_state;		///< true if the focused state should be painted automatically.
+//	static TBWidget *hovered_widget;	///< The currently hovered widget, or nullptr.
+//	static TBWidget *captured_widget;	///< The currently captured widget, or nullptr.
+//	static TBWidget *focused_widget;	///< The currently focused widget, or nullptr.
+//	static int pointer_down_widget_x;	///< Pointer x position on down event, relative to the captured widget.
+//	static int pointer_down_widget_y;	///< Pointer y position on down event, relative to the captured widget.
+//	static int pointer_move_widget_x;	///< Pointer x position on last pointer event, relative to the captured widget (if any) or hovered widget.
+//	static int pointer_move_widget_y;	///< Pointer y position on last pointer event, relative to the captured widget (if any) or hovered widget.
+//	static bool cancel_click;			///< true if the pointer up event should not generate a click event.
+//	static bool update_widget_states;	///< true if something has called InvalidateStates() and it still hasn't been updated.
+//	static bool update_skin_states;		///< true if something has called InvalidateStates() and skin still hasn't been updated.
+//	static bool show_focus_state;		///< true if the focused state should be painted automatically.
 	struct TOUCH_INFO {
 		TBWidget *hovered_widget;		///< The currently hovered widget, or nullptr.
 		TBWidget *captured_widget;		///< The currently captured widget, or nullptr.
@@ -1059,6 +1072,8 @@ public:
 	};
 	/** Return TOUCH_INFO for the given id, or nullptr if no touch is active for that id. */
 	static TOUCH_INFO *GetTouchInfo(uint32 id);
+    /* flag to debug layout bounds of widget */
+    int debugLayoutBound_;
 private:
 	/** Return this widget or the nearest parent that is scrollable
 		in the given axis, or nullptr if there is none. */
@@ -1068,8 +1083,10 @@ private:
 	TBWidget *GetWidgetByIDInternal(const TBID &id, const TB_TYPE_ID type_id = nullptr);
 	void InvokeSkinUpdatesInternal(bool force_update);
 	void InvokeProcessInternal();
-	static void SetHoveredWidget(TBWidget *widget, bool touch);
-	static void SetCapturedWidget(TBWidget *widget);
+//	static void SetHoveredWidget(TBWidget *widget, bool touch);
+//	static void SetCapturedWidget(TBWidget *widget);
+    void SetHoveredWidget(TBWidget *widget, bool touch);
+    void SetCapturedWidget(TBWidget *widget);
 	void HandlePanningOnMove(int x, int y);
 	void StartLongClickTimer(bool touch);
 	void StopLongClickTimer();

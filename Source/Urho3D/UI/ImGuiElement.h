@@ -45,7 +45,6 @@ public:
     virtual void OnKey(Key key, MouseButtonFlags buttons, QualifierFlags qualifiers);
 
     virtual void OnTextInput(const String& text);
-	
     // uielement callback
     virtual void OnPositionSet(const IntVector2& newPosition);
 
@@ -66,7 +65,6 @@ public:
     void HandleRawEvent(StringHash eventType, VariantMap& args);
 
     bool IsWithinScissor(const IntRect& currentScissor);
-
     // soon to be removed
     virtual void SetScene(Scene* scene) { scene_ = scene; }
 
@@ -76,7 +74,7 @@ protected:
 
 private:
 
-	// void ElementCallback(const ImDrawList* parent_list, const ImDrawCmd* cmd);
+    // void ElementCallback(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 
     void HandleFocused(StringHash /*eventType*/, VariantMap& eventData);
 

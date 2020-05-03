@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2008-2019 the Urho3D project.
+# Copyright (c) 2008-2020 the Urho3D project.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,13 +62,15 @@ list (APPEND INCLUDE_DIRS ${URHO3D_HOME}/include/Urho3D/ThirdParty/TurboBadger)
 #        add_sample_subdirectory (${DIR})
 #    endif ()
 #endforeach ()
-add_sample_subdirectory (02_HelloGUI)
+# add_sample_subdirectory (02_HelloGUI)
 # add_sample_subdirectory (65_PhysicsTest)
+add_sample_subdirectory (42_PBRMaterials)
+# add_sample_subdirectory (20_HugeObjectCount)
+# add_sample_subdirectory (06_SkeletalAnimation)
+# add_sample_subdirectory (46_RaycastVehicle)
+# add_sample_subdirectory (19_VehicleDemo)
+add_sample_subdirectory (44_RibbonTrailDemo)
 add_sample_subdirectory (64_HelloTBUI)
 add_sample_subdirectory (133_LightTest)
-add_sample_subdirectory (44_RibbonTrailDemo)
-add_sample_subdirectory (42_PBRMaterials)
-add_sample_subdirectory (20_HugeObjectCount)
-add_sample_subdirectory (06_SkeletalAnimation)
-add_sample_subdirectory (46_RaycastVehicle)
-add_sample_subdirectory (19_VehicleDemo)
+add_sample_subdirectory (134_VertexEditor)
+add_sample_subdirectory (135_DeferredDecal)

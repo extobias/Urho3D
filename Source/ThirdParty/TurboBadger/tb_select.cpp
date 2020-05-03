@@ -22,8 +22,11 @@ int select_list_sort_cb(TBSelectItemSource *source, const int *a, const int *b)
 
 // == TBSelectList ==============================================
 
-TBSelectList::TBSelectList()
-	: m_value(-1)
+TBSelectList::TBSelectList(TBCore *core)
+    : TBWidget (core)
+    , m_layout(core)
+    , m_container(core)
+    , m_value(-1)
 	, m_list_is_invalid(false)
 	, m_scroll_to_current(false)
 	, m_header_lng_string_id(TBIDC("TBList.header"))
@@ -164,10 +167,10 @@ void TBSelectList::ValidateList()
 	// Show header if we only show a subset of all items.
 	if (!m_filter.IsEmpty())
 	{
-		if (TBWidget *widget = new TBTextField())
+        if (TBWidget *widget = new TBTextField(core_))
 		{
 			TBStr str;
-			str.SetFormatted(g_tb_lng->GetString(m_header_lng_string_id), num_sorted_items, m_source->GetNumItems());
+            str.SetFormatted(core_->tb_lng_->GetString(m_header_lng_string_id), num_sorted_items, m_source->GetNumItems());
 			widget->SetText(str);
 			widget->SetSkinBg(TBIDC("TBList.header"));
 			widget->SetState(WIDGET_STATE_DISABLED, true);
@@ -189,7 +192,7 @@ void TBSelectList::ValidateList()
 
 TBWidget *TBSelectList::CreateAndAddItemAfter(int index, TBWidget *reference)
 {
-	if (TBWidget *widget = m_source->CreateItemWidget(index, this))
+    if (TBWidget *widget = m_source->CreateItemWidget(index, this, core_))
 	{
 		// Use item data as widget to index lookup
 		widget->data.SetInt(index);
@@ -357,8 +360,10 @@ bool TBSelectList::ChangeValue(SPECIAL_KEY key)
 
 // == TBSelectDropdown ==========================================
 
-TBSelectDropdown::TBSelectDropdown()
-	: m_value(-1)
+TBSelectDropdown::TBSelectDropdown(TBCore *core)
+    : TBButton (core)
+    , m_arrow(core)
+    , m_value(-1)
 {
 	SetSource(&m_default_source);
 	SetSkinBg(TBIDC("TBSelectDropdown"), WIDGET_INVOKE_INFO_NO_CALLBACKS);

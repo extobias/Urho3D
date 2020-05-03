@@ -18,8 +18,8 @@ class TBNode;
 
 /** INFLATE_INFO contains info passed to TBWidget::OnInflate during resource loading. */
 struct INFLATE_INFO {
-	INFLATE_INFO(TBWidgetsReader *reader, TBWidget *target, TBNode *node, TBValue::TYPE sync_type)
-		: reader(reader), target(target), node(node), sync_type(sync_type) {}
+    INFLATE_INFO(TBWidgetsReader *reader, TBWidget *target, TBNode *node, TBValue::TYPE sync_type, TBCore* core = nullptr)
+        : reader(reader), target(target), node(node), sync_type(sync_type), core(core) {}
 	TBWidgetsReader *reader;
 
 	/** The widget that that will be parent to the inflated widget. */
@@ -28,6 +28,8 @@ struct INFLATE_INFO {
 	TBNode *node;
 	/** The data type that should be synchronized through TBWidgetValue. */
 	TBValue::TYPE sync_type;
+
+    TBCore* core;
 };
 
 /** TBWidgetFactory creates a widget from a TBNode. */
@@ -65,12 +67,12 @@ public:
 	class classname##WidgetFactory : public tb::TBWidgetFactory \
 	{ \
 	public: \
-		classname##WidgetFactory() \
+        classname##WidgetFactory() \
 			: tb::TBWidgetFactory(#classname, sync_type) { Register(); } \
 		virtual ~classname##WidgetFactory() {} \
 		virtual tb::TBWidget *Create(tb::INFLATE_INFO *info) \
 		{ \
-			classname *widget = new classname(); \
+            classname *widget = new classname(info->core); \
 			if (widget) { \
 				widget->GetContentRoot()->SetZInflate(add_child_z); \
 				ReadCustomProps(widget, info); \
@@ -139,13 +141,17 @@ public:
 class TBWidgetsReader
 {
 public:
-	static TBWidgetsReader *Create();
+    TBWidgetsReader(TBCore* core) : core_(core) {}
 	~TBWidgetsReader();
+
+    static TBWidgetsReader *Create(TBCore* core);
+    static bool IsValid();
+    static void Clean();
 
 	/** Add a widget factory. Does not take ownership of the factory.
 		The easiest way to add factories for custom widget types, is using the
 		TB_WIDGET_FACTORY macro that automatically register it during startup. */
-	bool AddFactory(TBWidgetFactory *wf) { factories.AddLast(wf); return true; }
+    bool AddFactory(TBWidgetFactory *wf) { factories.AddLast(wf); return true; }
 	void RemoveFactory(TBWidgetFactory *wf) { factories.Remove(wf); }
 
 	/** Set the id from the given node. */
@@ -155,10 +161,15 @@ public:
 	bool LoadData(TBWidget *target, const char *data);
 	bool LoadData(TBWidget *target, const char *data, int data_len);
 	void LoadNodeTree(TBWidget *target, TBNode *node);
+
+    TBCore* core_;
+
 private:
+    static TBWidgetsReader* wr_;
 	bool Init();
 	bool CreateWidget(TBWidget *target, TBNode *node);
 	TBLinkListOf<TBWidgetFactory> factories;
+
 };
 
 } // namespace tb

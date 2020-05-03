@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,10 +45,12 @@ extern URHO3D_API const StringHash VSP_DELTATIME("DeltaTime");
 extern URHO3D_API const StringHash VSP_ELAPSEDTIME("ElapsedTime");
 extern URHO3D_API const StringHash VSP_FRUSTUMSIZE("FrustumSize");
 extern URHO3D_API const StringHash VSP_GBUFFEROFFSETS("GBufferOffsets");
+
 extern URHO3D_API const StringHash VSP_LIGHTDIR("LightDir");
 extern URHO3D_API const StringHash VSP_LIGHTPOS("LightPos");
 extern URHO3D_API const StringHash VSP_NORMALOFFSETSCALE("NormalOffsetScale");
 extern URHO3D_API const StringHash VSP_MODEL("Model");
+extern URHO3D_API const StringHash VSP_MODELINV("ModelInv");
 extern URHO3D_API const StringHash VSP_VIEW("View");
 extern URHO3D_API const StringHash VSP_VIEWINV("ViewInv");
 extern URHO3D_API const StringHash VSP_VIEWPROJ("ViewProj");

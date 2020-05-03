@@ -104,7 +104,7 @@ enum TB_VALIDATE_TYPE {
 class TBBitmapFragmentMap
 {
 public:
-	TBBitmapFragmentMap();
+    TBBitmapFragmentMap(TBCore* core);
 	~TBBitmapFragmentMap();
 
 	/** Initialize the map with the given size. The size should be a power of two since
@@ -122,6 +122,7 @@ public:
 		By default, the bitmap is validated if needed before returning (See TB_VALIDATE_TYPE) */
 	TBBitmap *GetBitmap(TB_VALIDATE_TYPE validate_type = TB_VALIDATE_ALWAYS);
 private:
+    TBCore* core_;
 	friend class TBBitmapFragmentManager;
 	bool ValidateBitmap();
 	void DeleteBitmap();
@@ -175,7 +176,7 @@ public:
 class TBBitmapFragmentManager
 {
 public:
-	TBBitmapFragmentManager();
+    TBBitmapFragmentManager(TBCore* core);
 	~TBBitmapFragmentManager();
 
 	/** Set to true if a 1px border should be added to new fragments so stretched
@@ -239,6 +240,7 @@ public:
 	void Debug();
 #endif
 private:
+    TBCore* core_;
 	TBListOf<TBBitmapFragmentMap> m_fragment_maps;
 	TBHashTableOf<TBBitmapFragment> m_fragments;
 	int m_num_maps_limit;

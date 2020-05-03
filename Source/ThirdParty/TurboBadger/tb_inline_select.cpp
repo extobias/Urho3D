@@ -14,8 +14,12 @@ namespace tb {
 
 // == TBInlineSelect ========================================================================================
 
-TBInlineSelect::TBInlineSelect()
-	: m_value(0)
+TBInlineSelect::TBInlineSelect(TBCore *core)
+    : TBWidget (core)
+    , m_buttons{core, core}
+    , m_layout(core)
+    , m_editfield(core)
+    , m_value(0)
 	, m_min(0)
 	, m_max(100)
 {
@@ -29,8 +33,8 @@ TBInlineSelect::TBInlineSelect()
 	m_layout.SetSpacing(0);
 	m_buttons[0].SetSkinBg(TBIDC("TBButton.flat"));
 	m_buttons[1].SetSkinBg(TBIDC("TBButton.flat"));
-	m_buttons[0].GetContentRoot()->AddChild(new TBSkinImage(TBIDC("arrow.left")));
-	m_buttons[1].GetContentRoot()->AddChild(new TBSkinImage(TBIDC("arrow.right")));
+    m_buttons[0].GetContentRoot()->AddChild(new TBSkinImage(core, TBIDC("arrow.left")));
+    m_buttons[1].GetContentRoot()->AddChild(new TBSkinImage(core, TBIDC("arrow.right")));
 	m_buttons[0].SetIsFocusable(false);
 	m_buttons[1].SetIsFocusable(false);
 	m_buttons[0].SetID(TBIDC("dec"));

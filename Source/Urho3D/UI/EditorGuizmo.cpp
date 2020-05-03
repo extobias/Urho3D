@@ -21,17 +21,55 @@ namespace Urho3D
 
 extern const char* UI_CATEGORY;
 
+static float cubeVertices[] = {
+  // front
+  -1.0, -1.0,  1.0,
+   1.0, -1.0,  1.0,
+   1.0,  1.0,  1.0,
+  -1.0,  1.0,  1.0,
+  // back
+  -1.0, -1.0, -1.0,
+   1.0, -1.0, -1.0,
+   1.0,  1.0, -1.0,
+  -1.0,  1.0, -1.0
+};
+
+static short cubeIndex[] = {
+    // front
+    0, 1, 2,
+    2, 3, 0,
+    // right
+    1, 5, 6,
+    6, 2, 1,
+    // back
+    7, 6, 5,
+    5, 4, 7,
+    // left
+    4, 0, 3,
+    3, 7, 4,
+    // bottom
+    4, 5, 1,
+    1, 0, 4,
+    // top
+    3, 2, 6,
+    6, 7, 3
+};
+
 /// EditorBrush
-class URHO3D_API EditorBrush : public Object
+class URHO3D_API EditorBrush : public Component
 {
-    URHO3D_OBJECT(EditorBrush, Object);
+    URHO3D_OBJECT(EditorBrush, Component);
 
 public:
-    explicit EditorBrush(Context* context, Node* node);
+    explicit EditorBrush(Context* context);
 
     ~EditorBrush();
 
+    void OnNodeSet(Node* node) override;
+
     void Update(StaticModel* model, const IntVector2& position, float radius);
+
+    void Update(StaticModel* model, const Vector3& position);
 
     void SetVisible(bool visible);
 
@@ -41,23 +79,20 @@ public:
 
 private:
 
-    SharedPtr<Node> node_;
+    float GetModelHeight(StaticModel* model, const Vector3& position, float x, float z);
 
     SharedPtr<CustomGeometry> customGeometry_;
 
     SharedPtr<BorderImage> selectionImage_;
 
-    int size_{ 5 };
+    float size_{ 0.1f };
 
     bool addedToOctree_{ false };
 };
 
-EditorBrush::EditorBrush(Context *context, Node *node)
-    : Object(context),
-      node_(node)
+EditorBrush::EditorBrush(Context *context)
+    : Component(context)
 {
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-
     selectionImage_ = new BorderImage(context_);
     selectionImage_->SetSize(size_, size_);
     selectionImage_->SetBorder(IntRect(3, 3, 3, 3));
@@ -68,41 +103,126 @@ EditorBrush::EditorBrush(Context *context, Node *node)
 
     UI* ui = GetSubsystem<UI>();
     ui->GetRoot()->AddChild(selectionImage_);
-//    customGeometry_ = node_->CreateComponent<CustomGeometry>();
-//    customGeometry_->SetNumGeometries(1);
-//    customGeometry_->SetMaterial(cache->GetResource<Material>("Materials/VColUnlit.xml"));
-//    customGeometry_->SetOccludee(false);
-//    customGeometry_->SetEnabled(true);
 
     SubscribeToEvent(E_MOUSEWHEEL, URHO3D_HANDLER(EditorBrush, HandleWheelMouse));
 }
 
 EditorBrush::~EditorBrush() = default;
 
+void EditorBrush::OnNodeSet(Node* node)
+{
+    if (!node)
+        return;
+
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+    customGeometry_ = node->CreateComponent<CustomGeometry>();
+    customGeometry_->SetNumGeometries(1);
+    customGeometry_->SetMaterial(cache->GetResource<Material>("Materials/DeferredDecal.xml"));
+    customGeometry_->SetOccludee(true);
+    customGeometry_->SetEnabled(true);
+}
+
 void EditorBrush::Update(StaticModel* model, const IntVector2& position, float radius)
 {
-    // node_->SetPosition(Vector3(position.x_, 0.0f, position.z_));
-    selectionImage_->SetPosition(position.x_ - size_ / 2, position.y_ - size_ / 2);
-    // Generate the circle
-//    customGeometry_->BeginGeometry(0, LINE_STRIP);
-//    for (unsigned i = 0; i < 364; i += 4)
-//    {
-//      float angle = i * M_PI / 180;
-//      float x = radius * Cos(angle / 0.0174532925);
-//      float z = radius * Sin(angle / 0.0174532925);
-//      float y = 1.0f;
-//      // float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
-//      customGeometry_->DefineVertex(Vector3(x, y + 0.25, z));
-//      customGeometry_->DefineColor(Color(1, 1, 0));
-//    }
-//    customGeometry_->Commit();
+    if (!node_)
+        return;
 
-//    Octree* octree = node_->GetScene()->GetComponent<Octree>();
-//    if (octree && !addedToOctree_)
+    // selectionImage_->SetPosition(position.x_ - size_ / 2, position.y_ - size_ / 2);
+    Scene* scene = GetScene();
+    Node* camNode = scene->GetChild("Camera");
+    Camera* camera = camNode->GetComponent<Camera>();
+    float z = 0.0f;
+
+    Graphics* g = GetSubsystem<Graphics>();
+    float x = (float)position.x_ / g->GetWidth();
+    float y = (float)position.y_ / g->GetHeight();
+    Vector3 pos = camera->ScreenToWorldPoint(Vector3(x, y, z));
+
+    EditorWindow* editor = static_cast<EditorWindow*>(GetSubsystem<UI>()->GetRootModalElement()->GetChild(String("editor"), false));
+    if (editor)
+    {
+        char str[256];
+        sprintf(str, "<%.2f, %.2f, %.2f>", pos.x_, pos.y_, pos.z_);
+        editor->debugText_.Clear();
+        editor->debugText_.AppendWithFormat("spos <%f, %f> \n wpos %s", x, y, str);
+    }
+    else
+    {
+        URHO3D_LOGERRORF("EditorBrush::Update: editor not found!");
+    }
+
+    node_->SetPosition(pos);
+
+    // Generate the circle
+    customGeometry_->BeginGeometry(0, LINE_STRIP);
+    for (unsigned i = 0; i < 364; i += 4)
+    {
+      float angle = i * M_PI / 180;
+      float x = radius * Cos(angle / 0.0174532925);
+      float z = radius * Sin(angle / 0.0174532925);
+      float y = 0.01f;
+//      float y = terrainComponent.GetHeight(Vector3(position.x + x, 0, position.z + z));
+      customGeometry_->DefineVertex(Vector3(x, y, z));
+      customGeometry_->DefineColor(Color(1, 0, 0));
+    }
+    customGeometry_->Commit();
+
+    Octree* octree = node_->GetScene()->GetComponent<Octree>();
+    if (octree && !addedToOctree_)
+    {
+      octree->AddManualDrawable(customGeometry_);
+      addedToOctree_ = true;
+    }
+}
+
+void EditorBrush::Update(StaticModel* model, const Vector3& position)
+{
+    if (!node_)
+        return;
+
+    node_->SetPosition(position);
+    EditorWindow* editor = static_cast<EditorWindow*>(GetSubsystem<UI>()->GetRootModalElement()->GetChild(String("editor"), false));
+    if (editor)
+    {
+        char str[256];
+        sprintf(str, "<%.2f, %.2f, %.2f>", position.x_, position.y_, position.z_);
+        editor->debugText_.Clear();
+        editor->debugText_.AppendWithFormat("wpos %s", str);
+    }
+    else
+    {
+        URHO3D_LOGERRORF("EditorBrush::Update: editor not found!");
+    }
+
+    // use cube as geom
+    unsigned indexLength = sizeof(cubeIndex) / sizeof(cubeIndex[0]);
+    customGeometry_->BeginGeometry(0, TRIANGLE_LIST);
+    for (unsigned j = 0; j < indexLength; j ++)
+    {
+        customGeometry_->DefineVertex(Vector3(cubeVertices + cubeIndex[j] * 3) * size_);
+        customGeometry_->DefineColor(Color(1, 0, 0));
+    }
+    customGeometry_->Commit();
+
+//    unsigned size = 8;
+//    for(unsigned j = 0; j < size; j++)
 //    {
-//      octree->AddManualDrawable(customGeometry_);
-//      addedToOctree_ = true;
+//        customGeometry_->DefineVertex(Vector3(cubeVertices + j * 3) * vertexScale_);
+//        customGeometry_->DefineColor(Color(1, 0, 0));
 //    }
+
+    Octree* octree = node_->GetScene()->GetComponent<Octree>();
+    if (octree && !addedToOctree_)
+    {
+      octree->AddManualDrawable(customGeometry_);
+      addedToOctree_ = true;
+    }
+}
+
+float EditorBrush::GetModelHeight(StaticModel* model, const Vector3& position, float x, float z)
+{
+    return 0.01f;
 }
 
 void EditorBrush::SetVisible(bool visible)
@@ -121,7 +241,7 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
 {
     using namespace MouseWheel;
     int delta = eventData[P_WHEEL].GetInt();
-    size_ += delta;
+    size_ += delta / 10.0f;
     selectionImage_->SetSize(size_, size_);
 }
 
@@ -129,7 +249,8 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
 /// EditorGuizmo
 EditorGuizmo::EditorGuizmo(Context* context) :
     ImGuiElement(context),
-    buttons_(0)
+    buttons_(0),
+    brush_(nullptr)
 {
     SetDragDropMode(DD_DISABLED);
 
@@ -143,21 +264,22 @@ EditorGuizmo::~EditorGuizmo() = default;
 void EditorGuizmo::RegisterObject(Context* context)
 {
     context->RegisterFactory<EditorGuizmo>(UI_CATEGORY);
+    context->RegisterFactory<EditorBrush>();
 }
 
 void EditorGuizmo::Render(float timeStep)
 {
-    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    Graphics* g = GetSubsystem<Graphics>();
 
     ImGuizmo::BeginFrame();
     ImGuizmo::SetRect(0, 0, g->GetWidth(), g->GetHeight());
     SetPosition(0, 0);
     SetSize(g->GetWidth(), g->GetHeight());
 
-    // Node* cameraNode = scene_->GetNode(cameraNode_);
     Node* cameraNode = cameraNode_;
     if (!cameraNode)
         return;
+
     Camera* camera = cameraNode->GetComponent<Camera>();
     if (!camera)
         return;
@@ -166,7 +288,8 @@ void EditorGuizmo::Render(float timeStep)
 //    debugRenderer->AddFrustum(selectFrustum_, Color::RED, false);
 
     Node* node = scene_->GetNode(selectedNode_);
-    brush_->SetVisible(currentEditMode_ == SELECT_VERTEX && node);
+    if (brush_)
+        brush_->SetVisible(currentEditMode_ == SELECT_VERTEX && node);
 
     if (node)
     {
@@ -195,7 +318,8 @@ void EditorGuizmo::Render(float timeStep)
 
                 debugRenderer->AddBoundingBox(modelBox, Color::YELLOW, false);
 
-                brush_->Update(staticModel, cursorPos, 1.0f);
+                if (brush_)
+                    brush_->Update(staticModel, hitPoint_);
             }
         }
     }
@@ -207,6 +331,9 @@ void EditorGuizmo::Render(float timeStep)
 
 //    Sphere sphereHit;
 //    sphereHit.radius_ = 0.01f;
+//    sphereHit.center_ = hitPoint_;
+//    debugRenderer->AddSphere(sphereHit, Color::RED, false);
+
 //    for(unsigned i = 0; i < hitPositions_.Size(); i++)
 //    {
 //        sphereHit.center_ = hitPositions_[i];
@@ -235,19 +362,19 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
                 SendEvent(E_GUIZMO_NODE_SELECTED, eventData);
             }
         }
-        else if(currentEditMode_ == SELECT_VERTEX)
-        {
-            PODVector<IntVector2> faces = SelectVertex(position);
-            Node* node = scene_->GetNode(selectedNode_);
-            if (node)
-            {
-                EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
-                if (debugModel)
-                {
-                    debugModel->DrawFaces(faces);
-                }
-            }
-        }
+//        else if(currentEditMode_ == SELECT_VERTEX)
+//        {
+//            PODVector<IntVector2> faces = SelectVertex(position);
+//            Node* node = scene_->GetNode(selectedNode_);
+//            if (node)
+//            {
+//                EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+//                if (debugModel)
+//                {
+//                    debugModel->DrawFaces(faces);
+//                }
+//            }
+//        }
     }
 }
 
@@ -259,8 +386,6 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
 //        SetFocusMode(FM_FOCUSABLE);
 //    else
 //        SetFocusMode(FM_NOTFOCUSABLE);
-
-//    // URHO3D_LOGERRORF("EditorGuizmo::OnHover");
 
 //    Node* node = scene_->GetNode(selectedNode_);
 //    if(currentEditMode_ == SELECT_VERTEX && node)
@@ -301,11 +426,14 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 {
     using namespace MouseMove;
 
+//    URHO3D_LOGERRORF("EditorGuizmo::HandleMouseMove");
+
     MouseButtonFlags mouseButtons = MouseButtonFlags(eventData[P_BUTTONS].GetUInt());
     QualifierFlags qualifiers = QualifierFlags(eventData[P_QUALIFIERS].GetUInt());
     IntVector2 DeltaP = IntVector2(eventData[P_DX].GetInt(), eventData[P_DY].GetInt());
     IntVector2 screenPosition = IntVector2(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
-    IntVector2 position = ScreenToElement(screenPosition);
+//    IntVector2 position = ScreenToElement(screenPosition);
+    IntVector2 position = screenPosition;
 
     ImGuiElement::OnHover(position, screenPosition, mouseButtons, qualifiers, nullptr);
 
@@ -314,30 +442,18 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
     else
         SetFocusMode(FM_NOTFOCUSABLE);
 
-    // URHO3D_LOGERRORF("EditorGuizmo::OnHover");
-
     Node* node = scene_->GetNode(selectedNode_);
     if(currentEditMode_ == SELECT_VERTEX && node)
     {
-        PODVector<IntVector2> faces = SelectVertex(position);
-        EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
-//        for(unsigned i = 0; i < faces.Size(); i++)
-//        {
-//            // URHO3D_LOGERRORF("selected vertex face <%i, %i>", faces.At(i).x_, faces.At(i).y_);
-//            if (debugModel)
-//            {
-//                debugModel->DrawFaces(faces);
-//            }
-//        }
+        CalculateHitPoint(position);
 
-        buttons_ = mouseButtons;
-        // if (mouseButtons & MOUSEB_LEFT)
+        if (mouseButtons & MOUSEB_LEFT)
         {
             if (debugModel)
             {
                 debugModel->AddSelectedFaces(faces);
-                // debugModel->DrawFaces(faces);
             }
+            buttons_ = mouseButtons;
         }
     }
 }
@@ -475,15 +591,13 @@ void EditorGuizmo::SelectVertex(const IntRect& screenRect)
 
     fr.UpdatePlanes();
 
-    selectFrustum_ = fr;
-
     Node* node = scene_->GetNode(selectedNode_);
     if (node)
     {
         EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
         if (debugModel)
         {
-            debugModel->SelectVertex(selectFrustum_);
+            debugModel->SelectVertex(fr);
         }
     }
 }
@@ -501,10 +615,11 @@ PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
     ray_ = v0->GetScreenRay(mousePos.x_, mousePos.y_);
 
     PODVector<RayQueryResult> result;
-    RayOctreeQuery query(result, ray_);
+    RayOctreeQuery query(result, ray_, RAY_TRIANGLE);
     octree->Raycast(query);
 
     Node* node = scene_->GetNode(selectedNode_);
+//    URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> selNode <%s>", result.Size(), node->GetName().CString());
     if (result.Size())
     {
         hitPositions_.Clear();
@@ -512,31 +627,38 @@ PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
         {
             RayQueryResult r = result[i];
             Node* hitNode = r.drawable_->GetNode();
-
-//            if (node && node->GetID() == r.node_->GetID())
-//            {
-//                URHO3D_LOGERRORF("rayquery result: node <%s> subObject <%i> subObjectElementIndex <%i>",
-//                                 r.node_->GetName().CString(), r.subObject_, r.subObjectElementIndex_);
-//            }
-
-            if(r.subObjectElementIndex_ == M_MAX_UNSIGNED)
-            {
-                hitPositions_.Push(r.position_);
-            }
-            else
-            {
-                if (node && node->GetID() == r.node_->GetID())
-                {
-                    faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
-                }
-            }
-
             if (hitNode)
             {
                 String name = hitNode->GetName();
                 if (name == "Zone")
                     continue;
             }
+
+            if(r.subObjectElementIndex_ != M_MAX_UNSIGNED)
+            {
+                if (node && node->GetID() == r.node_->GetID())
+                {
+                    hitPositions_.Push(r.position_);
+                    faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
+                }
+            }
+//            URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> hitNode <%s>", result.Size(), hitNode->GetName().CString());
+//            if (node && node->GetID() == r.node_->GetID())
+//            {
+////                URHO3D_LOGERRORF("rayquery result: node <%s> subObject <%i> subObjectElementIndex <%i>",
+////                                 r.node_->GetName().CString(), r.subObject_, r.subObjectElementIndex_);
+//                if(r.subObjectElementIndex_ == M_MAX_UNSIGNED)
+//                {
+//                    hitPositions_.Push(r.position_);
+//                }
+//                else
+//                {
+//                    if (node && node->GetID() == r.node_->GetID())
+//                    {
+//                        faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
+//                    }
+//                }
+//            }
         }
     }
 
@@ -546,7 +668,44 @@ PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
 void EditorGuizmo::CreateBrush()
 {
     Node* brushNode = scene_->CreateTemporaryChild("BrushNode", LOCAL);
-    brush_ = new EditorBrush(context_, brushNode);
+    brush_ = brushNode->CreateComponent<EditorBrush>();
+}
+
+void EditorGuizmo::CalculateHitPoint(const IntVector2& position)
+{
+    Octree* octree = scene_->GetComponent<Octree>();
+    Renderer* renderer = GetSubsystem<Renderer>();
+    Viewport* v0 = renderer->GetViewport(0);
+    IntVector2 mousePos = position;
+    ray_ = v0->GetScreenRay(mousePos.x_, mousePos.y_);
+
+    PODVector<RayQueryResult> result;
+    RayOctreeQuery query(result, ray_, RAY_TRIANGLE);
+    octree->Raycast(query);
+
+    Node* node = scene_->GetNode(selectedNode_);
+    if (result.Size())
+    {
+        for (int i = 0; i < result.Size(); i++)
+        {
+            RayQueryResult r = result[i];
+            Node* hitNode = r.drawable_->GetNode();
+            if (hitNode)
+            {
+                String name = hitNode->GetName();
+                if (name == "Zone")
+                    continue;
+            }
+
+            if(r.subObjectElementIndex_ != M_MAX_UNSIGNED)
+            {
+                if (node && node->GetID() == r.node_->GetID())
+                {
+                    hitPoint_ = r.position_;
+                }
+            }
+        }
+    }
 }
 
 }

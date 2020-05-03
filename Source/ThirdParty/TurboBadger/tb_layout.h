@@ -81,7 +81,7 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBLayout, TBWidget);
 
-	TBLayout(AXIS axis = AXIS_X);
+    TBLayout(TBCore* core, AXIS axis = AXIS_X);
 
 	/** Set along which axis the content should be layouted */
 	virtual void SetAxis(AXIS axis);

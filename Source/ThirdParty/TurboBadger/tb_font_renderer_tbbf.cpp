@@ -68,7 +68,7 @@ public:
 	bool FindGlyphs();
 	GLYPH *FindNext(UCS4 cp, int x);
 
-	virtual TBFontFace *Create(TBFontManager *font_manager, const char *filename,
+    virtual TBFontFace *Create(TBCore* core, TBFontManager *font_manager, const char *filename,
 								const TBFontDescription &font_desc);
 
 	virtual TBFontMetrics GetMetrics();
@@ -262,24 +262,24 @@ GLYPH *TBBFRenderer::FindNext(UCS4 cp, int x)
 	return glyph;
 }
 
-TBFontFace *TBBFRenderer::Create(TBFontManager *font_manager, const char *filename, const TBFontDescription &font_desc)
+TBFontFace *TBBFRenderer::Create(TBCore* core, TBFontManager *font_manager, const char *filename, const TBFontDescription &font_desc)
 {
 	if (!strstr(filename, ".tb.txt"))
 		return nullptr;
 	if (TBBFRenderer *fr = new TBBFRenderer())
 	{
 		if (fr->Load(filename, (int) font_desc.GetSize()))
-			if (TBFontFace *font = new TBFontFace(font_manager->GetGlyphCache(), fr, font_desc))
+            if (TBFontFace *font = new TBFontFace(core, font_manager->GetGlyphCache(), fr, font_desc))
 				return font;
 		delete fr;
 	}
 	return nullptr;
 }
 
-void register_tbbf_font_renderer()
+void register_tbbf_font_renderer(TBCore* core)
 {
 	if (TBBFRenderer *fr = new TBBFRenderer)
-		g_font_manager->AddRenderer(fr);
+        core->font_manager_->AddRenderer(fr);
 }
 
 #endif // TB_FONT_RENDERER_TBBF

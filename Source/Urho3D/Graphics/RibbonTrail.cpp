@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,8 @@
 #include "../Graphics/Material.h"
 #include "../Graphics/OctreeQuery.h"
 #include "../Graphics/Geometry.h"
+#include "../Graphics/DebugRenderer.h"
+#include "../Core/CoreEvents.h"
 #include "../Scene/Scene.h"
 #include "../Scene/SceneEvents.h"
 #include "../Resource/ResourceCache.h"
@@ -196,6 +198,95 @@ void RibbonTrail::HandleScenePostUpdate(StringHash eventType, VariantMap& eventD
         needUpdate_ = true;
         MarkForUpdate();
     }
+
+    DebugDraw();
+}
+
+void RibbonTrail::DebugDraw()
+{
+    DebugRenderer* debug = GetScene()->GetComponent<DebugRenderer>();
+
+    float trailLength = 0.0f;
+    for(unsigned i = 0; i < points_.Size(); ++i)
+    {
+        float length = i == 0 ? 0.0f : (points_[i].position_ - points_[i-1].position_).Length();
+        trailLength += length;
+//        points_[i].elapsedLength_ = trailLength;
+//        if (i < numPoints_ - 1)
+//            points_[i].next_ = &points_[i+1];
+    }
+
+    Node* cameraNode = GetScene()->GetChild("Camera", true);
+    Vector3 cameraPos = cameraNode->GetPosition();
+
+    for (unsigned i = 0; i < points_.Size(); ++i)
+    {
+        TrailPoint& point = points_[i];
+        // TrailPoint& point = *sortedPoints_[i];
+
+        // if (sortedPoints_[i] == &points_.Back()) continue;
+
+        // This point
+//        float factor = SmoothStep(0.0f, trailLength, point.elapsedLength_);
+//        unsigned c = endColor_.Lerp(startColor_, factor).ToUInt();
+//        float width = Lerp(width_ * endScale_, width_ * startScale_, factor);
+
+//        // Next point
+//        float nextFactor = SmoothStep(0.0f, trailLength, point.next_->elapsedLength_);
+//        unsigned nextC = endColor_.Lerp(startColor_, nextFactor).ToUInt();
+//        float nextWidth = Lerp(width_ * endScale_, width_ * startScale_, nextFactor);
+
+        Vector3 pos = point.position_;
+        Vector3 up = (cameraPos - pos).Normalized();
+        Vector3 right = point.forward_.CrossProduct(up).Normalized();
+        Vector3 posright = pos + right * width_;
+        Vector3 posleft = pos - right * width_;
+
+        debug->AddLine(posright, posleft, Color::RED);
+
+        //            return GetTrailPos(iPos, iTangent.xyz, iTangent.w, modelMatrix);
+        //            vec3 GetTrailPos(vec4 iPos, vec3 iFront, float iScale, mat4 modelMatrix)
+        //            {
+        //                vec3 up = normalize(cCameraPos - iPos.xyz);
+        //                vec3 right = normalize(cross(iFront, up));
+        //                return (vec4((iPos.xyz + right * iScale), 1.0) * modelMatrix).xyz;
+        //            }
+
+//        float scale(0.01f);
+//        Vector3 v1 = pos + Vector3(scale, 0.0f, scale);
+//        Vector3 v2 = pos + Vector3(scale, 0.0f, -scale);
+//        Vector3 v3 = pos + Vector3(-scale, 0.0f, -scale);
+//        Vector3 v4 = pos + Vector3(-scale, 0.0f, scale);
+
+//        debug->AddPolygon(v1, v2, v3, v4, Color::RED, false);
+
+        // debug->AddLine(startPos, nextPos, Color::RED);
+        // startPos = nextPos;
+
+
+        // First row
+//        dest[0] = point.position_.x_;
+//        dest[1] = point.position_.y_;
+//        dest[2] = point.position_.z_;
+//        ((unsigned&)dest[3]) = c;
+//        dest[4] = factor;
+//        dest[5] = 0.0f;
+//        dest[6] = point.forward_.x_;
+//        dest[7] = point.forward_.y_;
+//        dest[8] = point.forward_.z_;
+//        dest[9] = width;
+
+//        dest[10] = point.next_->position_.x_;
+//        dest[11] = point.next_->position_.y_;
+//        dest[12] = point.next_->position_.z_;
+//        ((unsigned&)dest[13]) = nextC;
+//        dest[14] = nextFactor;
+//        dest[15] = 0.0f;
+//        dest[16] = point.next_->forward_.x_;
+//        dest[17] = point.next_->forward_.y_;
+//        dest[18] = point.next_->forward_.z_;
+//        dest[19] = nextWidth;
+    }
 }
 
 void RibbonTrail::Update(const FrameInfo &frame)
@@ -300,9 +391,21 @@ void RibbonTrail::UpdateTail(float timeStep)
         // Add more points if path exceeded tail length
         if (path > vertexDistance_)
         {
+            TrailPoint& prevPoint = points_.Back();
+
             TrailPoint newPoint{worldPosition, forwardMotion};
+
             if (node_->GetParent() != nullptr)
                 newPoint.parentPos_ = node_->GetParent()->GetWorldPosition();
+
+//            return GetTrailPos(iPos, iTangent.xyz, iTangent.w, modelMatrix);
+//            vec3 GetTrailPos(vec4 iPos, vec3 iFront, float iScale, mat4 modelMatrix)
+//            {
+//                vec3 up = normalize(cCameraPos - iPos.xyz);
+//                vec3 right = normalize(cross(iFront, up));
+//                return (vec4((iPos.xyz + right * iScale), 1.0) * modelMatrix).xyz;
+//            }
+
 
             points_.Push(newPoint);
 
@@ -445,7 +548,8 @@ void RibbonTrail::UpdateBufferSize()
 {
     numPoints_ = points_.Size();
 
-    unsigned indexPerSegment = 6 + (tailColumn_ - 1) * 6;
+    // unsigned indexPerSegment = 6 + (tailColumn_ - 1) * 6;
+    unsigned indexPerSegment = 4 + (tailColumn_ - 1) * 4;
     unsigned vertexPerSegment = 4 + (tailColumn_ - 1) * 2;
 
     unsigned mask = 0;
@@ -487,33 +591,59 @@ void RibbonTrail::UpdateBufferSize()
 
     while (stripsLen--)
     {
+//        dest[0] = (unsigned short)vertexIndex;
+//        dest[1] = (unsigned short)(vertexIndex + 2);
+//        dest[2] = (unsigned short)(vertexIndex + 1);
+
+//        dest[3] = (unsigned short)(vertexIndex + 1);
+//        dest[4] = (unsigned short)(vertexIndex + 2);
+//        dest[5] = (unsigned short)(vertexIndex + 3);
+
+//        dest += 6;
+//        vertexIndex += 2;
+
+//        for (unsigned i = 0; i < (tailColumn_ - 1); ++i)
+//        {
+//            dest[0] = (unsigned short)vertexIndex;
+//            dest[1] = (unsigned short)(vertexIndex + 2);
+//            dest[2] = (unsigned short)(vertexIndex + 1);
+
+//            dest[3] = (unsigned short)(vertexIndex + 1);
+//            dest[4] = (unsigned short)(vertexIndex + 2);
+//            dest[5] = (unsigned short)(vertexIndex + 3);
+
+//            dest += 6;
+//            vertexIndex += 2;
+//        }
+
+//       vertexIndex += 2;
+
         dest[0] = (unsigned short)vertexIndex;
-        dest[1] = (unsigned short)(vertexIndex + 2);
-        dest[2] = (unsigned short)(vertexIndex + 1);
+        dest[1] = (unsigned short)(vertexIndex + 1);
+        dest[2] = (unsigned short)(vertexIndex + 2);
 
-        dest[3] = (unsigned short)(vertexIndex + 1);
-        dest[4] = (unsigned short)(vertexIndex + 2);
-        dest[5] = (unsigned short)(vertexIndex + 3);
+        dest[3] = (unsigned short)(vertexIndex + 3);
+//        dest[4] = (unsigned short)(vertexIndex + 2);
+//        dest[5] = (unsigned short)(vertexIndex + 3);
 
-        dest += 6;
-        vertexIndex += 2;
+        dest += 4;
+        vertexIndex += 4;
 
         for (unsigned i = 0; i < (tailColumn_ - 1); ++i)
         {
             dest[0] = (unsigned short)vertexIndex;
-            dest[1] = (unsigned short)(vertexIndex + 2);
-            dest[2] = (unsigned short)(vertexIndex + 1);
+            dest[1] = (unsigned short)(vertexIndex + 1);
+//            dest[2] = (unsigned short)(vertexIndex + 1);
 
-            dest[3] = (unsigned short)(vertexIndex + 1);
-            dest[4] = (unsigned short)(vertexIndex + 2);
-            dest[5] = (unsigned short)(vertexIndex + 3);
+//            dest[3] = (unsigned short)(vertexIndex + 1);
+//            dest[4] = (unsigned short)(vertexIndex + 2);
+//            dest[5] = (unsigned short)(vertexIndex + 3);
 
-            dest += 6;
+            dest += 2;
             vertexIndex += 2;
         }
 
-       vertexIndex += 2;
-
+       // vertexIndex += 2;
     }
 
     indexBuffer_->Unlock();
@@ -539,11 +669,13 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
     // if tail path is short and nothing to draw, exit
     if (numPoints_ < 2)
     {
-        batches_[0].geometry_->SetDrawRange(TRIANGLE_LIST, 0, 0, false);
+        // batches_[0].geometry_->SetDrawRange(TRIANGLE_LIST, 0, 0, false);
+        batches_[0].geometry_->SetDrawRange(TRIANGLE_STRIP, 0, 0, false);
         return;
     }
 
-    unsigned indexPerSegment = 6 + (tailColumn_ - 1) * 6;
+    // unsigned indexPerSegment = 6 + (tailColumn_ - 1) * 6;
+    unsigned indexPerSegment = 4 + (tailColumn_ - 1) * 4;
     unsigned vertexPerSegment = 4 + (tailColumn_ - 1) * 2;
 
     // Fill sorted points vector
@@ -571,7 +703,7 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
             points_[i].next_ = &points_[i+1];
     }
 
-    batches_[0].geometry_->SetDrawRange(TRIANGLE_LIST, 0, (numPoints_ - 1) * indexPerSegment, false);
+    batches_[0].geometry_->SetDrawRange(TRIANGLE_STRIP, 0, (numPoints_ - 1) * indexPerSegment, false);
     bufferDirty_ = false;
     forceUpdate_ = false;
 

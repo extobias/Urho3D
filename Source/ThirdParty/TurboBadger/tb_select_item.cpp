@@ -21,7 +21,7 @@ namespace tb {
 class TBSimpleLayoutItemWidget : public TBLayout, private TBWidgetListener
 {
 public:
-	TBSimpleLayoutItemWidget(TBID image, TBSelectItemSource *source, const char *str);
+    TBSimpleLayoutItemWidget(TBCore* core, TBID image, TBSelectItemSource *source, const char *str);
 	~TBSimpleLayoutItemWidget();
 	virtual bool OnEvent(const TBWidgetEvent &ev);
 private:
@@ -37,8 +37,12 @@ private:
 
 // == TBSimpleLayoutItemWidget ==============================================================================
 
-TBSimpleLayoutItemWidget::TBSimpleLayoutItemWidget(TBID image, TBSelectItemSource *source, const char *str)
-	: m_source(source)
+TBSimpleLayoutItemWidget::TBSimpleLayoutItemWidget(TBCore *core, TBID image, TBSelectItemSource *source, const char *str)
+    : TBLayout (core)
+    , m_textfield(core)
+    , m_image(core)
+    , m_image_arrow(core)
+    , m_source(source)
 	, m_menu(nullptr)
 {
 	SetSkinBg(TBIDC("TBSelectItem"));
@@ -149,26 +153,26 @@ bool TBSelectItemSource::Filter(int index, const char *filter)
 	return false;
 }
 
-TBWidget *TBSelectItemSource::CreateItemWidget(int index, TBSelectItemViewer *viewer)
+TBWidget *TBSelectItemSource::CreateItemWidget(int index, TBSelectItemViewer *viewer, tb::TBCore *core)
 {
 	const char *string = GetItemString(index);
 	TBSelectItemSource *sub_source = GetItemSubSource(index);
 	TBID image = GetItemImage(index);
 	if (sub_source || image)
 	{
-		if (TBSimpleLayoutItemWidget *itemwidget = new TBSimpleLayoutItemWidget(image, sub_source, string))
+        if (TBSimpleLayoutItemWidget *itemwidget = new TBSimpleLayoutItemWidget(core, image, sub_source, string))
 			return itemwidget;
 	}
 	else if (string && *string == '-')
 	{
-		if (TBSeparator *separator = new TBSeparator)
+        if (TBSeparator *separator = new TBSeparator(core))
 		{
 			separator->SetGravity(WIDGET_GRAVITY_ALL);
 			separator->SetSkinBg(TBIDC("TBSelectItem.separator"));
 			return separator;
 		}
 	}
-	else if (TBTextField *textfield = new TBTextField)
+    else if (TBTextField *textfield = new TBTextField(core))
 	{
 		textfield->SetSkinBg("TBSelectItem");
 		textfield->SetText(string);

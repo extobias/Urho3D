@@ -47,6 +47,7 @@
 #include "HelloTBUI.h"
 
 #include <Urho3D/DebugNew.h>
+#include <animation/tb_widget_animation.h>
 
 URHO3D_DEFINE_APPLICATION_MAIN(HelloTBUI)
 
@@ -92,45 +93,29 @@ void HelloTBUI::Start()
 
     TBUIElement::RegisterObject(context_);
 
-    if(1)
+    if (1)
     {
+        // animation test
+//        animTest_ = new TBUIElement(context_);
+//        animTest_->LoadResources();
+//        animTest_->LoadWidgets("Data/TB/layout/loading_screen.txt");
+//        // animTest_->SetPosition(-windowWidth / 8, 0);
+//        animTest_->SetSize(windowWidth / 2, windowHeight);
+//        GetSubsystem<UI>()->GetRootModalElement()->AddChild(animTest_);
+
         tbelement = new TBUIElement(context_);
-        // tbelement->SetEnableAnchor(true);
         tbelement->LoadResources();
+        tbelement->LoadWidgets("Data/TB/layout/game_stats.txt");
+        tbelement->SetPosition(0, 0);
+        tbelement->SetSize(windowWidth / 2, windowHeight);
+        GetSubsystem<UI>()->GetRoot()->AddChild(tbelement);
 
-        // tbelement->SetPosition(0, 0);
-        // tbelement->SetSize(windowWidth / 2, windowHeight);
-        tbelement->SetMinSize(windowWidth / 2, windowHeight);
-        tbelement->SetAlignment(HA_LEFT, VA_BOTTOM);
-
-        TBRootWidget* stateUI = new TBRootWidget(context_);
-        stateUI->SetGravity(WIDGET_GRAVITY_ALL);
-        // stateUI->SetGravity(WIDGET_GRAVITY_LEFT | WIDGET_GRAVITY_TOP);
-        tbelement->AddStateWidget(stateUI, true, true);
-        tbelement->LoadWidgets(stateUI, "Data/TB/layout/debug_screen.txt");
-
-        tbelement->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyDown));
-        tbelement->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement, &TBUIElement::HandleKeyUp));
-        // tbelement->SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
-        uiRoot_->AddChild(tbelement);
-
-        TBUIElement* tbelement2 = new TBUIElement(context_);
-        // tbelement2->SetEnableAnchor(true);
-        // tbelement2->LoadResources();
-        // tbelement2->SetPosition(windowWidth / 2, 0);
-        // tbelement2->SetPosition(512, 0);
-        tbelement2->SetMinSize(windowWidth / 4, windowHeight);
-        tbelement2->SetAlignment(HA_RIGHT, VA_TOP);
-
-        TBRootWidget* stateUI2 = new TBRootWidget(context_);
-        stateUI2->SetGravity(WIDGET_GRAVITY_ALL);
-        tbelement2->AddStateWidget(stateUI2, true);
-        tbelement2->LoadWidgets(stateUI2, "Data/TB/layout/debug_screen.txt");
-
-        tbelement2->SubscribeToEvent(E_KEYDOWN, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyDown));
-        tbelement2->SubscribeToEvent(E_KEYUP, new Urho3D::EventHandlerImpl<TBUIElement>(tbelement2, &TBUIElement::HandleKeyUp));
-
-        uiRoot_->AddChild(tbelement2);
+        tbelement2= new TBUIElement(context_);
+        tbelement2->LoadResources();
+        tbelement2->LoadWidgets("Data/TB/layout/game_stats.txt");
+        tbelement2->SetPosition(windowWidth / 2, 0);
+        tbelement2->SetSize(windowWidth / 2, windowHeight);
+        GetSubsystem<UI>()->GetRoot()->AddChild(tbelement2);
     }
     else
     {
@@ -157,8 +142,6 @@ void HelloTBUI::Start()
 //        uiRoot_->AddChild(button2);
     }
 
-    uiRoot_->SetSize(windowWidth, windowHeight);
-
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
 
     // Initialize Window
@@ -171,6 +154,8 @@ void HelloTBUI::Start()
     // CreateDraggableFish();
 
     CreateScene();
+
+    SetupViewport();
     // Set the mouse mode to use in the sample
     Sample::InitMouseMode(MM_FREE);
 }
@@ -256,24 +241,43 @@ void HelloTBUI::CreateScene()
     camera->SetFarClip(300.0f);
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
+    cameraNode_->SetPosition(Vector3(-5.0f, 0.0f, 0.0f));
 }
 
 void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 {
     int key = eventData[KeyDown::P_KEY].GetInt();
 
-    if (key == KEY_F1)
-        GetSubsystem<Console>()->Toggle();
+//    if (key == KEY_F1)
+//        GetSubsystem<Console>()->Toggle();
 
     if (key == KEY_F4)
     {
 #ifdef TB_RUNTIME_DEBUG_INFO
-        ShowDebugInfoSettingsWindow(tbelement->GetRoot());
+        ShowDebugInfoSettingsWindow(tbelement->root_);
 #else
         URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
 #endif
     }
+
+    if (key == KEY_A)
+    {
+        // animTest_->core_->widgets_animation_manager::AbortAnimations();
+        // TBWidgetsAnimationManager::AbortAnimations(animTest_->root_);
+        ANIMATION_CURVE curve = ANIMATION_CURVE_BEZIER;
+        double duration = 1500;
+
+        TBContainer* cont = animTest_->root_->GetWidgetByIDAndType<TBContainer>(TBIDC("load_container"));
+        TBRect rect = cont->GetRect();
+
+        if (TBAnimationObject *anim = new TBWidgetAnimationRect(cont, rect.Offset(0, -rect.y - rect.h), rect))
+        {
+                TBAnimationManager::StartAnimation(anim, curve, duration);
+        }
+
+    }
+
+    Sample::HandleKeyDown(eventType, eventData);
 }
 
 void HelloTBUI::InitControls()
@@ -383,6 +387,15 @@ void HelloTBUI::CreateDraggableFish()
     SubscribeToEvent(draggableFish, E_DRAGEND, URHO3D_HANDLER(HelloTBUI, HandleDragEnd));
 }
 
+void HelloTBUI::SetupViewport()
+{
+    auto* renderer = GetSubsystem<Renderer>();
+
+    // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
+    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
+    renderer->SetViewport(0, viewport);
+}
+
 void HelloTBUI::HandleDragBegin(StringHash eventType, VariantMap& eventData)
 {
     // Get UIElement relative position where input (touch or click) occurred (top-left = IntVector2(0,0))
@@ -402,6 +415,9 @@ void HelloTBUI::HandleDragEnd(StringHash eventType, VariantMap& eventData) // Fo
 
 void HelloTBUI::HandleClosePressed(StringHash eventType, VariantMap& eventData)
 {
+    tbelement->Remove();
+    tbelement2->Remove();
+
     if (GetPlatform() != "Web")
         engine_->Exit();
 }

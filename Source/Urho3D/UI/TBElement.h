@@ -11,16 +11,9 @@
 using namespace tb;
 using namespace Urho3D;
 
-//namespace tb
-//{
-//class TBWidgetLister;
-//class TBWidget;
-//class TBBitmap;
-//class TBRendererBatcher;
-//}
-
 namespace Urho3D
 {
+
 class TBRendererUrho3D;
 class TBUIElement;
 
@@ -32,8 +25,17 @@ static const StringHash E_TBUI_JOYSTICK_REMOVE("TB_UI_JOYSTICK_REMOVE");
 
 static const StringHash P_BUTTON_ID("button_id");
 static const StringHash P_BUTTON_TEXT("button_text");
+static const StringHash P_CONTROLLER_ID("controller_id");
 static const StringHash P_WIDGET_ID("widget_id");
 static const StringHash P_WIDGET_VALUE("widget_value");
+
+class NavMapping
+{
+public:
+    void Insert(int first, int second) { mapKey_.Insert(Pair<int, int>(first, second)); }
+
+    HashMap<int, int> mapKey_;
+};
 
 class TBRootWidget : public TBWidget, public TBWidgetListener, public Object
 {
@@ -41,8 +43,10 @@ class TBRootWidget : public TBWidget, public TBWidgetListener, public Object
 
 public:
 
-    TBRootWidget(Context* context);
-    
+
+    TBRootWidget(Context* context, TBCore* core);
+//    virtual ~TBRootWidget();
+
     virtual bool OnEvent(const TBWidgetEvent &ev) override;
 
     virtual void OnWidgetFocusChanged(TBWidget *widget, bool focused) override;
@@ -125,13 +129,15 @@ public:
 
     TBUIElement(Context* context);
 
-    ~TBUIElement() override;
+    virtual ~TBUIElement() override;
 
     static void RegisterObject(Context* context);
     
     void AddStateWidget(TBWidget* stateWidget, bool bottom = false, bool fullscreen = true);
 
-    void LoadWidgets(TBWidget* stateWidget, String filename);
+    void LoadWidgets(TBWidget* stateWidget, const String& filename);
+
+    void LoadWidgets(const String& filename);
 
     void LoadResources();
 
@@ -164,17 +170,23 @@ public:
 
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
-    void HandleScreenMode(StringHash eventType, VariantMap& eventData);
-
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
 
     void HandleRawEvent(StringHash eventType, VariantMap& args);
 
-    TBRootWidget* GetRoot() const { return root_; }
+    void SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap);
+
+    bool InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata = -1);
+
+    TBRootWidget* root_;
 
 private:
+
+    MODIFIER_KEYS GetModifierKeys();
+
+    bool ShouldEmulateTouchEvent();
 
     void HandleFocused(StringHash /*eventType*/, VariantMap& eventData);
 
@@ -182,11 +194,22 @@ private:
 
     int FindKeyMap(int key);
 
-    TBRootWidget* root_;
+    int FindQualMap(int key);
+
+    TBCore* core_;
 
     TBRendererUrho3D* renderer_;
 
     HashMap<int, int> mapKey_;
+
+    HashMap<int, int> mapQual_;
+
+    int mouse_x = 0;
+    int mouse_y = 0;
+    bool key_alt = false;
+    bool key_ctrl = false;
+    bool key_shift = false;
+    bool key_super = false;
 };
 
 

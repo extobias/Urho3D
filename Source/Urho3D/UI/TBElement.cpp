@@ -35,13 +35,12 @@ static const int KEY_QUAL_OFFSET = 0x8000;
  - el Context global no es una buena idea.
  - crear tantas texturas tampoco es buena idea.
  - el teclado tiene que andar en android
-        - la solucion es medio chota
+- la solucion es medio chota (en gral)
  */
-
 
 // Register tbbf font renderer
 #ifdef TB_FONT_RENDERER_TBBF
-    void register_tbbf_font_renderer();
+    void register_tbbf_font_renderer(TBCore* core);
 //    register_tbbf_font_renderer();
 #endif
 
@@ -52,6 +51,62 @@ namespace Urho3D
 {
 
 extern const char* UI_CATEGORY;
+
+/*------------ TBRootWidget ------------*/
+TBRootWidget::TBRootWidget(Context* context, TBCore* core)
+    : TBWidget (core)
+    , Object(context)
+{
+}
+
+//TBRootWidget::~TBRootWidget()
+//{
+//}
+
+bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
+{
+    if(ev.type == EVENT_TYPE_CLICK)
+    {
+        VariantMap eventData;
+        eventData[P_BUTTON_ID] = ev.target->GetID();
+        eventData[P_BUTTON_TEXT] = ev.target->GetText().CStr();
+        eventData[P_CONTROLLER_ID] = ev.user_data;
+
+        TBEditField *edit = TBSafeCast<TBEditField>(ev.target);
+        if(edit && !edit->GetReadOnly())
+            GetSubsystem<Input>()->SetScreenKeyboardVisible(true);
+
+        SendEvent(E_TBUI_BUTTON_RELEASED, eventData);
+
+        return true;
+    }
+    else if(ev.type == EVENT_TYPE_CHANGED)
+    {
+        VariantMap eventData;
+        eventData[P_WIDGET_ID] =  ev.target->GetID();
+        eventData[P_WIDGET_VALUE] = ev.target->GetValueDouble();
+
+        SendEvent(E_TBUI_WIDGET_CHANGED, eventData);
+        return true;
+    }
+
+    return false;
+}
+
+void TBRootWidget::OnWidgetFocusChanged(TBWidget *widget, bool focused)
+{
+    // URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: widget <%s> edit focus <%u>", widget->GetID().debug_string.CStr(), focused);
+    // esto es para desplegar el teclado en android
+    // cuando un editfield obtiene el foco
+    if (TBEditField *edit = TBSafeCast<TBEditField>(widget))
+    {
+        // URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: edit focus <%u>", focused);
+        if (!edit->GetReadOnly())
+        {
+            GetSubsystem<Input>()->SetScreenKeyboardVisible(focused);
+        }
+    }
+}
 
 /*------------ TBBitmapUrho3D ------------*/
 TBBitmapUrho3D::TBBitmapUrho3D(TBRendererUrho3D* renderer)
@@ -94,6 +149,7 @@ void TBBitmapUrho3D::SetData(uint32 *data)
 
 /*------------ TBRendererUrho3D ------------*/
 TBRendererUrho3D::TBRendererUrho3D()
+    : TBRendererBatcher()
 {
 }
 
@@ -103,16 +159,14 @@ TBRendererUrho3D::~TBRendererUrho3D()
 
 void TBRendererUrho3D::BeginPaint(int render_target_w, int render_target_h)
 {
-    // URHO3D_LOGERRORF("---------- begin paint -----------");
     TBRendererBatcher::BeginPaint(render_target_w, render_target_h);
 
-    // clipRect_.Set(clipRect_.x, clipRect_.y, render_target_w, render_target_h);
+    clipRect_.Set(clipRect_.x, clipRect_.y, render_target_w, render_target_h);
 }
 
 void TBRendererUrho3D::EndPaint()
 {
     TBRendererBatcher::EndPaint();
-    // URHO3D_LOGERRORF("---------- end paint -----------");
 }
 
 TBBitmap *TBRendererUrho3D::CreateBitmap(int width, int height, uint32 *data)
@@ -135,7 +189,7 @@ void TBRendererUrho3D::RenderBatch(TBRendererBatcher::Batch *batch)
     SharedPtr<Texture2D> texture = bitmap ? bitmap->GetTexture() : dummy;
 
     IntRect scissor(clipRect_.x, clipRect_.y, clipRect_.x + clipRect_.w, clipRect_.y + clipRect_.h);
-    UIBatch uiBatch(0, BLEND_ALPHA, scissor, texture, &vertexData_);
+    UIBatch uiBatch(nullptr, BLEND_ALPHA, scissor, texture, &vertexData_);
 
     // color 4 unsigned byte (o 1 float)
     // uv coord 2 float
@@ -185,23 +239,21 @@ TBUIElement::TBUIElement(Context* context)
     SetFocusMode(FM_FOCUSABLE);
 
     renderer_ = new TBRendererUrho3D();
-    if (!tb_core_is_initialized())
+//    if (!tb_core_is_initialized())
     {
-        tb_core_init(renderer_);
+        core_ = new TBCore();
+        core_->tb_core_init(renderer_);
     }
 
-    root_ = new TBRootWidget(context);
+    root_ = new TBRootWidget(context, core_);
     root_->SetAutoFocusState(true);
+    root_->SetZ(WIDGET_Z_TOP);
 
     CreateKeyMap();
 
-    SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(TBUIElement, HandleScreenMode));
     SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(TBUIElement, HandlePostUpdate));
 
     SubscribeToEvent(E_BEGINFRAME, URHO3D_HANDLER(TBUIElement, HandleBeginFrame));
-
-//    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(TBUIElement, HandleKeyDown));
-//    SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(TBUIElement, HandleKeyUp));
 
     SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
 
@@ -211,10 +263,13 @@ TBUIElement::TBUIElement(Context* context)
 
 TBUIElement::~TBUIElement()
 {
-    if (tb_core_is_initialized())
-    {
-        tb_core_shutdown();
-    }
+    // FIXME must delete? apparently is auto deleted by tb
+//    delete root_;
+//    root_ = nullptr;
+
+    core_->tb_core_shutdown();
+    delete core_;
+    core_ = nullptr;
 
     if(renderer_)
     {
@@ -247,9 +302,19 @@ void TBUIElement::AddStateWidget(TBWidget* stateWidget, bool bottom, bool fullsc
     root_->AddChild(stateWidget, bottom ? WIDGET_Z_BOTTOM : WIDGET_Z_TOP);
 }
 
-void TBUIElement::LoadWidgets(TBWidget* stateWidget, String filename)
+void TBUIElement::LoadWidgets(TBWidget* stateWidget, const String& filename)
 {
-    if(!g_widgets_reader->LoadFile(stateWidget, filename.CString()))
+    if(!core_->widgets_reader_->LoadFile(stateWidget, filename.CString()))
+    {
+        URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
+    }
+}
+
+void TBUIElement::LoadWidgets(const String& filename)
+{
+    root_->SetGravity(WIDGET_GRAVITY_ALL);
+    core_->widgets_reader_->core_ = core_;
+    if(!core_->widgets_reader_->LoadFile(root_, filename.CString()))
     {
         URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
     }
@@ -257,34 +322,37 @@ void TBUIElement::LoadWidgets(TBWidget* stateWidget, String filename)
 
 void TBUIElement::LoadResources()
 {
-    TBWidgetListener::AddGlobalListener(root_);
+//    if (TBUIElement::resourcesLoaded)
+//        return;
 
-    if(!g_tb_lng->Load("Data/TB/language/lng_en.tb.txt"))
+    TBWidgetListener::AddGlobalListener(core_, root_);
+
+    if(!core_->tb_lng_->Load("Data/TB/language/lng_en.tb.txt"))
     {
         URHO3D_LOGINFO("cannot load language");
     }
 
     // Load the default skin, and override skin that contains the graphics specific to the demo.
     // , "Data/TB/demo_skin/skin.tb.txt")
-    if(!g_tb_skin->Load("Data/TB/skin/skin.tb.txt", "Data/TB/skin/skin.sk.txt"))
+    if(!core_->tb_skin_->Load("Data/TB/skin/skin.tb.txt", "Data/TB/skin/skin.sk.txt"))
         URHO3D_LOGINFO("cannot load skin");
 
 #ifdef TB_FONT_RENDERER_TBBF
-    register_tbbf_font_renderer();
+    register_tbbf_font_renderer(core_);
 #endif
 
     // Add a font to the font manager.
-    g_font_manager->AddFontInfo("Data/TB/font/segoe_white_with_shadow.tb.txt", "Segoe");
-    g_font_manager->AddFontInfo("Data/TB/font/neon.tb.txt", "Neon");
+    core_->font_manager_->AddFontInfo("Data/TB/font/segoe_white_with_shadow.tb.txt", "Segoe");
+    core_->font_manager_->AddFontInfo("Data/TB/font/neon.tb.txt", "Neon");
 
     // Set the default font description for widgets to one of the fonts we just added
     TBFontDescription fd;
     fd.SetID(TBIDC("Segoe"));
-    fd.SetSize(g_tb_skin->GetDimensionConverter()->DpToPx(14));
-    g_font_manager->SetDefaultFontDescription(fd);
+    fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(14));
+    core_->font_manager_->SetDefaultFontDescription(fd);
 
     // Create the font now.
-    TBFontFace *font = g_font_manager->CreateFontFace(g_font_manager->GetDefaultFontDescription());
+    TBFontFace *font = core_->font_manager_->CreateFontFace(core_->font_manager_->GetDefaultFontDescription());
 
     // Give the root widget a background skin
     root_->SetSkinBg("background_solid");
@@ -306,9 +374,6 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
     {
         UIBatch& batch = renderer_->GetBatch(i);
         batch.element_ = this;
-//        batch.scissor_.top_ += screenPosition_.y_;
-//        batch.scissor_.left_ += screenPosition_.x_ - 500;
-        // batch.scissor_.bottom_ += screenPosition_.y_;
 
         unsigned batchStart = batch.vertexStart_;
         unsigned batchEnd = batch.vertexEnd_;
@@ -321,14 +386,15 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
         vertexData.Resize(newSize);
         float* dest = &(vertexData.At(begin));
 
-        // batch.vertexStart_ = begin;
-        // batch.vertexEnd_ = vertexData.Size();
+        // change vertex start/end on each tbuielement
+        batch.vertexStart_ = begin;
+        batch.vertexEnd_ = newSize;
 
-        // float* src = &(batch.vertexData_->At(batchStart));
-        // PODVector<float>* ptrVec = batch.vertexData_;
-        // URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
-        // memcpy(&vertexData[begin], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
-        //memcpy(dest, src, batchSize * sizeof(float));
+//        // float* src = &(batch.vertexData_->At(batchStart));
+//        // PODVector<float>* ptrVec = batch.vertexData_;
+//        // URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
+//        memcpy(&vertexData[begin], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
+//        //memcpy(dest, src, batchSize * sizeof(float));
 
         unsigned offset = 0;
         #define VER_COL(r, g, b, a) (((a)<<24) + ((b)<<16) + ((g)<<8) + r)
@@ -337,17 +403,27 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
 //            dest[offset + 0] += screenPosition_.x_;
 //            dest[offset + 1] += screenPosition_.y_;
 
-//            dest[offset + 0] = batch.vertexData_->At(j + 0) + screenPosition_.x_;
-//            dest[offset + 1] = batch.vertexData_->At(j + 1) + screenPosition_.y_;
-            dest[offset + 0] = batch.vertexData_->At(j + 0);
-            dest[offset + 1] = batch.vertexData_->At(j + 1);
-            dest[offset + 2] = batch.vertexData_->At(j + 2);
-            float col   = batch.vertexData_->At(j + 3);
-            color.FromHSL(colorStep * i, 100.0f, 50.0f);
-            // unsigned col = color.ToUInt();
-            ((unsigned&)dest[offset + 3]) = (unsigned&)col;
-            dest[offset + 4] = batch.vertexData_->At(j + 4);
-            dest[offset + 5] = batch.vertexData_->At(j + 5);
+            float v = batch.vertexData_->At(j + 0);
+            dest[offset + 0] = v;
+            v = batch.vertexData_->At(j + 1);
+            dest[offset + 1] = v;
+            v = batch.vertexData_->At(j + 2);
+            dest[offset + 2] = v;
+            v = batch.vertexData_->At(j + 3);
+            ((unsigned&)dest[offset + 3]) = (unsigned&)v;
+            v = batch.vertexData_->At(j + 4);
+            dest[offset + 4] = v;
+            v = batch.vertexData_->At(j + 5);
+            dest[offset + 5] = v;
+//            dest[offset + 0] = batch.vertexData_->At(j + 0);
+//            dest[offset + 1] = batch.vertexData_->At(j + 1);
+//            dest[offset + 2] = batch.vertexData_->At(j + 2);
+//            float col   = batch.vertexData_->At(j + 3);
+//            color.FromHSL(colorStep * i, 100.0f, 50.0f);
+//            // unsigned col = color.ToUInt();
+//            ((unsigned&)dest[offset + 3]) = (unsigned&)col;
+//            dest[offset + 4] = batch.vertexData_->At(j + 4);
+//            dest[offset + 5] = batch.vertexData_->At(j + 5);
 
             offset += VERTEX_SIZE;
         }
@@ -358,14 +434,7 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
     renderer_->Clear();
 }
 
-int mouse_x = 0;
-int mouse_y = 0;
-bool key_alt = false;
-bool key_ctrl = false;
-bool key_shift = false;
-bool key_super = false;
-
-MODIFIER_KEYS GetModifierKeys()
+MODIFIER_KEYS TBUIElement::GetModifierKeys()
 {
     MODIFIER_KEYS code = TB_MODIFIER_NONE;
     if (key_alt)    code |= TB_ALT;
@@ -375,7 +444,7 @@ MODIFIER_KEYS GetModifierKeys()
     return code;
 }
 
-static bool ShouldEmulateTouchEvent()
+bool TBUIElement::ShouldEmulateTouchEvent()
 {
     // Used to emulate that mouse events are touch events when alt, ctrl and shift are pressed.
     // This makes testing a lot easier when there is no touch screen around :)
@@ -426,6 +495,15 @@ int TBUIElement::FindKeyMap(int key)
     return TB_KEY_UNDEFINED;
 }
 
+int TBUIElement::FindQualMap(int key)
+{
+    auto it = mapQual_.Find(key);
+    if (it != mapQual_.End())
+        return it->second_;
+
+    return TB_KEY_UNDEFINED;
+}
+
 void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
 {
     root_->InvokePointerDown(position.x_, position.y_, 0, GetModifierKeys(), ShouldEmulateTouchEvent());
@@ -458,11 +536,14 @@ void TBUIElement::OnPositionSet(const IntVector2& newPosition)
 void TBUIElement::OnResize(const IntVector2& newSize, const IntVector2& delta)
 {
     root_->SetSize(newSize.x_, newSize.y_);
+
+    MarkDirty();
 }
 
 bool TBUIElement::IsWithinScissor(const IntRect& currentScissor)
 {
-    return true;
+    /// \todo Implement properly, for now just checks visibility flag
+    return visible_;
 }
 
 const IntVector2& TBUIElement::GetScreenPosition() const
@@ -486,13 +567,13 @@ void TBUIElement::Update(float timeStep)
 
 void TBUIElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
 {
-    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    Graphics* g = GetSubsystem<Graphics>();
 
     //renderer_->BeginPaint(GetWidth(), GetHeight());
     // renderer_->BeginPaint(root_->GetRect().w, root_->GetRect().h);
     renderer_->BeginPaint(g->GetWidth(), g->GetHeight());
 
-    root_->InvokePaint(TBWidget::PaintProps());
+    root_->InvokePaint(TBWidget::PaintProps(core_));
 
     if (TBAnimationManager::HasAnimationsRunning())
     {
@@ -509,13 +590,6 @@ void TBUIElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
     root_->InvokeProcess();
 }
 
-void TBUIElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
-{
-//    using namespace ScreenMode;
-//    int w = eventData[P_WIDTH].GetInt();
-//    int h = eventData[P_HEIGHT].GetInt();
-}
-
 void TBUIElement::HandleFocused(StringHash /*eventType*/, VariantMap& eventData)
 {
     if (GetSubsystem<UI>()->GetUseScreenKeyboard())
@@ -530,6 +604,12 @@ void TBUIElement::HandleKeyDown(StringHash eventType, VariantMap &eventData)
 
     int tbModifier = FindKeyMap(KEY_QUAL_OFFSET + qualifiers);
     int tbSpecial = FindKeyMap(key);
+
+    // asign qualifier to remapped key
+    int qualMod = FindQualMap(key);
+    if (qualMod != TB_KEY_UNDEFINED)
+        tbModifier = qualMod;
+
     if (tbSpecial != TB_KEY_UNDEFINED)
         key = TB_KEY_UNDEFINED;
 
@@ -561,71 +641,85 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
         int x = event->motion.x;
         int y = event->motion.y;
 
+        if(!IsInside(IntVector2(x, y), true))
+        {
+            return;
+        }
         mouse_x = x;
         mouse_y = y;
 
-        TBWidget *widget;
-        if (widget = root_->GetWidgetAt(x, y, true))
+        TBWidget *widget; 
+        // TB needs coords in element space
+//        IntVector2 elemPos = ScreenToElement(IntVector2(x, y));
+        IntVector2 elemPos = IntVector2(x, y);
+        if (widget = root_->GetWidgetAt(elemPos.x_, elemPos.y_, true))
         {
-            // root_->InvokePointerMove(x, y, GetModifierKeys(), ShouldEmulateTouchEvent());
-            widget->ConvertFromRoot(x, y);
-            TBWidgetEvent ev(EVENT_TYPE_POINTER_MOVE, x, y, ShouldEmulateTouchEvent(), GetModifierKeys());
-            if (widget->InvokeEvent(ev))
+            if (root_->InvokePointerMove(elemPos.x_, elemPos.y_, GetModifierKeys(), ShouldEmulateTouchEvent()))
             {
                 args[SDLRawInput::P_CONSUMED] = true;
                 return;
             }
+            // pass event directly to target widet only to get if event is consumed
+//            x = elemPos.x_;
+//            y = elemPos.y_;
+//            widget->ConvertFromRoot(x, y);
+//            TBWidgetEvent ev(EVENT_TYPE_POINTER_MOVE, x, y, ShouldEmulateTouchEvent());
+//            if (widget->InvokeEvent(ev))
+//            {
+//                args[SDLRawInput::P_CONSUMED] = true;
+//                return;
+//            }
         }
     }
-    else if (event->type == SDL_CONTROLLERDEVICEADDED || event->type == SDL_JOYDEVICEADDED)
-    {
-        if (event->type == SDL_CONTROLLERDEVICEADDED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller added <%i>", event->cdevice.which);
-        }
-        else if (event->type == SDL_JOYDEVICEADDED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: joystick added <%i>", event->jdevice.which);
-        }
-    }
-    else if (event->type == SDL_CONTROLLERDEVICEREMOVED || event->type == SDL_JOYDEVICEREMOVED)
-    {
-        if (event->type == SDL_CONTROLLERDEVICEREMOVED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->cdevice.which);
-        }
-        else if (event->type == SDL_JOYDEVICEREMOVED)
-        {
-            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->jdevice.which);
-        }
-    }
-    else if (event->type == SDL_CONTROLLERDEVICEREMAPPED)
-    {
-        URHO3D_LOGERRORF("tbuielement.handleeventraw: controller remapped");
-    }
+//    else if (event->type == SDL_CONTROLLERDEVICEADDED || event->type == SDL_JOYDEVICEADDED)
+//    {
+//        if (event->type == SDL_CONTROLLERDEVICEADDED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller added <%i>", event->cdevice.which);
+//        }
+//        else if (event->type == SDL_JOYDEVICEADDED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: joystick added <%i>", event->jdevice.which);
+//        }
+//    }
+//    else if (event->type == SDL_CONTROLLERDEVICEREMOVED || event->type == SDL_JOYDEVICEREMOVED)
+//    {
+//        if (event->type == SDL_CONTROLLERDEVICEREMOVED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->cdevice.which);
+//        }
+//        else if (event->type == SDL_JOYDEVICEREMOVED)
+//        {
+//            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->jdevice.which);
+//        }
+//    }
+//    else if (event->type == SDL_CONTROLLERDEVICEREMAPPED)
+//    {
+//        URHO3D_LOGERRORF("tbuielement.handleeventraw: controller remapped");
+//    }
 
-    // FIXME this is navigation control, but should not have effect while focus is on
-    // edit alike field
-    if (event->type == SDL_JOYHATMOTION)
-    {
-        int key = 9;
-        SPECIAL_KEY special = TB_KEY_TAB;
+//    // FIXME this is navigation control, but should not have effect while focus is on
+//    // edit alike field
+//    if (event->type == SDL_JOYHATMOTION)
+//    {
+//        int key = 9;
+//        SPECIAL_KEY special = TB_KEY_TAB;
 
-        if (event->jhat.value & SDL_HAT_RIGHT)
-        {
-            root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
+//        if (event->jhat.value & SDL_HAT_RIGHT)
+//        {
+//            root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
 
-            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-            //    event->type, event->jhat, event->jaxis.value);
-        }
-        else if (event->jhat.value & SDL_HAT_LEFT)
-        {
-            root_->InvokeKey(key, special, TB_SHIFT, true);
+//            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+//            //    event->type, event->jhat, event->jaxis.value);
+//        }
+//        else if (event->jhat.value & SDL_HAT_LEFT)
+//        {
+//            root_->InvokeKey(key, special, TB_SHIFT, true);
 
-            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-            //    event->type, event->jhat, event->jaxis.value);
-        }
-    }
+//            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
+//            //    event->type, event->jhat, event->jaxis.value);
+//        }
+//    }
 
     //if (event->type == SDL_JOYAXISMOTION)
     //{
@@ -660,53 +754,40 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
     //}
 }
 
-TBRootWidget::TBRootWidget(Context* context)
-    : Urho3D::Object(context)
+void TBUIElement::SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap)
 {
-}
-
-bool TBRootWidget::OnEvent(const TBWidgetEvent &ev)
-{
-    if(ev.type == EVENT_TYPE_CLICK)
+    auto it = keyMap.mapKey_.Begin();
+    for (; it != keyMap.mapKey_.End(); it++)
     {
-        Urho3D::VariantMap eventData;
-        eventData[P_BUTTON_ID] = ev.target->GetID();
-        eventData[P_BUTTON_TEXT] = ev.target->GetText().CStr();
-
-        TBEditField *edit = TBSafeCast<TBEditField>(ev.target);
-        if(edit && !edit->GetReadOnly())
-            GetSubsystem<Input>()->SetScreenKeyboardVisible(true);
-
-        SendEvent(E_TBUI_BUTTON_RELEASED, eventData);
-
-        return true;
-    }
-    else if(ev.type == EVENT_TYPE_CHANGED)
-    {
-        Urho3D::VariantMap eventData;
-        eventData[P_WIDGET_ID] =  ev.target->GetID();
-        eventData[P_WIDGET_VALUE] = ev.target->GetValueDouble();
-
-        SendEvent(E_TBUI_WIDGET_CHANGED, eventData);
-        return true;
-    }
-
-    return false;
-}
-
-void TBRootWidget::OnWidgetFocusChanged(TBWidget *widget, bool focused)
-{
-    URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: widget <%s> edit focus <%u>", widget->GetID().debug_string.CStr(), focused);
-    // esto es para desplegar el teclado en android
-    // cuando un editfield obtiene el foco
-    if (TBEditField *edit = TBSafeCast<TBEditField>(widget))
-    {
-        // URHO3D_LOGERRORF("TBRootWidget::OnWidgetFocusChanged: edit focus <%u>", focused);
-        if (!edit->GetReadOnly())
+        auto it1 = mapKey_.Find(it->first_);
+        if (it1 != mapKey_.End())
         {
-            GetSubsystem<Input>()->SetScreenKeyboardVisible(focused);
+             it1->second_ = it->second_;
+        }
+        else
+        {
+            mapKey_.Insert(Pair<int, int>(it->first_, it->second_));
         }
     }
+
+    auto qit = qualMap.mapKey_.Begin();
+    for (; qit != qualMap.mapKey_.End(); qit++)
+    {
+        auto it1 = mapQual_.Find(qit->first_);
+        if (it1 != mapQual_.End())
+        {
+             it1->second_ = qit->second_;
+        }
+        else
+        {
+            mapQual_.Insert(Pair<int, int>(qit->first_, qit->second_));
+        }
+    }
+}
+
+bool TBUIElement::InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata)
+{
+    return root_->InvokeKey(key, (SPECIAL_KEY)special, (MODIFIER_KEYS)modifier, down, userdata);
 }
 
 } // end namespace Urho3D
@@ -735,7 +816,7 @@ private:
 
 TBFile *TBFile::Open(const char *filename, TBFileMode mode)
 {
-    Urho3D::File *f = 0;
+    Urho3D::File *f = nullptr;
     String filepath = g_programDir + filename;
     // URHO3D_LOGINFOF("TBFile::Open: filepath <%s>", filepath.CString());
     switch (mode)
@@ -747,7 +828,7 @@ TBFile *TBFile::Open(const char *filename, TBFileMode mode)
             break;
     }
     if (!f)
-        return NULL;
+        return nullptr;
 
     TBUrho3DFile *tbf = new TBUrho3DFile(f);
     if(!tbf)

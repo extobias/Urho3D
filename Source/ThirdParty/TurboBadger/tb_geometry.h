@@ -6,7 +6,7 @@
 #ifndef TB_GEOMETRY_H
 #define TB_GEOMETRY_H
 
-#include "tb_core.h"
+// #include "tb_core.h"
 
 namespace tb {
 

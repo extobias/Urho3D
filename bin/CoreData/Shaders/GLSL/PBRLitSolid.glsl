@@ -66,6 +66,7 @@ void VS()
         vTexCoord = GetTexCoord(iTexCoord);
     #endif
 
+    
     #ifdef PERPIXEL
         // Per-pixel forward lighting
         vec4 projWorldPos = vec4(worldPos, 1.0);
@@ -133,7 +134,7 @@ void PS()
         float metalness = roughMetalSrc.g + cMetallic;
     #else
         float roughness = cRoughness;
-        float metalness = cMetallic;
+        float metalness = cMetallic; 
     #endif
 
     roughness *= roughness;
@@ -165,7 +166,7 @@ void PS()
     #else
         float fogFactor = GetFogFactor(vWorldPos.w);
     #endif
-
+    
     #if defined(PERPIXEL)
         // Per-pixel forward lighting
         vec3 lightColor;
@@ -207,11 +208,10 @@ void PS()
             finalColor += cMatEmissiveColor;
             gl_FragColor = vec4(GetFog(finalColor, fogFactor), diffColor.a);
         #else
-            //gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
-            gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
         #endif
     #elif defined(DEFERRED)
-        // Fill deferred G-buffer
+//      Fill deferred G-buffer
         const vec3 spareData = vec3(0,0,0); // Can be used to pass more data to deferred renderer
         gl_FragData[0] = vec4(specColor, spareData.r);
         gl_FragData[1] = vec4(diffColor.rgb, spareData.g);

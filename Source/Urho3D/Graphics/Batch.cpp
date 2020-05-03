@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2019 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -248,7 +248,11 @@ void Batch::Prepare(View* view, Camera* camera, bool setModelTransform, bool all
                 12 * numWorldTransforms_);
         }
         else
+        {
             graphics->SetShaderParameter(VSP_MODEL, *worldTransform_);
+            Matrix3x4 modelInv = (*worldTransform_).Inverse();
+            graphics->SetShaderParameter(VSP_MODELINV, modelInv);
+        }
 
         // Set the orientation for billboards, either from the object itself or from the camera
         if (geometryType_ == GEOM_BILLBOARD)
@@ -684,7 +688,10 @@ void BatchGroup::Draw(View* view, Camera* camera, bool allowDepthWrite) const
             for (unsigned i = 0; i < instances_.Size(); ++i)
             {
                 if (graphics->NeedParameterUpdate(SP_OBJECT, instances_[i].worldTransform_))
+                {
                     graphics->SetShaderParameter(VSP_MODEL, *instances_[i].worldTransform_);
+                    graphics->SetShaderParameter(VSP_MODELINV, instances_[i].worldTransform_->Inverse());
+                }
 
                 graphics->Draw(geometry_->GetPrimitiveType(), geometry_->GetIndexStart(), geometry_->GetIndexCount(),
                     geometry_->GetVertexStart(), geometry_->GetVertexCount());

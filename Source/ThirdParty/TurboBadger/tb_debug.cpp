@@ -31,45 +31,48 @@ public:
 	TBOBJECT_SUBCLASS(DebugSettingsWindow, TBWindow);
 
 	DebugSettingsWindow(TBWidget *root)
+        : TBWindow(root->core_)
 	{
 		SetText("Debug settings");
-		g_widgets_reader->LoadData(this,
-			"TBLayout: axis: y, distribution: available, position: left\n"
-			"	TBLayout: id: 'container', axis: y, size: available\n"
-			"	TBTextField: text: 'Event output:'\n"
-			"	TBEditField: id: 'output', gravity: all, multiline: 1, wrap: 0\n"
-			"		lp: pref-height: 100dp");
+        // FIXME: update core before calling any load* function
+        core_->widgets_reader_->core_ = core_;
+        core_->widgets_reader_->LoadData(this,
+            "TBLayout: id: 'debug_window', axis: y, distribution: available, position: left\n"
+            "	TBLayout: id: 'container', axis: y, size: available, debug: 1\n"
+            "	TBTextField: text: 'Event output:'\n"
+            "	TBEditField: id: 'output', gravity: all, multiline: 1, wrap: 0\n"
+            "		lp: pref-height: 100dp");
 
-		AddCheckbox(TBDebugInfo::LAYOUT_BOUNDS, "Layout bounds");
-		AddCheckbox(TBDebugInfo::LAYOUT_CLIPPING, "Layout clipping");
-		AddCheckbox(TBDebugInfo::LAYOUT_PS_DEBUGGING, "Layout size calculation");
-		AddCheckbox(TBDebugInfo::RENDER_BATCHES, "Render batches");
-		AddCheckbox(TBDebugInfo::RENDER_SKIN_BITMAP_FRAGMENTS, "Render skin bitmap fragments");
-		AddCheckbox(TBDebugInfo::RENDER_FONT_BITMAP_FRAGMENTS, "Render font bitmap fragments");
+        AddCheckbox(TBDebugInfo::LAYOUT_BOUNDS, "Layout bounds");
+        AddCheckbox(TBDebugInfo::LAYOUT_CLIPPING, "Layout clipping");
+        AddCheckbox(TBDebugInfo::LAYOUT_PS_DEBUGGING, "Layout size calculation");
+        AddCheckbox(TBDebugInfo::RENDER_BATCHES, "Render batches");
+        AddCheckbox(TBDebugInfo::RENDER_SKIN_BITMAP_FRAGMENTS, "Render skin bitmap fragments");
+        AddCheckbox(TBDebugInfo::RENDER_FONT_BITMAP_FRAGMENTS, "Render font bitmap fragments");
 
-		output = GetWidgetByIDAndType<TBEditField>(TBIDC("output"));
+        output = GetWidgetByIDAndType<TBEditField>(TBIDC("output"));
 
 		TBRect bounds(0, 0, root->GetRect().w, root->GetRect().h);
 		SetRect(GetResizeToFitContentRect().CenterIn(bounds).MoveIn(bounds).Clip(bounds));
 
 		root->AddChild(this);
 
-		TBWidgetListener::AddGlobalListener(this);
+        TBWidgetListener::AddGlobalListener(core_, this);
 	}
 
 	~DebugSettingsWindow()
 	{
-		TBWidgetListener::RemoveGlobalListener(this);
+        TBWidgetListener::RemoveGlobalListener(core_, this);
 	}
 
 	void AddCheckbox(TBDebugInfo::SETTING setting, const char *str)
 	{
-		TBCheckBox *check = new TBCheckBox();
+        TBCheckBox *check = new TBCheckBox(core_);
 		check->SetValue(g_tb_debug.settings[setting]);
 		check->data.SetInt(setting);
 		check->SetID(TBIDC("check"));
 
-		TBClickLabel *label = new TBClickLabel();
+        TBClickLabel *label = new TBClickLabel(core_);
 		label->SetText(str);
 		label->GetContentRoot()->AddChild(check, WIDGET_Z_BOTTOM);
 
@@ -91,22 +94,22 @@ public:
 	virtual void OnPaint(const PaintProps &paint_props)
 	{
 		// Draw stuff to the right of the debug window
-		g_renderer->Translate(GetRect().w, 0);
+        core_->renderer_->Translate(GetRect().w, 0);
 
 		// Draw skin bitmap fragments
 		if (TB_DEBUG_SETTING(RENDER_SKIN_BITMAP_FRAGMENTS))
-			g_tb_skin->Debug();
+            core_->tb_skin_->Debug();
 
 		// Draw font glyph fragments (the font of the hovered widget)
 		if (TB_DEBUG_SETTING(RENDER_FONT_BITMAP_FRAGMENTS))
 		{
-			TBWidget *widget = TBWidget::hovered_widget ? TBWidget::hovered_widget : TBWidget::focused_widget;
-			g_font_manager->GetFontFace(widget ?
+            TBWidget *widget = core_->hovered_widget ? core_->hovered_widget : core_->focused_widget;
+            core_->font_manager_->GetFontFace(widget ?
 										widget->GetCalculatedFontDescription() :
-										g_font_manager->GetDefaultFontDescription())->Debug();
+                                        core_->font_manager_->GetDefaultFontDescription())->Debug();
 		}
 
-		g_renderer->Translate(-GetRect().w, 0);
+        core_->renderer_->Translate(-GetRect().w, 0);
 	}
 
 	TBStr GetIDString(const TBID &id)

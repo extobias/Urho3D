@@ -47,11 +47,23 @@ public:
 
     void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
-    void SetCameraNode(Node* node) { cameraNode_ = node; }
+    void SetCameraNode(Node* node);
 
     void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
 
+    void HandleUpdate(StringHash eventType, VariantMap& eventData);
+
+    void CreateGuizmo();
+
+    void SetVisible(bool visible);
+
+    String debugText_;
+
+    float plotVars_[4][100];
+    int plotVarsOffset_[4];
+
 private:
+
     void AttributeEdit(Serializable *c);
 
     void AddComponentMenu(Node *node);
@@ -67,6 +79,8 @@ private:
     int FindMaterial(const String& name);
 
     void DrawChild(Node* node, int &i, int &nodeClicked);
+
+    void MoveCamera(float timeStep);
 
     Node* cameraNode_;
 
@@ -93,6 +107,10 @@ private:
     Vector3 hitPosition_{ Vector3::ZERO };
 
     EditorMode mode_ { SELECT_OBJECT };
+
+    float yaw_;
+
+    float pitch_;
 };
 
 }
