@@ -45,6 +45,7 @@
 #include <Urho3D/UI/EditorWindow.h>
 #include <Urho3D/UI/EditorGuizmo.h>
 #include <Urho3D/Physics/RigidBody.h>
+#include <Urho3D/Physics/PhysicsWorld.h>
 
 #include "StaticScene.h"
 
@@ -90,7 +91,13 @@ void StaticScene::CreateScene()
     scene_->CreateComponent<Octree>();
     scene_->CreateComponent<DebugRenderer>();
 
-    engine_->SetMaxFps(60.0f);
+    engine_->SetMaxFps(30.0f);
+
+    PhysicsWorld* pw = scene_->CreateComponent<PhysicsWorld>(LOCAL);
+    // pw->SetDebugRenderer(scene->GetComponent<DebugRenderer>());
+    pw->SetFps(30.0f);
+    pw->SetInterpolation(false);
+    pw->SetMaxSubSteps(-1);
 
 //    SharedPtr<File> file = cache->GetFile("Scenes/pbremissive-test.xml");
     // GM->scene_.Reset();

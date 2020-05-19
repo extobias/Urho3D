@@ -70,13 +70,13 @@ void HelloTBUI::Start()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
     Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
+    // g->Maximize();
 
     int windowWidth = g->GetWidth();
     int windowHeight = g->GetHeight();
     // Set the loaded style as default style
     uiRoot_->SetDefaultStyle(style);
-    uiRoot_->SetLayout(LM_HORIZONTAL);
-    uiRoot_->SetSize(windowWidth, windowHeight);
+    uiRoot_->SetLayout(LM_VERTICAL);
 
     //ImGuiElement* imgui = new ImGuiElement(context_);
     //ImGuiElement::RegisterObject(context_);
