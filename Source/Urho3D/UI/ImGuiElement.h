@@ -65,8 +65,6 @@ public:
     void HandleRawEvent(StringHash eventType, VariantMap& args);
 
     bool IsWithinScissor(const IntRect& currentScissor);
-    // soon to be removed
-    virtual void SetScene(Scene* scene) { scene_ = scene; }
 
 protected:
 

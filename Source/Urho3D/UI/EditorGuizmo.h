@@ -49,7 +49,7 @@ public:
 
     void HandleMouseMove(StringHash eventType, VariantMap& eventData);
 
-    void SetScene(Scene* scene) override;
+    void SetScene(Scene* scene);
 
     int buttons_;
 

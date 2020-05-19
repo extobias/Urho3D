@@ -166,6 +166,9 @@ void EditorWindow::MoveCamera(float timeStep)
     if (focusElement)
         return;
 
+    if (!cameraNode_)
+        return;
+
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
@@ -245,8 +248,25 @@ void EditorWindow::SetVisible(bool visible)
         guizmo_->SetVisible(visible);
 }
 
+void EditorWindow::SetPlotVar(int index, float value)
+{
+    plotVars_[index][plotVarsOffset_[index]] = value;
+    plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
+}
+
+void EditorWindow::SetScene(Scene* scene)
+{
+    scene_ = scene;
+
+    if (guizmo_)
+        guizmo_->SetScene(scene);
+}
+
 void EditorWindow::Render(float timeStep)
 {
+    if (!scene_)
+        return;
+
     static bool closable = true;
     ImGui::Begin("Scene Inspector", &closable);
 
@@ -444,7 +464,11 @@ void EditorWindow::Render(float timeStep)
     for(int i = 0; i < 4; i++)
     {
         char buf[32];
-        sprintf(buf, "var-%i-%.2f", i, plotVars_[i][99]);
+        int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
+        sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
+
+//        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
+
         ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -10000.0f, 10000.0f, ImVec2(0, 60));
     }
 

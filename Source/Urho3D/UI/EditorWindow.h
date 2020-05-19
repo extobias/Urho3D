@@ -57,9 +57,14 @@ public:
 
     void SetVisible(bool visible);
 
+    void SetPlotVar(int index, float value);
+
+    void SetScene(Scene* scene);
+
     String debugText_;
 
     float plotVars_[4][100];
+
     int plotVarsOffset_[4];
 
 private:

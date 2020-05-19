@@ -269,6 +269,9 @@ void EditorGuizmo::RegisterObject(Context* context)
 
 void EditorGuizmo::Render(float timeStep)
 {
+    if (!scene_)
+        return;
+
     Graphics* g = GetSubsystem<Graphics>();
 
     ImGuizmo::BeginFrame();
@@ -424,6 +427,9 @@ void EditorGuizmo::HandleNodeSelected(StringHash eventType, VariantMap& eventDat
 
 void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 {
+    if (!scene_)
+        return;
+
     using namespace MouseMove;
 
 //    URHO3D_LOGERRORF("EditorGuizmo::HandleMouseMove");
@@ -463,7 +469,8 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 
 void EditorGuizmo::SetScene(Scene* scene)
 {
-    ImGuiElement::SetScene(scene);
+    // ImGuiElement::SetScene(scene);
+    scene_ = scene;
 
     CreateBrush();
 }
