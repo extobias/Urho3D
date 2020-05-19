@@ -66,10 +66,6 @@ void StaticScene::Start()
     // Execute base class startup
     Sample::Start();
 
-    EditorWindow::RegisterObject(context_);
-    ImGuiElement::RegisterObject(context_);
-    EditorGuizmo::RegisterObject(context_);
-
     // Create the scene content
     CreateScene();
 
@@ -96,58 +92,85 @@ void StaticScene::CreateScene()
 
     engine_->SetMaxFps(60.0f);
 
-    SharedPtr<File> file = cache->GetFile("Scenes/pbremissive-test.xml");
-
+//    SharedPtr<File> file = cache->GetFile("Scenes/pbremissive-test.xml");
     // GM->scene_.Reset();
-    scene_->LoadAsyncXML(file);
+//    scene_->LoadAsyncXML(file);
 
-//    // zone
-//    Node* zoneNode = scene_->CreateChild("Zone");
-//    Zone* zone = zoneNode->CreateComponent<Zone>();
-//    zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
-//    zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
-//    Node* zoneChild = zoneNode->CreateChild("ZoneChild");
+    // zone
+    Node* zoneNode = scene_->CreateChild("Zone");
+    Zone* zone = zoneNode->CreateComponent<Zone>();
+    zone->SetBoundingBox(BoundingBox(Vector3(-200.0f, -10.0f, -200.0f), Vector3(200, 10.0f, 200.0f)));
+    zone->SetAmbientColor(Color(0.5f, 0.5f, 0.5f));
+    Node* zoneChild = zoneNode->CreateChild("ZoneChild");
 
-//    // ground
-//    Node* planeNode = scene_->CreateChild("Plane");
-//    planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
-//    StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
-//    planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
-//    // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
-//    planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    // ground
+    Node* planeNode = scene_->CreateChild("Plane");
+    planeNode->SetScale(Vector3(100.0f, 1.0f, 100.0f));
+    StaticModel* planeObject = planeNode->CreateComponent<StaticModel>();
+    planeObject->SetModel(cache->GetResource<Model>("Models/Plane.mdl"));
+    // planeObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiled.xml"));
+    planeObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Sand.xml"));
 
-//    // light
-//    Node* lightNode = scene_->CreateChild("DirectionalLight");
-//    lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
-//    lightNode->SetRotation(Quaternion(90.0f, Vector3::RIGHT));
-//    // lightNode->SetDirection(Vector3(0.6f, -1.0f, 0.8f));
-//    light_ = lightNode->CreateComponent<Light>();
-//    light_->SetLightType(LIGHT_DIRECTIONAL);
+    // light
+    Node* lightNode = scene_->CreateChild("DirectionalLight");
+    lightNode->SetPosition(Vector3(0.0f, 1.0f, -1.0f));
+    lightNode->SetRotation(Quaternion(90.0f, Vector3::RIGHT));
+    // lightNode->SetDirection(Vector3(0.6f, -1.as0f, 0.8f));
+    light_ = lightNode->CreateComponent<Light>();
+    light_->SetLightType(LIGHT_DIRECTIONAL);
+    light_->SetRadius(10.0f);
+    light_->SetFov(50.0f);
+    light_->SetBrightness(1500.0f);
+    light_->SetUsePhysicalValues(true);
+    light_->SetTemperature(6500.0f);
+    light_->SetCastShadows(true);
+    light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+
+//    Node* pointlightNode = scene_->CreateChild("PointLight");
+//    pointlightNode->SetPosition(Vector3(-1.0f, 1.0f, -1.0f));
+//    light_ = pointlightNode->CreateComponent<Light>();
+//    light_->SetLightType(LIGHT_POINT);
 //    light_->SetRadius(10.0f);
 //    light_->SetFov(50.0f);
-//    light_->SetBrightness(5000.0f);
+//    light_->SetBrightness(35000.0f);
 //    light_->SetUsePhysicalValues(true);
 //    light_->SetTemperature(6500.0f);
 //    light_->SetCastShadows(true);
-//    light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
+//    light_->SetColor(Color(0.0f, 1.0f, 0.0f, 1.0f));
 
-//    // sky
-//    //Node* skyNode = scene_->CreateChild("Sky");
-//    //skyNode->SetScale(500.0f); // The scale actually does not matter
-//    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
-//    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-//    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+//    Node* pointlightNode2 = scene_->CreateChild("PointLight2");
+//    pointlightNode2->SetPosition(Vector3(-1.0f, 1.0f, -3.0f));
+//    light_ = pointlightNode2->CreateComponent<Light>();
+//    light_->SetLightType(LIGHT_POINT);
+//    light_->SetRadius(10.0f);
+//    light_->SetFov(50.0f);
+//    light_->SetBrightness(35000.0f);
+//    light_->SetUsePhysicalValues(true);
+//    light_->SetTemperature(6500.0f);
+//    light_->SetCastShadows(true);
+//    light_->SetColor(Color(1.0f, 0.0f, 0.0f, 1.0f));
 
-//    // particles
-//    Node* emitterNode = scene_->CreateChild("Emitter");
-//    emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
-//    auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
-//    effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
-//    effectMaterial_ = effect_->GetMaterial();
+    // sky
+    Node* skyNode = scene_->CreateChild("Sky");
+    skyNode->SetScale(500.0f); // The scale actually does not matter
+    Skybox* skybox = skyNode->CreateComponent<Skybox>();
+    skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+
+    // particles
+    Node* emitterNode = scene_->CreateChild("Emitter");
+    emitterNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+    auto* particleEmitter = emitterNode->CreateComponent<ParticleEmitter>();
+    particleEmitter->SetNumParticles(20);
+    effect_ = cache->GetResource<ParticleEffect>("Particle/SmokeTrail.xml");
+    effectMaterial_ = effect_->GetMaterial();
 //    effect_->SetEmitterType(EmitterType::EMITTER_SPHEREVOLUME);
-//    effect_->SetEmitterSize(Vector3::ONE);
-//    particleEmitter->SetEffect(effect_);
-//    particleEmitter->SetEmitting(false);
+//    effect_->SetEmitterSize(Vector3(0.1f, 0.0f, 0.0f));
+//    effect_->SetMinEmissionRate(2.0f);
+//    effect_->SetMaxEmissionRate(10.0f);
+    effect_->SetSorted(true);
+    particleEmitter->SetEffect(effect_);
+    particleEmitter->SetEmitting(true);
 
 //    const unsigned NUM_OBJECTS = 5;
 //    for (unsigned i = 0; i < NUM_OBJECTS; ++i)
@@ -182,11 +205,13 @@ void StaticScene::CreateScene()
     // camera->SetAspectRatio()
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
+    cameraNode_->SetPosition(Vector3(-0.036f, 1.0f, -0.374f));
     // cameraNode_->LookAt(Vector3::ZERO);
-    cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
+    cameraNode_->SetRotation(Quaternion(0.984f, 0.082f, 0.155f, -0.013f));
     // Set an initial position for the front camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
+
+    editor_->SetCameraNode(cameraNode_);
+    editor_->SetScene(scene_);
 
 //    CreateDepthTexture();
     Graphics* graphics = GetSubsystem<Graphics>();
@@ -202,7 +227,7 @@ void StaticScene::CreateScene()
     // Because the rear viewport is rather small, disable occlusion culling from it. Use the camera's
     // "view override flags" for this. We could also disable eg. shadows or force low material quality
     // if we wanted
-    rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
+//    rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
 
 //    SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
 //    SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
@@ -239,26 +264,8 @@ void StaticScene::CreateDepthTexture()
 
 void StaticScene::CreateInstructions()
 {
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    UI* ui = GetSubsystem<UI>();
-
-    EditorWindow* imgui = new EditorWindow(context_);
-    imgui->SetName("editor");
-    imgui->SetCameraNode(cameraNode_);
-    ui->GetRoot()->AddChild(imgui);
-    imgui->SetScene(scene_);
-
-    EditorGuizmo* guizmo = new EditorGuizmo(context_);
-    guizmo->SetName("guizmo");
-    guizmo->SetCameraNode(cameraNode_);
-    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
-    ui->GetRoot()->AddChild(guizmo);
-    guizmo->SetPosition(0, 0);
-    guizmo->SetScene(scene_);
-
-    imgui->BringToFront();
-    imgui->SetPriority(100);
-    imgui->SetGuizmo(guizmo);
+//    ResourceCache* cache = GetSubsystem<ResourceCache>();
+//    UI* ui = GetSubsystem<UI>();
 
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
@@ -290,6 +297,7 @@ void StaticScene::SetupViewport()
     //RenderPath* effectRenderPath = viewport->GetRenderPath();
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferredHWDepth.xml"));
+
     // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
 //     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepthWithCopy.xml"));
 
@@ -418,7 +426,7 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     float timeStep = eventData[P_TIMESTEP].GetFloat();
 
     // Move the camera, scale movement with time step
-    MoveCamera(timeStep);
+    // MoveCamera(timeStep);
 
 //    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
 //    editorModel_->DrawDebugGeometry(debugRenderer, true);

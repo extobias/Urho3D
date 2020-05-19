@@ -61,27 +61,32 @@ private:
     /// Subscribe to application-wide logic update events.
     void SubscribeToEvents();
 
-	void CreateDepthTexture();
+    void CreateDepthTexture();
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
-	void HandleRenderUpdate(StringHash eventType, VariantMap& eventData);
+    void HandleRenderUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
-	void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
+    void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
 
-	void UpdateRenderPath(float timeStep);
+    void UpdateRenderPath(float timeStep);
 
-	int commandIndexSaoCopy_;
-	int commandIndexSaoMain_;
+    int commandIndexSaoCopy_;
+    int commandIndexSaoMain_;
     bool aoOnly_;
 
-	Material* effectMaterial_;
-	ParticleEffect* effect_;
-	Light* light_;
+    Material* effectMaterial_;
+
+    ParticleEffect* effect_;
+
+    Light* light_;
+
     CollisionShape* meshShape;
+
     EditorModelDebug* editorModel_;
+
     SharedPtr<Node> rearCameraNode_;
 
     float cameraDistance_;
