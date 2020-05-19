@@ -231,15 +231,26 @@ void PS()
             float spec = GetSpecular(normal, cCameraPosPS - vWorldPos.xyz, lightDir, cMatSpecColor.a);
             finalColor = diff * lightColor * (diffColor.rgb + spec * specColor * cLightColor.a);
         #else
-            finalColor = diff * lightColor * diffColor.rgb;
+            // finalColor = diff * lightColor * diffColor.rgb;
+            finalColor = diffColor.rgb;
         #endif
 
         // gl_FragColor = vec4(GetLitFog(finalColor, 1), diffColor.a);
-        gl_FragColor = vec4(vec3(diff), diffColor.a);
+        gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+//         discard;
+         //gl_FragColor = vec4(vec3(diff.r, 0.0, 0.0), diffColor.a);
+    #elif defined(DEFERRED)
+//      Fill deferred G-buffer
+        const vec3 spareData = vec3(1.0,1.0,1.0); // Can be used to pass more data to deferred renderer
+        gl_FragData[0] = vec4(cMatSpecColor.rgb, spareData.r);
+        gl_FragData[1] = vec4(diffColor.rgb, spareData.g);
+        gl_FragData[2] = vec4(normal, spareData.b);
+        gl_FragData[3] = vec4(EncodeDepth(vWorldPos.w), 1.0);
+//         gl_FragData[3] = vec4(1.0);
     #else
         // Ambient & per-vertex lighting
         vec3 finalColor = vVertexLight * diffColor.rgb;
-
-        gl_FragColor = vec4(GetFog(finalColor, fogFactor), diffColor.a);
+        // gl_FragColor = vec4(GetFog(finalColor, fogFactor), diffColor.a);
+        gl_FragColor = vec4(0.9, 0.9, 0.9, 1.0);
     #endif
 }

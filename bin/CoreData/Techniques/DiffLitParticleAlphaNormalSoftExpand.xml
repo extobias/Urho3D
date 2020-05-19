@@ -1,5 +1,6 @@
 <technique vs="LitParticleNormal" ps="LitParticleNormal" vsdefines="NORMALMAP VERTEXCOLOR" psdefines="DIFFMAP NORMALMAP VERTEXCOLOR" >
-    <pass name="alpha" depthwrite="false" depthtest="false" blend="alpha" />
-    <pass name="litalpha" depthwrite="false" depthtest="false" blend="alpha" />
-    <pass name="shadow" vs="Shadow" ps="Shadow" />
+     <!-- ambient light -->
+    <pass name="base" depthwrite="true" depthtest="false" />
+    <!-- lighten up to gbuffer -->
+    <pass name="deferred" depthwrite="true" depthtest="false" blend="replace" psdefines="DEFERRED" /> 
 </technique>
