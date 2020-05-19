@@ -600,6 +600,10 @@ public:
     void SetVBO(unsigned object);
     /// Bind a UBO, avoiding redundant operation. Used only on OpenGL.
     void SetUBO(unsigned object);
+    /// Debug mark start
+    void PushDebugMark(const String& message);
+    /// Debug mark end
+    void PopDebugMark();
 
     /// Return the API-specific alpha texture format.
     static unsigned GetAlphaFormat();

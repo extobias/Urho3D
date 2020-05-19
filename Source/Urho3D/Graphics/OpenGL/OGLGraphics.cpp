@@ -2462,6 +2462,16 @@ void Graphics::SetUBO(unsigned object)
 #endif
 }
 
+void Graphics::PushDebugMark(const String& message)
+{
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, message.CString());
+}
+
+void Graphics::PopDebugMark()
+{
+    glPopDebugGroup();
+}
+
 unsigned Graphics::GetAlphaFormat()
 {
 #ifndef GL_ES_VERSION_2_0

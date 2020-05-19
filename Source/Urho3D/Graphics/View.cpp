@@ -1587,8 +1587,14 @@ void View::ExecuteRenderPathCommands()
                             graphics_->ClearParameterSources();
                             passCommand_ = &command;
                         }
+                        // glPushDebugGroup(GLenum source, GLuint id, GLsizei length, const GLchar * message)
+                        String debugMsg = command.pass_;
+                        debugMsg.AppendWithFormat(" %i", command.passIndex_);
+                        graphics_->PushDebugMark(debugMsg);
 
                         queue.Draw(this, camera_, command.markToStencil_, false, allowDepthWrite);
+
+                        graphics_->PopDebugMark();
 
                         passCommand_ = nullptr;
                     }
@@ -1659,7 +1665,8 @@ void View::ExecuteRenderPathCommands()
                     URHO3D_PROFILE(RenderLightVolumes);
 
                     SetRenderTargets(command);
-                    for (Vector<LightBatchQueue>::Iterator i = actualView->lightQueues_.Begin(); i != actualView->lightQueues_.End(); ++i)
+                    unsigned count = 0;
+                    for (Vector<LightBatchQueue>::Iterator i = actualView->lightQueues_.Begin(); i != actualView->lightQueues_.End(); ++i, count++)
                     {
                         // If reusing shadowmaps, render each of them before the lit batches
                         if (renderer_->GetReuseShadowMaps() && NeedRenderShadowMap(*i))
@@ -1676,11 +1683,17 @@ void View::ExecuteRenderPathCommands()
                             passCommand_ = &command;
                         }
 
+                        String debugMsg = "lightvol";
+                        debugMsg.AppendWithFormat(" %i - light %i", command.passIndex_, count);
+                        graphics_->PushDebugMark(debugMsg);
+
                         for (unsigned j = 0; j < i->volumeBatches_.Size(); ++j)
                         {
                             SetupLightVolumeBatch(i->volumeBatches_[j]);
                             i->volumeBatches_[j].Draw(this, camera_, false);
                         }
+
+                        graphics_->PopDebugMark();
 
                         passCommand_ = nullptr;
                     }
@@ -1692,8 +1705,14 @@ void View::ExecuteRenderPathCommands()
 
             case CMD_RENDERUI:
                 {
+                    String debugMsg = "renderui";
+                    debugMsg.AppendWithFormat(" %i", command.passIndex_);
+                    graphics_->PushDebugMark(debugMsg);
+
                     SetRenderTargets(command);
                     GetSubsystem<UI>()->Render(true);
+
+                    graphics_->PopDebugMark();
                 }
                 break;
 
@@ -2161,7 +2180,11 @@ void View::DrawFullscreenQuad(bool setIdentityProjection)
     graphics_->SetCullMode(CULL_NONE);
     graphics_->ClearTransformSources();
 
+    graphics_->PushDebugMark("fullquad");
+
     geometry->Draw(graphics_);
+
+    graphics_->PopDebugMark();
 }
 
 void View::UpdateOccluders(PODVector<Drawable*>& occluders, Camera* camera)
