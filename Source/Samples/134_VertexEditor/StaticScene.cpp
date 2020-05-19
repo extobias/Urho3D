@@ -42,8 +42,6 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
-#include <Urho3D/UI/EditorWindow.h>
-#include <Urho3D/UI/EditorGuizmo.h>
 #include <Urho3D/UI/EditorModelDebug.h>
 #include <Urho3D/Physics/RigidBody.h>
 
@@ -67,9 +65,6 @@ void StaticScene::Start()
     // Execute base class startup
     Sample::Start();
 
-    EditorWindow::RegisterObject(context_);
-    ImGuiElement::RegisterObject(context_);
-    EditorGuizmo::RegisterObject(context_);
     EditorModelDebug::RegisterObject(context_);
 
     // Create the scene content
@@ -231,25 +226,6 @@ void StaticScene::CreateInstructions()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     UI* ui = GetSubsystem<UI>();
 
-    editor_ = new EditorWindow(context_);
-    editor_->SetName("editor");
-    editor_->SetCameraNode(cameraNode_);
-    ui->GetRootModalElement()->AddChild(editor_);
-    editor_->SetScene(scene_);
-
-//    EditorGuizmo* guizmo = new EditorGuizmo(context_);
-//    guizmo->SetName("guizmo");
-//    guizmo->SetCameraNode(cameraNode_);
-//    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
-//    ui->GetRoot()->AddChild(guizmo);
-//    guizmo->SetPosition(0, 0);
-//    guizmo->SetScene(scene_);
-
-    editor_->BringToFront();
-    editor_->SetPriority(100);
-//    imgui->SetGuizmo(guizmo);
-    editor_->CreateGuizmo();
-
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
     //instructionText->SetText("Use WASD keys and mouse/touch to move");
@@ -349,7 +325,7 @@ void StaticScene::MoveCamera(float timeStep)
         pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
         pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
-        URHO3D_LOGERRORF("EditorWindow: mouse move <%i, %i> yaw pitch <%f, %f>", mouseMove.x_, mouseMove.y_, yaw_, pitch_);
+        // URHO3D_LOGERRORF("EditorWindow: mouse move <%i, %i> yaw pitch <%f, %f>", mouseMove.x_, mouseMove.y_, yaw_, pitch_);
         // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
         cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
     }
@@ -501,11 +477,6 @@ void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
             effect_->SetMaxRotation(360.0f);
             effect_->SetMaxRotationSpeed(50.0f);
         }
-    }
-
-    if (key == KEY_F4)
-    {
-        editor_->SetVisible(!editor_->IsVisible());
     }
 
     Sample::HandleKeyDown(eventType, eventData);
