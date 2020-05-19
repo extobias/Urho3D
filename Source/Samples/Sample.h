@@ -31,6 +31,7 @@ namespace Urho3D
 class Node;
 class Scene;
 class Sprite;
+class EditorWindow;
 
 }
 
@@ -90,7 +91,10 @@ protected:
     /// Mouse mode option to use in the sample.
     MouseMode useMouseMode_;
 
-	void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+    void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+
+    /// Editor
+    SharedPtr<EditorWindow> editor_;
 
 private:
     /// Create logo.

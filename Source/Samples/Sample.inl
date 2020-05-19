@@ -41,6 +41,8 @@
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/Resource/XMLFile.h>
 #include <Urho3D/IO/Log.h>
+#include <Urho3D/UI/EditorWindow.h>
+#include <Urho3D/UI/EditorGuizmo.h>
 
 Sample::Sample(Context* context) :
     Application(context),
@@ -80,6 +82,10 @@ void Sample::Setup()
 
 void Sample::Start()
 {
+    EditorWindow::RegisterObject(context_);
+    ImGuiElement::RegisterObject(context_);
+    EditorGuizmo::RegisterObject(context_);
+
     if (GetPlatform() == "Android" || GetPlatform() == "iOS")
         // On mobile platform, enable touch by adding a screen joystick
         InitTouchInput();
@@ -97,7 +103,7 @@ void Sample::Start()
     CreateConsoleAndDebugHud();
 
     // Subscribe key down event
-    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Sample, HandleKeyDown));
+//    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Sample, HandleKeyDown));
     // Subscribe key up event
     SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(Sample, HandleKeyUp));
     // Subscribe scene update event
@@ -212,6 +218,7 @@ void Sample::CreateConsoleAndDebugHud()
     // Get default style
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     XMLFile* xmlFile = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
+    UI* ui = GetSubsystem<UI>();
 
     // Create console
     Console* console = engine_->CreateConsole();
@@ -221,6 +228,16 @@ void Sample::CreateConsoleAndDebugHud()
     // Create debug HUD.
     DebugHud* debugHud = engine_->CreateDebugHud();
     debugHud->SetDefaultStyle(xmlFile);
+
+    editor_ = new EditorWindow(context_);
+    editor_->SetName("editor");
+//    editor_->SetCameraNode(cameraNode_);
+    ui->GetRootModalElement()->AddChild(editor_);
+//    editor_->SetScene(scene_);
+
+    editor_->BringToFront();
+    editor_->SetPriority(100);
+    editor_->CreateGuizmo();
 }
 
 
@@ -263,6 +280,12 @@ void Sample::HandleKeyDown(StringHash /*eventType*/, VariantMap& eventData)
     // Toggle debug HUD with F2
     else if (key == KEY_F2)
         GetSubsystem<DebugHud>()->ToggleAll();
+
+    if (key == KEY_F4)
+    {
+        editor_->SetVisible(!editor_->IsVisible());
+    }
+
 
     // Common rendering quality controls, only when UI has no focused element
     else if (!GetSubsystem<UI>()->GetFocusElement())
