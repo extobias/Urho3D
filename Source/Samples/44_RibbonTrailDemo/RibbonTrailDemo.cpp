@@ -29,8 +29,10 @@
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Graphics/Renderer.h>
+#include <Urho3D/Graphics/RenderPath.h>
 #include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/RibbonTrail.h>
+#include <Urho3D/Graphics/TailGenerator.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
@@ -56,6 +58,7 @@ RibbonTrailDemo::RibbonTrailDemo(Context* context) :
 
 void RibbonTrailDemo::Start()
 {
+     TailGenerator::RegisterObject(context_);
     // Execute base class startup
     Sample::Start();
 
@@ -63,7 +66,7 @@ void RibbonTrailDemo::Start()
     CreateScene();
 
     // Create the UI content
-    CreateInstructions();
+//    CreateInstructions();
 
     // Setup the viewport for displaying the scene
     SetupViewport();
@@ -107,16 +110,27 @@ void RibbonTrailDemo::CreateScene()
     //auto* box1 = boxNode1_->CreateComponent<StaticModel>();
     //box1->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     //box1->SetCastShadows(true);
+
     auto* boxTrail1 = boxNode1_->CreateComponent<RibbonTrail>();
-    boxTrail1->SetMaterial(cache->GetResource<Material>("Materials/RibbonTrail.xml"));
+    boxTrail1->SetMaterial(cache->GetResource<Material>("Materials/RibbonTrailRaytraced.xml"));
     boxTrail1->SetStartColor(Color(1.0f, 0.5f, 0.0f, 1.0f));
     boxTrail1->SetEndColor(Color(1.0f, 1.0f, 0.0f, 0.0f));
-    boxTrail1->SetWidth(0.5f);
+    boxTrail1->SetWidth(0.1f);
+    boxTrail1->SetLifetime(1.0f);
+    boxTrail1->SetVertexDistance(1.0f);
     boxTrail1->SetUpdateInvisible(true);
-    //boxTrail1->SetWidth(0.2f);
+
+//    Node *tailNode = boxNode1_->CreateChild();
+//    tailNode->Translate(Vector3(0.0f, 1.0f, 0.1f), TransformSpace::TS_LOCAL); // translate a tail relatively a object
+//    TailGenerator* tailGen = tailNode->CreateComponent<TailGenerator>();
+//    tailGen->SetTailLength(0.1f); // set segment length
+//    tailGen->SetNumTails(50);     // set num of segments
+//    tailGen->SetWidthScale(0.5f); // side scale
+//    tailGen->SetColorForHead(Color(1.0f, 1.0f, 1.0f));
+//    tailGen->SetColorForTip(Color(0.0f, 0.0f, 1.0f));
+
+//    boxTrail1->SetTrailType(TT_BONE);
     //boxTrail1->SetVertexDistance(0.5f);
-
-
     // boxTrail1->SetTailColumn(2);
     // boxTrail1->SetTrailType(TT_BONE);
 
@@ -206,12 +220,17 @@ void RibbonTrailDemo::CreateInstructions()
 void RibbonTrailDemo::SetupViewport()
 {
     auto* renderer = GetSubsystem<Renderer>();
+    auto* cache = GetSubsystem<ResourceCache>();
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen. We need to define the scene and the camera
     // at minimum. Additionally we could configure the viewport screen size and the rendering path (eg. forward / deferred) to
     // use, but now we just use full screen and default render path configured in the engine command line options
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
+
+    SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferredHWDepth.xml"));
+    viewport->SetRenderPath(effectRenderPath);
 }
 
 void RibbonTrailDemo::MoveCamera(float timeStep)
@@ -223,7 +242,7 @@ void RibbonTrailDemo::MoveCamera(float timeStep)
     auto* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
-    const float MOVE_SPEED = 20.0f;
+    const float MOVE_SPEED = 2.0f;
     // Mouse sensitivity as degrees per pixel
     const float MOUSE_SENSITIVITY = 0.1f;
 
@@ -304,9 +323,9 @@ void RibbonTrailDemo::HandleKeyDown(StringHash eventType, VariantMap& eventData)
     // Toggle console with F1
     if (key == KEY_P)
     {
-//        paused_ = scene_->IsUpdateEnabled();
-//        scene_->SetUpdateEnabled(!paused_);
-        paused_ = !paused_;
+        paused_ = scene_->IsUpdateEnabled();
+        scene_->SetUpdateEnabled(!paused_);
+//        paused_ = !paused_;
     }
 
     Sample::HandleKeyDown(eventType, eventData);
