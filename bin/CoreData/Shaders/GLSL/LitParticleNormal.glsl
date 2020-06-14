@@ -155,6 +155,9 @@ void PS()
     #else
         vec4 diffColor = cMatDiffColor;
     #endif
+    
+    float roughness = 0.0;
+    float metalness = 0.0; 
 
     #ifdef VERTEXCOLOR
         // diffColor *= vColor;
