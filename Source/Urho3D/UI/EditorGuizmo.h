@@ -29,11 +29,11 @@ public:
     /// Register object factory.
     static void RegisterObject(Context* context);
 
-    virtual void Render(float timeStep);
+    virtual void Render(float timeStep) override;
 
-    void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor);
+    void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor) override;
 
-    void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor);
+    void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor) override;
 
     void SetSelectedNode(unsigned selectedNode) { selectedNode_ = selectedNode;    }
 

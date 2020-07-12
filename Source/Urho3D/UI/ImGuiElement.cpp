@@ -162,7 +162,7 @@ void ImGuiElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& ver
                 // IntRect scissor((int)clip_rect.x, (int)clip_rect.y, (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
                 // IntRect scissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
 
-                UIBatch batch(this, BLEND_ALPHA, scissor, texture_, &vertexData);
+                UIBatch batch(this, BLEND_ALPHA, scissor, pcmd->TextureId ? (Texture2D*)pcmd->TextureId : texture_, &vertexData);
 
                 unsigned vertexSize = VERTEX_SIZE * pcmd->ElemCount;
                 if (!vertexSize)

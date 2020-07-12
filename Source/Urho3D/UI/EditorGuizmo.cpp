@@ -144,8 +144,8 @@ void EditorBrush::Update(StaticModel* model, const IntVector2& position, float r
     {
         char str[256];
         sprintf(str, "<%.2f, %.2f, %.2f>", pos.x_, pos.y_, pos.z_);
-        editor->debugText_.Clear();
-        editor->debugText_.AppendWithFormat("spos <%f, %f> \n wpos %s", x, y, str);
+//        editor->debugText_.Clear();
+//        editor->debugText_.AppendWithFormat("spos <%f, %f> \n wpos %s", x, y, str);
     }
     else
     {
@@ -187,8 +187,8 @@ void EditorBrush::Update(StaticModel* model, const Vector3& position)
     {
         char str[256];
         sprintf(str, "<%.2f, %.2f, %.2f>", position.x_, position.y_, position.z_);
-        editor->debugText_.Clear();
-        editor->debugText_.AppendWithFormat("wpos %s", str);
+//        editor->debugText_.Clear();
+//        editor->debugText_.AppendWithFormat("wpos %s", str);
     }
     else
     {
@@ -275,6 +275,7 @@ void EditorGuizmo::Render(float timeStep)
     Graphics* g = GetSubsystem<Graphics>();
 
     ImGuizmo::BeginFrame();
+    // resize fullscreen
     ImGuizmo::SetRect(0, 0, g->GetWidth(), g->GetHeight());
     SetPosition(0, 0);
     SetSize(g->GetWidth(), g->GetHeight());
@@ -327,7 +328,7 @@ void EditorGuizmo::Render(float timeStep)
         }
     }
 
-    debugRenderer->AddLine(ray_.origin_, ray_.origin_ + ray_.direction_ * 1000.0f, Color::BLUE, false);
+//    debugRenderer->AddLine(ray_.origin_, ray_.origin_ + ray_.direction_ * 1000.0f, Color::BLUE, false);
 
     // Octree* octree = scene_->GetComponent<Octree>();
     // octree->DrawDebugGeometry(false);

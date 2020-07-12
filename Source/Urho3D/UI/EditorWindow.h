@@ -61,11 +61,13 @@ public:
 
     void SetScene(Scene* scene);
 
-    String debugText_;
+    void AddSelectedNode(unsigned id);
 
-    float plotVars_[4][100];
+//    String debugText_;
 
-    int plotVarsOffset_[4];
+//    float plotVars_[4][100];
+
+//    int plotVarsOffset_[4];
 
 private:
 
@@ -83,9 +85,25 @@ private:
 
     int FindMaterial(const String& name);
 
-    void DrawChild(Node* node, int &i, int &nodeClicked);
+    int FindSprite(const String& name);
+
+    void DrawChild(Node* node, int &i);
+
+    void DrawNodeTree();
+
+    void DrawNodeSelected();
 
     void MoveCamera(float timeStep);
+
+    void LoadResources();
+
+    PODVector<int> currentMaterialList_;
+
+    PODVector<unsigned> selectedNodes_;
+
+    Vector3 hitPosition_{ Vector3::ZERO };
+
+    EditorMode mode_ { SELECT_OBJECT };
 
     Node* cameraNode_;
 
@@ -101,17 +119,17 @@ private:
 
     String materialResourcesString_;
 
+    ResourceMap spriteResources_;
+
+    String spriteResourcesString_;
+
     int currentModel_;
 
-    PODVector<int> currentMaterialList_;
+    int currentSprite_;
 
     unsigned selectedNode_;
 
     unsigned selectedSubElementIndex_{ M_MAX_UNSIGNED };
-
-    Vector3 hitPosition_{ Vector3::ZERO };
-
-    EditorMode mode_ { SELECT_OBJECT };
 
     float yaw_;
 

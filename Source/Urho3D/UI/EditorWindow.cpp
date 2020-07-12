@@ -16,6 +16,7 @@
 #include "../Input/Input.h"
 #include "../IO/Log.h"
 #include "../IO/FileSystem.h"
+#include "../IO/MemoryBuffer.h"
 #include "../Math/Polyhedron.h"
 #include "../Resource/ResourceCache.h"
 #include "../UI/EditorGuizmo.h"
@@ -32,87 +33,21 @@ extern const char* UI_CATEGORY;
 
 EditorWindow::EditorWindow(Context* context) :
     ImGuiElement(context),
-    guizmo_(nullptr),
+//    debugText_(""),
     cameraNode_(nullptr),
+    guizmo_(nullptr),
+    currentModel_(0),
+    currentSprite_(0),
     selectedNode_(0),
-    currentModel_(2),
-    debugText_(""),
     yaw_(0.0f),
     pitch_(0.0f)
 {
-    for (int i = 0; i < 4; i++)
-    {
-        plotVarsOffset_[i] = 0;
-    }
+//    for (int i = 0; i < 4; i++)
+//    {
+//        plotVarsOffset_[i] = 0;
+//    }
 
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    FileSystem dir(context_);
-
-    const Vector<String>& dirs = cache->GetResourceDirs();
-    for (int i = 0; i < dirs.Size(); i++)
-    {
-        String dirPath = dirs.At(i);
-        // URHO3D_LOGERRORF("dir <%s>", dirPath.CString());
-
-        Vector<String> result;
-        dir.ScanDir(result, dirPath, "*.*", SCAN_FILES, true);
-        for (int j = 0; j < result.Size(); j++)
-        {
-            String prefix, name, ext;
-            SplitPath(result.At(j), prefix, name, ext);
-
-            ext.Erase(0, 1);
-
-            ResourceFile resFile;
-            resFile.prefix = prefix;
-            resFile.path = dirPath;
-            resFile.ext = ext;
-            resFile.name = result.At(j);
-
-            if (!resources_.Contains(prefix))
-            {
-                Vector<ResourceFile> list;
-                list.Push(resFile);
-                resources_.Insert(Pair<String, Vector<ResourceFile>>(prefix, list));
-            }
-            else
-            {
-                resources_[prefix].Push(resFile);
-            }
-        }
-    }
-
-    StringVector keys = resources_.Keys();
-    URHO3D_LOGERRORF("keys size <%i>", keys.Size());
-    ResourceMap modelResources;
-    for (int i = 0; i < keys.Size(); i++)
-    {
-        Vector<ResourceFile> list = resources_[keys.At(i)];
-        // URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
-        for (unsigned l = 0; l < list.Size(); l++)
-        {
-            ResourceFile file = list.At(l);
-            String modelsFilter("mdl");
-            if (file.ext == modelsFilter)
-            {
-                // URHO3D_LOGERRORF("    file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
-
-                modelResources_[file.name] = file;
-            }
-            else if (file.prefix.Contains("materials", false) && (file.ext == "xml" || file.ext == "material" || file.ext == "json"))
-            {
-                materialResources_[file.name] = file;
-            }
-        }
-    }
-
-    modelResourcesString_.Join(modelResources_.Keys(), "@");
-    modelResourcesString_.Replace('@', '\0');
-    modelResourcesString_.Append('\0');
-
-    materialResourcesString_.Join(materialResources_.Keys(), "@");
-    materialResourcesString_.Replace('@', '\0');
-    materialResourcesString_.Append('\0');
+    LoadResources();
 
     SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
 
@@ -139,8 +74,6 @@ void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventDat
     selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
     selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
     hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
-
-    // URHO3D_LOGERRORF("editwindow: node selected <%i>", selectedNode_);
 }
 
 void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -193,15 +126,11 @@ void EditorWindow::MoveCamera(float timeStep)
 //        Quaternion camRot = cameraNode_->GetRotation();
 //        pitch_ = camRot.PitchAngle();
 //        yaw_ = camRot.YawAngle();
-
 //        cameraDistance_ += input->GetMouseMoveWheel();
-
 //        Vector3 lookAt = cameraNode_->GetDirection(); // pos - rot * Vector3(0.0f, 0.0f, -3.0f);
 //        Quaternion dir(yaw_, Vector3::UP);
 //        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
-
 //        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
-
 //        cameraNode_->SetPosition(cameraTargetPos);
     }
 
@@ -221,6 +150,97 @@ void EditorWindow::MoveCamera(float timeStep)
         cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
     if (input->GetKeyDown(KEY_Q))
         cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
+
+    if (input->GetKeyDown(KEY_PAGEUP))
+    {
+        auto* camera = cameraNode_->GetComponent<Camera>();
+        camera->SetZoom(camera->GetZoom() * 1.01f);
+    }
+
+    if (input->GetKeyDown(KEY_PAGEDOWN))
+    {
+        auto* camera = cameraNode_->GetComponent<Camera>();
+        camera->SetZoom(camera->GetZoom() * 0.99f);
+    }
+}
+
+void EditorWindow::LoadResources()
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    FileSystem dir(context_);
+
+    // load all resources dirs
+    const Vector<String>& dirs = cache->GetResourceDirs();
+    for (int i = 0; i < dirs.Size(); i++)
+    {
+        String dirPath = dirs.At(i);
+        // URHO3D_LOGERRORF("dir <%s>", dirPath.CString());
+
+        Vector<String> result;
+        dir.ScanDir(result, dirPath, "*.*", SCAN_FILES, true);
+        for (int j = 0; j < result.Size(); j++)
+        {
+            String prefix, name, ext;
+            SplitPath(result.At(j), prefix, name, ext);
+
+            ext.Erase(0, 1);
+
+            ResourceFile resFile;
+            resFile.prefix = prefix;
+            resFile.path = dirPath;
+            resFile.ext = ext;
+            resFile.name = result.At(j);
+
+            if (!resources_.Contains(prefix))
+            {
+                Vector<ResourceFile> list;
+                list.Push(resFile);
+                resources_.Insert(Pair<String, Vector<ResourceFile>>(prefix, list));
+            }
+            else
+            {
+                resources_[prefix].Push(resFile);
+            }
+        }
+    }
+
+    // Categorize them
+    StringVector keys = resources_.Keys();
+    for (int i = 0; i < keys.Size(); i++)
+    {
+        Vector<ResourceFile> list = resources_[keys.At(i)];
+        // URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
+        for (unsigned l = 0; l < list.Size(); l++)
+        {
+            ResourceFile file = list.At(l);
+            String modelsFilter("mdl");
+            URHO3D_LOGERRORF("    file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
+            if (file.ext == modelsFilter)
+            {
+                modelResources_[file.name] = file;
+            }
+            else if (file.prefix.Contains("materials", false) && (file.ext == "xml" || file.ext == "material" || file.ext == "json"))
+            {
+                materialResources_[file.name] = file;
+            }
+            else if (file.prefix.Contains("urho2d", false) && (file.ext == "png"))
+            {
+                spriteResources_[file.name] = file;
+            }
+        }
+    }
+
+    modelResourcesString_.Join(modelResources_.Keys(), "@");
+    modelResourcesString_.Replace('@', '\0');
+    modelResourcesString_.Append('\0');
+
+    materialResourcesString_.Join(materialResources_.Keys(), "@");
+    materialResourcesString_.Replace('@', '\0');
+    materialResourcesString_.Append('\0');
+
+    spriteResourcesString_.Join(spriteResources_.Keys(), "@");
+    spriteResourcesString_.Replace('@', '\0');
+    spriteResourcesString_.Append('\0');
 }
 
 void EditorWindow::CreateGuizmo()
@@ -250,8 +270,8 @@ void EditorWindow::SetVisible(bool visible)
 
 void EditorWindow::SetPlotVar(int index, float value)
 {
-    plotVars_[index][plotVarsOffset_[index]] = value;
-    plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
+//    plotVars_[index][plotVarsOffset_[index]] = value;
+//    plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
 }
 
 void EditorWindow::SetScene(Scene* scene)
@@ -260,6 +280,15 @@ void EditorWindow::SetScene(Scene* scene)
 
     if (guizmo_)
         guizmo_->SetScene(scene);
+}
+
+void EditorWindow::AddSelectedNode(unsigned id)
+{
+    Input* input = GetSubsystem<Input>();
+    if (!input->GetKeyDown(KEY_SHIFT))
+        selectedNodes_.Clear();
+
+    selectedNodes_.Push(id);
 }
 
 void EditorWindow::Render(float timeStep)
@@ -274,9 +303,20 @@ void EditorWindow::Render(float timeStep)
     static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::ROTATE);
     static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
 
-    static const char* modeTypes[] = { "Select Object", "Select Vertex" };
-    ImGui::Combo("Mode", (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
+    static const char* modeTypes[] = { "Object", "Vertex" };
 
+    // selection mode
+    const char* hideLabel = "##hidelabel";
+    ImGui::PushID("Mode");
+    int total_w = (int)ImGui::GetContentRegionAvail().x;
+    ImGui::Text("Mode");
+    ImGui::SameLine(total_w / 2.0f);
+    ImGui::SetNextItemWidth(total_w / 2.0f);
+
+    ImGui::Combo(hideLabel, (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
+    ImGui::PopID();
+
+    // current operation
     if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
         currentGizmoOperation = ImGuizmo::TRANSLATE;
     ImGui::SameLine();
@@ -318,14 +358,23 @@ void EditorWindow::Render(float timeStep)
     // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
     // ImGui::PlotLines("Lines", );
 
-    int i = 0;
-    static int nodeClicked = -1;
-
-    ImGui::Text("Node clicked <%i> selected <%u> guizmoBtn <%i>", nodeClicked, selectedNode_, guizmoBtn);
-    ImGui::SameLine();
+    ImGui::Text("Node selected <%u> guizmoBtn <%i>", selectedNode_, guizmoBtn);
+    // ImGui::SameLine();
     if(ImGui::Button("\+Local"))
     {
-        scene_->CreateChild(String::EMPTY, LOCAL);
+        if (selectedNode_)
+        {
+            Node* node = scene_->GetNode(selectedNode_);
+            if (node)
+            {
+                node->CreateChild(String::EMPTY, LOCAL);
+            }
+        }
+        else
+        {
+            scene_->CreateChild(String::EMPTY, LOCAL);
+        }
+
     }
     ImGui::SameLine();
     if(ImGui::Button("\+Replicated"))
@@ -333,144 +382,40 @@ void EditorWindow::Render(float timeStep)
         scene_->CreateChild();
     }
 
-    ImGui::BeginGroup();
-    ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
-
-    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
-    if (nodeClicked == i)
-        nodeFlags |= ImGuiTreeNodeFlags_Selected;
-
-    String sceneName = scene_->GetName();
-    if (sceneName.Empty())
-        sceneName = "Scene";
-
-    bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - %i - %i", sceneName.CString(), scene_->GetID(), scene_->GetChildren().Size());
-    if (ImGui::IsItemClicked())
+    ImGui::SameLine();
+    if(ImGui::Button("\-Remove"))
     {
-        nodeClicked = i;
-        // select node
-        if(mode_ == SELECT_OBJECT)
+        for(unsigned i = 0; i < selectedNodes_.Size(); i++)
         {
-            selectedNode_ = scene_->GetID();
-
-            VariantMap eventData;
-            eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
-
-            SendEvent(E_EDITOR_NODE_SELECTED, eventData);
-        }
-        else
-        {
-            URHO3D_LOGERRORF("mode <%i>", mode_);
+            Node* node = scene_->GetChild(selectedNodes_.At(i));
+            if (node)
+                scene_->RemoveChild(node);
         }
     }
-    i++;
-    if (isOpen)
-    {
-        auto grantchidren = scene_->GetChildren();
-        for (Node* grantchild : grantchidren)
-            DrawChild(grantchild, i, nodeClicked);
 
-        ImGui::TreePop();
-    }
-
-    ImGui::EndChild();
-    ImGui::EndGroup();
+    DrawNodeTree();
 
     ImGui::Separator();
 
-    if (selectedNode_)
-    {
-        Node* node = scene_->GetNode(selectedNode_);
-        if (node)
-        {
-            // Node* cameraNode = scene_->GetChild("Camera");
-            Node* cameraNode = cameraNode_;
-            if(!cameraNode)
-                return;
-
-            Camera* camera = cameraNode->GetComponent<Camera>();
-            if(!camera)
-                return;
-
-            AttributeEdit(node);
-
-//            Matrix4 identity = Matrix4::IDENTITY;
-//            Matrix4 projection = camera->GetProjection().Transpose();
-//            Matrix4 view = camera->GetView().ToMatrix4().Transpose();
-//            Matrix4 nodeTransform = node->GetTransform().ToMatrix4().Transpose();
-//            // Matrix4 nodeTransform = Matrix4::IDENTITY.Transpose();
-//            Matrix4 delta;
-
-//            const unsigned len = node->GetName().Length();
-//            char name[512];
-//            sprintf(name, node->GetName().CString());
-//            ImGui::InputText("Name", name, node->GetName().Length());
-
-//            float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-//            ImGuizmo::DecomposeMatrixToComponents(&nodeTransform.m00_, matrixTranslation, matrixRotation, matrixScale);
-//            bool modified = false;
-//            ImGui::InputFloat3("Tr", matrixTranslation, 3);
-//            ImGui::InputFloat3("Rt", matrixRotation, 3);
-//            ImGui::InputFloat3("Sc", matrixScale, 3);
-//            ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, &nodeTransform.m00_);
-
-//            node->SetTransform(Matrix3x4(nodeTransform.Transpose()));
-
-            // add component
-            if (ImGui::Button("Add component"))
-                ImGui::OpenPopup("new_component_popup");
-            if (ImGui::BeginPopup("new_component_popup"))
-            {
-                AddComponentMenu(node);
-                ImGui::EndPopup();
-            }
-
-            // components
-            ImGui::BeginGroup();
-            ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
-
-            auto childComponents = node->GetComponents();
-            for (Component* c : childComponents)
-            {
-                // ImGui::Text("%s", c->GetTypeName().CString());
-                static bool headerOpen = true;
-                ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_DefaultOpen;
-                if (ImGui::CollapsingHeader(c->GetTypeName().CString(), &headerOpen, headerFlags))
-                {
-                    AttributeEdit(c);
-
-                    EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
-                    EditModelDebug(modelDebug);
-                }
-            }
-
-            ImGui::EndChild();
-            ImGui::EndGroup();
-        }
-        else
-        {
-            URHO3D_LOGERRORF("node <%u> not found!", selectedNode_);
-        }
-    }
+    DrawNodeSelected();
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
     ImGui::Separator();
 
-    ImGui::Text("%s", debugText_.CString());
+//    ImGui::Text("%s", debugText_.CString());
 
     ImGui::Separator();
 
-    for(int i = 0; i < 4; i++)
-    {
-        char buf[32];
-        int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
-        sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
-
-//        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
-
-        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -10000.0f, 10000.0f, ImVec2(0, 60));
-    }
+    // FIXME make these dinamyc
+//    for(int i = 0; i < 4; i++)
+//    {
+//        char buf[32];
+//        int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
+//        sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
+////        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
+//        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -2.0f, 2.0f, ImVec2(0, 60));
+//    }
 
     ImVec2 windowPos = ImGui::GetWindowPos();
     SetPosition(windowPos.x, windowPos.y);
@@ -481,17 +426,34 @@ void EditorWindow::Render(float timeStep)
     ImGui::End();
 }
 
-void EditorWindow::DrawChild(Node* node, int& i, int& nodeClicked)
+void EditorWindow::DrawChild(Node* node, int& i)
 {
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-    if (nodeClicked == i)
+
+    // selected node
+    // if (selectedNode_ == node->GetID())
+    if (selectedNodes_.Contains(node->GetID()))
+    {
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    // open if child is selected
+    auto children = node->GetChildren();
+    for (Node* child : children)
+    {
+        if (child->GetID() == selectedNode_)
+        {
+            nodeFlags |= ImGuiTreeNodeFlags_DefaultOpen;
+            break;
+        }
+    }
 
     bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - %i - %i", node->GetName().CString(), node->GetID(), node->GetChildren().Size());
     if (ImGui::IsItemClicked())
     {
         selectedNode_ = node->GetID();
-        nodeClicked = i;
+        AddSelectedNode(node->GetID());
+
         if (guizmo_)
         {
             guizmo_->SetSelectedNode(selectedNode_);
@@ -501,11 +463,117 @@ void EditorWindow::DrawChild(Node* node, int& i, int& nodeClicked)
     i++;
     if (isOpen)
     {
-        auto grantchidren = node->GetChildren();
-        for (Node* grantchild : grantchidren)
-            DrawChild(grantchild, i, nodeClicked);
+        auto children = node->GetChildren();
+        for (Node* child : children)
+            DrawChild(child, i);
 
         ImGui::TreePop();
+    }
+}
+
+void EditorWindow::DrawNodeTree()
+{
+    int i = 0;
+
+    ImGui::BeginGroup();
+    ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
+
+    ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
+    if (selectedNode_ == 0)
+        nodeFlags |= ImGuiTreeNodeFlags_Selected;
+
+    String sceneName = scene_->GetName();
+    if (sceneName.Empty())
+        sceneName = "Scene";
+
+    bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - ID %i - Size %i", sceneName.CString(), scene_->GetID(), scene_->GetChildren().Size());
+    if (ImGui::IsItemClicked())
+    {
+        // select scene
+        if(mode_ == SELECT_OBJECT)
+        {
+            selectedNode_ = scene_->GetID();
+            AddSelectedNode(scene_->GetID());
+
+            VariantMap eventData;
+            eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
+            SendEvent(E_EDITOR_NODE_SELECTED, eventData);
+        }
+        else
+        {
+            URHO3D_LOGERRORF("EditorWindow: mode <%i>", mode_);
+        }
+    }
+    i++;
+    if (isOpen)
+    {
+        auto grantchidren = scene_->GetChildren();
+        for (Node* grantchild : grantchidren)
+            DrawChild(grantchild, i);
+
+        ImGui::TreePop();
+    }
+
+    ImGui::EndChild();
+    ImGui::EndGroup();
+}
+
+void EditorWindow::DrawNodeSelected()
+{
+    if (selectedNodes_.Size() != 1)
+        return;
+
+    unsigned selectedNode = selectedNodes_.At(0);
+    if (selectedNode)
+    {
+        Node* node = scene_->GetNode(selectedNode);
+        if (!node)
+        {
+            URHO3D_LOGERRORF("EditorWindow: node <%u> not found!", selectedNode);
+            return;
+        }
+
+        // Node* cameraNode = scene_->GetChild("Camera");
+        Node* cameraNode = cameraNode_;
+        if(!cameraNode)
+            return;
+
+        Camera* camera = cameraNode->GetComponent<Camera>();
+        if(!camera)
+            return;
+
+        AttributeEdit(node);
+
+        // add component
+        if (ImGui::Button("Add component"))
+            ImGui::OpenPopup("new_component_popup");
+        if (ImGui::BeginPopup("new_component_popup"))
+        {
+            AddComponentMenu(node);
+            ImGui::EndPopup();
+        }
+
+        // components
+        ImGui::BeginGroup();
+        ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 400.0f), true);
+
+        bool headerOpen = true;
+        auto childComponents = node->GetComponents();
+        for (Component* c : childComponents)
+        {
+            // ImGui::Text("%s", c->GetTypeName().CString());
+            ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow;
+            if (ImGui::CollapsingHeader(c->GetTypeName().CString(), &headerOpen, headerFlags))
+            {
+                AttributeEdit(c);
+
+                EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
+                EditModelDebug(modelDebug);
+            }
+        }
+
+        ImGui::EndChild();
+        ImGui::EndGroup();
     }
 }
 
@@ -515,15 +583,26 @@ void EditorWindow::AttributeEdit(Serializable* c)
     if(!attr)
         return;
 
+    const char* hideLabel = "##hidelabel";
     for (auto var : (*attr))
     {
         const AttributeInfo& info = var;
+
+        if (info.mode_ & AM_NOEDIT)
+            continue;
+
+        ImGui::PushID(info.name_.CString());
+        int total_w = (int)ImGui::GetContentRegionAvail().x;
+        ImGui::Text("%s", info.name_.CString());
+        ImGui::SameLine(total_w / 2.0f);
+        ImGui::SetNextItemWidth(total_w / 2.0f);
+
         switch (info.type_)
         {
         case VAR_BOOL:
         {
             bool v = c->GetAttribute(info.name_).GetBool();
-            if (ImGui::Checkbox(info.name_.CString(), &v))
+            if (ImGui::Checkbox(hideLabel, &v))
             {
                 c->SetAttribute(info.name_, v);
             }
@@ -546,8 +625,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
                 enumName.Replace('@', '\0');
                 enumName.Append('\0');
 
-
-                if (ImGui::Combo(info.name_.CString(), (int*)&v, enumName.CString()))
+                if (ImGui::Combo(hideLabel, (int*)&v, enumName.CString()))
                 {
                     // URHO3D_LOGERRORF("imgui return val <%u>", v);
                     c->SetAttribute(info.name_, v);
@@ -555,7 +633,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
             else
             {
-                if (ImGui::InputInt(info.name_.CString(), (int*)&v))
+                if (ImGui::InputInt(hideLabel, (int*)&v))
                 {
                     c->SetAttribute(info.name_, v);
                 }
@@ -565,7 +643,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         case VAR_FLOAT:
         {
             float v = c->GetAttribute(info.name_).GetFloat();
-            if (ImGui::InputFloat(info.name_.CString(), &v))
+            if (ImGui::InputFloat(hideLabel, &v))
             {
                 c->SetAttribute(info.name_, v);
             }
@@ -577,7 +655,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             char buffer[512];
             strncpy(buffer, v.CString(), v.Length());
             buffer[v.Length()] = '\0';
-            if (ImGui::InputText(info.name_.CString(), buffer, 512))
+            if (ImGui::InputText(hideLabel, buffer, 512))
             {
                 c->SetAttribute(info.name_, buffer);
             }
@@ -588,9 +666,20 @@ void EditorWindow::AttributeEdit(Serializable* c)
             float col[4];
             Color color = c->GetAttribute(info.name_).GetColor();
             memcpy(col, color.Data(), sizeof(col));
-            if (ImGui::ColorEdit4(info.name_.CString(), (float*)&col))
+            if (ImGui::ColorEdit4(hideLabel, (float*)&col))
             {
                 c->SetAttribute(info.name_, Color(col));
+            }
+        }
+        break;
+        case VAR_VECTOR2:
+        {
+            float v[2];
+            Vector2 value = c->GetAttribute(info.name_).GetVector2();
+            memcpy(v, value.Data(), sizeof(v));
+            if (ImGui::InputFloat2(hideLabel, (float*)&v))
+            {
+                c->SetAttribute(info.name_, Vector2(v));
             }
         }
         break;
@@ -599,7 +688,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             float v[3];
             Vector3 value = c->GetAttribute(info.name_).GetVector3();
             memcpy(v, value.Data(), sizeof(v));
-            if (ImGui::InputFloat3(info.name_.CString(), (float*)&v))
+            if (ImGui::InputFloat3(hideLabel, (float*)&v))
             {
                 c->SetAttribute(info.name_, Vector3(v));
             }
@@ -610,19 +699,78 @@ void EditorWindow::AttributeEdit(Serializable* c)
             float v[4];
             Vector4 value = c->GetAttribute(info.name_).GetVector4();
             memcpy(v, value.Data(), sizeof(v));
-            if (ImGui::InputFloat4(info.name_.CString(), (float*)&v))
+            if (ImGui::InputFloat4(hideLabel, (float*)&v))
             {
-                c->SetAttribute(info.name_, Vector3(v));
+                c->SetAttribute(info.name_, Vector4(v));
             }
         }
+        break;
         case VAR_QUATERNION:
         {
             float q[4];
             Quaternion value = c->GetAttribute(info.name_).GetQuaternion();
             memcpy(q, value.Data(), sizeof(q));
-            if (ImGui::InputFloat4(info.name_.CString(), (float*)&q))
+            if (ImGui::InputFloat4(hideLabel, (float*)&q))
             {
                 c->SetAttribute(info.name_, Quaternion(q));
+            }
+        }
+        break;
+        case VAR_BUFFER:
+        {
+            if (info.name_ == "Vertices")
+            {
+                const PODVector<unsigned char> value = c->GetAttribute(info.name_).GetBuffer();
+                PODVector<Vector2> vertices;
+
+                // load
+                MemoryBuffer buffer(value);
+                while (!buffer.IsEof())
+                    vertices.Push(buffer.ReadVector2());
+
+                ImGui::Text("Vertices: size <%i>", vertices.Size());
+                ImGui::SameLine();
+                if(ImGui::Button("Add"))
+                {
+                    vertices.Push(Vector2::ZERO);
+                    // save buffer
+                    VectorBuffer ret;
+                    for (unsigned i = 0; i < vertices.Size(); ++i)
+                    {
+//                        URHO3D_LOGERRORF("EditorWindow: add v2 <%f, %f>", vertices[i].x_, vertices[i].y_);
+                        ret.WriteVector2(vertices[i]);
+                    }
+
+                    Variant val(ret.GetBuffer());
+                    c->SetAttribute(info.name_, val);
+                }
+
+                bool modified = false;
+                // for(Vector2 v2: vertices)
+                for (unsigned i = 0; i < vertices.Size(); ++i)
+                {
+                    ///URHO3D_LOGERRORF("EditorWindow: 1 v2 <%f, %f>", v2.x_, v2.y_);
+                    float v[2];// = { 0.0f, 0.0f };
+                    memcpy(v, vertices[i].Data(), sizeof(v));
+
+                    char buf[4];
+                    sprintf(buf, "v%i", i);
+                    if (ImGui::InputFloat2(buf, (float*)&v))
+                    {
+                        modified = true;
+                        vertices[i] = Vector2(v);
+                    }
+                }
+
+                // save
+                if (modified)
+                {
+                    VectorBuffer ret;
+                    for (unsigned i = 0; i < vertices.Size(); ++i)
+                        ret.WriteVector2(vertices[i]);
+
+                    c->SetAttribute(info.name_, ret.GetBuffer());
+                }
             }
         }
         break;
@@ -651,8 +799,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             //resourcePickers.Push(ResourcePicker("TmxFile2D", tmxFilters, ACTION_PICK | ACTION_OPEN));
 
             ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
-            currentModel_ = FindModel(v.name_);
-            // ImGui::Text("type <%s> name <%s> currentid <%i>", info.defaultValue_.GetTypeName().CString(), v.name_.CString(), currentModel_);
+            ImGui::Text("type <%s> name <%s> currentid <%i>", info.defaultValue_.GetTypeName().CString(), v.name_.CString(), currentModel_);
             if (v.type_ == StringHash("ParticleEffect"))
             {
                 ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
@@ -660,12 +807,71 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
             else if (v.type_ == StringHash("Model"))
             {
+                currentModel_ = FindModel(v.name_);
                 if (ImGui::Combo("Model", &currentModel_, modelResourcesString_.CString()))
                 {
                     ResourceFile resource = modelResources_.Values().At(currentModel_);
                     v.name_ = resource.path + resource.name;
                     c->SetAttribute(info.name_, v);
                 }
+            }
+            else if (v.type_ == StringHash("Sprite2D"))
+            {
+//                currentSprite_ = FindSprite(v.name_);
+//                if (ImGui::Combo("Sprite", &currentSprite_, spriteResourcesString_.CString()))
+//                {
+//                    ResourceFile resource = spriteResources_.Values().At(currentSprite_);
+//                    v.name_ = resource.path + resource.name;
+//                    c->SetAttribute(info.name_, v);
+//                }
+                auto* cache = GetSubsystem<ResourceCache>();
+
+                static int lines = 1;
+                ImGui::SliderInt("Lines", &lines, 1, 15);
+                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
+                ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 50), true, ImGuiWindowFlags_HorizontalScrollbar);
+                for (int line = 0; line < lines; line++)
+                {
+//                    int num_buttons = 10 + ((line & 1) ? line * 9 : line * 3);
+//                    for (int n = 0; n < num_buttons; n++)
+//                    {
+//                        if (n > 0) ImGui::SameLine();
+//                        ImGui::PushID(n + line * 1000);
+//                        char num_buf[16];
+//                        sprintf(num_buf, "%d", n);
+//                        const char* label = (!(n%15)) ? "FizzBuzz" : (!(n%3)) ? "Fizz" : (!(n%5)) ? "Buzz" : num_buf;
+//                        float hue = n*0.05f;
+//                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(hue, 0.6f, 0.6f));
+//                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(hue, 0.7f, 0.7f));
+//                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(hue, 0.8f, 0.8f));
+//                        ImGui::Button(label, ImVec2(40.0f + sinf((float)(line + n)) * 20.0f, 0.0f));
+//                        ImGui::PopStyleColor(3);
+//                        ImGui::PopID();
+//                    }
+                    float btnWidth = 32.0f;
+                    float btnHeight = 32.0f;
+                    for (int i = 0; i < spriteResources_.Size(); i++)
+                    {
+                        ResourceFile resource = spriteResources_.Values().At(i);
+
+                        ImGui::PushID(i);
+                        Texture2D* texture1 = cache->GetResource<Texture2D>(resource.path + resource.name);
+    //                    ImGui::Image((ImTextureID)texture1, ImVec2((float)texture1->GetWidth(), (float)texture1->GetHeight()));
+                        int frame_padding = -1;     // -1 = uses default padding
+                        float texWidth = (float)texture1->GetWidth();
+                        float texHeight = (float)texture1->GetHeight();
+                        if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1))) //, frame_padding, ImVec4(0.0f,0.0f,0.0f,1.0f)))
+                        {
+                            v.name_ = resource.path + resource.name;
+                            c->SetAttribute(info.name_, v);
+                        }
+                        ImGui::SameLine();
+                        ImGui::PopID();
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::PopStyleVar(2);
             }
         }
         break;
@@ -705,6 +911,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         }
         break;
         }
+        ImGui::PopID();
     }
 }
 
@@ -1026,5 +1233,19 @@ int EditorWindow::FindMaterial(const String& name)
     }
     return -1;
 }
+
+int EditorWindow::FindSprite(const String& name)
+{
+    int index = 0;
+    for (auto it = spriteResources_.Begin(); it != spriteResources_.End(); it++, index++)
+    {
+        ResourceFile resource = (*it).second_;
+        String s = resource.name;
+        if (name == s)
+            return index;
+    }
+    return -1;
+}
+
 
 }
