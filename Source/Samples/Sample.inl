@@ -52,7 +52,8 @@ Sample::Sample(Context* context) :
     useMouseMode_(MM_ABSOLUTE),
     screenJoystickIndex_(M_MAX_UNSIGNED),
     screenJoystickSettingsIndex_(M_MAX_UNSIGNED),
-    paused_(false)
+    paused_(false),
+    editor_(nullptr)
 {
 }
 
@@ -61,15 +62,17 @@ void Sample::Setup()
     // Modify engine startup parameters
     engineParameters_[EP_WINDOW_TITLE] = GetTypeName();
     engineParameters_[EP_LOG_NAME]     = GetSubsystem<FileSystem>()->GetAppPreferencesDir("urho3d", "logs") + GetTypeName() + ".log";
-    engineParameters_[EP_FULL_SCREEN]  = false;
+    engineParameters_[EP_FULL_SCREEN]  = GetPlatform() == "Android" || GetPlatform() == "iOS";
     engineParameters_[EP_HEADLESS]     = false;
     engineParameters_[EP_SOUND]        = false;
 
-    engineParameters_[EP_WINDOW_WIDTH] = 1480;
-    engineParameters_[EP_WINDOW_HEIGHT] = 568;
+//    engineParameters_[EP_WINDOW_WIDTH] = 1360;
+//    engineParameters_[EP_WINDOW_HEIGHT] = 640;
     engineParameters_[EP_WINDOW_RESIZABLE] = true;
-    engineParameters_[EP_WINDOW_POSITION_X] = 300;
-    engineParameters_[EP_WINDOW_POSITION_Y] = 50;
+//    engineParameters_[EP_WINDOW_POSITION_X] = 300;
+//    engineParameters_[EP_WINDOW_POSITION_Y] = 50;
+
+    engineParameters_[EP_ORIENTATIONS] = "Portrait";
 
 //     engineParameters_[EP_FORCE_GL2] = true;
 
@@ -228,16 +231,6 @@ void Sample::CreateConsoleAndDebugHud()
     // Create debug HUD.
     DebugHud* debugHud = engine_->CreateDebugHud();
     debugHud->SetDefaultStyle(xmlFile);
-
-    editor_ = new EditorWindow(context_);
-    editor_->SetName("editor");
-//    editor_->SetCameraNode(cameraNode_);
-    ui->GetRootModalElement()->AddChild(editor_);
-//    editor_->SetScene(scene_);
-
-    editor_->BringToFront();
-    editor_->SetPriority(100);
-    editor_->CreateGuizmo();
 }
 
 
@@ -283,7 +276,8 @@ void Sample::HandleKeyDown(StringHash /*eventType*/, VariantMap& eventData)
 
     if (key == KEY_F4)
     {
-        editor_->SetVisible(!editor_->IsVisible());
+        if (editor_)
+            editor_->SetVisible(!editor_->IsVisible());
     }
 
 
