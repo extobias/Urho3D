@@ -13,7 +13,10 @@
 
 Ball2D::Ball2D(Context* context)
     : LogicComponent (context),
-      scaleFactor_(0.0f)
+      next_(nullptr),
+      scaleFactor_(1.0f),
+      chained_(false),
+      magnetized_(false)
 {
     SetUpdateEventMask(USE_FIXEDUPDATE);
 }
@@ -30,8 +33,44 @@ void Ball2D::RegisterObject(Context* context)
 
 void Ball2D::FixedUpdate(float timeStep)
 {
-    if (node_->GetScale2D().x_ < 3.0f)
-        node_->Scale(1.0f + scaleFactor_);
+//    if (node_->GetScale2D().x_ < 3.0f)
+//        node_->Scale(1.0f + scaleFactor_);
+//    UpdateArea();
+}
+
+void Ball2D::OnNodeSet(Node* node)
+{
+    if (!node)
+        return;
+
+    node->SetPosition(Vector3::ZERO);
+
+    // Create rigid body
+    body_ = node->CreateComponent<RigidBody2D>();
+    body_->SetBodyType(BT_DYNAMIC);
+
+    Vector2 force(Random(-10.0f, 10.0f), Random(-10.0f, 10.0f));
+    body_->ApplyForce(force, Vector2::ZERO, true);
+
+    sprite_ = node->CreateComponent<StaticSprite2D>();
+    sprite_->SetColor(color_);
+
+    auto* cache = GetSubsystem<ResourceCache>();
+    auto* ballSprite = cache->GetResource<Sprite2D>("Urho2D/Ball.png");
+    IntRect r = ballSprite->GetRectangle();
+    // URHO3D_LOGERRORF("ball rect l <%i> r <%i> t <%i> b <%i>", r.Left(), r.Right(), r.Top(), r.Bottom());
+    sprite_->SetSprite(ballSprite);
+
+    // Create circle
+    shape_ = node->CreateComponent<CollisionCircle2D>();
+    // Set radius
+    shape_->SetRadius((float )r.Right() * PIXEL_SIZE / 2.0f);
+    // Set density
+    shape_->SetDensity(1.0f);
+    // Set friction.
+    shape_->SetFriction(0.5f);
+    // Set restitution
+    shape_->SetRestitution(0.1f);
 
     UpdateArea();
 }
@@ -44,36 +83,19 @@ void Ball2D::SetColor(const Color& color)
          sprite_->SetColor(color);
 }
 
-void Ball2D::OnNodeSet(Node* node)
+void Ball2D::SetScaleFactor(float scaleFactor)
 {
-    if (!node)
-        return;
+     scaleFactor_ = scaleFactor;
 
-    node->SetPosition(Vector3(Random(-0.1f, 0.1f), -3.0f, 0.0f));
+    node_->SetScale(scaleFactor);
 
-    // Create rigid body
-    body_ = node->CreateComponent<RigidBody2D>();
-    body_->SetBodyType(BT_DYNAMIC);
+//    shape_->SetRadius(0.16f * scaleFactor);
+}
 
-    sprite_ = node->CreateComponent<StaticSprite2D>();
-    sprite_->SetColor(color_);
-
-    auto* cache = GetSubsystem<ResourceCache>();
-    auto* ballSprite = cache->GetResource<Sprite2D>("Urho2D/Ball.png");
-    sprite_->SetSprite(ballSprite);
-
-    // Create circle
-    shape_ = node->CreateComponent<CollisionCircle2D>();
-    // Set radius
-    shape_->SetRadius(0.16f);
-    // Set density
-    shape_->SetDensity(1.0f);
-    // Set friction.
-    shape_->SetFriction(0.5f);
-    // Set restitution
-    shape_->SetRestitution(0.1f);
-
-    UpdateArea();
+void Ball2D::SetSprite(Sprite2D* sprite)
+{
+    if (sprite_)
+        sprite_->SetSprite(sprite);
 }
 
 void Ball2D::UpdateArea()

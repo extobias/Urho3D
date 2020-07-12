@@ -8,6 +8,7 @@ namespace Urho3D
     class RigidBody2D;
     class StaticSprite2D;
     class CollisionCircle2D;
+    class Sprite2D;
 }
 
 using namespace Urho3D;
@@ -30,9 +31,21 @@ public:
 
     const Color& GetColor() const { return color_; }
 
-    void SetScaleFactor(float scaleFactor) { scaleFactor_ = scaleFactor; }
+    void SetScaleFactor(float scaleFactor);
+
+    void SetSprite(Sprite2D* sprite);
 
     float GetArea() const { return area_; }
+
+    void SetChained(bool chain) { chained_ = chain; }
+
+    bool IsChained() const { return chained_; }
+
+    void SetMagnetized(bool magnetized) { magnetized_ = magnetized; }
+
+    bool IsMagnetized() const { return magnetized_; }
+
+    Node* next_;
 
 protected:
 
@@ -53,4 +66,8 @@ private:
     float scaleFactor_;
 
     float area_;
+
+    bool chained_;
+
+    bool magnetized_;
 };

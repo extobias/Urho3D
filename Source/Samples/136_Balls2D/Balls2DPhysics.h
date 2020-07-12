@@ -32,6 +32,7 @@ namespace Urho3D
 }
 
 class Ball2D;
+class BallSucker;
 
 /// Urho2D physics sample.
 /// This sample demonstrates:
@@ -77,15 +78,31 @@ private:
     /// Construct an instruction text to the UI.
     void CreateInstructions();
 
+    void CreateWalls();
+
+    void CreateSucker();
+
+    void CreateRacket(const Vector2 &pos);
+
     void CreateBall();
+
+    void CreateSink();
+
+    void CreateEditor();
+
+    void UpdateTimer();
     /// Set up a viewport for displaying the scene.
     void SetupViewport();
     /// Read input and moves the camera.
     void MoveCamera(float timeStep);
     /// Subscribe to application-wide logic update events.
     void SubscribeToEvents();
+
+    void DebugDraw();
     /// Handle the logic update event.
-    void HandleUpdate(StringHash eventType, VariantMap& eventData);
+    void HandleSceneUpdate(StringHash eventType, VariantMap& eventData);
+
+    void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleMouseButtonDown(StringHash eventType, VariantMap& eventData);
 
@@ -93,11 +110,17 @@ private:
 
     void HandleMouseMove(StringHash eventType, VariantMap& eventData);
 
+    void HandleTouchBegin3(StringHash eventType, VariantMap& eventData);
+
+    void HandleTouchMove3(StringHash eventType, VariantMap& eventData);
+
+    void HandleTouchEnd3(StringHash eventType, VariantMap& eventData);
+
     void HandlePhysicsBegin2D(StringHash eventType, VariantMap& eventData);
 
-    Vector2 GetMousePositionXY();
+    void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
-    Vector<WeakPtr<Ball2D> > balls_;
+    Vector2 GetMousePositionXY();
 
     Vector<Color> colors_;
 
@@ -107,7 +130,31 @@ private:
 
     Node* tailNode_;
 
+    Node* sinkNode_;
+
+    Node* textNode_;
+
+    Node* spriterNode_;
+
+    Node* ballsNode_;
+
+    Node* ballSuckerNode_;
+
+    Node* ballRacketNode_;
+
     RigidBody2D* dummyBody_;
 
+    Text* timerText_;
+
+    Rect field_;
+
     float ballTimer_;
+
+    float sinkTimer_;
+
+    float sinkMaxTimer_;
+
+    float scalePhysics_;
+
+    bool debugDraw_;
 };
