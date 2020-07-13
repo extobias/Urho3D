@@ -72,7 +72,7 @@ private:
 
     void CalculateHitPoint(const IntVector2 &position);
 
-    unsigned selectedNode_;
+    void AddSelectedNode(unsigned id);
 
     WeakPtr<Node> cameraNode_;
 
@@ -89,6 +89,10 @@ private:
     Vector3 hitPoint_;
 
     SharedPtr<EditorBrush> brush_;
+
+    PODVector<unsigned> selectedNodes_;
+
+    unsigned selectedNode_;
 };
 
 }

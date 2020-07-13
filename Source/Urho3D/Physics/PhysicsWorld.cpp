@@ -525,7 +525,121 @@ struct VertexAccessor
         }
 };
 
-void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask, float overlapDistance)
+btVector3 BarycentricCoordinates(const btVector3& position, const btVector3& p1, const btVector3& p2, const btVector3& p3)
+{
+    btVector3 edge1 = p2 - p1;
+    btVector3 edge2 = p3 - p1;
+
+    // Area of triangle ABC
+    btScalar p1p2p3 = edge1.cross(edge2).length2();
+    // Area of BCP
+    btScalar p2p3p = (p3 - p2).cross(position - p2).length2();
+    // Area of CAP
+    btScalar p3p1p = edge2.cross(position - p3).length2();
+
+    btScalar s = btSqrt(p2p3p / p1p2p3);
+    btScalar t = btSqrt(p3p1p / p1p2p3);
+    btScalar w = 1.0f - s - t;
+
+    //#ifdef BUILD_DEBUG
+    //              // Unit test...
+    //              btVector3 regen_position = s * p1 + t * p2 + w * p3;
+    //              btAssert((regen_position - position).length2() < 0.0001f);
+    //#endif
+
+    return btVector3(s, t, w);
+}
+
+btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* shape,
+                              int subpart, int triangle, const btVector3& position, DebugRenderer* debug)
+{
+    // Get the geometry from somewhere...
+//    btAssert(shape->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE);
+
+//    btTriangleMeshShape* mesh_shape = static_cast<btTriangleMeshShape *>(shape);
+//    btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
+    btScaledBvhTriangleMeshShape* scaled_mesh = static_cast<btScaledBvhTriangleMeshShape*>(shape);
+    btBvhTriangleMeshShape* mesh_shape = scaled_mesh->getChildShape();
+    btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
+
+    const unsigned char* vertexbase;
+    int numverts;
+    PHY_ScalarType type;
+    int stride;
+
+    const unsigned char *indexbase;
+    int indexstride;
+    int numfaces;
+    PHY_ScalarType indicestype;
+
+    mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
+                                                     &indexbase, indexstride, numfaces, indicestype, subpart);
+
+//     FIXME: handle unsigned int indices
+//    long int offset = (unsigned int)(triangle * indexstride);
+//    unsigned int* ptr = (unsigned int*)(indexbase);
+
+    const unsigned short* ptr = (const unsigned short*)(indexbase + triangle * indexstride);
+    unsigned int i = ptr[0];
+    unsigned int j = ptr[1];
+    unsigned int k = ptr[2];
+//    URHO3D_LOGERRORF("physicsworld.interpolatemeshnormal: indices <%u,%u,%u>", i, j, k);
+
+    MaterialTriangleMeshInterface* my_mesh = static_cast<MaterialTriangleMeshInterface*>(mesh_interface);
+    btAssert(my_mesh);
+
+    VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
+    VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
+
+    btVector3 barry = BarycentricCoordinates(transform.invXform(position),
+                                             positions[i], positions[j], positions[k]);
+
+//    URHO3D_LOGERRORF("barry <%f, %f, %f> sum <%f>", barry.x(), barry.y(), barry.z(), barry.x() + barry.y() + barry.z());
+//    URHO3D_LOGERRORF("normali <%f, %f, %f> normalj <%f, %f, %f> normalk <%f, %f, %f>"
+//                     ,normals[i].getX(), normals[i].getY(), normals[i].getZ()
+//                     ,normals[j].getX(), normals[j].getY(), normals[j].getZ()
+//                     ,normals[k].getX(), normals[k].getY(), normals[k].getZ() );
+    // Interpolate from barycentric coordinates
+    btVector3 result = barry.x() * normals[i] + barry.y() * normals[j] + barry.z() * normals[k];
+
+    // Transform back into world space
+    result = transform.getBasis() * result;
+    result.normalize();
+
+    if (debug)
+    {
+        // positions
+        Vector3 p0 = ToVector3(transform.getOrigin() + transform.getBasis() * positions[i]);
+//        Sphere s0(p0, 1.0f);
+//        debug->AddSphere(s0, Color::RED);
+
+        Vector3 p1 = ToVector3(transform.getOrigin() + transform.getBasis() * positions[j]);
+//        Sphere s1(p1, 1.0f);
+//        debug->AddSphere(s1, Color::GREEN);
+
+        Vector3 p2 = ToVector3(transform.getOrigin() + transform.getBasis() * positions[k]);
+//        Sphere s2(p2, 1.0f);
+//        debug->AddSphere(s2, Color::BLUE);
+
+        // normals
+        debug->AddLine(p0, p0 + ToVector3(normals[i]), Color::RED);
+        debug->AddLine(p1, p1 + ToVector3(normals[j]), Color::GREEN);
+        debug->AddLine(p2, p2 + ToVector3(normals[k]), Color::BLUE);
+
+//        Vector3 pos = ToVector3(position);
+//        debug->AddLine(pos, pos + ToVector3(result), Color::BLUE);
+
+//        Sphere sb(ToVector3(transform.invXform(position) + barry), 0.5f);
+//        Sphere sb(ToVector3(position), 0.5f);
+//        debug->AddSphere(sb, Color::MAGENTA);
+    }
+
+    mesh_interface->unLockReadOnlyVertexBase(subpart);
+
+    return result;
+}
+
+void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask, float overlapDistance, bool interpolateNormal)
 {
     URHO3D_PROFILE(PhysicsRaycastSingleSegmented);
 
@@ -556,13 +670,35 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
         if (rayCallback.hasHit())
         {
             result.position_ = ToVector3(rayCallback.m_hitPointWorld);
-            result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
             result.distance_ = (result.position_ - ray.origin_).Length();
             result.hitFraction_ = rayCallback.m_closestHitFraction;
             result.body_ = static_cast<RigidBody*>(rayCallback.m_collisionObject->getUserPointer());
 
-                        result.shapePart_ = rayCallback.m_shapePart;
-                        result.triangleIndex_ = rayCallback.m_triangleIndex;
+            result.shapePart_ = rayCallback.m_shapePart;
+            result.triangleIndex_ = rayCallback.m_triangleIndex;
+
+            if (interpolateNormal)
+            {
+                const btRigidBody* hitBody = btRigidBody::upcast(rayCallback.m_collisionObject);
+                btCollisionShape* hitShape = (btCollisionShape*)hitBody->getCollisionShape();
+                if (hitShape->getShapeType() == SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE)
+                {
+                    btVector3 in = InterpolateMeshNormal(hitBody->getWorldTransform(),
+                                                  hitShape, result.shapePart_, result.triangleIndex_,
+                                                  rayCallback.m_hitPointWorld, GetComponent<DebugRenderer>());
+
+                    //URHO3D_LOGERRORF("shapepart <%u> triangleindex <%u>", result.shapePart_, result.triangleIndex_);
+                    //URHO3D_LOGERRORF("interpolated normal <%f, %f, %f>", in.getX(), in.getY(), in.getZ());
+                    result.normal_ = ToVector3(in);
+                    // result.normalOld_ = ToVector3(rayCallback.m_hitNormalWorld);
+                }
+                else
+                    result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
+            }
+            else
+            {
+                result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
+            }
 
             Node* node = result.body_->GetNode();
             Vector3 scale = node->GetScale();

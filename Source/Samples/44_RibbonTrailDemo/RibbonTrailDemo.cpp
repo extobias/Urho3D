@@ -32,7 +32,7 @@
 #include <Urho3D/Graphics/RenderPath.h>
 #include <Urho3D/Graphics/DebugRenderer.h>
 #include <Urho3D/Graphics/RibbonTrail.h>
-#include <Urho3D/Graphics/TailGenerator.h>
+// #include <Urho3D/Graphics/TailGenerator.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
@@ -58,7 +58,7 @@ RibbonTrailDemo::RibbonTrailDemo(Context* context) :
 
 void RibbonTrailDemo::Start()
 {
-     TailGenerator::RegisterObject(context_);
+    // TailGenerator::RegisterObject(context_);
     // Execute base class startup
     Sample::Start();
 

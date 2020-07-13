@@ -13,6 +13,7 @@
 #include "../UI/EditorWindow.h"
 #include "../UI/EditorModelDebug.h"
 #include "../UI/UI.h"
+#include "../Urho2D/StaticSprite2D.h"
 
 #include "imgui.h"
 
@@ -289,7 +290,6 @@ void EditorGuizmo::Render(float timeStep)
         return;
 
     DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-//    debugRenderer->AddFrustum(selectFrustum_, Color::RED, false);
 
     Node* node = scene_->GetNode(selectedNode_);
     if (brush_)
@@ -297,6 +297,22 @@ void EditorGuizmo::Render(float timeStep)
 
     if (node)
     {
+        /// TEST
+        BoundingBox bb;
+        for(unsigned i = 0; i < selectedNodes_.Size(); i++)
+        {
+//            URHO3D_LOGERRORF("EditorGuizmo: selected <%i>", selectedNodes_.At(i));
+            Node* nodeSelected = scene_->GetNode(selectedNodes_.At(i));
+            StaticSprite2D* sprite = nodeSelected->GetComponent<StaticSprite2D>();
+            if (sprite)
+            {
+                bb.Merge(sprite->GetBoundingBox());
+            }
+        }
+
+//        URHO3D_LOGERRORF("EditorGuizmo: selected <%i>", bb.);
+        debugRenderer->AddBoundingBox(bb, node->GetTransform(), Color::RED);
+
         if(currentEditMode_ == SELECT_OBJECT)
         {
             Matrix4 identity = Matrix4::IDENTITY;
@@ -358,6 +374,8 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
             if(result.node_)
             {
                 selectedNode_ = result.node_->GetID();
+
+                AddSelectedNode(result.node_->GetID());
 
                 VariantMap eventData;
                 eventData[P_GUIZMO_NODE_SELECTED] = selectedNode_;
@@ -433,8 +451,6 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 
     using namespace MouseMove;
 
-//    URHO3D_LOGERRORF("EditorGuizmo::HandleMouseMove");
-
     MouseButtonFlags mouseButtons = MouseButtonFlags(eventData[P_BUTTONS].GetUInt());
     QualifierFlags qualifiers = QualifierFlags(eventData[P_QUALIFIERS].GetUInt());
     IntVector2 DeltaP = IntVector2(eventData[P_DX].GetInt(), eventData[P_DY].GetInt());
@@ -454,6 +470,7 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
     {
         CalculateHitPoint(position);
 
+        // this is only one action
         if (mouseButtons & MOUSEB_LEFT)
         {
             PODVector<IntVector2> faces = SelectVertex(position);
@@ -717,6 +734,15 @@ void EditorGuizmo::CalculateHitPoint(const IntVector2& position)
             }
         }
     }
+}
+
+void EditorGuizmo::AddSelectedNode(unsigned id)
+{
+    Input* input = GetSubsystem<Input>();
+    if (!input->GetKeyDown(KEY_SHIFT))
+        selectedNodes_.Clear();
+
+    selectedNodes_.Push(id);
 }
 
 }

@@ -106,8 +106,6 @@ void ImGuiElement::SubscribeToEvents()
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(ImGuiElement, HandleKeyDown));
     SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(ImGuiElement, HandleKeyUp));
 
-    SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(ImGuiElement, HandleRawEvent));
-
     //    SubscribeToEvent(this, E_FOCUSED, URHO3D_HANDLER(ImGuiElement, HandleFocused));
     //    SubscribeToEvent(this, E_DEFOCUSED, URHO3D_HANDLER(LineEdit, HandleDefocused));
 }
@@ -376,17 +374,6 @@ void ImGuiElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
     ImGuiIO& io = ImGui::GetIO();
     IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
 
-    // Setup display size (every frame to accommodate for window resizing)
-//    int w, h;
-//    int display_w, display_h;
-//    Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
-//    w = g->GetWidth();
-//    h = g->GetHeight();
-//    //glfwGetWindowSize(g_Window, &w, &h);
-//    //glfwGetFramebufferSize(g_Window, &display_w, &display_h);
-//    io.DisplaySize = ImVec2((float)w, (float)h);
-    // if (w > 0 && h > 0)
-    //    io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
     using namespace BeginFrame;
     float timeStep = eventData[P_TIMESTEP].GetFloat();
     io.DeltaTime = timeStep < M_EPSILON ? 1.0f / 60.0f : timeStep;
@@ -411,8 +398,6 @@ void ImGuiElement::HandleKeyDown(StringHash eventType, VariantMap &eventData)
     Key key = (Key)eventData[P_KEY].GetUInt();
     unsigned scancode = eventData[P_SCANCODE].GetUInt();
     QualifierFlags qualifiers = QualifierFlags(eventData[P_QUALIFIERS].GetUInt());
-
-    // URHO3D_LOGERRORF("onkey key <%i> scancode <%i> qualifiers <%i>", key, scancode, qualifiers);
 
     ImGui::SetCurrentContext(imguiContext_);
 
@@ -441,33 +426,6 @@ void ImGuiElement::HandleKeyUp(StringHash eventType, VariantMap &eventData)
     io.KeyShift = qualifiers & QUAL_SHIFT;
 
     io.KeysDown[scancode] = false;
-}
-
-void ImGuiElement::HandleRawEvent(StringHash eventType, VariantMap& args)
-{
-    auto event = static_cast<SDL_Event*>(args[SDLRawInput::P_SDLEVENT].Get<void*>());
-
-    //if (event->type == SDL_MOUSEMOTION)
-    //{
-    //    ImGuiIO& io = ImGui::GetIO();
-    //    io.MousePos = ImVec2(event->motion.x, event->motion.y);
-
-    //    if (ImGuizmo::IsOver())
-    //    {
-    //        URHO3D_LOGERRORF("guizmo hover!!!!!!!");
-    //    }
-    //}
-    //else if (event->type == SDL_KEYDOWN || event->type == SDL_KEYUP /*|| */)
-    //{
-    //
-    //}
-    //else if (event->type == SDL_MOUSEBUTTONDOWN || event->type == SDL_MOUSEBUTTONUP)
-    //{
-    //    if (HasFocus())
-    //    {
-    //        args[SDLRawInput::P_CONSUMED] = true;
-    //    }
-    //}
 }
 
 } // end namespace Urho3D

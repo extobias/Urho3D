@@ -38,6 +38,7 @@
 #include <Urho3D/Urho2D/PhysicsWorld2D.h>
 #include <Urho3D/Urho2D/CollisionBox2D.h>
 #include <Urho3D/Urho2D/CollisionCircle2D.h>
+#include <Urho3D/Urho2D/CollisionPolygon2D.h>
 #include <Urho3D/Urho2D/RigidBody2D.h>
 #include <Urho3D/Urho2D/Sprite2D.h>
 #include <Urho3D/Urho2D/AnimatedSprite2D.h>
@@ -50,6 +51,7 @@
 #include <Urho3D/Urho2D/PhysicsUtils2D.h>
 #include <Urho3D/Math/Color.h>
 #include <Urho3D/IO/MemoryBuffer.h>
+#include <Urho3D/IO/Log.h>
 
 #include "Balls2DPhysics.h"
 #include "Ball2D.h"
@@ -130,6 +132,7 @@ void Balls2DPhysics::CreateScene()
     scalePhysics_ = dpi.z_ / 160.0f;
 
     URHO3D_LOGERRORF("dpi ddpi <%f> hdpi <%f> vdpi <%f> width <%i> height <%i>", dpi.x_, dpi.y_, dpi.z_, graphics->GetWidth(), graphics->GetHeight());
+
     camera_->SetOrthoSize((float)graphics->GetHeight() * PIXEL_SIZE);
 //    camera_->SetOrthoSize(10.0f);
     // Set zoom according to user's resolution to ensure full visibility (initial zoom (1.2) is set for full visibility at 1280x800 resolution)
@@ -173,6 +176,7 @@ void Balls2DPhysics::CreateScene()
 //    CreateSink();
 //    CreateSink();
 //    CreateSink();
+
     // Create ground.
 //    for (int i = 0; i < 3; i++)
 //    {
@@ -457,6 +461,8 @@ void Balls2DPhysics::SetupViewport()
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
+
+    engine_->SetMaxFps(30);
 }
 
 void Balls2DPhysics::MoveCamera(float timeStep)
@@ -541,7 +547,7 @@ void Balls2DPhysics::HandleSceneUpdate(StringHash eventType, VariantMap& eventDa
     if (ballTimer_ > 1.0f && scene_->IsUpdateEnabled())
     {
         ballTimer_ = 0.0f;
-        CreateBall();
+//        CreateBall();
     }
 
     sinkTimer_ += timeStep;
@@ -605,6 +611,9 @@ void Balls2DPhysics::HandleMouseButtonDown(StringHash eventType, VariantMap& eve
         constraintMouse->SetMaxForce(1000 * rigidBody->GetMass());
         constraintMouse->SetCollideConnected(true);
         constraintMouse->SetOtherBody(dummyBody_);
+
+        Vector2 p3 = ToVector2(rigidBody->GetBody()->GetLocalPoint(ToB2Vec2(GetMousePositionXY())));
+        URHO3D_LOGERRORF("p3 <%f, %f>", p3.x_, p3.y_);
     }
 //    Vector2 v2 = ToVector2(rigidBody->GetBody()->GetLocalPoint(ToB2Vec2(GetMousePositionXY())));
 //    URHO3D_LOGERRORF("shape coords <%f, %f>", v2.x_, v2.y_);

@@ -41,11 +41,11 @@ public:
 
     virtual void OnDragMove(const IntVector2& position, const IntVector2& screenPosition, const IntVector2& deltaPos,
             int buttons, int qualifiers, Cursor* cursor)  override;
-
+    /// not used
     virtual void OnKey(Key key, MouseButtonFlags buttons, QualifierFlags qualifiers);
 
     virtual void OnTextInput(const String& text);
-    // uielement callback
+
     virtual void OnPositionSet(const IntVector2& newPosition);
 
     virtual void Update(float timeStep);
@@ -61,8 +61,6 @@ public:
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
-
-    void HandleRawEvent(StringHash eventType, VariantMap& args);
 
     bool IsWithinScissor(const IntRect& currentScissor);
 
