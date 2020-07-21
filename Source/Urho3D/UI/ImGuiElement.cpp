@@ -306,6 +306,7 @@ void ImGuiElement::OnClickEnd(const IntVector2& position, const IntVector2& scre
 void ImGuiElement::OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers)
 {
     ImGui::SetCurrentContext(imguiContext_);
+
     ImGuiIO& io = ImGui::GetIO();
     io.MouseWheel = delta > 0 ? 1 : (delta < 0 ? -1 : 0);
 }

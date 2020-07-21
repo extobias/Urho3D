@@ -21,17 +21,17 @@ public:
 
     ImGuiElement(Context* context);
 
-    ~ImGuiElement();
+    virtual ~ImGuiElement();
 
     static void RegisterObject(Context* context);
     
-    virtual void GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, const IntRect& currentScissor);
+    virtual void GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, const IntRect& currentScissor) override;
 
-    virtual void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor);
+    virtual void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor) override;
 
-    virtual void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor);
+    virtual void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor) override;
 
-    virtual void OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement);
+    virtual void OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement) override;
    
     virtual void OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
 
@@ -42,13 +42,13 @@ public:
     virtual void OnDragMove(const IntVector2& position, const IntVector2& screenPosition, const IntVector2& deltaPos,
             int buttons, int qualifiers, Cursor* cursor)  override;
     /// not used
-    virtual void OnKey(Key key, MouseButtonFlags buttons, QualifierFlags qualifiers);
+    virtual void OnKey(Key key, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
 
-    virtual void OnTextInput(const String& text);
+    virtual void OnTextInput(const String& text) override;
 
-    virtual void OnPositionSet(const IntVector2& newPosition);
+    virtual void OnPositionSet(const IntVector2& newPosition) override;
 
-    virtual void Update(float timeStep);
+    virtual void Update(float timeStep) override;
 
     virtual void Render(float timeStep);
 

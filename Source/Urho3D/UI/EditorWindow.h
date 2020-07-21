@@ -10,15 +10,12 @@ class ParticleEmitter;
 class EditorGuizmo;
 class EditorModelDebug;
 
-static const StringHash E_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED");
-static const StringHash P_EDITOR_NODE_SELECTED("EDITOR_NODE_SELECTED_ID");
-
 struct ResourceFile
 {
-        String prefix;
-        String path;
-        String name;
-        String ext;
+    String prefix;
+    String path;
+    String name;
+    String ext;
 };
 
 using ResourceDir = HashMap<String, Vector<ResourceFile>>;
@@ -31,9 +28,56 @@ enum EditorMode
     SELECT_VERTEX
 };
 
+class URHO3D_API EditorSelection : public Object
+{
+    URHO3D_OBJECT(EditorSelection, Object);
+
+public:
+
+    explicit EditorSelection(Context* context);
+
+    ~EditorSelection() override;
+
+    void Add(unsigned id);
+
+    void Clear();
+
+    String ToString();
+
+    void SetScene(Scene* scene) { scene_ = scene; }
+
+    void SetTransform(const Matrix3x4& matrix);
+
+    void SetDelta(const Matrix3x4& matrix);
+
+    void Render();
+
+    const PODVector<unsigned>& GetSelectedNodes() const { return selectedNodes_; }
+
+    const Matrix3x4& GetTransform() const { return transform_; }
+
+private:
+
+    void UpdateTransform();
+
+    bool PointAboveLine(Vector3 point, Vector3 p1, Vector3 p2);
+
+    void PoligonPoints(Vector<Vector3>& points);
+
+    Vector3 CalculateCentroid(const Vector<Vector3>& points);
+
+    PODVector<unsigned> selectedNodes_;
+
+    Matrix3x4 transform_;
+
+    Scene* scene_;
+
+//        unsigned selectedSubElementIndex_{ M_MAX_UNSIGNED };
+};
+
 class URHO3D_API EditorWindow : public ImGuiElement
 {
-        URHO3D_OBJECT(EditorWindow, ImGuiElement);
+    URHO3D_OBJECT(EditorWindow, ImGuiElement);
 
 public:
     /// Construct.
@@ -43,7 +87,9 @@ public:
     /// Register object factory.
     static void RegisterObject(Context* context);
 
-    virtual void Render(float timeStep);
+    virtual void Render(float timeStep) override;
+
+    bool IsWheelHandler() const override { return true; }
 
     void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
@@ -60,8 +106,6 @@ public:
     void SetPlotVar(int index, float value);
 
     void SetScene(Scene* scene);
-
-    void AddSelectedNode(unsigned id);
 
 //    String debugText_;
 
@@ -97,17 +141,17 @@ private:
 
     void LoadResources();
 
-    PODVector<int> currentMaterialList_;
+    SharedPtr<EditorSelection> selection_;
 
-    PODVector<unsigned> selectedNodes_;
+    SharedPtr<EditorGuizmo> guizmo_;
+
+    PODVector<int> currentMaterialList_;
 
     Vector3 hitPosition_{ Vector3::ZERO };
 
     EditorMode mode_ { SELECT_OBJECT };
 
     Node* cameraNode_;
-
-    EditorGuizmo* guizmo_;
 
     ResourceDir resources_;
 
@@ -126,10 +170,6 @@ private:
     int currentModel_;
 
     int currentSprite_;
-
-    unsigned selectedNode_;
-
-    unsigned selectedSubElementIndex_{ M_MAX_UNSIGNED };
 
     float yaw_;
 

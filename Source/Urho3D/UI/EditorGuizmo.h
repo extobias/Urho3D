@@ -5,15 +5,9 @@
 #include "../UI/ImGuiElement.h"
 #include "../UI/EditorWindow.h"
 #include "../Graphics/CustomGeometry.h"
-#include "../ThirdParty/ImGui/ImGuizmo.h"
 
 namespace Urho3D
 {
-
-static const StringHash E_GUIZMO_NODE_SELECTED("GUIZMO_NODE_SELECTED");
-static const StringHash P_GUIZMO_NODE_SELECTED("GUIZMO_NODE_SELECTED_ID");
-static const StringHash P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX("GUIZMO_NODE_SELECTED_SUBELEMENTINDEX");
-static const StringHash P_GUIZMO_NODE_SELECTED_POSITION("GUIZMO_NODE_SELECTED_POSITION");
 
 class EditorBrush;
 
@@ -33,13 +27,17 @@ public:
 
     void OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor) override;
 
+    void OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement) override;
+
     void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor) override;
 
-    void SetSelectedNode(unsigned selectedNode) { selectedNode_ = selectedNode;    }
+    void OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
 
-    void SetCurrentOperation(ImGuizmo::OPERATION currentOperation) { currentOperation_ = currentOperation; }
+    bool IsWheelHandler() const override { return true; }
 
-    void SetCurrentMode(ImGuizmo::MODE currentMode) { currentMode_ = currentMode; }
+    void SetCurrentOperation(unsigned currentOperation) { currentOperation_ = currentOperation; }
+
+    void SetCurrentMode(unsigned currentMode) { currentMode_ = currentMode; }
 
     void SetCurrentEditMode(EditorMode mode) { currentEditMode_ = mode; }
 
@@ -50,6 +48,8 @@ public:
     void HandleMouseMove(StringHash eventType, VariantMap& eventData);
 
     void SetScene(Scene* scene);
+
+    void SetEditorSelection(EditorSelection* selection) { selection_ = selection; }
 
     int buttons_;
 
@@ -64,6 +64,8 @@ private:
 
     RayQueryResult SelectObject(const IntVector2& position);
 
+    void SelectObjects(const BoundingBox& boundingBox);
+
     void SelectVertex(const IntRect& screenRect);
 
     PODVector<IntVector2> SelectVertex(const IntVector2& position);
@@ -72,13 +74,15 @@ private:
 
     void CalculateHitPoint(const IntVector2 &position);
 
-    void AddSelectedNode(unsigned id);
+    void RenderVerticesPoint();
 
     WeakPtr<Node> cameraNode_;
 
-    ImGuizmo::OPERATION currentOperation_;
+    WeakPtr<EditorSelection> selection_;
 
-    ImGuizmo::MODE currentMode_;
+    unsigned currentOperation_;
+
+    unsigned currentMode_;
 
     EditorMode currentEditMode_;
 
@@ -90,9 +94,9 @@ private:
 
     SharedPtr<EditorBrush> brush_;
 
-    PODVector<unsigned> selectedNodes_;
+    IntVector2 clickStart_;
 
-    unsigned selectedNode_;
+    bool clicked_;
 };
 
 }

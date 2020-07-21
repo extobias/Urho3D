@@ -21,24 +21,265 @@
 #include "../Resource/ResourceCache.h"
 #include "../UI/EditorGuizmo.h"
 #include "../UI/UI.h"
+#include "../Urho2D/StaticSprite2D.h"
 
 #include "../UI/EditorModelDebug.h"
 
 #include "imgui.h"
+#include "ImGuizmo.h"
 
 namespace Urho3D
 {
 
 extern const char* UI_CATEGORY;
 
+EditorSelection::EditorSelection(Context* context)
+    : Object (context)
+{
+}
+
+EditorSelection::~EditorSelection() = default;
+
+void EditorSelection::Add(unsigned id)
+{
+    Input* input = GetSubsystem<Input>();
+    if (!input->GetKeyDown(KEY_SHIFT))
+        selectedNodes_.Clear();
+
+    selectedNodes_.Push(id);
+
+    UpdateTransform();
+}
+
+void EditorSelection::Clear()
+{
+    selectedNodes_.Clear();
+}
+
+String EditorSelection::ToString()
+{
+    char buf[512];
+    memset(buf, 0, 512);
+    unsigned offset = 0;
+    for(unsigned i: selectedNodes_)
+    {
+        sprintf(buf + offset, "%i, ", i);
+        offset = strlen(buf);
+    }
+
+    return buf;
+}
+
+void EditorSelection::SetTransform(const Matrix3x4 &matrix)
+{
+    transform_ = matrix;
+}
+
+void EditorSelection::SetDelta(const Matrix3x4 &matrix)
+{
+    for(unsigned id: selectedNodes_)
+    {
+        Node* node = scene_->GetNode(id);
+        node->Translate(matrix.Translation());
+        node->Rotate(matrix.Rotation());
+        node->Scale(matrix.Scale());
+    }
+}
+
+void EditorSelection::Render()
+{
+    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+    for(unsigned id: selectedNodes_)
+    {
+        Node* node = scene_->GetNode(id);
+        StaticSprite2D* draw = node->GetComponent<StaticSprite2D>();
+        if (draw)
+        {
+            debugRenderer->AddBoundingBox(draw->GetBoundingBox(), node->GetTransform(), Color::YELLOW);
+        }
+    }
+
+//        if (poligonPoints.Size() > 1)
+//        {
+//            float f = 1.0f / poligonPoints.Size();
+//            Vector3 a = poligonPoints.At(0);
+//            for (unsigned i = 1; i < poligonPoints.Size(); i++)
+//            {
+//                Vector3 p = poligonPoints.At(i);
+//                float hue = i * f;
+//                Color color;
+//                color.FromHSV(hue, 1.0f, 1.0f, 1.0f);
+//                debugRenderer->AddLine(a , p, color);
+//                a = p;
+//            }
+//        }
+}
+
+void EditorSelection::UpdateTransform()
+{
+    if (selectedNodes_.Size() == 1)
+    {
+        Node* node = scene_->GetNode(selectedNodes_.At(0));
+        transform_ = node->GetTransform();
+        return;
+    }
+
+    Vector<Vector3> poligonPoints;
+    PoligonPoints(poligonPoints);
+    Vector3 center = CalculateCentroid(poligonPoints);
+    transform_.SetTranslation(center);
+}
+
+bool EditorSelection::PointAboveLine(Vector3 point, Vector3 p1, Vector3 p2)
+{
+    // first, horizontally sort the points in the line
+    Vector3 first;
+    Vector3 second;
+
+    if (p1.x_ > p2.x_)
+    {
+        first = p2;
+        second = p1;
+    }
+    else
+    {
+        first = p1;
+        second = p2;
+    }
+
+    Vector3 v1 = second - first;
+    Vector3 v2 = second - point;
+    Vector3 cp = v1.CrossProduct(v2);
+
+    // above or on the line
+    return (cp.z_ >= 0.0f);
+}
+
+void EditorSelection::PoligonPoints(Vector<Vector3>& points)
+{
+    if (selectedNodes_.Size() == 0)
+        return;
+
+    if (selectedNodes_.Size() == 1)
+    {
+        Node* nodeSelected = scene_->GetNode(selectedNodes_.At(0));
+        points.Push(nodeSelected->GetPosition());
+
+        return;
+    }
+
+    Vector3 p, q;
+    p.x_ = M_INFINITY;
+    q.x_ = -M_INFINITY;
+    unsigned pi = 0;
+    unsigned qi = 0;
+    Vector<Vector3> a, b;
+    for(unsigned i = 0; i < selectedNodes_.Size(); i++)
+    {
+//            URHO3D_LOGERRORF("EditorGuizmo: selected <%i>", selectedNodes_.At(i));
+        Node* nodeSelected = scene_->GetNode(selectedNodes_.At(i));
+        Vector3 pos = nodeSelected->GetPosition();
+        if (pos.x_ < p.x_)
+        {
+            p = pos;
+            pi = i;
+        }
+        if (pos.x_ > q.x_)
+        {
+            q = pos;
+            qi = i;
+        }
+    }
+
+    for(unsigned i = 0; i < selectedNodes_.Size(); i++)
+    {
+        Node* nodeSelected = scene_->GetNode(selectedNodes_.At(i));
+        Vector3 point = nodeSelected->GetPosition();
+        if (i == pi || i == qi)
+            continue;
+
+        if (PointAboveLine(point, p, q))
+        {
+            b.Push(point);
+        }
+        else
+        {
+            a.Push(point);
+        }
+    }
+
+    Sort(a.Begin(), a.End(), [](const Vector3& lhs, const Vector3& rhs) { return lhs.x_ < rhs.x_; });
+
+    Sort(b.Begin(), b.End(), [](const Vector3& lhs, const Vector3& rhs) { return lhs.x_ > rhs.x_; });
+
+    points.Push(p);
+    if (a.Size())
+        points.Push(a);
+
+    points.Push(q);
+    if (b.Size())
+        points.Push(b);
+}
+
+Vector3 EditorSelection::CalculateCentroid(const Vector<Vector3>& points)
+{
+    if (points.Size() < 2)
+        return Vector3::ZERO;
+
+    if (points.Size() == 2)
+    {
+        Vector3 v0 = points.At(0);
+        Vector3 v1 = points.At(1);
+
+        return (v0 + v1) / 2.0f;
+    }
+
+    Vector3 centroid;
+    float signedArea = 0.0;
+    Vector3 v0, v1;
+    float a = 0.0;  // Partial signed area
+
+    // For all vertices except last
+    for (unsigned i=0; i < points.Size() - 1; ++i)
+    {
+        v0 = points.At(i);
+        v1 = points.At(i + 1);
+        Vector3 v2 = v0.CrossProduct(v1);
+        a = v2.z_;
+        signedArea += a;
+        centroid.x_ += (v0.x_ + v1.x_) * a;
+        centroid.y_ += (v0.y_ + v1.y_) * a;
+    }
+
+    // Do last vertex separately to avoid performing an expensive
+    // modulus operation in each iteration.
+    v0 = points.At(points.Size() - 1);
+    v1 = points.At(0);
+    Vector3 v2 = v0.CrossProduct(v1);
+
+    a = v2.z_;
+    signedArea += a;
+    centroid.x_ += (v0.x_ + v1.x_) * a;
+    centroid.y_ += (v0.y_ + v1.y_) * a;
+
+    signedArea *= 0.5f;
+    centroid.x_ /= (6.0f * signedArea);
+    centroid.y_ /= (6.0f * signedArea);
+
+    return centroid;
+}
+
+
+
+/// EditorWindow
 EditorWindow::EditorWindow(Context* context) :
     ImGuiElement(context),
+    selection_(new EditorSelection(context)),
 //    debugText_(""),
     cameraNode_(nullptr),
     guizmo_(nullptr),
     currentModel_(0),
     currentSprite_(0),
-    selectedNode_(0),
     yaw_(0.0f),
     pitch_(0.0f)
 {
@@ -47,9 +288,11 @@ EditorWindow::EditorWindow(Context* context) :
 //        plotVarsOffset_[i] = 0;
 //    }
 
+
+
     LoadResources();
 
-    SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
+//    SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
 
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
 }
@@ -71,9 +314,9 @@ void EditorWindow::SetCameraNode(Node* node)
 
 void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
 {
-    selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
-    selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
-    hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
+//    selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
+//    selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
+//    hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
 }
 
 void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -249,12 +492,16 @@ void EditorWindow::CreateGuizmo()
     guizmo_->SetName("guizmo");
     guizmo_->SetFocusMode(FM_NOTFOCUSABLE);
     guizmo_->SetPosition(0, 0);
-
-    if (scene_)
-        guizmo_->SetScene(scene_);
+    guizmo_->SetEditorSelection(selection_);
 
     if (parent_)
         parent_->AddChild(guizmo_);
+
+    if (scene_)
+    {
+        guizmo_->SetScene(scene_);
+        selection_->SetScene(scene_);
+    }
 
     if (cameraNode_)
         guizmo_->SetCameraNode(cameraNode_);
@@ -278,17 +525,10 @@ void EditorWindow::SetScene(Scene* scene)
 {
     scene_ = scene;
 
+    selection_->SetScene(scene);
+
     if (guizmo_)
         guizmo_->SetScene(scene);
-}
-
-void EditorWindow::AddSelectedNode(unsigned id)
-{
-    Input* input = GetSubsystem<Input>();
-    if (!input->GetKeyDown(KEY_SHIFT))
-        selectedNodes_.Clear();
-
-    selectedNodes_.Push(id);
 }
 
 void EditorWindow::Render(float timeStep)
@@ -300,7 +540,7 @@ void EditorWindow::Render(float timeStep)
     ImGui::Begin("Scene Inspector", &closable);
 
     // Guizmo stuff
-    static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::ROTATE);
+    static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::TRANSLATE);
     static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
 
     static const char* modeTypes[] = { "Object", "Vertex" };
@@ -357,14 +597,15 @@ void EditorWindow::Render(float timeStep)
 
     // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
     // ImGui::PlotLines("Lines", );
+    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
 
-    ImGui::Text("Node selected <%u> guizmoBtn <%i>", selectedNode_, guizmoBtn);
+    ImGui::Text("Node selected <%s> guizmoBtn <%i>", selection_->ToString().CString(), guizmoBtn);
     // ImGui::SameLine();
     if(ImGui::Button("\+Local"))
     {
-        if (selectedNode_)
+        if (s.Size() == 1)
         {
-            Node* node = scene_->GetNode(selectedNode_);
+            Node* node = scene_->GetNode(s.At(0));
             if (node)
             {
                 node->CreateChild(String::EMPTY, LOCAL);
@@ -385,12 +626,12 @@ void EditorWindow::Render(float timeStep)
     ImGui::SameLine();
     if(ImGui::Button("\-Remove"))
     {
-        for(unsigned i = 0; i < selectedNodes_.Size(); i++)
-        {
-            Node* node = scene_->GetChild(selectedNodes_.At(i));
-            if (node)
-                scene_->RemoveChild(node);
-        }
+//        for(unsigned i = 0; i < selectedNodes_.Size(); i++)
+//        {
+//            Node* node = scene_->GetChild(selectedNodes_.At(i));
+//            if (node)
+//                scene_->RemoveChild(node);
+//        }
     }
 
     DrawNodeTree();
@@ -430,9 +671,10 @@ void EditorWindow::DrawChild(Node* node, int& i)
 {
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
+    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
     // selected node
     // if (selectedNode_ == node->GetID())
-    if (selectedNodes_.Contains(node->GetID()))
+    if (s.Contains(node->GetID()))
     {
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
     }
@@ -441,7 +683,7 @@ void EditorWindow::DrawChild(Node* node, int& i)
     auto children = node->GetChildren();
     for (Node* child : children)
     {
-        if (child->GetID() == selectedNode_)
+        if (s.Size() == 1 && s.Contains(child->GetID()))
         {
             nodeFlags |= ImGuiTreeNodeFlags_DefaultOpen;
             break;
@@ -451,14 +693,15 @@ void EditorWindow::DrawChild(Node* node, int& i)
     bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - %i - %i", node->GetName().CString(), node->GetID(), node->GetChildren().Size());
     if (ImGui::IsItemClicked())
     {
-        selectedNode_ = node->GetID();
-        AddSelectedNode(node->GetID());
+        selection_->Add(node->GetID());
+//        selectedNode_ = node->GetID();
+////        AddSelectedNode(node->GetID());
 
-        if (guizmo_)
-        {
-            guizmo_->SetSelectedNode(selectedNode_);
-            URHO3D_LOGERRORF("item selected <%i>", node->GetID());
-        }
+//        if (guizmo_)
+//        {
+//            guizmo_->SetSelectedNode(selectedNode_);
+//            URHO3D_LOGERRORF("item selected <%i>", node->GetID());
+//        }
     }
     i++;
     if (isOpen)
@@ -479,7 +722,9 @@ void EditorWindow::DrawNodeTree()
     ImGui::BeginChild("Nodes", ImVec2(ImGui::GetContentRegionAvail().x, 200.0f), true);
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
-    if (selectedNode_ == 0)
+
+    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
+    if (s.Size() == 1 && s.Contains(scene_->GetID()))
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
 
     String sceneName = scene_->GetName();
@@ -492,12 +737,7 @@ void EditorWindow::DrawNodeTree()
         // select scene
         if(mode_ == SELECT_OBJECT)
         {
-            selectedNode_ = scene_->GetID();
-            AddSelectedNode(scene_->GetID());
-
-            VariantMap eventData;
-            eventData[P_EDITOR_NODE_SELECTED] = selectedNode_;
-            SendEvent(E_EDITOR_NODE_SELECTED, eventData);
+            selection_->Add(scene_->GetID());
         }
         else
         {
@@ -520,10 +760,11 @@ void EditorWindow::DrawNodeTree()
 
 void EditorWindow::DrawNodeSelected()
 {
-    if (selectedNodes_.Size() != 1)
+    const PODVector<unsigned> selected = selection_->GetSelectedNodes();
+    if (selected.Size() != 1)
         return;
 
-    unsigned selectedNode = selectedNodes_.At(0);
+    unsigned selectedNode = selected.At(0);
     if (selectedNode)
     {
         Node* node = scene_->GetNode(selectedNode);
@@ -562,7 +803,7 @@ void EditorWindow::DrawNodeSelected()
         for (Component* c : childComponents)
         {
             // ImGui::Text("%s", c->GetTypeName().CString());
-            ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow;
+            ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
             if (ImGui::CollapsingHeader(c->GetTypeName().CString(), &headerOpen, headerFlags))
             {
                 AttributeEdit(c);
