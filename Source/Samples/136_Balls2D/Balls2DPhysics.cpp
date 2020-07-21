@@ -27,8 +27,10 @@
 #include <Urho3D/Graphics/Graphics.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Graphics/Renderer.h>
+#include <Urho3D/Graphics/StaticModel.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/Resource/ResourceCache.h>
+#include <Urho3D/Graphics/Model.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Scene/SceneEvents.h>
 #include <Urho3D/UI/Font.h>
@@ -119,7 +121,7 @@ void Balls2DPhysics::CreateScene()
     // Create camera node
     cameraNode_ = scene_->CreateChild("Camera");
     // Set camera's position
-    cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -10.0f));
+    cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -1.0f));
 
     camera_ = cameraNode_->CreateComponent<Camera>();
     camera_->SetOrthographic(true);
@@ -176,6 +178,37 @@ void Balls2DPhysics::CreateScene()
 //    CreateSink();
 //    CreateSink();
 //    CreateSink();
+
+    const char* names[] = {
+        "Urho2D/Aster.png",
+        "Urho2D/Ball.png",
+        "Urho2D/Box.png",
+        "Urho2D/GoldIcon.png",
+    };
+
+    Octree* octree = scene_->GetComponent<Octree>();
+    auto* cache = GetSubsystem<ResourceCache>();
+    for (int i = 0; i < 4; i++)
+    {
+        String name;
+        Node* node = scene_->CreateChild(name.AppendWithFormat("Test-%i", i));
+        auto* sprite2d = cache->GetResource<Sprite2D>(names[i]);
+        auto* sprite = node->CreateComponent<StaticSprite2D>();
+        sprite->SetSprite(sprite2d);
+
+        octree->AddManualDrawable(sprite);
+
+        URHO3D_LOGERRORF("Balls2DPhysics::CreateScene: BOUNDINGBOX <%s>", sprite->GetWorldBoundingBox().ToString().CString());
+    }
+
+    Node* node = scene_->CreateChild("Cube");
+    StaticModel* mushroom= node->CreateComponent<StaticModel>();
+    Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
+    mushroom->SetModel(mushroomModel);
+    mushroom->SetCastShadows(true);
+    mushroom->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+
+    URHO3D_LOGERRORF("Balls2DPhysics::CreateScene: BOUNDINGBOX <%s>", mushroom->GetBoundingBox().ToString().CString());
 
     // Create ground.
 //    for (int i = 0; i < 3; i++)
@@ -430,6 +463,7 @@ void Balls2DPhysics::CreateEditor()
     editor_->SetName("editor");
     //    editor_->SetCameraNode(cameraNode_);
     UI* ui = GetSubsystem<UI>();
+    ui->SetNonFocusedMouseWheel(true);
     ui->GetRootModalElement()->AddChild(editor_);
     //    editor_->SetScene(scene_);
 
@@ -556,7 +590,8 @@ void Balls2DPhysics::HandleSceneUpdate(StringHash eventType, VariantMap& eventDa
 //    timerText_->SetText(textBuffer);
     if (sinkTimer_ > sinkMaxTimer_)
     {
-        sinkMaxTimer_ = Random(1.0f, 5.0f);
+//        sinkMaxTimer_ = Random(1.0f, 5.0f);
+        sinkMaxTimer_ = 10.0f;
         sinkTimer_ = 0.0f;
         CreateSink();
     }
@@ -567,6 +602,15 @@ void Balls2DPhysics::HandleSceneUpdate(StringHash eventType, VariantMap& eventDa
     Quaternion rot(angle, Vector3(0.0f, 0.0f, 1.0f));
     // URHO3D_LOGERRORF("angle <%f>", angle);
 //    textNode_->Rotate(rot);
+
+    Node* node = scene_->GetChild("Test-0");
+    if (node)
+    {
+        StaticSprite2D* sprite2d = node->GetComponent<StaticSprite2D>();
+        BoundingBox bb = sprite2d->GetBoundingBox();
+        DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+        debugRenderer->AddBoundingBox(bb, Color::RED);
+    }
 }
 
 void Balls2DPhysics::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
