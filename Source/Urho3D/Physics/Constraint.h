@@ -154,12 +154,12 @@ protected:
     void OnSceneSet(Scene* scene) override;
     /// Handle node transform being dirtied.
     void OnMarkedDirty(Node* node) override;
-
-private:
     /// Create the constraint.
     void CreateConstraint();
     /// Apply high and low constraint limits.
     void ApplyLimits();
+
+private:
     /// Adjust other body position.
     void AdjustOtherBodyPosition();
     /// Mark constraint dirty.
@@ -167,6 +167,7 @@ private:
     /// Mark frames dirty.
     void MarkFramesDirty() { framesDirty_ = true; }
 
+protected:
     /// Physics world.
     WeakPtr<PhysicsWorld> physicsWorld_;
     /// Own rigid body.

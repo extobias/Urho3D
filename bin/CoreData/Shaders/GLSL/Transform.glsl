@@ -66,6 +66,19 @@ vec4 GetClipPos(vec3 worldPos)
     return ret;
 }
 
+vec4 GetClipPosTrailFace(vec3 worldPos)
+{
+    // vec4 ret = vec4(worldPos, 1.0) * inverse(cView) * cViewProj;
+    vec4 ret = vec4(worldPos, 1.0) * cViewProj;
+    // While getting the clip coordinate, also automatically set gl_ClipVertex for user clip planes
+    #if !defined(GL_ES) && !defined(GL3)
+        gl_ClipVertex = ret;
+    #elif defined(GL3)
+        gl_ClipDistance[0] = dot(cClipPlane, ret);
+    #endif
+    return ret;
+}
+
 float GetZonePos(vec3 worldPos)
 {
     return clamp((vec4(worldPos, 1.0) * cZone).z, 0.0, 1.0);
@@ -120,9 +133,10 @@ vec3 GetBillboardNormal(vec4 iPos, vec3 iDirection, mat4 modelMatrix)
 #ifdef TRAILFACECAM
 vec3 GetTrailPos(vec4 iPos, vec3 iFront, float iScale, mat4 modelMatrix)
 {
-    vec3 up = normalize(cCameraPos - iPos.xyz);
-    vec3 right = normalize(cross(iFront, up));
-    return (vec4((iPos.xyz + right * iScale), 1.0) * modelMatrix).xyz;
+//     vec3 up = normalize(cCameraPos - iPos.xyz);
+//     vec3 right = normalize(cross(iFront, up));
+//     return (vec4((iPos.xyz + right * iScale), 1.0) * modelMatrix).xyz;
+    return (vec4(iPos.xyz, 1.0) * modelMatrix).xyz;
 }
 
 vec3 GetTrailNormal(vec4 iPos)

@@ -47,6 +47,7 @@ static const char* typeNames[] =
     "Hinge",
     "Slider",
     "ConeTwist",
+    "6DoF",
     nullptr
 };
 

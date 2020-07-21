@@ -44,6 +44,7 @@ android {
                 arguments.apply {
                     System.getenv("ANDROID_CCACHE")?.let { add("-DANDROID_CCACHE=$it") }
                     add("-DGRADLE_BUILD_DIR=${findProject(":android:urho3d-lib")?.buildDir}")
+                    add("-DCMAKE_VERBOSE_MAKEFILE=ON")
                     addAll(
                         listOf(
                             "URHO3D_LIB_TYPE",

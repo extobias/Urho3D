@@ -608,6 +608,10 @@ void Urho2DConstraints::HandleTouchEnd3(StringHash eventType, VariantMap& eventD
 
         pickedNode->RemoveComponent<ConstraintMouse2D>(); // Remove temporary constraint
         pickedNode = nullptr;
+
+        // sigsegv
+        volatile int *p = reinterpret_cast<volatile int*>(0);
+        *p = 0x1337D00D;
     }
     UnsubscribeFromEvent(E_TOUCHMOVE);
     UnsubscribeFromEvent(E_TOUCHEND);

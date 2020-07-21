@@ -80,6 +80,8 @@ public:
 
     /// Get the length of SplinePath.
     float GetLength() const { return length_; }
+    /// Get the traveled length of SplinePath;
+    float GetTraveled() const { return traveled_; }
 
     /// Get the parent Node's last position on the spline.
     Vector3 GetPosition() const { return GetPoint(traveled_); }

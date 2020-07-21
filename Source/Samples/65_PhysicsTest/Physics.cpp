@@ -59,22 +59,22 @@ URHO3D_DEFINE_APPLICATION_MAIN(Physics)
 const float CAMERA_DISTANCE = 10.0f;
 
 Physics::Physics(Context* context) :
-	Sample(context),
-	drawDebug_(false),
-	mass_(100.0f),
-	length_(3.0f),
-	width_(2.0f),
-	debugText_(nullptr),
-	maxHeight_(0.0f),
-	updateLinSuspension_(false),
-	updateRotSuspension_(false),
-	floatHeight_(1.0f),
-	k_(350.0f),
-	kFactor_(0),
-	maxImpulse_(0.0f),
-	timeElapsed_(0.0f)
+    Sample(context),
+    drawDebug_(false),
+    mass_(100.0f),
+    length_(3.0f),
+    width_(2.0f),
+    debugText_(nullptr),
+    maxHeight_(0.0f),
+    updateLinSuspension_(false),
+    updateRotSuspension_(false),
+    floatHeight_(1.0f),
+    k_(350.0f),
+    kFactor_(0),
+    maxImpulse_(0.0f),
+    timeElapsed_(0.0f)
 {
-	Raycastest::RegisterObject(context);
+    Raycastest::RegisterObject(context);
 }
 
 void Physics::Start()
@@ -87,7 +87,7 @@ void Physics::Start()
 
     // Create the UI content
     // CreateInstructions();
-	CreateDebugText();
+    CreateDebugText();
     // Setup the viewport for displaying the scene
     SetupViewport();
 
@@ -95,7 +95,7 @@ void Physics::Start()
     SubscribeToEvents();
 
     // Set the mouse mode to use in the sample
-    Sample::InitMouseMode(MM_RELATIVE);
+    Sample::InitMouseMode(MM_FREE);
 }
 
 void Physics::CreateScene()
@@ -103,8 +103,9 @@ void Physics::CreateScene()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     scene_ = new Scene(context_);
+    editor_->SetScene(scene_);
 
-	engine_->SetMaxFps(60);
+    engine_->SetMaxFps(60);
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
     // Create a physics simulation world with default parameters, which will update at 60fps. Like the Octree must
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
@@ -155,36 +156,36 @@ void Physics::CreateScene()
         // in the physics simulation
         RigidBody* body = floorNode->CreateComponent<RigidBody>();
         body->SetCollisionLayer(1 << 0);
-		body->SetMass(0.0f);
+        body->SetMass(0.0f);
         CollisionShape* shape = floorNode->CreateComponent<CollisionShape>();
         // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
         // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
         shape->SetBox(Vector3::ONE);
 
-		//Node* terrainNode = scene_->CreateChild("Terrain");
-		//terrainNode->SetPosition(Vector3::ZERO);
-		//auto* terrain = terrainNode->CreateComponent<Terrain>();
-		//terrain->SetPatchSize(64);
-		//terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
-		//terrain->SetSmoothing(true);
-		//terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
-		//terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
-		//// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
-		//// terrain patches and other objects behind it
-		//terrain->SetOccluder(true);
+        //Node* terrainNode = scene_->CreateChild("Terrain");
+        //terrainNode->SetPosition(Vector3::ZERO);
+        //auto* terrain = terrainNode->CreateComponent<Terrain>();
+        //terrain->SetPatchSize(64);
+        //terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+        //terrain->SetSmoothing(true);
+        //terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+        //terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+        //// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+        //// terrain patches and other objects behind it
+        //terrain->SetOccluder(true);
 
-		//auto* body = terrainNode->CreateComponent<RigidBody>();
-		//body->SetCollisionLayer(1 << 0); // Use layer bitmask 2 for static geometry
-		//auto* shape = terrainNode->CreateComponent<CollisionShape>();
-		//shape->SetTerrain();
+        //auto* body = terrainNode->CreateComponent<RigidBody>();
+        //body->SetCollisionLayer(1 << 0); // Use layer bitmask 2 for static geometry
+        //auto* shape = terrainNode->CreateComponent<CollisionShape>();
+        //shape->SetTerrain();
     }
 
-	Node* boxNode;
-	if(1)
+    Node* boxNode;
+    if(1)
     {
-		int x = 0, y = 0;
+        int x = 0, y = 0;
         boxNode = scene_->CreateChild("Box");
-		boxNode->SetScale(Vector3(width_, 1.0f, length_));
+        boxNode->SetScale(Vector3(width_, 1.0f, length_));
         boxNode->SetPosition(Vector3((float)x, -(float)y + 0.5f, 0.0f));
         StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
         boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
@@ -195,54 +196,54 @@ void Physics::CreateScene()
         // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
         // objects are significant
         body_ = boxNode->CreateComponent<RigidBody>();
-		body_->SetCollisionLayer(1 << 1);
+        body_->SetCollisionLayer(1 << 1);
         body_->SetMass(mass_);
-		body_->SetRestitution(1.0f);
+        body_->SetRestitution(1.0f);
+        body_->SetKinematic(true);
         // body_->SetFriction(0.75f);
-		// body_->SetAngularFactor(Vector3::ZERO);
-		// body_->SetLinearFactor(Vector3::UP);
+        // body_->SetAngularFactor(Vector3::ZERO);
+        // body_->SetLinearFactor(Vector3::UP);
         CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
         shape->SetBox(Vector3::ONE);
     }
 
-	// Node* rtNode = scene_->CreateChild("RT");
-	// Node* boxNode = scene_->CreateChild("Box");
-	// boxNode->SetScale(Vector3(width_, 1.0f, length_));
-	// boxNode->SetPosition(Vector3(0.0f, 0.5f, 0.0f));
-	Vector<Vector3> wheelPos;
-	wheelPos.Push(Vector3(0.5f, 0.0f, 1.0f));
-	wheelPos.Push(Vector3(-0.5f, 0.0f, 1.0f));
-	wheelPos.Push(Vector3(0.5f, 0.0f, -1.0f));
-	wheelPos.Push(Vector3(-0.5f, 0.0f, -1.0f));
+    // Node* rtNode = scene_->CreateChild("RT");
+    // Node* boxNode = scene_->CreateChild("Box");
+    // boxNode->SetScale(Vector3(width_, 1.0f, length_));
+    // boxNode->SetPosition(Vector3(0.0f, 0.5f, 0.0f));
+    Vector<Vector3> wheelPos;
+    wheelPos.Push(Vector3(0.5f, 0.0f, 1.0f));
+    wheelPos.Push(Vector3(-0.5f, 0.0f, 1.0f));
+    wheelPos.Push(Vector3(0.5f, 0.0f, -1.0f));
+    wheelPos.Push(Vector3(-0.5f, 0.0f, -1.0f));
 
-	for (int i = 0; i < wheelPos.Size(); i++)
-	{
-		Raycastest* rt = boxNode->CreateComponent<Raycastest>();
-		rt->SetOffset(wheelPos.At(i));
-		convexCastTest_.Push(rt);
+    for (int i = 0; i < wheelPos.Size(); i++)
+    {
+        Raycastest* rt = boxNode->CreateComponent<Raycastest>();
+        rt->SetOffset(wheelPos.At(i));
+        convexCastTest_.Push(rt);
+    }
 
-	}
+    {
+        //for (int i = 1; i < 8; ++i)
+        //{
+        //    Node* boxNode = scene_->CreateChild("SmallBox");
+        //    boxNode->SetPosition(Vector3(0.0f, 1.0f, 5.0f * i));
+        //    boxNode->SetScale(0.25f);
+        //    StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+        //    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+        //    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+        //    boxObject->SetCastShadows(true);
 
-	{
-		//for (int i = 1; i < 8; ++i)
-		//{
-		//	Node* boxNode = scene_->CreateChild("SmallBox");
-		//	boxNode->SetPosition(Vector3(0.0f, 1.0f, 5.0f * i));
-		//	boxNode->SetScale(0.25f);
-		//	StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-		//	boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-		//	boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-		//	boxObject->SetCastShadows(true);
-
-		//	// Create physics components, use a smaller mass also
-		//	RigidBody* body = boxNode->CreateComponent<RigidBody>();
-		//	body->SetMass(0.25f);
-		//	// body->SetFriction(0.75f);
-		//	body->SetCollisionLayer(1 << 0);
-		//	CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-		//	shape->SetBox(Vector3::ONE);
-		//}
-	}
+        //    // Create physics components, use a smaller mass also
+        //    RigidBody* body = boxNode->CreateComponent<RigidBody>();
+        //    body->SetMass(0.25f);
+        //    // body->SetFriction(0.75f);
+        //    body->SetCollisionLayer(1 << 0);
+        //    CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+        //    shape->SetBox(Vector3::ONE);
+        //}
+    }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
@@ -251,8 +252,10 @@ void Physics::CreateScene()
     camera->SetFarClip(500.0f);
 
     // Set an initial position for the camera scene node above the floor
-	cameraNode_->SetPosition(Vector3(5.0f, 0.5f, 0.0f));
-	//cameraNode_->SetRotation(Quaternion(90.0f, Vector3::UP));
+    cameraNode_->SetPosition(Vector3(5.0f, 0.5f, 0.0f));
+    //cameraNode_->SetRotation(Quaternion(90.0f, Vector3::UP));
+
+    editor_->SetCameraNode(cameraNode_);
 }
 
 void Physics::CreateInstructions()
@@ -280,34 +283,34 @@ void Physics::CreateInstructions()
 
 void Physics::CreateDebugText()
 {
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
-	UI* ui = GetSubsystem<UI>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    UI* ui = GetSubsystem<UI>();
 
-	debugText_ = ui->GetRoot()->CreateChild<Text>();
+    debugText_ = ui->GetRoot()->CreateChild<Text>();
 
-	debugText_->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 10);
-	// The text has multiple rows. Center them in relation to each other
-	debugText_->SetTextAlignment(HA_CENTER);
+    debugText_->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 10);
+    // The text has multiple rows. Center them in relation to each other
+    debugText_->SetTextAlignment(HA_CENTER);
 
-	// Position the text relative to the screen center
-	debugText_->SetHorizontalAlignment(HA_LEFT);
-	debugText_->SetVerticalAlignment(VA_CENTER);
-	debugText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+    // Position the text relative to the screen center
+    debugText_->SetHorizontalAlignment(HA_LEFT);
+    debugText_->SetVerticalAlignment(VA_CENTER);
+    debugText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
 }
 
 void Physics::SetupViewport()
 {
     Renderer* renderer = GetSubsystem<Renderer>();
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
 
-	SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+    SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
         effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
 
-	viewport->SetRenderPath(effectRenderPath);
+    viewport->SetRenderPath(effectRenderPath);
 }
 
 void Physics::SubscribeToEvents()
@@ -319,10 +322,10 @@ void Physics::SubscribeToEvents()
     // debug geometry
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(Physics, HandlePostRenderUpdate));
 
-	SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Physics, HandleKeyDown));
+    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Physics, HandleKeyDown));
 
-	Component* world = scene_->GetComponent<PhysicsWorld>();
-	SubscribeToEvent(world, E_PHYSICSPRESTEP, URHO3D_HANDLER(Physics, HandlePhysicsPreStep));
+    Component* world = scene_->GetComponent<PhysicsWorld>();
+    SubscribeToEvent(world, E_PHYSICSPRESTEP, URHO3D_HANDLER(Physics, HandlePhysicsPreStep));
 }
 
 void Physics::MoveCamera(float timeStep)
@@ -338,14 +341,18 @@ void Physics::MoveCamera(float timeStep)
     // Mouse sensitivity as degrees per pixel
     const float MOUSE_SENSITIVITY = 0.1f;
 
-    // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    IntVector2 mouseMove = input->GetMouseMove();
-    yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
-    pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
-    pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+    if (input->GetMouseButtonDown(MOUSEB_RIGHT))
+    {
+        // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
+        IntVector2 mouseMove = input->GetMouseMove();
+        yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
+        pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
+        pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
-    // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-    cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+        // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
+
 
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     if (input->GetKeyDown(KEY_W))
@@ -356,17 +363,17 @@ void Physics::MoveCamera(float timeStep)
         cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * timeStep);
     if (input->GetKeyDown(KEY_D))
         cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
-	if (input->GetKeyDown(KEY_E))
-		cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
-	if (input->GetKeyDown(KEY_Q))
-		cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_E))
+        cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
+    if (input->GetKeyDown(KEY_Q))
+        cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
 
-	if (input->GetKeyDown(KEY_C))
-	{
-		Vector3 camPos = cameraNode_->GetPosition();
-		// cameraNode_->SetPosition(Vector3(camPos.x_, 0.0f, camPos.z_));
-		cameraNode_->SetPosition(Vector3(5.0f, 0.0f, 0.0f));
-	}
+    if (input->GetKeyDown(KEY_C))
+    {
+        Vector3 camPos = cameraNode_->GetPosition();
+        // cameraNode_->SetPosition(Vector3(camPos.x_, 0.0f, camPos.z_));
+        cameraNode_->SetPosition(Vector3(5.0f, 0.0f, 0.0f));
+    }
 
     // "Shoot" a physics object with left mousebutton
     if (input->GetMouseButtonDown(MOUSEB_LEFT))
@@ -388,49 +395,49 @@ void Physics::MoveCamera(float timeStep)
 
 void Physics::SpawnObject(bool camera)
 {
-	ResourceCache* cache = GetSubsystem<ResourceCache>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-	// Create a smaller box at camera position
-	Node* boxNode = scene_->CreateChild("SmallBox");
-	if (camera)
-	{
-		boxNode->SetPosition(cameraNode_->GetPosition());
-		boxNode->SetRotation(cameraNode_->GetRotation());
-	}
-	else
-	{
-		boxNode->SetPosition(Vector3::ZERO);
-		boxNode->SetRotation(Quaternion::IDENTITY);
-	}
+    // Create a smaller box at camera position
+    Node* boxNode = scene_->CreateChild("SmallBox");
+    if (camera)
+    {
+        boxNode->SetPosition(cameraNode_->GetPosition());
+        boxNode->SetRotation(cameraNode_->GetRotation());
+    }
+    else
+    {
+        boxNode->SetPosition(Vector3::ZERO);
+        boxNode->SetRotation(Quaternion::IDENTITY);
+    }
 
-	boxNode->SetScale(0.1f);
-	StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-	boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-	boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-	boxObject->SetCastShadows(true);
+    boxNode->SetScale(0.1f);
+    StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+    boxObject->SetCastShadows(true);
 
-	// Create physics components, use a smaller mass also
-	RigidBody* body = boxNode->CreateComponent<RigidBody>();
-	body->SetMass(0.25f);
-	body->SetFriction(0.75f);
-	body->SetCollisionLayer(1 << 0);
-	CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-	shape->SetBox(Vector3::ONE);
+    // Create physics components, use a smaller mass also
+    RigidBody* body = boxNode->CreateComponent<RigidBody>();
+    body->SetMass(0.25f);
+    body->SetFriction(0.75f);
+    body->SetCollisionLayer(1 << 0);
+    CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+    shape->SetBox(Vector3::ONE);
 
-	const float OBJECT_VELOCITY = 1.0f;
+    const float OBJECT_VELOCITY = 1.0f;
 
-	// Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
-	// to overcome gravity better
-	if (camera)
-	{
-		body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
-	}
-	else
-	{
-		
-	}
+    // Set initial velocity for the RigidBody based on camera forward vector. Add also a slight up component
+    // to overcome gravity better
+    if (camera)
+    {
+        body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+    }
+    else
+    {
 
-	boxNodes_.Push(boxNode);
+    }
+
+    boxNodes_.Push(boxNode);
 }
 
 void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -440,111 +447,111 @@ void Physics::HandleUpdate(StringHash eventType, VariantMap& eventData)
     // Take the frame time step, which is stored as a float
     float timeStep = eventData[P_TIMESTEP].GetFloat();
 
-	//Node* vehicleNode = body_->GetNode();
+    //Node* vehicleNode = body_->GetNode();
 
-	//// Physics update has completed. Position camera behind vehicle
-	//Quaternion dir(vehicleNode->GetRotation().YawAngle(), Vector3::UP);
-	//dir = dir * Quaternion(-90.0f, Vector3::UP);
-	////dir = dir * Quaternion(vehicle_->controls_.pitch_, Vector3::RIGHT);
+    //// Physics update has completed. Position camera behind vehicle
+    //Quaternion dir(vehicleNode->GetRotation().YawAngle(), Vector3::UP);
+    //dir = dir * Quaternion(-90.0f, Vector3::UP);
+    ////dir = dir * Quaternion(vehicle_->controls_.pitch_, Vector3::RIGHT);
 
-	//Vector3 cameraTargetPos = vehicleNode->GetPosition() - dir * Vector3(0.0f, 0.0f, CAMERA_DISTANCE);
-	//Vector3 cameraStartPos = vehicleNode->GetPosition();
+    //Vector3 cameraTargetPos = vehicleNode->GetPosition() - dir * Vector3(0.0f, 0.0f, CAMERA_DISTANCE);
+    //Vector3 cameraStartPos = vehicleNode->GetPosition();
 
-	//// Raycast camera against static objects (physics collision mask 2)
-	//// and move it closer to the vehicle if something in between
-	//Ray cameraRay(cameraStartPos, cameraTargetPos - cameraStartPos);
-	//float cameraRayLength = (cameraTargetPos - cameraStartPos).Length();
-	//PhysicsRaycastResult result;
-	//scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, cameraRay, cameraRayLength, 2);
-	//if (result.body_)
-	//	cameraTargetPos = cameraStartPos + cameraRay.direction_ * (result.distance_ - 0.5f);
+    //// Raycast camera against static objects (physics collision mask 2)
+    //// and move it closer to the vehicle if something in between
+    //Ray cameraRay(cameraStartPos, cameraTargetPos - cameraStartPos);
+    //float cameraRayLength = (cameraTargetPos - cameraStartPos).Length();
+    //PhysicsRaycastResult result;
+    //scene_->GetComponent<PhysicsWorld>()->RaycastSingle(result, cameraRay, cameraRayLength, 2);
+    //if (result.body_)
+    //    cameraTargetPos = cameraStartPos + cameraRay.direction_ * (result.distance_ - 0.5f);
 
-	//cameraNode_->SetPosition(cameraTargetPos);
-	//cameraNode_->SetRotation(dir);
+    //cameraNode_->SetPosition(cameraTargetPos);
+    //cameraNode_->SetRotation(dir);
 
-	// Move the camera, scale movement with time step
-	MoveCamera(timeStep);
+    // Move the camera, scale movement with time step
+    MoveCamera(timeStep);
 }
 
 void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 {
-	int key = eventData[KeyDown::P_KEY].GetInt();
+    int key = eventData[KeyDown::P_KEY].GetInt();
 
     if (key == KEY_T)
-	{
-		updateLinSuspension_ = !updateLinSuspension_;
-	}
+    {
+        updateLinSuspension_ = !updateLinSuspension_;
+    }
 
     if (key == KEY_Y)
-	{
-		updateRotSuspension_ = !updateRotSuspension_;
-	}
+    {
+        updateRotSuspension_ = !updateRotSuspension_;
+    }
 
     if (key == KEY_R)
-	{
-		maxHeight_ = 0.0f;
-		k_ = 0.0f;
-		kFactor_ = 0;
-		impulse_ = Vector3::ZERO;
-		maxImpulse_ = 0.0f;
-		timeElapsed_ = 0.0f;
-		// scene_->SetTimeScale(0.1f);
-	}
+    {
+        maxHeight_ = 0.0f;
+        k_ = 0.0f;
+        kFactor_ = 0;
+        impulse_ = Vector3::ZERO;
+        maxImpulse_ = 0.0f;
+        timeElapsed_ = 0.0f;
+        // scene_->SetTimeScale(0.1f);
+    }
 
-	if (key == KEY_M)
-	{
-		scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
-	}
+    if (key == KEY_M)
+    {
+        scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
+    }
 
-	if (key == KEY_UP)
-	{
-		//kFactor_++;
-		//k_ = kFactor_ * 10.0f;
+    if (key == KEY_UP)
+    {
+        //kFactor_++;
+        //k_ = kFactor_ * 10.0f;
 
-		//float radius = convexCastTest_->GetRadius();
-		//convexCastTest_->SetRadius(radius + 0.05f);
-	}
+        //float radius = convexCastTest_->GetRadius();
+        //convexCastTest_->SetRadius(radius + 0.05f);
+    }
 
-	if (key == KEY_DOWN)
-	{
-		//kFactor_--;
-		//k_ = kFactor_ * 10.0f;
+    if (key == KEY_DOWN)
+    {
+        //kFactor_--;
+        //k_ = kFactor_ * 10.0f;
 
-		//float radius = convexCastTest_->GetRadius();
-		//convexCastTest_->SetRadius(radius - 0.05f);
-	}
+        //float radius = convexCastTest_->GetRadius();
+        //convexCastTest_->SetRadius(radius - 0.05f);
+    }
 
-	if (key == KEY_Z)
-	{
-		Quaternion rot = body_->GetRotation();
-		Vector3 pos = body_->GetPosition();
-		Vector3 vel = rot * Vector3::FORWARD;
+    if (key == KEY_Z)
+    {
+        Quaternion rot = body_->GetRotation();
+        Vector3 pos = body_->GetPosition();
+        Vector3 vel = rot * Vector3::FORWARD;
 
-		Vector3 relPos = rot * Vector3::ZERO;
-		float forwardFactor_ = 2000.0f;
+        Vector3 relPos = rot * Vector3::ZERO;
+        float forwardFactor_ = 2000.0f;
 
-		body_->ApplyForce(vel * forwardFactor_, relPos);
-	}
+        body_->ApplyForce(vel * forwardFactor_, relPos);
+    }
 
-	if (key == KEY_LEFT)
-	{
-		SpawnObject(false);
-	}
+    if (key == KEY_LEFT)
+    {
+        SpawnObject(false);
+    }
 
-	// Toggle physics debug geometry with space
-	if (key == KEY_SPACE)
-		drawDebug_ = !drawDebug_;
+    // Toggle physics debug geometry with space
+    if (key == KEY_SPACE)
+        drawDebug_ = !drawDebug_;
 
-	if (key == KEY_X)
-	{
-		for(unsigned i = 0; i < boxNodes_.Size(); i++)
-		{
-			boxNodes_.At(i)->Remove();
-		}
-		boxNodes_.Clear();
-	}
+    if (key == KEY_X)
+    {
+        for(unsigned i = 0; i < boxNodes_.Size(); i++)
+        {
+            boxNodes_.At(i)->Remove();
+        }
+        boxNodes_.Clear();
+    }
 
-	Sample::HandleKeyDown(eventType, eventData);
+    Sample::HandleKeyDown(eventType, eventData);
 }
 
 void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
@@ -554,203 +561,203 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
         scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(false);
 
     if (debugText_ && convexCastTest_.Size())
-	{
-		Raycastest* caster = convexCastTest_.At(0);
-		int index = caster->hitIndex_;
-		if (index < 0)
-			return;
+    {
+        Raycastest* caster = convexCastTest_.At(0);
+        int index = caster->hitIndex_;
+        if (index < 0)
+            return;
 
-		float posy = caster->hitDistance_.At(index) + caster->GetRadius();
+        float posy = caster->hitDistance_.At(index) + caster->GetRadius();
 
-		String text;
-		char buff[128];
+        String text;
+        char buff[128];
 
-		float vel = body_->GetLinearVelocity().y_;
-		sprintf(buff, "height <%.2f>\n max height <%.2f>\n vel <%.2f>\n k <%.2f>\n c <%.2f>\n error <%.2f>\n", 
-			posy, maxHeight_, vel, k_, c_, floatHeight_ - posy);
-		text.AppendWithFormat("%s", buff);
+        float vel = body_->GetLinearVelocity().y_;
+        sprintf(buff, "height <%.2f>\n max height <%.2f>\n vel <%.2f>\n k <%.2f>\n c <%.2f>\n error <%.2f>\n",
+            posy, maxHeight_, vel, k_, c_, floatHeight_ - posy);
+        text.AppendWithFormat("%s", buff);
 
-		text.AppendWithFormat("\nhits <%i> index <%i>", caster->hitPoints_, caster->hitIndex_);
+        text.AppendWithFormat("\nhits <%i> index <%i>", caster->hitPoints_, caster->hitIndex_);
 
-		text.AppendWithFormat("\nradius <%f> ", caster->GetRadius());
-		memset(buff, 0, 128);
-		Vector3 hp = caster->hardPointWS_;
-		sprintf(buff, "\nfrom <%.2f,%.2f,%.2f> ", hp.x_, hp.y_, hp.z_);
-		text.AppendWithFormat("%s", buff);
+        text.AppendWithFormat("\nradius <%f> ", caster->GetRadius());
+        memset(buff, 0, 128);
+        Vector3 hp = caster->hardPointWS_;
+        sprintf(buff, "\nfrom <%.2f,%.2f,%.2f> ", hp.x_, hp.y_, hp.z_);
+        text.AppendWithFormat("%s", buff);
 
-		Vector3 to = hp + caster->suspensionRest_ * caster->direction_;
-		memset(buff, 0, 128);
-		sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
-		text.AppendWithFormat("%s", buff);
+        Vector3 to = hp + caster->suspensionRest_ * caster->direction_;
+        memset(buff, 0, 128);
+        sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
+        text.AppendWithFormat("%s", buff);
 
         if(convexCastTest_.Size() <= 4)
             return;
 
-		// for (int i = 0; i < convexCastTest_->hitPoints_; i++)
-		int i = index;
-		{
-			Vector3 h = caster->hitPointWorld_.At(i);
-			char buff[128];
-			memset(buff, 0, 128);
-			sprintf(buff, "\nhit <%.2f,%.2f,%.2f> ", h.x_, h.y_, h.z_);
-			text.AppendWithFormat("%s", buff);
+        // for (int i = 0; i < convexCastTest_->hitPoints_; i++)
+        int i = index;
+        {
+            Vector3 h = caster->hitPointWorld_.At(i);
+            char buff[128];
+            memset(buff, 0, 128);
+            sprintf(buff, "\nhit <%.2f,%.2f,%.2f> ", h.x_, h.y_, h.z_);
+            text.AppendWithFormat("%s", buff);
 
-			Vector3 l = caster->hitPointLocal_.At(i);
-			memset(buff, 0, 128);
-			sprintf(buff, "local <%.2f,%.2f	,%.2f> ", l.x_, l.y_, l.z_);
-			text.AppendWithFormat("%s", buff);
+            Vector3 l = caster->hitPointLocal_.At(i);
+            memset(buff, 0, 128);
+            sprintf(buff, "local <%.2f,%.2f    ,%.2f> ", l.x_, l.y_, l.z_);
+            text.AppendWithFormat("%s", buff);
 
-			memset(buff, 0, 128);
-			float d = caster->hitDistance_.At(i);
-			sprintf(buff, "f <%.2f> d <%.2f>", caster->hitFraction_.At(i), d);
-			text.AppendWithFormat("%s", buff);
-		}
-		
-		if(caster->hitBody_ && caster->hitBody_->GetNode())
-			text.AppendWithFormat("\nbody <%s> ", caster->hitBody_->GetNode()->GetName().CString());
+            memset(buff, 0, 128);
+            float d = caster->hitDistance_.At(i);
+            sprintf(buff, "f <%.2f> d <%.2f>", caster->hitFraction_.At(i), d);
+            text.AppendWithFormat("%s", buff);
+        }
 
-		debugText_->SetText(text);
-	}
+        if(caster->hitBody_ && caster->hitBody_->GetNode())
+            text.AppendWithFormat("\nbody <%s> ", caster->hitBody_->GetNode()->GetName().CString());
+
+        debugText_->SetText(text);
+    }
 }
 
 void Physics::UpdateLineal(float timeStep)
 {
-	Quaternion rot = body_->GetRotation();
-	Vector3 pos = body_->GetPosition();
-	float posy = pos.y_ - 0.5;
+    Quaternion rot = body_->GetRotation();
+    Vector3 pos = body_->GetPosition();
+    float posy = pos.y_ - 0.5;
 
-	float k = k_;
-	float x = floatHeight_ - posy;
-	float springForce = k * x;
+    float k = k_;
+    float x = floatHeight_ - posy;
+    float springForce = k * x;
 
-	float vel = GetVelocity(pos);
-	float d = 1.0f;
-	float c = -sqrt(mass_ * k * 4) * d;
-	c_ = c;
+    float vel = GetVelocity(pos);
+    float d = 1.0f;
+    float c = -sqrt(mass_ * k * 4) * d;
+    c_ = c;
 
-	float antiG = mass_ * 9.81f;
-	float dampingForce = c * vel;
-	float suspensionForce = springForce + dampingForce + antiG;
+    float antiG = mass_ * 9.81f;
+    float dampingForce = c * vel;
+    float suspensionForce = springForce + dampingForce + antiG;
 
-	Vector3 direction = Vector3::UP;
-	impulse_ = direction * suspensionForce; // *timeStep;
+    Vector3 direction = Vector3::UP;
+    impulse_ = direction * suspensionForce; // *timeStep;
 
-	body_->ApplyForce(impulse_);
+    body_->ApplyForce(impulse_);
 }
 
 void Physics::UpdateLinealCast(float timeStep, Raycastest* caster)
 {
-	float mass = mass_ / convexCastTest_.Size();
+    float mass = mass_ / convexCastTest_.Size();
 
-	if (caster->hasHit_)
-	{
-		int index = caster->hitIndex_;
+    if (caster->hasHit_)
+    {
+        int index = caster->hitIndex_;
 
-		Quaternion rot = body_->GetRotation();
-		Vector3 pos = body_->GetPosition();
+        Quaternion rot = body_->GetRotation();
+        Vector3 pos = body_->GetPosition();
 
-		float posy = caster->hitDistance_.At(index);
-		float k = k_;
-		float x = floatHeight_ - (posy); // +caster->GetRadius());
-		// x = 0.0f;
-		float springForce = k * x;
+        float posy = caster->hitDistance_.At(index);
+        float k = k_;
+        float x = floatHeight_ - (posy); // +caster->GetRadius());
+        // x = 0.0f;
+        float springForce = k * x;
 
-		float vel = GetVelocity(pos + caster->offset_);
-		float d = 1.0f;
-		float c = -sqrt(mass * k * 4.0f) * d;
-		c_ = c;
+        float vel = GetVelocity(pos + caster->offset_);
+        float d = 1.0f;
+        float c = -sqrt(mass * k * 4.0f) * d;
+        c_ = c;
 
-		float antiG = mass * 9.81f;
-		float dampingForce = c * vel;
-		float suspensionForce = springForce + dampingForce + antiG;
+        float antiG = mass * 9.81f;
+        float dampingForce = c * vel;
+        float suspensionForce = springForce + dampingForce + antiG;
 
-    	Vector3 direction = Vector3::UP;
-		//Vector3 local(convexCastTest_->hitPointLocal_.At(index));
-		Vector3 normal(caster->hitNormalWorld_.At(index));
-		//Vector3 direction = normal;
-		impulse_ = direction * suspensionForce; // *timeStep;
-	}
-	else
-	{
-		impulse_ = Vector3::ZERO;
-	}
-	
-	Vector3 relpos = caster->offset_;
-	
-	body_->ApplyForce(impulse_, relpos);
+        Vector3 direction = Vector3::UP;
+        //Vector3 local(convexCastTest_->hitPointLocal_.At(index));
+        Vector3 normal(caster->hitNormalWorld_.At(index));
+        //Vector3 direction = normal;
+        impulse_ = direction * suspensionForce; // *timeStep;
+    }
+    else
+    {
+        impulse_ = Vector3::ZERO;
+    }
 
-	//URHO3D_LOGERRORF("time, pos <%f, %f>", timeElapsed_, posy);
+    Vector3 relpos = caster->offset_;
+
+    body_->ApplyForce(impulse_, relpos);
+
+    //URHO3D_LOGERRORF("time, pos <%f, %f>", timeElapsed_, posy);
 }
 
 void Physics::UpdateRotation(float timeStep)
 {
-	timeElapsed_ += timeStep;
+    timeElapsed_ += timeStep;
 
-	Quaternion rot = body_->GetRotation();
-	Vector3 angVel = body_->GetAngularVelocity();
+    Quaternion rot = body_->GetRotation();
+    Vector3 angVel = body_->GetAngularVelocity();
 
-	float k = 500.0f;
-	float x = (45.0f - rot.EulerAngles().y_) * M_DEGTORAD;
-	float springForce = k * x;
-	// btMatrix3x3 inertia =  hullBody_->GetBody()->getInvInertiaTensorWorld();
-	float d = 1.0f;
-	float moi = mass_ / 12.0f * (width_ * width_ + length_ * length_);
+    float k = 500.0f;
+    float x = (45.0f - rot.EulerAngles().y_) * M_DEGTORAD;
+    float springForce = k * x;
+    // btMatrix3x3 inertia =  hullBody_->GetBody()->getInvInertiaTensorWorld();
+    float d = 1.0f;
+    float moi = mass_ / 12.0f * (width_ * width_ + length_ * length_);
 
-	float c = -sqrt(moi * k * 4.0f) * d;
-	float v = angVel.y_;
-	float dampingForce = c * v;
+    float c = -sqrt(moi * k * 4.0f) * d;
+    float v = angVel.y_;
+    float dampingForce = c * v;
 
-	float steeringForce = springForce + dampingForce;
+    float steeringForce = springForce + dampingForce;
 
-	char buff[512];
-	sprintf(buff, "x <%.3f> timestep <%.3f> moi <%.2f>", (45.0f - rot.EulerAngles().y_), timeElapsed_, moi);
-	// URHO3D_LOGERRORF("%s", buff);
+    char buff[512];
+    sprintf(buff, "x <%.3f> timestep <%.3f> moi <%.2f>", (45.0f - rot.EulerAngles().y_), timeElapsed_, moi);
+    // URHO3D_LOGERRORF("%s", buff);
 
-	Vector3 torqueDir = rot * Vector3::UP;
-	Vector3 impulse = torqueDir * steeringForce;// *timeStep;
+    Vector3 torqueDir = rot * Vector3::UP;
+    Vector3 impulse = torqueDir * steeringForce;// *timeStep;
 
-	body_->ApplyTorque(impulse);
+    body_->ApplyTorque(impulse);
 }
 
 void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 {
-	using namespace PhysicsPreStep;
-	float timeStep = eventData[P_TIMESTEP].GetFloat();
+    using namespace PhysicsPreStep;
+    float timeStep = eventData[P_TIMESTEP].GetFloat();
 
-	if (updateLinSuspension_)
-	{
+    if (updateLinSuspension_)
+    {
         for (int i = 0; i < convexCastTest_.Size(); i++)
-		{
-			UpdateLinealCast(timeStep, convexCastTest_.At(i));
-		}
-	}
-	if (updateRotSuspension_)
-	{
-		UpdateRotation(timeStep);
-	}
+        {
+            UpdateLinealCast(timeStep, convexCastTest_.At(i));
+        }
+    }
+    if (updateRotSuspension_)
+    {
+        UpdateRotation(timeStep);
+    }
 }
 
 float Physics::GetVelocity(const Vector3& relPos)
 {
-	Quaternion rot = body_->GetRotation();
-	Vector3 pos = body_->GetPosition();
+    Quaternion rot = body_->GetRotation();
+    Vector3 pos = body_->GetPosition();
 
-	Vector3 normal = rot * Vector3::UP;
-	float dd = normal.DotProduct(-Vector3::UP);
-	// Vector3 relPos = body_->GetPosition();
+    Vector3 normal = rot * Vector3::UP;
+    float dd = normal.DotProduct(-Vector3::UP);
+    // Vector3 relPos = body_->GetPosition();
 
-	Vector3 contactVel = body_->GetVelocityAtPoint(relPos);
-	float projVel = normal.DotProduct(contactVel);
-	float vel = 0.0f;
-	if (dd >= -0.1f)
-	{
-		vel = 0.0f;
-	}
-	else
-	{
-		float inv = btScalar(-1.) / dd;
-		vel = projVel * inv;
-	}
+    Vector3 contactVel = body_->GetVelocityAtPoint(relPos);
+    float projVel = normal.DotProduct(contactVel);
+    float vel = 0.0f;
+    if (dd >= -0.1f)
+    {
+        vel = 0.0f;
+    }
+    else
+    {
+        float inv = btScalar(-1.) / dd;
+        vel = projVel * inv;
+    }
 
-	return vel;
+    return vel;
 }

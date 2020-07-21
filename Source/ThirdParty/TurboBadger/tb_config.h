@@ -98,6 +98,7 @@
 #if defined(ANDROID) || defined(__ANDROID__)
 #define TB_SYSTEM_ANDROID
 #define TB_CLIPBOARD_DUMMY
+#define TB_RUNTIME_DEBUG_INFO
 #elif defined(__linux) || defined(__linux__)
 // #define TB_FILE_POSIX
 #define TB_TARGET_LINUX

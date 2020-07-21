@@ -10,6 +10,7 @@
 #include "tb_list.h"
 #include "tb_value.h"
 #include "tb_id.h"
+#include "tb_widgets.h"
 
 namespace tb {
 

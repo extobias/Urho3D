@@ -550,9 +550,10 @@ btVector3 BarycentricCoordinates(const btVector3& position, const btVector3& p1,
     return btVector3(s, t, w);
 }
 
-btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* shape,
+btVector3 PhysicsWorld::InterpolateMeshNormal(const btTransform& transform, btCollisionShape* shape,
                               int subpart, int triangle, const btVector3& position, DebugRenderer* debug)
 {
+    URHO3D_PROFILE(PhysicsInterpolateMeshNormal);
     // Get the geometry from somewhere...
 //    btAssert(shape->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE);
 
@@ -591,8 +592,7 @@ btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* 
     VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
     VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
 
-    btVector3 barry = BarycentricCoordinates(transform.invXform(position),
-                                             positions[i], positions[j], positions[k]);
+    btVector3 barry = BarycentricCoordinates(transform.invXform(position), positions[i], positions[j], positions[k]);
 
 //    URHO3D_LOGERRORF("barry <%f, %f, %f> sum <%f>", barry.x(), barry.y(), barry.z(), barry.x() + barry.y() + barry.z());
 //    URHO3D_LOGERRORF("normali <%f, %f, %f> normalj <%f, %f, %f> normalk <%f, %f, %f>"
@@ -605,6 +605,8 @@ btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* 
     // Transform back into world space
     result = transform.getBasis() * result;
     result.normalize();
+
+    mesh_interface->unLockReadOnlyVertexBase(subpart);
 
     if (debug)
     {
@@ -622,9 +624,9 @@ btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* 
 //        debug->AddSphere(s2, Color::BLUE);
 
         // normals
-        debug->AddLine(p0, p0 + ToVector3(normals[i]), Color::RED);
-        debug->AddLine(p1, p1 + ToVector3(normals[j]), Color::GREEN);
-        debug->AddLine(p2, p2 + ToVector3(normals[k]), Color::BLUE);
+//        debug->AddLine(p0, p0 + ToVector3(normals[i]), Color::RED);
+//        debug->AddLine(p1, p1 + ToVector3(normals[j]), Color::GREEN);
+//        debug->AddLine(p2, p2 + ToVector3(normals[k]), Color::BLUE);
 
 //        Vector3 pos = ToVector3(position);
 //        debug->AddLine(pos, pos + ToVector3(result), Color::BLUE);
@@ -633,8 +635,6 @@ btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* 
 //        Sphere sb(ToVector3(position), 0.5f);
 //        debug->AddSphere(sb, Color::MAGENTA);
     }
-
-    mesh_interface->unLockReadOnlyVertexBase(subpart);
 
     return result;
 }

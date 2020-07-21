@@ -31,6 +31,7 @@
 #include "../Graphics/OctreeQuery.h"
 #include "../Graphics/Geometry.h"
 #include "../Graphics/DebugRenderer.h"
+#include "../Graphics/GraphicsEvents.h"
 #include "../Core/CoreEvents.h"
 #include "../Scene/Scene.h"
 #include "../Scene/SceneEvents.h"
@@ -100,6 +101,8 @@ RibbonTrail::RibbonTrail(Context* context) :
     batches_[0].geometryType_ = GEOM_TRAIL_FACE_CAMERA;
     batches_[0].worldTransform_ = &transforms_;
     batches_[0].numWorldTransforms_ = 1;
+
+    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(RibbonTrail, HandleRenderPostUpdate));
 }
 
 RibbonTrail::~RibbonTrail() = default;
@@ -198,7 +201,10 @@ void RibbonTrail::HandleScenePostUpdate(StringHash eventType, VariantMap& eventD
         needUpdate_ = true;
         MarkForUpdate();
     }
+}
 
+void RibbonTrail::HandleRenderPostUpdate(StringHash eventType, VariantMap& eventData)
+{
     DebugDraw();
 }
 
@@ -244,21 +250,22 @@ void RibbonTrail::DebugDraw()
 
         debug->AddLine(posright, posleft, Color::RED);
 
-        //            return GetTrailPos(iPos, iTangent.xyz, iTangent.w, modelMatrix);
-        //            vec3 GetTrailPos(vec4 iPos, vec3 iFront, float iScale, mat4 modelMatrix)
-        //            {
-        //                vec3 up = normalize(cCameraPos - iPos.xyz);
-        //                vec3 right = normalize(cross(iFront, up));
-        //                return (vec4((iPos.xyz + right * iScale), 1.0) * modelMatrix).xyz;
-        //            }
+        debug->AddLine(pos, pos + point.forward_.Normalized() * 0.05f, Color::GREEN);
 
-//        float scale(0.01f);
-//        Vector3 v1 = pos + Vector3(scale, 0.0f, scale);
-//        Vector3 v2 = pos + Vector3(scale, 0.0f, -scale);
-//        Vector3 v3 = pos + Vector3(-scale, 0.0f, -scale);
-//        Vector3 v4 = pos + Vector3(-scale, 0.0f, scale);
+        debug->AddLine(pos, cameraPos, Color::BLUE);
 
-//        debug->AddPolygon(v1, v2, v3, v4, Color::RED, false);
+        if (point.next_)
+        {
+            debug->AddLine(pos, point.next_->position_, Color::CYAN);
+        }
+
+        float scale(0.01f);
+        Vector3 v1 = pos + Vector3(scale, 0.0f, scale);
+        Vector3 v2 = pos + Vector3(scale, 0.0f, -scale);
+        Vector3 v3 = pos + Vector3(-scale, 0.0f, -scale);
+        Vector3 v4 = pos + Vector3(-scale, 0.0f, scale);
+
+        debug->AddPolygon(v1, v2, v3, v4, Color::RED, false);
 
         // debug->AddLine(startPos, nextPos, Color::RED);
         // startPos = nextPos;
@@ -397,15 +404,6 @@ void RibbonTrail::UpdateTail(float timeStep)
 
             if (node_->GetParent() != nullptr)
                 newPoint.parentPos_ = node_->GetParent()->GetWorldPosition();
-
-//            return GetTrailPos(iPos, iTangent.xyz, iTangent.w, modelMatrix);
-//            vec3 GetTrailPos(vec4 iPos, vec3 iFront, float iScale, mat4 modelMatrix)
-//            {
-//                vec3 up = normalize(cCameraPos - iPos.xyz);
-//                vec3 right = normalize(cross(iFront, up));
-//                return (vec4((iPos.xyz + right * iScale), 1.0) * modelMatrix).xyz;
-//            }
-
 
             points_.Push(newPoint);
 
@@ -675,8 +673,11 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
     }
 
     // unsigned indexPerSegment = 6 + (tailColumn_ - 1) * 6;
-    unsigned indexPerSegment = 4 + (tailColumn_ - 1) * 4;
-    unsigned vertexPerSegment = 4 + (tailColumn_ - 1) * 2;
+//    unsigned indexPerSegment = 4 + (tailColumn_ - 1) * 4;
+//    unsigned vertexPerSegment = 4 + (tailColumn_ - 1) * 2;
+
+    unsigned indexPerSegment = 2 + (tailColumn_ - 1) * 4;
+    unsigned vertexPerSegment = 2 + (tailColumn_ - 1) * 2;
 
     // Fill sorted points vector
     sortedPoints_.Resize(numPoints_);
@@ -707,16 +708,28 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
     bufferDirty_ = false;
     forceUpdate_ = false;
 
+    Node* camNode = frame.camera_->GetNode();
+    Vector3 camPos = camNode->GetPosition();
+
+//    auto* destCPU = (float*)vertexBuffer_->Lock(0, (numPoints_ - 1) * vertexPerSegment, true);
     auto* dest = (float*)vertexBuffer_->Lock(0, (numPoints_ - 1) * vertexPerSegment, true);
     if (!dest)
         return;
 
+
+     auto* destCPU = dest;
+
+    bool useCPU = true;
+
+    Vector3 q0, q1;
     // Generate trail mesh
     if (trailType_ == TT_FACE_CAMERA)
     {
         for (unsigned i = 0; i < numPoints_; ++i)
         {
             TrailPoint& point = *sortedPoints_[i];
+
+            Vector3 p0, p1, p2, p3;
 
             if (sortedPoints_[i] == &points_.Back()) continue;
 
@@ -730,10 +743,16 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
             unsigned nextC = endColor_.Lerp(startColor_, nextFactor).ToUInt();
             float nextWidth = Lerp(width_ * endScale_, width_ * startScale_, nextFactor);
 
+            Vector3 up = (camPos  - point.position_);
+//            URHO3D_LOGERRORF("cam pos <%f, %f, %f>", point.position_.x_, point.position_.y_, point.position_.z_);
+            Vector3 right = point.forward_.CrossProduct(up.Normalized());
+            Vector3 pos = point.position_ + right.Normalized() * width;
+
+            p0 = pos;
             // First row
-            dest[0] = point.position_.x_;
-            dest[1] = point.position_.y_;
-            dest[2] = point.position_.z_;
+            dest[0] = useCPU ? pos.x_ : point.position_.x_;
+            dest[1] = useCPU ? pos.y_ : point.position_.y_;
+            dest[2] = useCPU ? pos.z_ : point.position_.z_;
             ((unsigned&)dest[3]) = c;
             dest[4] = factor;
             dest[5] = 0.0f;
@@ -742,18 +761,23 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
             dest[8] = point.forward_.z_;
             dest[9] = width;
 
-            dest[10] = point.next_->position_.x_;
-            dest[11] = point.next_->position_.y_;
-            dest[12] = point.next_->position_.z_;
-            ((unsigned&)dest[13]) = nextC;
-            dest[14] = nextFactor;
-            dest[15] = 0.0f;
-            dest[16] = point.next_->forward_.x_;
-            dest[17] = point.next_->forward_.y_;
-            dest[18] = point.next_->forward_.z_;
-            dest[19] = nextWidth;
+//            up = (camPos  - point.next_->position_);
+//            right = point.next_->forward_.CrossProduct(up.Normalized());
+//            Vector3 nextPos = point.next_->position_ + right.Normalized() * nextWidth;
 
-            dest += 20;
+//            p1 = nextPos;
+//            dest[10] = useCPU ? nextPos.x_ : point.next_->position_.x_;
+//            dest[11] = useCPU ? nextPos.y_ : point.next_->position_.y_;
+//            dest[12] = useCPU ? nextPos.z_ : point.next_->position_.z_;
+//            ((unsigned&)dest[13]) = nextC;
+//            dest[14] = nextFactor;
+//            dest[15] = 0.0f;
+//            dest[16] = point.next_->forward_.x_;
+//            dest[17] = point.next_->forward_.y_;
+//            dest[18] = point.next_->forward_.z_;
+//            dest[19] = nextWidth;
+
+            dest += 10;
 
             // Middle rows
             for (unsigned j = 0; j < (tailColumn_ - 1); ++j)
@@ -787,30 +811,147 @@ void RibbonTrail::UpdateVertexBuffer(const FrameInfo& frame)
                 dest += 20;
             }
 
-            // Last row
-            dest[0] = point.position_.x_;
-            dest[1] = point.position_.y_;
-            dest[2] = point.position_.z_;
-            ((unsigned&)dest[3]) = c;
-            dest[4] = factor;
-            dest[5] = 1.0f;
-            dest[6] = point.forward_.x_;
-            dest[7] = point.forward_.y_;
-            dest[8] = point.forward_.z_;
-            dest[9] = -width;
+//            up = (camPos  - point.position_);
+//            right = point.forward_.CrossProduct(up.Normalized());
+//            pos = point.position_ + right.Normalized() * -width;
 
-            dest[10] = point.next_->position_.x_;
-            dest[11] = point.next_->position_.y_;
-            dest[12] = point.next_->position_.z_;
-            ((unsigned&)dest[13]) = nextC;
-            dest[14] = nextFactor;
-            dest[15] = 1.0f;
-            dest[16] = point.next_->forward_.x_;
-            dest[17] = point.next_->forward_.y_;
-            dest[18] = point.next_->forward_.z_;
-            dest[19] = -nextWidth;
+//            p2 = pos;
+//            // Last row
+//            dest[0] = useCPU ? pos.x_ : point.position_.x_;
+//            dest[1] = useCPU ? pos.y_ : point.position_.y_;
+//            dest[2] = useCPU ? pos.z_ : point.position_.z_;
+//            ((unsigned&)dest[3]) = c;
+//            dest[4] = factor;
+//            dest[5] = 1.0f;
+//            dest[6] = point.forward_.x_;
+//            dest[7] = point.forward_.y_;
+//            dest[8] = point.forward_.z_;
+//            dest[9] = -width;
 
-            dest += 20;
+//            up = (camPos  - point.next_->position_);
+//            right = point.next_->forward_.CrossProduct(up.Normalized());
+//            nextPos = point.next_->position_ + right.Normalized() * -nextWidth;
+
+//            p3 = nextPos;
+//            dest[10] = useCPU ? nextPos.x_ : point.next_->position_.x_;
+//            dest[11] = useCPU ? nextPos.y_ : point.next_->position_.y_;
+//            dest[12] = useCPU ? nextPos.z_ : point.next_->position_.z_;
+//            ((unsigned&)dest[13]) = nextC;
+//            dest[14] = nextFactor;
+//            dest[15] = 1.0f;
+//            dest[16] = point.next_->forward_.x_;
+//            dest[17] = point.next_->forward_.y_;
+//            dest[18] = point.next_->forward_.z_;
+//            dest[19] = -nextWidth;
+
+//            dest += 10;
+
+//            if (useCPU)
+//            {
+//                if (point.next_)
+//                {
+//                    Vector3 p00 = p0 - p0;
+//                    Vector3 p11 = p1 - p0;
+//                    Vector3 p22 = p2 - p0;
+//                    Vector3 p33 = p3 - p0;
+//                    Vector3 dir = point.next_->position_ - point.position_;
+//                    if (Abs(dir.x_) > Abs(dir.y_))
+//                    {
+//                        // forward
+//                        if (dir.x_ > 0)
+//                        {
+//                            if (p00.x_ > p11.x_ || p00.x_ > p33.x_)
+//                            {
+//                                // p0 a p1
+//                                destCPU[0] = p1.x_;
+//                                destCPU[1] = p1.y_;
+//                                destCPU[2] = p1.z_;
+//                                URHO3D_LOGERROR("ribbontrail: +x p0 a p1");
+//                            }
+//                            if (p22.x_ > p11.x_ || p22.x_ > p33.x_)
+//                            {
+//                                // p2 a p3
+//                                destCPU += 20;
+//                                destCPU[0] = p3.x_;
+//                                destCPU[1] = p3.y_;
+//                                destCPU[2] = p3.z_;
+//                                destCPU -= 20;
+//                                URHO3D_LOGERROR("ribbontrail: +x p2 a p3");
+//                            }
+//                        }
+//                        else
+//                        {
+//                            if (p00.x_ < p11.x_ || p00.x_ < p33.x_)
+//                            {
+//                                // p0 a p1
+//                                destCPU[0] = p1.x_;
+//                                destCPU[1] = p1.y_;
+//                                destCPU[2] = p1.z_;
+//                                URHO3D_LOGERROR("ribbontrail: -x p0 a p1");
+//                            }
+//                            if (p22.x_ < p11.x_ || p22.x_ < p33.x_)
+//                            {
+//                                // p2 a p3
+//                                destCPU += 20;
+//                                destCPU[0] = p3.x_;
+//                                destCPU[1] = p3.y_;
+//                                destCPU[2] = p3.z_;
+//                                destCPU -= 20;
+//                                URHO3D_LOGERROR("ribbontrail: -x p2 a p3");
+//                            }
+//                        }
+//                    }
+//                    else
+//                    {
+//                        // up
+//                        if (dir.y_ > 0)
+//                        {
+//                            if (p00.y_ > p11.y_ || p00.y_ > p33.y_)
+//                            {
+//                                // p0 a p1
+//                                destCPU[0] = p1.x_;
+//                                destCPU[1] = p1.y_;
+//                                destCPU[2] = p1.z_;
+//                                URHO3D_LOGERROR("ribbontrail: +y p0 a p1");
+//                            }
+//                            if (p22.y_ > p11.y_ || p22.y_ > p33.y_)
+//                            {
+//                                // p2 a p3
+//                                destCPU += 20;
+//                                destCPU[0] = p3.x_;
+//                                destCPU[1] = p3.y_;
+//                                destCPU[2] = p3.z_;
+//                                destCPU -= 20;
+//                                URHO3D_LOGERROR("ribbontrail: +y p2 a p3");
+//                            }
+//                        }
+//                        else
+//                        {
+//                            if (p00.y_ < p11.y_ || p00.y_ < p33.y_)
+//                            {
+//                                // p0 a p1
+//                                destCPU[0] = p1.x_;
+//                                destCPU[1] = p1.y_;
+//                                destCPU[2] = p1.z_;
+//                                URHO3D_LOGERROR("ribbontrail: -y p0 a p1");
+//                            }
+
+//                            if (p22.y_ < p33.y_ || p22.y_ < p11.y_)
+//                            {
+//                                // p2 a p3
+//                                destCPU += 20;
+//                                destCPU[0] = p3.x_;
+//                                destCPU[1] = p3.y_;
+//                                destCPU[2] = p3.z_;
+//                                destCPU -= 20;
+//                                URHO3D_LOGERROR("ribbontrail: -y p2 a p3");
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+            q0 = p0;
+            q1 = p2;
         }
     }
     else if (trailType_ == TT_BONE)

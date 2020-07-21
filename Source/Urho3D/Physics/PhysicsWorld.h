@@ -306,6 +306,8 @@ public:
 
     static bool GetCollisionMask(const btCollisionObject* collisionObject, const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc);
 
+    btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* shape, int subpart, int triangle, const btVector3& position, DebugRenderer* debug);
+
 protected:
     void CreateDynaymicWorld();
     /// Handle scene being assigned.
