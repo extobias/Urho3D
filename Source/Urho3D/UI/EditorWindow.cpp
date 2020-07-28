@@ -798,19 +798,39 @@ void EditorWindow::DrawNodeSelected()
         ImGui::BeginGroup();
         ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 400.0f), true);
 
-        bool headerOpen = true;
+        // static bool headerOpen = true;
         auto childComponents = node->GetComponents();
+        // FIXME
+        static bool headerOpen[10] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+        unsigned compCount = 0;
         for (Component* c : childComponents)
         {
-            // ImGui::Text("%s", c->GetTypeName().CString());
+            String label = c->GetTypeName();
+            label.AppendWithFormat("-%i", compCount);
+
             ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
-            if (ImGui::CollapsingHeader(c->GetTypeName().CString(), &headerOpen, headerFlags))
+            if (ImGui::CollapsingHeader(label.CString(), &headerOpen[compCount], headerFlags))
             {
                 AttributeEdit(c);
 
                 EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
                 EditModelDebug(modelDebug);
             }
+            else
+            {
+                // component removed
+                if (!headerOpen[compCount])
+                {
+                    headerOpen[compCount] = true;
+//                    childComponents.Erase(compCount);
+                    node->RemoveComponent(c);
+                }
+//                for(unsigned i = 0; i < 10; i++)
+//                    URHO3D_LOGERRORF("EditorWindow: headerOpen <%i>", headerOpen[i]);
+            }
+
+            compCount++;
         }
 
         ImGui::EndChild();
@@ -973,7 +993,16 @@ void EditorWindow::AttributeEdit(Serializable* c)
                 ImGui::SameLine();
                 if(ImGui::Button("Add"))
                 {
-                    vertices.Push(Vector2::ZERO);
+                    if (vertices.Size() == 0)
+                    {
+                        vertices.Push(Vector2(-0.1f, 0.0f));
+                        vertices.Push(Vector2(0.1f, 0.0f));
+                        vertices.Push(Vector2(0.0f, 0.1f));
+                    }
+                    else
+                    {
+                        vertices.Push(Vector2::ZERO);
+                    }
                     // save buffer
                     VectorBuffer ret;
                     for (unsigned i = 0; i < vertices.Size(); ++i)
