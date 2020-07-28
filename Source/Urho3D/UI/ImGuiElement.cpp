@@ -248,6 +248,7 @@ void ImGuiElement::OnDragMove(const IntVector2& position, const IntVector2& scre
 
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = ImVec2(screenPosition.x_, screenPosition.y_);
+    io.MouseDelta = ImVec2(deltaPos.x_, deltaPos.y_);
 
     IntVector2 delta = screenPosition - dragBeginCursor_;
     SetPosition(dragBeginPosition_ + delta);
@@ -270,12 +271,9 @@ void ImGuiElement::OnHover(const IntVector2& position, const IntVector2& screenP
     ImGui::SetCurrentContext(imguiContext_);
     ImGuiIO& io = ImGui::GetIO();
     io.MousePos = ImVec2(screenPosition.x_, screenPosition.y_);
-
-    // URHO3D_LOGERRORF("hover <%s> position <%i, %i> screen <%i, %i>", name_.CString(), position.x_, position.y_, screenPosition.x_, screenPosition.y_);
 }
 
-void ImGuiElement::OnClickBegin(const IntVector2& position, const IntVector2& screenPosition,
-                                int button, int buttons, int qualifiers, Cursor* cursor)
+void ImGuiElement::OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
 {
     ImGui::SetCurrentContext(imguiContext_);
     // 0=left, 1=right, 2=middle
@@ -288,8 +286,7 @@ void ImGuiElement::OnClickBegin(const IntVector2& position, const IntVector2& sc
         io.MouseDown[2] = true;
 }
 
-void ImGuiElement::OnClickEnd(const IntVector2& position, const IntVector2& screenPosition,
-                              int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
+void ImGuiElement::OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
 {
     ImGui::SetCurrentContext(imguiContext_);
 
