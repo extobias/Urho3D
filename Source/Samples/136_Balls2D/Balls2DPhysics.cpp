@@ -196,7 +196,18 @@ void Balls2DPhysics::CreateScene()
         auto* sprite = node->CreateComponent<StaticSprite2D>();
         sprite->SetSprite(sprite2d);
 
-        octree->AddManualDrawable(sprite);
+        if (i == 3)
+        {
+            PODVector<Vector2> vertices;
+            vertices.Push(Vector2(-0.1f, 0.0f));
+            vertices.Push(Vector2(0.1f, 0.0f));
+            vertices.Push(Vector2(0.0f, 0.1f));
+
+            CollisionPolygon2D* poly = node->CreateComponent<CollisionPolygon2D>();
+            poly->SetVertices(vertices);
+        }
+
+        // octree->AddManualDrawable(sprite);
 
         URHO3D_LOGERRORF("Balls2DPhysics::CreateScene: BOUNDINGBOX <%s>", sprite->GetWorldBoundingBox().ToString().CString());
     }
