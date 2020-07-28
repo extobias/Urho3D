@@ -9,11 +9,13 @@
 #include "../Graphics/StaticModel.h"
 #include "../Input/Input.h"
 #include "../IO/Log.h"
+#include "../IO/MemoryBuffer.h"
 #include "../Resource/ResourceCache.h"
 #include "../UI/EditorWindow.h"
 #include "../UI/EditorModelDebug.h"
 #include "../UI/UI.h"
 #include "../Urho2D/StaticSprite2D.h"
+#include "../Urho2D/CollisionPolygon2D.h"
 
 #include "imgui.h"
 #include "ImGuizmo.h"
@@ -248,103 +250,209 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
     selectionImage_->SetSize(size_, size_);
 }
 
-/// VerticeEdit
-struct RampEdit : public ImCurveEdit::Delegate
+struct ComponentBufferEdit : public ImCurveEdit::Delegate
 {
-   RampEdit()
-   {
-      mPts[0][0] = ImVec2(0.1f, 0.1f);
-      mPts[0][1] = ImVec2(0.2f, 0.1f);
-      mPts[0][2] = ImVec2(0.3f, 0.1f);
-      mPts[0][3] = ImVec2(0.4f, 0.1f);
-      mPts[0][4] = ImVec2(0.5f, 0.1f);
-      mPointCount[0] = 5;
+    ComponentBufferEdit(Node* node)
+    {
+        node_ = node;
 
-      mPts[1][0] = ImVec2(-5.f, 0.2f);
-      mPts[1][1] = ImVec2(3.f, 0.7f);
-      mPts[1][2] = ImVec2(8.f, 0.2f);
-      mPts[1][3] = ImVec2(8.f, 0.8f);
-      mPointCount[1] = 4;
+        PODVector<CollisionPolygon2D*> dest;
+        node_->GetComponents(dest);
 
-      mPts[2][0] = ImVec2(4.f, 0);
-      mPts[2][1] = ImVec2(6.f, 0.1f);
-      mPts[2][2] = ImVec2(9.f, 0.82f);
-      mPts[2][3] = ImVec2(15.f, 0.24f);
-      mPts[2][4] = ImVec2(2.f, 0.34f);
-      mPts[2][5] = ImVec2(2.5f, 0.12f);
-      mPointCount[2] = 6;
-      mbVisible[0] = mbVisible[1] = mbVisible[2] = true;
-      mMax = ImVec2(1.f, 1.f);
-      mMin = ImVec2(0.f, 0.f);
-   }
-   size_t GetCurveCount()
-   {
-      return 1;
+        vertices_.Resize(dest.Size());
+        unsigned count = 0;
+        for(auto c: dest)
+        {
+            const PODVector<unsigned char> value = c->GetAttribute("Vertices").GetBuffer();
+            // load
+            MemoryBuffer buffer(value);
+            while (!buffer.IsEof())
+            {
+                vertices_[count].Push(buffer.ReadVector2());
+            }
 
-   }
+            count++;
+        }
 
-   bool IsVisible(size_t curveIndex)
-   {
-      return mbVisible[curveIndex];
-   }
-   size_t GetPointCount(size_t curveIndex)
-   {
-      return mPointCount[curveIndex];
-   }
+        max_ = ImVec2(1.f, 1.f);
+        min_ = ImVec2(0.f, 0.f);
+    }
 
-   uint32_t GetCurveColor(size_t curveIndex)
-   {
-      uint32_t cols[] = { 0xFF0000FF, 0xFF00FF00, 0xFFFF0000 };
-      return cols[curveIndex];
-   }
-   ImVec2* GetPoints(size_t curveIndex)
-   {
-      return mPts[curveIndex];
-   }
-   virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const
-   {
-      return ImCurveEdit::CurveLinear;
-   }
-   virtual int EditPoint(size_t curveIndex, int pointIndex, ImVec2 value)
-   {
-      mPts[curveIndex][pointIndex] = ImVec2(value.x, value.y);
-      // SortValues(curveIndex);
-      for (size_t i = 0; i < GetPointCount(curveIndex); i++)
-      {
-         if (mPts[curveIndex][i].x == value.x)
-            return (int)i;
-      }
-      return pointIndex;
-   }
-   virtual void AddPoint(size_t curveIndex, ImVec2 value)
-   {
-      if (mPointCount[curveIndex] >= 8)
-         return;
-      mPts[curveIndex][mPointCount[curveIndex]++] = value;
-      SortValues(curveIndex);
-   }
-   virtual ImVec2& GetMax() { return mMax; }
-   virtual ImVec2& GetMin() { return mMin; }
-   virtual unsigned int GetBackgroundColor() { return 0xFF202020; }
+    size_t GetCurveCount()
+    {
+        return vertices_.Size();
+    }
 
-   ImVec2 mPts[3][8];
-   size_t mPointCount[3];
-   bool mbVisible[3];
-   ImVec2 mMin;
-   ImVec2 mMax;
+    bool IsVisible(size_t curveIndex)
+    {
+        return true;
+    }
+
+    size_t GetPointCount(size_t curveIndex)
+    {
+        return vertices_[curveIndex].Size();
+    }
+
+    uint32_t GetCurveColor(size_t curveIndex)
+    {
+        uint32_t cols[] = { 0xFF0000FF, 0xFF00FF00, 0xFFFF0000 };
+        return cols[curveIndex];
+    }
+
+    ImVec2* GetPoints(size_t curveIndex)
+    {
+        return (ImVec2*)vertices_[curveIndex].Buffer();
+    }
+
+    virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const
+    {
+        return ImCurveEdit::CurveLinear;
+    }
+
+    virtual int EditPoint(size_t curveIndex, int pointIndex, ImVec2 value)
+    {
+        // URHO3D_LOGERRORF("EditPoint point index <%i> value <%f, %f>", value.x, value.y);
+        vertices_[curveIndex][pointIndex] = Vector2(value.x, value.y);
+
+        VectorBuffer ret;
+        for (unsigned i = 0; i < vertices_[curveIndex].Size(); ++i)
+            ret.WriteVector2(vertices_[curveIndex][i]);
+
+        PODVector<CollisionPolygon2D*> dest;
+        node_->GetComponents(dest);
+
+        dest.At(curveIndex)->SetAttribute("Vertices", ret.GetBuffer());
+
+        return pointIndex;
+    }
+
+    virtual void AddPoint(size_t curveIndex, ImVec2 value)
+    {
+//        if (vertices_.Size() >= 8)
+//            return;
+//        vertices_.Push(Vector2(value.x, value.y));
+    }
+
+    virtual ImVec2& GetMax() { return max_; }
+    virtual ImVec2& GetMin() { return min_; }
+    virtual unsigned int GetBackgroundColor() { return 0x20202020; }
+
+  //   bool mbVisible[3];
+     ImVec2 min_;
+     ImVec2 max_;
+
+  //private:
+
+  //   void SortValues(size_t curveIndex)
+  //   {
+  //      auto b = std::begin(mPts[curveIndex]);
+  //      auto e = std::begin(mPts[curveIndex]) + GetPointCount(curveIndex);
+  //      std::sort(b, e, [](ImVec2 a, ImVec2 b) { return a.x < b.x; });
+
+  //   }
 
 private:
 
-   void SortValues(size_t curveIndex)
-   {
-      auto b = std::begin(mPts[curveIndex]);
-      auto e = std::begin(mPts[curveIndex]) + GetPointCount(curveIndex);
-      std::sort(b, e, [](ImVec2 a, ImVec2 b) { return a.x < b.x; });
-
-   }
+    Vector<PODVector<Vector2> > vertices_;
+    Node* node_;
 };
 
-static RampEdit points_;
+/// VerticeEdit
+//struct RampEdit : public ImCurveEdit::Delegate
+//{
+//   RampEdit()
+//   {
+//      mPts[0][0] = ImVec2(0.1f, 0.1f);
+//      mPts[0][1] = ImVec2(0.2f, 0.1f);
+//      mPts[0][2] = ImVec2(0.3f, 0.1f);
+//      mPts[0][3] = ImVec2(0.4f, 0.1f);
+//      mPts[0][4] = ImVec2(0.5f, 0.1f);
+//      mPointCount[0] = 5;
+
+//      mPts[1][0] = ImVec2(-5.f, 0.2f);
+//      mPts[1][1] = ImVec2(3.f, 0.7f);
+//      mPts[1][2] = ImVec2(8.f, 0.2f);
+//      mPts[1][3] = ImVec2(8.f, 0.8f);
+//      mPointCount[1] = 4;
+
+//      mPts[2][0] = ImVec2(4.f, 0);
+//      mPts[2][1] = ImVec2(6.f, 0.1f);
+//      mPts[2][2] = ImVec2(9.f, 0.82f);
+//      mPts[2][3] = ImVec2(15.f, 0.24f);
+//      mPts[2][4] = ImVec2(2.f, 0.34f);
+//      mPts[2][5] = ImVec2(2.5f, 0.12f);
+//      mPointCount[2] = 6;
+//      mbVisible[0] = mbVisible[1] = mbVisible[2] = true;
+//      mMax = ImVec2(1.f, 1.f);
+//      mMin = ImVec2(0.f, 0.f);
+//   }
+//   size_t GetCurveCount()
+//   {
+//      return 1;
+//   }
+
+//   bool IsVisible(size_t curveIndex)
+//   {
+//      return mbVisible[curveIndex];
+//   }
+//   size_t GetPointCount(size_t curveIndex)
+//   {
+//      return mPointCount[curveIndex];
+//   }
+
+//   uint32_t GetCurveColor(size_t curveIndex)
+//   {
+//      uint32_t cols[] = { 0xFF0000FF, 0xFF00FF00, 0xFFFF0000 };
+//      return cols[curveIndex];
+//   }
+//   ImVec2* GetPoints(size_t curveIndex)
+//   {
+//      return mPts[curveIndex];
+//   }
+//   virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const
+//   {
+//      return ImCurveEdit::CurveLinear;
+//   }
+//   virtual int EditPoint(size_t curveIndex, int pointIndex, ImVec2 value)
+//   {
+//      mPts[curveIndex][pointIndex] = ImVec2(value.x, value.y);
+//      // SortValues(curveIndex);
+//      for (size_t i = 0; i < GetPointCount(curveIndex); i++)
+//      {
+//         if (mPts[curveIndex][i].x == value.x)
+//            return (int)i;
+//      }
+//      return pointIndex;
+//   }
+//   virtual void AddPoint(size_t curveIndex, ImVec2 value)
+//   {
+//      if (mPointCount[curveIndex] >= 8)
+//         return;
+//      mPts[curveIndex][mPointCount[curveIndex]++] = value;
+//      SortValues(curveIndex);
+//   }
+//   virtual ImVec2& GetMax() { return mMax; }
+//   virtual ImVec2& GetMin() { return mMin; }
+//   virtual unsigned int GetBackgroundColor() { return 0x20202020; }
+
+//   ImVec2 mPts[3][8];
+//   size_t mPointCount[3];
+//   bool mbVisible[3];
+//   ImVec2 mMin;
+//   ImVec2 mMax;
+
+//private:
+
+//   void SortValues(size_t curveIndex)
+//   {
+//      auto b = std::begin(mPts[curveIndex]);
+//      auto e = std::begin(mPts[curveIndex]) + GetPointCount(curveIndex);
+//      std::sort(b, e, [](ImVec2 a, ImVec2 b) { return a.x < b.x; });
+
+//   }
+//};
+
+//static RampEdit points_;
 
 /// EditorGuizmo
 EditorGuizmo::EditorGuizmo(Context* context) :
@@ -398,7 +506,6 @@ void EditorGuizmo::Render(float timeStep)
 //    if (brush_)
 //        brush_->SetVisible(currentEditMode_ == SELECT_VERTEX && node);
 
-    Matrix4 identity = Matrix4::IDENTITY;
     Matrix4 projection = camera->GetProjection().Transpose();
     Matrix4 view = camera->GetView().ToMatrix4().Transpose();
     Matrix4 transform = selection_->GetTransform().ToMatrix4().Transpose();
@@ -413,7 +520,8 @@ void EditorGuizmo::Render(float timeStep)
 
     ImGuizmo::DrawGrid(&view.m00_, &projection.m00_, &gridMatrix.m00_, gridSize);
 
-    if (!selection_ || !selection_->GetSelectedNodes().Size())
+    //  || !selection_->GetSelectedNodes().Size()
+    if (!selection_)
         return;
 
     selection_->Render();
@@ -424,6 +532,23 @@ void EditorGuizmo::Render(float timeStep)
 
         selection_->SetTransform(Matrix3x4(transform.Transpose()));
         selection_->SetDelta(Matrix3x4(delta.Transpose()));
+
+        if (selection_->GetSelectedNodes().Size() == 1)
+        {
+            Node* node = scene_->GetNode(selection_->GetSelectedNodes().At(0));
+            if (node)
+            {
+                PODVector<CollisionPolygon2D*> dest;
+                node->GetComponents(dest);
+                if (dest.Size())
+                {
+                    if (RenderVerticesPoint(node))
+                    {
+                        // apply changes
+                    }
+                }
+            }
+        }
     }
     else if(currentEditMode_ == SELECT_VERTEX)
     {
@@ -440,7 +565,7 @@ void EditorGuizmo::Render(float timeStep)
 //            }
     }
 
-    RenderVerticesPoint();
+
 
 //    debugRenderer->AddLine(ray_.origin_, ray_.origin_ + ray_.direction_ * 1000.0f, Color::BLUE, false);
     // Octree* octree = scene_->GetComponent<Octree>();
@@ -909,7 +1034,7 @@ void EditorGuizmo::CalculateHitPoint(const IntVector2& position)
 //    }
 }
 
-void EditorGuizmo::RenderVerticesPoint()
+bool EditorGuizmo::RenderVerticesPoint(Node *node)
 {
     Graphics* g = GetSubsystem<Graphics>();
 
@@ -926,12 +1051,30 @@ void EditorGuizmo::RenderVerticesPoint()
             | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
     ImGui::Begin("VerticeEdit", nullptr, flags);
 
-    ImCurveEdit::Edit(points_, ImVec2(g->GetWidth(), g->GetHeight()), 137);
+    Camera* camera = cameraNode_->GetComponent<Camera>();
+    if (!camera)
+        return false;
+
+    // Node* node = polygon->GetNode();
+
+//    Vector3 cameraPos = cameraNode_->GetPosition();
+    Matrix4 projection = camera->GetProjection().Transpose();
+    Matrix4 view = camera->GetView().ToMatrix4().Transpose();
+    // view.SetTranslation(cameraPos);
+    Matrix4 transform = node->GetTransform().ToMatrix4().Transpose();
+
+    // URHO3D_LOGERRORF("EditorGuizmo: view <%s>", view.ToString().CString());
+//    view.m03_ = 0.0f;
+
+    ComponentBufferEdit buffer(node);
+    int r = ImCurveEdit::EditPolygon(&view.m00_, &projection.m00_, &transform.m00_, buffer, ImVec2(g->GetWidth(), g->GetHeight()), 137);
 
     ImGui::End();
 
     ImGui::PopStyleVar();
     ImGui::PopStyleColor(2);
+
+    return r;
 }
 
 }

@@ -844,7 +844,7 @@ namespace ImGuizmo
    void SetDrawlist()
    {
       gContext.mDrawList = ImGui::GetWindowDrawList();
-}
+   }
 
    void BeginFrame()
    {

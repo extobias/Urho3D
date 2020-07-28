@@ -9,6 +9,8 @@
 namespace Urho3D
 {
 
+class CollisionPolygon2D;
+
 class EditorBrush;
 
 class URHO3D_API EditorGuizmo : public ImGuiElement
@@ -43,8 +45,6 @@ public:
 
     void SetCameraNode(Node* node) { cameraNode_ = node; }
 
-    void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
-
     void HandleMouseMove(StringHash eventType, VariantMap& eventData);
 
     void SetScene(Scene* scene);
@@ -74,7 +74,7 @@ private:
 
     void CalculateHitPoint(const IntVector2 &position);
 
-    void RenderVerticesPoint();
+    bool RenderVerticesPoint(Node* node);
 
     WeakPtr<Node> cameraNode_;
 
