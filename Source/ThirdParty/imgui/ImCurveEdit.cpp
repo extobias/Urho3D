@@ -498,7 +498,7 @@ namespace ImCurveEdit
       return ret;
    }
 
-   int EditPolygon(const float *view, const float *projection, const float *transform, Delegate &delegate, const ImVec2 &size, unsigned int id, const ImRect *clippingRect, ImVector<EditPoint> *selectedPoints)
+   int EditPolygon(const float *view, const float *projection, const float *transform, Delegate &delegate, const ImVec2 &size, const ImRect *clippingRect, ImVector<EditPoint> *selectedPoints)
    {
        glm::mat4 viewProjection = *(glm::mat4*)projection * *(glm::mat4*) view;
 
@@ -739,6 +739,8 @@ namespace ImCurveEdit
                pointsMoved = false;
                delegate.EndEdit();
            }
+           // added
+           ret = 1;
        }
 
        // add point

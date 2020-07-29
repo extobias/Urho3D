@@ -1,4 +1,4 @@
-#include "../UI/EditorGuizmo.h"
+ #include "../UI/EditorGuizmo.h"
 
 #include "../Graphics/Graphics.h"
 #include "../Graphics/Camera.h"
@@ -460,7 +460,8 @@ EditorGuizmo::EditorGuizmo(Context* context) :
     buttons_(0),
     selection_(nullptr),
     brush_(nullptr),
-    clicked_(false)
+    clicked_(false),
+    editPointHover_(false)
 {
     SetDragDropMode(DD_DISABLED);
 
@@ -542,7 +543,7 @@ void EditorGuizmo::Render(float timeStep)
                 node->GetComponents(dest);
                 if (dest.Size())
                 {
-                    if (RenderVerticesPoint(node))
+                    RenderVerticesPoint(node);
                     {
                         // apply changes
                     }
@@ -597,7 +598,8 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
             }
             else
             {
-                selection_->Clear();
+                if (!editPointHover_)
+                   selection_->Clear();
 
                 clickStart_ = screenPosition;
                 clicked_ = true;
@@ -1034,7 +1036,7 @@ void EditorGuizmo::CalculateHitPoint(const IntVector2& position)
 //    }
 }
 
-bool EditorGuizmo::RenderVerticesPoint(Node *node)
+void EditorGuizmo::RenderVerticesPoint(Node *node)
 {
     Graphics* g = GetSubsystem<Graphics>();
 
@@ -1053,28 +1055,23 @@ bool EditorGuizmo::RenderVerticesPoint(Node *node)
 
     Camera* camera = cameraNode_->GetComponent<Camera>();
     if (!camera)
-        return false;
+        return;
 
-    // Node* node = polygon->GetNode();
-
-//    Vector3 cameraPos = cameraNode_->GetPosition();
     Matrix4 projection = camera->GetProjection().Transpose();
     Matrix4 view = camera->GetView().ToMatrix4().Transpose();
-    // view.SetTranslation(cameraPos);
     Matrix4 transform = node->GetTransform().ToMatrix4().Transpose();
 
-    // URHO3D_LOGERRORF("EditorGuizmo: view <%s>", view.ToString().CString());
-//    view.m03_ = 0.0f;
-
     ComponentBufferEdit buffer(node);
-    int r = ImCurveEdit::EditPolygon(&view.m00_, &projection.m00_, &transform.m00_, buffer, ImVec2(g->GetWidth(), g->GetHeight()), 137);
+    ImVector<ImCurveEdit::EditPoint> selectedPoints;
+
+    editPointHover_ = ImCurveEdit::EditPolygon(&view.m00_, &projection.m00_, &transform.m00_, buffer, ImVec2(g->GetWidth(), g->GetHeight()), NULL, &selectedPoints);
+
+    // URHO3D_LOGERRORF("EditorGuizmo: point edited <%i> selected <%i>", pointEdited_, selectedPoints.size());
 
     ImGui::End();
 
     ImGui::PopStyleVar();
     ImGui::PopStyleColor(2);
-
-    return r;
 }
 
 }

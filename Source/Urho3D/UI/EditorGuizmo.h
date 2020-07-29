@@ -74,7 +74,7 @@ private:
 
     void CalculateHitPoint(const IntVector2 &position);
 
-    bool RenderVerticesPoint(Node* node);
+    void RenderVerticesPoint(Node* node);
 
     WeakPtr<Node> cameraNode_;
 
@@ -97,6 +97,8 @@ private:
     IntVector2 clickStart_;
 
     bool clicked_;
+
+    bool editPointHover_;
 };
 
 }

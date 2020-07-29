@@ -53,5 +53,5 @@ namespace ImCurveEdit
 
     int Edit(Delegate &delegate, const ImVec2& size, unsigned int id, const ImRect *clippingRect = NULL, ImVector<EditPoint> *selectedPoints = NULL);
 
-    int EditPolygon(const float* view, const float* projection, const float *transform, Delegate &delegate, const ImVec2& size, unsigned int id, const ImRect *clippingRect = NULL, ImVector<EditPoint> *selectedPoints = NULL);
+    int EditPolygon(const float* view, const float* projection, const float *transform, Delegate &delegate, const ImVec2& size, const ImRect *clippingRect = NULL, ImVector<EditPoint> *selectedPoints = NULL);
 }
