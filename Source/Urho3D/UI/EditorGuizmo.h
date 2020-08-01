@@ -33,8 +33,6 @@ public:
 
     void OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor) override;
 
-    void OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers) override;
-
     bool IsWheelHandler() const override { return true; }
 
     void SetCurrentOperation(unsigned currentOperation) { currentOperation_ = currentOperation; }

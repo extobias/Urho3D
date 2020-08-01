@@ -25,7 +25,8 @@ using ResourceMap = HashMap<String, ResourceFile>;
 enum EditorMode
 {
     SELECT_OBJECT,
-    SELECT_VERTEX
+    SELECT_MESH_VERTEX,
+    SELECT_POLYGON_VERTEX
 };
 
 class URHO3D_API EditorSelection : public Object
@@ -38,9 +39,11 @@ public:
 
     ~EditorSelection() override;
 
-    void Add(unsigned id);
+    void Add(Node* node);
 
     void Clear();
+
+    bool IsEmpty() const { return !selectedNodes_.Size(); }
 
     String ToString();
 
@@ -52,7 +55,7 @@ public:
 
     void Render();
 
-    const PODVector<unsigned>& GetSelectedNodes() const { return selectedNodes_; }
+    const PODVector<Node*>& GetSelectedNodes() const { return selectedNodes_; }
 
     const Matrix3x4& GetTransform() const { return transform_; }
 
@@ -66,7 +69,7 @@ private:
 
     Vector3 CalculateCentroid(const Vector<Vector3>& points);
 
-    PODVector<unsigned> selectedNodes_;
+    PODVector<Node*> selectedNodes_;
 
     Matrix3x4 transform_;
 

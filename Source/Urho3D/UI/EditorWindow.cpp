@@ -40,13 +40,16 @@ EditorSelection::EditorSelection(Context* context)
 
 EditorSelection::~EditorSelection() = default;
 
-void EditorSelection::Add(unsigned id)
+void EditorSelection::Add(Node *node)
 {
+    if (selectedNodes_.Contains(node))
+        return;
+
     Input* input = GetSubsystem<Input>();
     if (!input->GetKeyDown(KEY_SHIFT))
         selectedNodes_.Clear();
 
-    selectedNodes_.Push(id);
+    selectedNodes_.Push(node);
 
     UpdateTransform();
 }
@@ -58,12 +61,12 @@ void EditorSelection::Clear()
 
 String EditorSelection::ToString()
 {
-    char buf[512];
-    memset(buf, 0, 512);
+    char buf[5120];
+    memset(buf, 0, 5120);
     unsigned offset = 0;
-    for(unsigned i: selectedNodes_)
+    for(Node* node: selectedNodes_)
     {
-        sprintf(buf + offset, "%i, ", i);
+        sprintf(buf + offset, "%i, ", node->GetID());
         offset = strlen(buf);
     }
 
@@ -77,9 +80,8 @@ void EditorSelection::SetTransform(const Matrix3x4 &matrix)
 
 void EditorSelection::SetDelta(const Matrix3x4 &matrix)
 {
-    for(unsigned id: selectedNodes_)
+    for(Node* node: selectedNodes_)
     {
-        Node* node = scene_->GetNode(id);
         node->Translate(matrix.Translation());
         node->Rotate(matrix.Rotation());
         node->Scale(matrix.Scale());
@@ -89,9 +91,8 @@ void EditorSelection::SetDelta(const Matrix3x4 &matrix)
 void EditorSelection::Render()
 {
     DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-    for(unsigned id: selectedNodes_)
+    for(Node* node: selectedNodes_)
     {
-        Node* node = scene_->GetNode(id);
         StaticSprite2D* draw = node->GetComponent<StaticSprite2D>();
         if (draw)
         {
@@ -119,7 +120,7 @@ void EditorSelection::UpdateTransform()
 {
     if (selectedNodes_.Size() == 1)
     {
-        Node* node = scene_->GetNode(selectedNodes_.At(0));
+        Node* node = selectedNodes_.At(0);
         transform_ = node->GetTransform();
         return;
     }
@@ -162,7 +163,7 @@ void EditorSelection::PoligonPoints(Vector<Vector3>& points)
 
     if (selectedNodes_.Size() == 1)
     {
-        Node* nodeSelected = scene_->GetNode(selectedNodes_.At(0));
+        Node* nodeSelected = selectedNodes_.At(0);
         points.Push(nodeSelected->GetPosition());
 
         return;
@@ -177,7 +178,7 @@ void EditorSelection::PoligonPoints(Vector<Vector3>& points)
     for(unsigned i = 0; i < selectedNodes_.Size(); i++)
     {
 //            URHO3D_LOGERRORF("EditorGuizmo: selected <%i>", selectedNodes_.At(i));
-        Node* nodeSelected = scene_->GetNode(selectedNodes_.At(i));
+        Node* nodeSelected = selectedNodes_.At(i);
         Vector3 pos = nodeSelected->GetPosition();
         if (pos.x_ < p.x_)
         {
@@ -193,7 +194,7 @@ void EditorSelection::PoligonPoints(Vector<Vector3>& points)
 
     for(unsigned i = 0; i < selectedNodes_.Size(); i++)
     {
-        Node* nodeSelected = scene_->GetNode(selectedNodes_.At(i));
+        Node* nodeSelected = selectedNodes_.At(i);
         Vector3 point = nodeSelected->GetPosition();
         if (i == pi || i == qi)
             continue;
@@ -348,17 +349,19 @@ void EditorWindow::MoveCamera(float timeStep)
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
-    float MOVE_SPEED = 1.0f;
+    float moveSpeed = 10.0f;
     // Mouse sensitivity as degrees per pixel
-    const float MOUSE_SENSITIVITY = 0.1f;
+    const float mouseSensitivity = 0.1f;
+    // wheel speed
+    float wheelSpeed = 0.15f;
 
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
     if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
     {
         IntVector2 mouseMove = input->GetMouseMove();
 
-        yaw_ += (float)MOUSE_SENSITIVITY * mouseMove.x_;
-        pitch_ += (float)MOUSE_SENSITIVITY * mouseMove.y_;
+        yaw_ += (float)mouseSensitivity * mouseMove.x_;
+        pitch_ += (float)mouseSensitivity * mouseMove.y_;
         pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
         // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
@@ -377,34 +380,55 @@ void EditorWindow::MoveCamera(float timeStep)
 //        cameraNode_->SetPosition(cameraTargetPos);
     }
 
-    if (input->GetKeyDown(KEY_SHIFT))
-        MOVE_SPEED *= 50.0f;
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     // Use the Translate() function (default local space) to move relative to the node's orientation.
     if (input->GetKeyDown(KEY_W))
-        cameraNode_->Translate(Vector3::FORWARD * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::FORWARD * moveSpeed * timeStep);
     if (input->GetKeyDown(KEY_S))
-        cameraNode_->Translate(Vector3::BACK * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::BACK * moveSpeed * timeStep);
     if (input->GetKeyDown(KEY_A))
-        cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::LEFT * moveSpeed * timeStep);
     if (input->GetKeyDown(KEY_D))
-        cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::RIGHT * moveSpeed * timeStep);
     if (input->GetKeyDown(KEY_E))
-        cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::UP * moveSpeed * timeStep);
     if (input->GetKeyDown(KEY_Q))
-        cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
+        cameraNode_->Translate(Vector3::DOWN * moveSpeed * timeStep);
 
-    if (input->GetKeyDown(KEY_PAGEUP))
+    // Mouse input
+    Camera* camera = cameraNode_->GetComponent<Camera>();
+    // wheel zoom
+    int delta = input->GetMouseMoveWheel();
+    if (input->GetKeyDown(KEY_CTRL))
     {
-        auto* camera = cameraNode_->GetComponent<Camera>();
-        camera->SetZoom(camera->GetZoom() * 1.01f);
+        if (delta > 0)
+        {
+            camera->SetZoom(camera->GetZoom() * (1.0f + wheelSpeed));
+        }
+
+        if (delta < 0)
+        {
+            camera->SetZoom(camera->GetZoom() * (1.0f - wheelSpeed));
+        }
+    }
+    else
+    {
+        if (input->GetKeyDown(KEY_SHIFT))
+        {
+            if (delta > 0)
+                cameraNode_->Translate(Vector3::LEFT * moveSpeed * timeStep);
+            else if (delta < 0)
+                cameraNode_->Translate(Vector3::RIGHT * moveSpeed * timeStep);
+        }
+        else
+        {
+            if (delta > 0)
+                cameraNode_->Translate(Vector3::UP * moveSpeed * timeStep);
+            else if (delta < 0)
+                cameraNode_->Translate(Vector3::DOWN * moveSpeed * timeStep);
+        }
     }
 
-    if (input->GetKeyDown(KEY_PAGEDOWN))
-    {
-        auto* camera = cameraNode_->GetComponent<Camera>();
-        camera->SetZoom(camera->GetZoom() * 0.99f);
-    }
 }
 
 void EditorWindow::LoadResources()
@@ -543,7 +567,7 @@ void EditorWindow::Render(float timeStep)
     static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::TRANSLATE);
     static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
 
-    static const char* modeTypes[] = { "Object", "Vertex" };
+    static const char* modeTypes[] = { "Object", "Mesh Vertex", "Polygon Vertex" };
 
     // selection mode
     const char* hideLabel = "##hidelabel";
@@ -597,7 +621,7 @@ void EditorWindow::Render(float timeStep)
 
     // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
     // ImGui::PlotLines("Lines", );
-    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
+    const PODVector<Node*>& s = selection_->GetSelectedNodes();
 
     ImGui::Text("Node selected <%s> guizmoBtn <%i>", selection_->ToString().CString(), guizmoBtn);
     // ImGui::SameLine();
@@ -605,7 +629,7 @@ void EditorWindow::Render(float timeStep)
     {
         if (s.Size() == 1)
         {
-            Node* node = scene_->GetNode(s.At(0));
+            Node* node = s.At(0);
             if (node)
             {
                 node->CreateChild(String::EMPTY, LOCAL);
@@ -626,12 +650,13 @@ void EditorWindow::Render(float timeStep)
     ImGui::SameLine();
     if(ImGui::Button("\-Remove"))
     {
-//        for(unsigned i = 0; i < selectedNodes_.Size(); i++)
-//        {
-//            Node* node = scene_->GetChild(selectedNodes_.At(i));
-//            if (node)
-//                scene_->RemoveChild(node);
-//        }
+        for(unsigned i = 0; i < selection_->GetSelectedNodes().Size(); i++)
+        {
+            Node* node = selection_->GetSelectedNodes().At(i);
+            if (node)
+                scene_->RemoveChild(node);
+        }
+        selection_->Clear();
     }
 
     DrawNodeTree();
@@ -671,10 +696,10 @@ void EditorWindow::DrawChild(Node* node, int& i)
 {
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
+    const PODVector<Node*>& s = selection_->GetSelectedNodes();
     // selected node
     // if (selectedNode_ == node->GetID())
-    if (s.Contains(node->GetID()))
+    if (s.Contains(node))
     {
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
     }
@@ -683,7 +708,7 @@ void EditorWindow::DrawChild(Node* node, int& i)
     auto children = node->GetChildren();
     for (Node* child : children)
     {
-        if (s.Size() == 1 && s.Contains(child->GetID()))
+        if (s.Size() == 1 && s.Contains(child))
         {
             nodeFlags |= ImGuiTreeNodeFlags_DefaultOpen;
             break;
@@ -693,15 +718,7 @@ void EditorWindow::DrawChild(Node* node, int& i)
     bool isOpen = ImGui::TreeNodeEx((void*)(intptr_t)i, nodeFlags, "%s - %i - %i", node->GetName().CString(), node->GetID(), node->GetChildren().Size());
     if (ImGui::IsItemClicked())
     {
-        selection_->Add(node->GetID());
-//        selectedNode_ = node->GetID();
-////        AddSelectedNode(node->GetID());
-
-//        if (guizmo_)
-//        {
-//            guizmo_->SetSelectedNode(selectedNode_);
-//            URHO3D_LOGERRORF("item selected <%i>", node->GetID());
-//        }
+        selection_->Add(node);
     }
     i++;
     if (isOpen)
@@ -723,8 +740,8 @@ void EditorWindow::DrawNodeTree()
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
 
-    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
-    if (s.Size() == 1 && s.Contains(scene_->GetID()))
+    const PODVector<Node*>& s = selection_->GetSelectedNodes();
+    if (s.Size() == 1 && s.Contains(scene_))
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
 
     String sceneName = scene_->GetName();
@@ -737,7 +754,7 @@ void EditorWindow::DrawNodeTree()
         // select scene
         if(mode_ == SELECT_OBJECT)
         {
-            selection_->Add(scene_->GetID());
+            selection_->Add(scene_);
         }
         else
         {
@@ -760,82 +777,77 @@ void EditorWindow::DrawNodeTree()
 
 void EditorWindow::DrawNodeSelected()
 {
-    const PODVector<unsigned> selected = selection_->GetSelectedNodes();
+    const PODVector<Node*> selected = selection_->GetSelectedNodes();
     if (selected.Size() != 1)
         return;
 
-    unsigned selectedNode = selected.At(0);
-    if (selectedNode)
+    Node* node = selected.At(0);
+    if (!node)
     {
-        Node* node = scene_->GetNode(selectedNode);
-        if (!node)
+        URHO3D_LOGERRORF("EditorWindow: node <%p> not found!", node);
+        return;
+    }
+
+    Node* cameraNode = cameraNode_;
+    if(!cameraNode)
+        return;
+
+    Camera* camera = cameraNode->GetComponent<Camera>();
+    if(!camera)
+        return;
+
+    AttributeEdit(node);
+
+    // add component
+    if (ImGui::Button("Add component"))
+        ImGui::OpenPopup("new_component_popup");
+    if (ImGui::BeginPopup("new_component_popup"))
+    {
+        AddComponentMenu(node);
+        ImGui::EndPopup();
+    }
+
+    // components
+    ImGui::BeginGroup();
+    ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 400.0f), true);
+
+    // static bool headerOpen = true;
+    auto childComponents = node->GetComponents();
+    // FIXME
+    static bool headerOpen[10] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+    unsigned compCount = 0;
+    for (Component* c : childComponents)
+    {
+        String label = c->GetTypeName();
+        label.AppendWithFormat("-%i", compCount);
+
+        ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
+        if (ImGui::CollapsingHeader(label.CString(), &headerOpen[compCount], headerFlags))
         {
-            URHO3D_LOGERRORF("EditorWindow: node <%u> not found!", selectedNode);
-            return;
+            AttributeEdit(c);
+
+            EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
+            EditModelDebug(modelDebug);
         }
-
-        // Node* cameraNode = scene_->GetChild("Camera");
-        Node* cameraNode = cameraNode_;
-        if(!cameraNode)
-            return;
-
-        Camera* camera = cameraNode->GetComponent<Camera>();
-        if(!camera)
-            return;
-
-        AttributeEdit(node);
-
-        // add component
-        if (ImGui::Button("Add component"))
-            ImGui::OpenPopup("new_component_popup");
-        if (ImGui::BeginPopup("new_component_popup"))
+        else
         {
-            AddComponentMenu(node);
-            ImGui::EndPopup();
-        }
-
-        // components
-        ImGui::BeginGroup();
-        ImGui::BeginChild("Components", ImVec2(ImGui::GetContentRegionAvail().x, 400.0f), true);
-
-        // static bool headerOpen = true;
-        auto childComponents = node->GetComponents();
-        // FIXME
-        static bool headerOpen[10] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-
-        unsigned compCount = 0;
-        for (Component* c : childComponents)
-        {
-            String label = c->GetTypeName();
-            label.AppendWithFormat("-%i", compCount);
-
-            ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
-            if (ImGui::CollapsingHeader(label.CString(), &headerOpen[compCount], headerFlags))
+            // component removed
+            if (!headerOpen[compCount])
             {
-                AttributeEdit(c);
-
-                EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
-                EditModelDebug(modelDebug);
-            }
-            else
-            {
-                // component removed
-                if (!headerOpen[compCount])
-                {
-                    headerOpen[compCount] = true;
+                headerOpen[compCount] = true;
 //                    childComponents.Erase(compCount);
-                    node->RemoveComponent(c);
-                }
+                node->RemoveComponent(c);
+            }
 //                for(unsigned i = 0; i < 10; i++)
 //                    URHO3D_LOGERRORF("EditorWindow: headerOpen <%i>", headerOpen[i]);
-            }
-
-            compCount++;
         }
 
-        ImGui::EndChild();
-        ImGui::EndGroup();
+        compCount++;
     }
+
+    ImGui::EndChild();
+    ImGui::EndGroup();
 }
 
 void EditorWindow::AttributeEdit(Serializable* c)

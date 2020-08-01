@@ -527,16 +527,35 @@ void EditorGuizmo::Render(float timeStep)
 
     selection_->Render();
 
-    if(currentEditMode_ == SELECT_OBJECT)
+    if (currentEditMode_ == SELECT_OBJECT)
     {
-        ImGuizmo::Manipulate(&view.m00_, &projection.m00_, (ImGuizmo::OPERATION)currentOperation_, (ImGuizmo::MODE)currentMode_, &transform.m00_, &delta.m00_);
+        if (!selection_->IsEmpty())
+        {
+            ImGuizmo::Manipulate(&view.m00_, &projection.m00_, (ImGuizmo::OPERATION)currentOperation_, (ImGuizmo::MODE)currentMode_, &transform.m00_, &delta.m00_);
 
-        selection_->SetTransform(Matrix3x4(transform.Transpose()));
-        selection_->SetDelta(Matrix3x4(delta.Transpose()));
-
+            selection_->SetTransform(Matrix3x4(transform.Transpose()));
+            selection_->SetDelta(Matrix3x4(delta.Transpose()));
+        }
+    }
+    else if (currentEditMode_ == SELECT_MESH_VERTEX)
+    {
+//            UI* ui = GetSubsystem<UI>();
+//            IntVector2 cursorPos = ui->GetCursorPosition();
+//            // Vector3 worldPos = GetWorldPosition();
+//            StaticModel* staticModel = node->GetComponent<StaticModel>();
+//            if(staticModel)
+//            {
+//                BoundingBox modelBox = staticModel->GetBoundingBox();
+//                debugRenderer->AddBoundingBox(modelBox, Color::YELLOW, false);
+//                if (brush_)
+//                    brush_->Update(staticModel, hitPoint_);
+//            }
+    }
+    else if (currentEditMode_ == SELECT_POLYGON_VERTEX)
+    {
         if (selection_->GetSelectedNodes().Size() == 1)
         {
-            Node* node = scene_->GetNode(selection_->GetSelectedNodes().At(0));
+            Node* node = selection_->GetSelectedNodes().At(0);
             if (node)
             {
                 PODVector<CollisionPolygon2D*> dest;
@@ -550,20 +569,6 @@ void EditorGuizmo::Render(float timeStep)
                 }
             }
         }
-    }
-    else if(currentEditMode_ == SELECT_VERTEX)
-    {
-//            UI* ui = GetSubsystem<UI>();
-//            IntVector2 cursorPos = ui->GetCursorPosition();
-//            // Vector3 worldPos = GetWorldPosition();
-//            StaticModel* staticModel = node->GetComponent<StaticModel>();
-//            if(staticModel)
-//            {
-//                BoundingBox modelBox = staticModel->GetBoundingBox();
-//                debugRenderer->AddBoundingBox(modelBox, Color::YELLOW, false);
-//                if (brush_)
-//                    brush_->Update(staticModel, hitPoint_);
-//            }
     }
 
 
@@ -594,7 +599,7 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
             RayQueryResult result = SelectObject(position);
             if(result.node_)
             {
-                selection_->Add(result.node_->GetID());
+                selection_->Add(result.node_);
             }
             else
             {
@@ -687,29 +692,6 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
 //    }
 }
 
-void EditorGuizmo::OnWheel(int delta, MouseButtonFlags buttons, QualifierFlags qualifiers)
-{
-    ImGuiElement::OnWheel(delta, buttons, qualifiers);
-
-    Input* input = GetSubsystem<Input>();
-
-    float step = 0.01f;
-    if (input->GetKeyDown(KEY_SHIFT))
-        step = 0.2f;
-
-    if (delta > 0)
-    {
-        auto* camera = cameraNode_->GetComponent<Camera>();
-        camera->SetZoom(camera->GetZoom() * (1.0f + step));
-    }
-
-    if (delta < 0)
-    {
-        auto* camera = cameraNode_->GetComponent<Camera>();
-        camera->SetZoom(camera->GetZoom() * (1.0f - step));
-    }
-}
-
 void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 {
     if (!scene_ || !selection_)
@@ -724,32 +706,37 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
 //    IntVector2 position = ScreenToElement(screenPosition);
     IntVector2 position = screenPosition;
 
-//    ImGuiElement::OnHover(position, screenPosition, mouseButtons, qualifiers, nullptr);
-
     if(ImGuizmo::IsOver())
         SetFocusMode(FM_FOCUSABLE);
     else
         SetFocusMode(FM_NOTFOCUSABLE);
 
-    const PODVector<unsigned>& s = selection_->GetSelectedNodes();
+    const PODVector<Node*>& s = selection_->GetSelectedNodes();
     if (s.Size() == 1)
     {
-        Node* node = scene_->GetNode(s.At(0));
-        if(currentEditMode_ == SELECT_VERTEX && node)
+        Node* node = s.At(0);
+        if (node)
         {
-            CalculateHitPoint(position);
-
-            // this is only one action
-            if (mouseButtons & MOUSEB_LEFT)
+            if(currentEditMode_ == SELECT_MESH_VERTEX)
             {
-                PODVector<IntVector2> faces = SelectVertex(position);
-                EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+                CalculateHitPoint(position);
 
-                if (debugModel)
+                // this is only one action
+                if (mouseButtons & MOUSEB_LEFT)
                 {
-                    debugModel->AddSelectedFaces(faces);
+                    PODVector<IntVector2> faces = SelectVertex(position);
+                    EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+
+                    if (debugModel)
+                    {
+                        debugModel->AddSelectedFaces(faces);
+                    }
+                    buttons_ = mouseButtons;
                 }
-                buttons_ = mouseButtons;
+            }
+            else if (currentEditMode_ == SELECT_POLYGON_VERTEX)
+            {
+
             }
         }
     }
@@ -868,8 +855,8 @@ void EditorGuizmo::SelectObjects(const BoundingBox& boundingBox)
         for (unsigned i = 0; i < result.Size(); i++)
         {
             Node* node = result.At(i)->GetNode();
-            URHO3D_LOGERRORF("EditorGuizmo::SelectObjects: node name <%s>", node->GetName().CString());
-            selection_->Add(node->GetID());
+            // URHO3D_LOGERRORF("EditorGuizmo::SelectObjects: node name <%s>", node->GetName().CString());
+            selection_->Add(node);
         }
     }
 }
