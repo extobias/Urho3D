@@ -59,6 +59,7 @@
 #include "Ball2D.h"
 #include "BallSucker.h"
 #include "BallRacket.h"
+#include "Sinkhole.h"
 
 #include <Urho3D/DebugNew.h>
 
@@ -76,10 +77,8 @@ Balls2DPhysics::Balls2DPhysics(Context* context) :
     ballSuckerNode_(nullptr),
     ballRacketNode_(nullptr),
     ballTimer_(0.0f),
-    sinkTimer_(0.0f),
-    sinkMaxTimer_(0.0f),
     scalePhysics_(0.0f),
-    debugDraw_(false)
+    debugDraw_(true)
 {
 
     colors_.Push(Color::RED);
@@ -92,6 +91,7 @@ void Balls2DPhysics::Start()
     Ball2D::RegisterObject(context_);
     BallSucker::RegisterObject(context_);
     BallRacket::RegisterObject(context_);
+    Sinkhole::RegisterObject(context_);
 
     // Execute base class startup
     Sample::Start();
@@ -121,7 +121,7 @@ void Balls2DPhysics::CreateScene()
     // Create camera node
     cameraNode_ = scene_->CreateChild("Camera");
     // Set camera's position
-    cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -1.0f));
+    cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -10.0f));
 
     camera_ = cameraNode_->CreateComponent<Camera>();
     camera_->SetOrthographic(true);
@@ -148,9 +148,9 @@ void Balls2DPhysics::CreateScene()
 
     CreateWalls();
 
-//    CreateSucker();
+    CreateScore();
 
-//    UpdateTimer();
+    CreateSink();
 
     ballsNode_ = scene_->CreateChild("Balls");
 
@@ -158,7 +158,7 @@ void Balls2DPhysics::CreateScene()
 
     ballRacketNode_ = scene_->CreateChild("Rackets");
 
-//    CreateBall();
+    // CreateSucker();
 
 //    CreateRacket(Vector2(0.0f, 2.0f * scalePhysics_));
 
@@ -175,10 +175,32 @@ void Balls2DPhysics::CreateScene()
 //    spriterAnimatedSprite->SetAnimationSet(spriterAnimationSet);
 //    spriterAnimatedSprite->SetAnimation(spriterAnimationSet->GetAnimation(0));
 
-//    CreateSink();
-//    CreateSink();
-//    CreateSink();
+    // Create ground.
+//    for (int i = 0; i < 3; i++)
+//    {
+//        String name;
+//        Node* groundNode = scene_->CreateChild(name.AppendWithFormat("GroundNode-%i", i));
+//        groundNode->SetPosition(Vector3(1.0f * (i - 1), 2.5f, 0.0f));
+//        groundNode->SetScale(Vector3(1.0f, 1.0f, 0.0f));
+//        groundNode->CreateComponent<RigidBody2D>();
+//        groundNode->SetVar("Type", name);
+//        groundNode->SetVar("Color", i);
 
+//        // Create box collider for ground
+//        CollisionCircle2D* groundShape = groundNode->CreateComponent<CollisionCircle2D>();
+//        // Set box size
+//        groundShape->SetRadius(0.16f);
+//        // Set friction
+//        groundShape->SetFriction(1.0f);
+
+//        auto* groundSprite = groundNode->CreateComponent<StaticSprite2D>();
+//        groundSprite->SetColor(colors_[i]);
+//        groundSprite->SetSprite(ballSprite);
+//    }
+}
+
+void Balls2DPhysics::TestNodes()
+{
     const char* names[] = {
         "Urho2D/Aster.png",
         "Urho2D/Ball.png",
@@ -186,7 +208,6 @@ void Balls2DPhysics::CreateScene()
         "Urho2D/GoldIcon.png",
     };
 
-    Octree* octree = scene_->GetComponent<Octree>();
     auto* cache = GetSubsystem<ResourceCache>();
     for (int i = 0; i < 4; i++)
     {
@@ -220,34 +241,10 @@ void Balls2DPhysics::CreateScene()
     mushroom->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
 
     URHO3D_LOGERRORF("Balls2DPhysics::CreateScene: BOUNDINGBOX <%s>", mushroom->GetBoundingBox().ToString().CString());
-
-    // Create ground.
-//    for (int i = 0; i < 3; i++)
-//    {
-//        String name;
-//        Node* groundNode = scene_->CreateChild(name.AppendWithFormat("GroundNode-%i", i));
-//        groundNode->SetPosition(Vector3(1.0f * (i - 1), 2.5f, 0.0f));
-//        groundNode->SetScale(Vector3(1.0f, 1.0f, 0.0f));
-//        groundNode->CreateComponent<RigidBody2D>();
-//        groundNode->SetVar("Type", name);
-//        groundNode->SetVar("Color", i);
-
-//        // Create box collider for ground
-//        CollisionCircle2D* groundShape = groundNode->CreateComponent<CollisionCircle2D>();
-//        // Set box size
-//        groundShape->SetRadius(0.16f);
-//        // Set friction
-//        groundShape->SetFriction(1.0f);
-
-//        auto* groundSprite = groundNode->CreateComponent<StaticSprite2D>();
-//        groundSprite->SetColor(colors_[i]);
-//        groundSprite->SetSprite(ballSprite);
-//    }
 }
 
 void Balls2DPhysics::CreateWalls()
 {
-
     //    // Create top.
     //    Node* topNode = scene_->CreateChild("TopGround");
     //    topNode->SetVar("Type", "Ground");
@@ -361,7 +358,7 @@ void Balls2DPhysics::CreateWalls()
     //    rightSprite->SetSprite(boxSprite);
 }
 
-void Balls2DPhysics::UpdateTimer()
+void Balls2DPhysics::CreateScore()
 {
     auto* cache = GetSubsystem<ResourceCache>();
     auto* ui = GetSubsystem<UI>();
@@ -372,16 +369,9 @@ void Balls2DPhysics::UpdateTimer()
     timerText_->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 30);
 
     // Position the text relative to the screen center
-//    timerText_->SetHorizontalAlignment(HA_LEFT);
+    timerText_->SetHorizontalAlignment(HA_LEFT);
     timerText_->SetVerticalAlignment(VA_TOP);
-//    timerText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
-
-    textNode_ = scene_->CreateChild("TextNode");
-    textNode_->SetPosition(Vector3::ZERO);
-    Text3D* text3d = textNode_->CreateComponent<Text3D>();
-    text3d->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 20);
-    text3d->SetText("TOBI");
-
+    timerText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
 }
 
 void Balls2DPhysics::CreateSucker()
@@ -442,30 +432,11 @@ void Balls2DPhysics::CreateBall()
 
 void Balls2DPhysics::CreateSink()
 {
-    if (!sinkNode_)
-        sinkNode_ = scene_->CreateChild("Sink");
-
-    sinkNode_->SetVar("Type", "Sink");
-
-    auto* cache = GetSubsystem<ResourceCache>();
-    auto* boxSprite = cache->GetResource<Sprite2D>("Urho2D/Box.png");
-
-    Ball2D* ball = sinkNode_->GetOrCreateComponent<Ball2D>();
-    ball->SetScaleFactor(scalePhysics_);
-    ball->SetSprite(boxSprite);
-    RigidBody2D* rigidBody = sinkNode_->GetComponent<RigidBody2D>();
-    rigidBody->SetBodyType(BT_STATIC);
-
-    unsigned color = (unsigned)Random(0, 3);
-//    unsigned color = 0;
-    ball->SetColor(colors_[color]);
-    // ball->SetScaleFactor(Random(0.0001f, 0.0009f));
-    sinkNode_->SetVar("Color", color);
-
-    // URHO3D_LOGERRORF("RECT <%f, %f, %f, %f>", field_.Top(), field_.Left(), field_.Bottom(), field_.Right());
-    float x = Random(field_.Left(), field_.Right());
-    float y = Random(field_.Top(), field_.Bottom());
-    sinkNode_->SetPosition(Vector3(x, y, 0.0f));
+    sinkNode_ = scene_->CreateChild("Sink");
+    Sinkhole* sih = sinkNode_->GetOrCreateComponent<Sinkhole>();
+    sih->SetRect(field_);
+    sih->SetColors(colors_);
+    sih->SetScaleFactor(scalePhysics_);
 }
 
 void Balls2DPhysics::CreateEditor()
@@ -481,6 +452,7 @@ void Balls2DPhysics::CreateEditor()
     editor_->BringToFront();
     editor_->SetPriority(100);
     editor_->CreateGuizmo();
+    editor_->SetVisible(false);
 }
 
 void Balls2DPhysics::CreateInstructions()
@@ -508,40 +480,6 @@ void Balls2DPhysics::SetupViewport()
     renderer->SetViewport(0, viewport);
 
     engine_->SetMaxFps(30);
-}
-
-void Balls2DPhysics::MoveCamera(float timeStep)
-{
-    // Do not move if the UI has a focused element (the console)
-    if (GetSubsystem<UI>()->GetFocusElement())
-        return;
-
-    auto* input = GetSubsystem<Input>();
-
-    // Movement speed as world units per second
-    const float MOVE_SPEED = 4.0f;
-
-    // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
-    if (input->GetKeyDown(KEY_W))
-        cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
-    if (input->GetKeyDown(KEY_S))
-        cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
-    if (input->GetKeyDown(KEY_A))
-        cameraNode_->Translate(Vector3::LEFT * MOVE_SPEED * timeStep);
-    if (input->GetKeyDown(KEY_D))
-        cameraNode_->Translate(Vector3::RIGHT * MOVE_SPEED * timeStep);
-
-    if (input->GetKeyDown(KEY_PAGEUP))
-    {
-        auto* camera = cameraNode_->GetComponent<Camera>();
-        camera->SetZoom(camera->GetZoom() * 1.01f);
-    }
-
-    if (input->GetKeyDown(KEY_PAGEDOWN))
-    {
-        auto* camera = cameraNode_->GetComponent<Camera>();
-        camera->SetZoom(camera->GetZoom() * 0.99f);
-    }
 }
 
 void Balls2DPhysics::SubscribeToEvents()
@@ -585,42 +523,11 @@ void Balls2DPhysics::HandleSceneUpdate(StringHash eventType, VariantMap& eventDa
     // Take the frame time step, which is stored as a float
     float timeStep = eventData[P_TIMESTEP].GetFloat();
 
-    // Move the camera, scale movement with time step
-    MoveCamera(timeStep);
-
     ballTimer_ += timeStep;
     if (ballTimer_ > 1.0f && scene_->IsUpdateEnabled())
     {
         ballTimer_ = 0.0f;
-//        CreateBall();
-    }
-
-    sinkTimer_ += timeStep;
-//    char textBuffer[8];
-//    sprintf(textBuffer, "%.1f", sinkMaxTimer_ - sinkTimer_);
-//    timerText_->SetText(textBuffer);
-    if (sinkTimer_ > sinkMaxTimer_)
-    {
-//        sinkMaxTimer_ = Random(1.0f, 5.0f);
-        sinkMaxTimer_ = 10.0f;
-        sinkTimer_ = 0.0f;
-        CreateSink();
-    }
-
-    // Quaternion rot = textNode_->GetRotation();
-    const float ROT_VEL = 50.0f;
-    float angle = timeStep * ROT_VEL;
-    Quaternion rot(angle, Vector3(0.0f, 0.0f, 1.0f));
-    // URHO3D_LOGERRORF("angle <%f>", angle);
-//    textNode_->Rotate(rot);
-
-    Node* node = scene_->GetChild("Test-0");
-    if (node)
-    {
-        StaticSprite2D* sprite2d = node->GetComponent<StaticSprite2D>();
-        BoundingBox bb = sprite2d->GetBoundingBox();
-        DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-        debugRenderer->AddBoundingBox(bb, Color::RED);
+        CreateBall();
     }
 }
 
@@ -820,6 +727,7 @@ void Balls2DPhysics::HandlePhysicsBegin2D(StringHash eventType, VariantMap& even
     unsigned colorA = nodeA->GetVar("Color").GetUInt();
     unsigned colorB = nodeB->GetVar("Color").GetUInt();
 
+    // collision with sink
     if (typeA.StartsWith("Sink") || typeB.StartsWith("Sink"))
     {
         if (colorA == colorB)
@@ -846,6 +754,7 @@ void Balls2DPhysics::HandlePhysicsBegin2D(StringHash eventType, VariantMap& even
         }
     }
 
+    // collision between same colors balls
     if (pickedNode_ && colorA == colorB && (nodeA == pickedNode_ || nodeB == pickedNode_) && !typeA.StartsWith("Ground") && !typeB.StartsWith("Ground")
             && typeA.Length() && typeB.Length())
     {
@@ -908,8 +817,8 @@ void Balls2DPhysics::HandlePhysicsBegin2D(StringHash eventType, VariantMap& even
 ////            constraintDistance->SetOtherBodyAnchor(contactPosition);
 //        }
         // Make the constraint soft (comment to make it rigid, which is its basic behavior)
-        constraintDistance->SetFrequencyHz(1.0f);
-        constraintDistance->SetDampingRatio(0.1f);
+//        constraintDistance->SetFrequencyHz(1.0f);
+//        constraintDistance->SetDampingRatio(0.1f);
     }
 }
 

@@ -90,11 +90,9 @@ private:
 
     void CreateEditor();
 
-    void UpdateTimer();
+    void CreateScore();
     /// Set up a viewport for displaying the scene.
     void SetupViewport();
-    /// Read input and moves the camera.
-    void MoveCamera(float timeStep);
     /// Subscribe to application-wide logic update events.
     void SubscribeToEvents();
 
@@ -121,6 +119,8 @@ private:
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     Vector2 GetMousePositionXY();
+
+    void TestNodes();
 
     Vector<Color> colors_;
 
@@ -149,10 +149,6 @@ private:
     Rect field_;
 
     float ballTimer_;
-
-    float sinkTimer_;
-
-    float sinkMaxTimer_;
 
     float scalePhysics_;
 
