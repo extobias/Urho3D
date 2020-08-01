@@ -86,7 +86,7 @@ public:
 
 protected:
 
-    virtual void OnWorldBoundingBoxUpdate();
+    virtual void OnWorldBoundingBoxUpdate() override;
 
     PrimitiveType primitiveType_;
 

@@ -62,7 +62,7 @@ public:
 
     void HandleKeyUp(StringHash eventType, VariantMap& eventData);
 
-    bool IsWithinScissor(const IntRect& currentScissor);
+    bool IsWithinScissor(const IntRect& currentScissor) override;
 
 protected:
 
