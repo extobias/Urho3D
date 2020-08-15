@@ -14,6 +14,7 @@
 
 #include "BallRacket.h"
 #include "Ball2D.h"
+#include "BallDefs.h"
 
 namespace Urho3D
 {
@@ -22,7 +23,6 @@ extern const char* URHO2D_CATEGORY;
 
 BallRacket::BallRacket(Context* context)
     : LogicComponent (context),
-      scaleFactor_(1.0f),
       rotationVelocity_(50.0f),
       clockwise_(false)
 {
@@ -63,13 +63,16 @@ void BallRacket::OnNodeSet(Node* node)
     if (!node)
         return;
 
-    auto* cache = GetSubsystem<ResourceCache>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    node_->SetScale(gPhysicsScale);
 
     // Create rigid body
     body_ = node->CreateComponent<RigidBody2D>();
+    body_->SetTemporary(true);
     body_->SetBodyType(BT_STATIC);
 
     sprite_ = node->CreateComponent<StaticSprite2D>();
+    sprite_->SetTemporary(true);
     Sprite2D* ballSprite = cache->GetResource<Sprite2D>("Urho2D/Racket.png");
     IntRect r = ballSprite->GetRectangle();
 
@@ -77,13 +80,15 @@ void BallRacket::OnNodeSet(Node* node)
 
     // Create circle
     CollisionBox2D *shape = node->CreateComponent<CollisionBox2D>();
-    shape->SetCenter(1.0f, 0.0f);
+    shape->SetTemporary(true);
+    shape->SetCenter(0.0f, 0.0f);
     shape->SetSize(Vector2((float )r.Width() * PIXEL_SIZE, r.Height() * PIXEL_SIZE));
     shape->SetDensity(1.0f);
     shape->SetFriction(0.5f);
     shape->SetRestitution(0.1f);
 
     CollisionCircle2D *circle = node->CreateComponent<CollisionCircle2D>();
+    circle->SetTemporary(true);
     circle->SetRadius(0.32f);
     circle->SetDensity(1.0f);
     circle->SetFriction(0.5f);
@@ -92,9 +97,3 @@ void BallRacket::OnNodeSet(Node* node)
     shape_ = shape;
 }
 
-void BallRacket::SetScaleFactor(float scaleFactor)
-{
-    scaleFactor_ = scaleFactor;
-
-    node_->SetScale(scaleFactor);
-}

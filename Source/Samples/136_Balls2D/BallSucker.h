@@ -28,8 +28,6 @@ public:
 
     void DebugDraw();
 
-    void SetScaleFactor(float scale);
-
     void SetBalls(Vector<WeakPtr<class Ball2D> >& balls);
 
     float GetMagnetRadius() const { return magnetRadius_; }
@@ -47,8 +45,6 @@ private:
     WeakPtr<CollisionShape2D> shape_;
 
     Vector<WeakPtr<Ball2D> >* balls_;
-
-    float scaleFactor_;
 
     float magnetRadius_;
 

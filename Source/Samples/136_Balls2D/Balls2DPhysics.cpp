@@ -60,6 +60,8 @@
 #include "BallSucker.h"
 #include "BallRacket.h"
 #include "Sinkhole.h"
+#include "Pumper.h"
+#include "InputManager.h"
 
 #include <Urho3D/DebugNew.h>
 
@@ -67,23 +69,38 @@ URHO3D_DEFINE_APPLICATION_MAIN(Balls2DPhysics)
 
 static const unsigned NUM_OBJECTS = 100;
 
+Node* gPickedNode = nullptr;
+
+Node* gTailNode = nullptr;
+
+Node* gCameraNode = nullptr;
+
+RigidBody2D* gDummyBody = nullptr;
+
+float gPhysicsScale;
+
+Rect gField;
+/// type/count
+HashMap<unsigned, unsigned> gCounters;
+/// type/minimum
+HashMap<unsigned, unsigned> gLevelTargets;
+
 Balls2DPhysics::Balls2DPhysics(Context* context) :
     Sample(context),
-    pickedNode_(nullptr),
-    tailNode_(nullptr),
     sinkNode_(nullptr),
     textNode_(nullptr),
     ballsNode_(nullptr),
     ballSuckerNode_(nullptr),
     ballRacketNode_(nullptr),
-    ballTimer_(0.0f),
-    scalePhysics_(0.0f),
     debugDraw_(true)
 {
+    gLevelTargets[0] = 5;
+    gLevelTargets[1] = 5;
+    gLevelTargets[2] = 5;
 
-    colors_.Push(Color::RED);
-    colors_.Push(Color::GREEN);
-    colors_.Push(Color::BLUE);
+    gCounters[0] = 0;
+    gCounters[1] = 0;
+    gCounters[2] = 0;
 }
 
 void Balls2DPhysics::Start()
@@ -92,6 +109,8 @@ void Balls2DPhysics::Start()
     BallSucker::RegisterObject(context_);
     BallRacket::RegisterObject(context_);
     Sinkhole::RegisterObject(context_);
+    Pumper::RegisterObject(context_);
+    InputManager::RegisterObject(context_);
 
     // Execute base class startup
     Sample::Start();
@@ -115,23 +134,28 @@ void Balls2DPhysics::Start()
 
 void Balls2DPhysics::CreateScene()
 {
+    // inputManager_ = new (context_);
+
     scene_ = new Scene(context_);
     scene_->CreateComponent<Octree>();
     scene_->CreateComponent<DebugRenderer>();
-    // Create camera node
-    cameraNode_ = scene_->CreateChild("Camera");
-    // Set camera's position
-    cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -10.0f));
+    scene_->CreateComponent<InputManager>();
 
-    camera_ = cameraNode_->CreateComponent<Camera>();
+    // Create camera node
+    gCameraNode = scene_->CreateChild("Camera");
+    // Set camera's position
+    gCameraNode->SetPosition(Vector3(0.0f, 0.0f, -10.0f));
+
+    camera_ = gCameraNode->CreateComponent<Camera>();
     camera_->SetOrthographic(true);
 
     editor_->SetScene(scene_);
-    editor_->SetCameraNode(cameraNode_);
+    editor_->SetCameraNode(gCameraNode);
 
     auto* graphics = GetSubsystem<Graphics>();
     Vector3 dpi = graphics->GetDisplayDPI();
-    scalePhysics_ = dpi.z_ / 160.0f;
+    //scalePhysics_ = dpi.z_ / 160.0f;
+    gPhysicsScale = dpi.z_ / 160.0f;
 
     URHO3D_LOGERRORF("dpi ddpi <%f> hdpi <%f> vdpi <%f> width <%i> height <%i>", dpi.x_, dpi.y_, dpi.z_, graphics->GetWidth(), graphics->GetHeight());
 
@@ -282,7 +306,7 @@ void Balls2DPhysics::CreateWalls()
     edgeShape->SetVertices(Vector2((-halfViewSize + paddingX) * aspect, -halfViewSize + paddingY), Vector2((-halfViewSize + paddingX) * aspect, halfViewSize - paddingY));
     edgeShape->SetFriction(0.5f); // Set friction
 
-    dummyBody_ = edgeNode->CreateComponent<RigidBody2D>();
+    gDummyBody = edgeNode->CreateComponent<RigidBody2D>();
 
     // right
     edgeNode = scene_->CreateChild("VerticalEdge");
@@ -305,7 +329,7 @@ void Balls2DPhysics::CreateWalls()
     edgeShape->SetVertices(Vector2((-halfViewSize + paddingX) * aspect, -halfViewSize + paddingY), Vector2((halfViewSize - paddingX) * aspect, -halfViewSize + paddingY));
     edgeShape->SetFriction(0.5f); // Set friction
 
-    field_ = Rect(Vector2((-halfViewSize + paddingX) * aspect, -halfViewSize + paddingY), Vector2((halfViewSize - paddingX) * aspect, halfViewSize - paddingY));
+    gField = Rect(Vector2((-halfViewSize + paddingX) * aspect, -halfViewSize + paddingY), Vector2((halfViewSize - paddingX) * aspect, halfViewSize - paddingY));
 
     //    // Create bottom.
     //    Node* bottomNode = scene_->CreateChild("BottomGround");
@@ -365,13 +389,14 @@ void Balls2DPhysics::CreateScore()
 
     // Construct new Text object, set string to display and font to use
     timerText_ = ui->GetRoot()->CreateChild<Text>();
-    timerText_->SetText("9999");
-    timerText_->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 30);
+    timerText_->SetText("");
+    timerText_->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 15);
 
     // Position the text relative to the screen center
-    timerText_->SetHorizontalAlignment(HA_LEFT);
+    timerText_->SetHorizontalAlignment(HA_CENTER);
     timerText_->SetVerticalAlignment(VA_TOP);
-    timerText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+    // timerText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+    timerText_->SetPosition(0, 0);
 }
 
 void Balls2DPhysics::CreateSucker()
@@ -380,10 +405,8 @@ void Balls2DPhysics::CreateSucker()
     float aspectRatio = (float)graphics->GetWidth() / (float)graphics->GetHeight();
 
     Node* node  = ballSuckerNode_->CreateChild("Sucker");
-    node->SetPosition2D(1.0f * aspectRatio * scalePhysics_, 0.0f);
+    node->SetPosition2D(1.0f * aspectRatio * gPhysicsScale, 0.0f);
     BallSucker* sucker = node->CreateComponent<BallSucker>();
-    sucker->SetScaleFactor(scalePhysics_);
-    // ball->SetScaleFactor(Random(0.0001f, 0.0009f));
 }
 
 void Balls2DPhysics::CreateRacket(const Vector2& pos)
@@ -393,50 +416,17 @@ void Balls2DPhysics::CreateRacket(const Vector2& pos)
 
     Node* node  = scene_->CreateChild("Racket");
     node->SetPosition2D(pos);
+
     BallRacket* racket = node->CreateComponent<BallRacket>();
-    racket->SetScaleFactor(scalePhysics_);
-}
-
-void Balls2DPhysics::CreateBall()
-{
-    Node* node  = ballsNode_->CreateChild("Ball");
-    node->SetVar("Type", "Ball");
-
-    Ball2D* ball = node->CreateComponent<Ball2D>();
-     unsigned color = (unsigned)Random(0, 3);
-//    unsigned color = 0;
-    ball->SetColor(colors_[color]);
-    ball->SetScaleFactor(scalePhysics_);
-    // ball->SetScaleFactor(Random(0.0001f, 0.0009f));
-
-    node->SetVar("Color", color);
-
-//    float areaTotal = 0.0f;
-//    for (int i = 0; i < balls_.Size(); i++)
-//    {
-//        Ball2D* b = balls_.At(i);
-//        if (b)
-//        {
-//            areaTotal += b->GetArea();
-//        }
-//        else
-//        {
-//            URHO3D_LOGERRORF("node not found <%p>", b);
-//        }
-//    }
-
-
-//    if (areaTotal > 400.0f)
-//        scene_->SetUpdateEnabled(false);
 }
 
 void Balls2DPhysics::CreateSink()
 {
     sinkNode_ = scene_->CreateChild("Sink");
-    Sinkhole* sih = sinkNode_->GetOrCreateComponent<Sinkhole>();
-    sih->SetRect(field_);
-    sih->SetColors(colors_);
-    sih->SetScaleFactor(scalePhysics_);
+    sinkNode_->GetOrCreateComponent<Sinkhole>();
+
+    Node* pumperNode = scene_->CreateChild("Pumper");
+    pumperNode->CreateComponent<Pumper>();
 }
 
 void Balls2DPhysics::CreateEditor()
@@ -476,7 +466,7 @@ void Balls2DPhysics::SetupViewport()
     auto* renderer = GetSubsystem<Renderer>();
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
-    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
+    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, gCameraNode->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
 
     engine_->SetMaxFps(30);
@@ -488,17 +478,10 @@ void Balls2DPhysics::SubscribeToEvents()
 //    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(Balls2DPhysics, HandleUpdate));
 
     // Unsubscribe the SceneUpdate event from base class to prevent camera pitch and yaw in 2D sample
-    SubscribeToEvent(E_SCENEUPDATE, URHO3D_HANDLER(Balls2DPhysics, HandleSceneUpdate));
-//    UnsubscribeFromEvent(E_SCENEUPDATE);
+    // SubscribeToEvent(E_SCENEUPDATE, URHO3D_HANDLER(Balls2DPhysics, HandleSceneUpdate));
+    // UnsubscribeFromEvent(E_SCENEUPDATE);
 
     SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(Balls2DPhysics, HandlePostUpdate));
-
-    SubscribeToEvent(E_MOUSEBUTTONDOWN, URHO3D_HANDLER(Balls2DPhysics, HandleMouseButtonDown));
-
-    SubscribeToEvent(E_PHYSICSBEGINCONTACT2D, URHO3D_HANDLER(Balls2DPhysics, HandlePhysicsBegin2D));
-
-    if (touchEnabled_)
-        SubscribeToEvent(E_TOUCHBEGIN, URHO3D_HANDLER(Balls2DPhysics, HandleTouchBegin3));
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Balls2DPhysics, HandleKeyDown));
 }
@@ -516,309 +499,18 @@ void Balls2DPhysics::DebugDraw()
     }
 }
 
-void Balls2DPhysics::HandleSceneUpdate(StringHash eventType, VariantMap& eventData)
-{
-    using namespace Update;
-
-    // Take the frame time step, which is stored as a float
-    float timeStep = eventData[P_TIMESTEP].GetFloat();
-
-    ballTimer_ += timeStep;
-    if (ballTimer_ > 1.0f && scene_->IsUpdateEnabled())
-    {
-        ballTimer_ = 0.0f;
-        CreateBall();
-    }
-}
-
 void Balls2DPhysics::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
 {
+    String counterText;
+    for(auto c: gCounters)
+    {
+        counterText.AppendWithFormat("type %i: %i\n", c.first_, c.second_);
+    }
+    timerText_->SetText(counterText);
+
     if (debugDraw_)
     {
         DebugDraw();
-    }
-}
-
-Vector2 Balls2DPhysics::GetMousePositionXY()
-{
-    auto* input = GetSubsystem<Input>();
-    auto* graphics = GetSubsystem<Graphics>();
-    Vector3 screenPoint = Vector3((float)input->GetMousePosition().x_ / graphics->GetWidth(), (float)input->GetMousePosition().y_ / graphics->GetHeight(), 0.0f);
-    Vector3 worldPoint = camera_->ScreenToWorldPoint(screenPoint);
-//     URHO3D_LOGERRORF("worldpoint <%f, %f, %f>", worldPoint.x_, worldPoint.y_, worldPoint.z_);
-    return Vector2(worldPoint.x_, worldPoint.y_);
-}
-
-void Balls2DPhysics::HandleMouseButtonDown(StringHash eventType, VariantMap& eventData)
-{
-    auto* input = GetSubsystem<Input>();
-    auto* physicsWorld = scene_->GetComponent<PhysicsWorld2D>();
-    RigidBody2D* rigidBody = physicsWorld->GetRigidBody(input->GetMousePosition().x_, input->GetMousePosition().y_); // Raycast for RigidBody2Ds to pick
-    if (rigidBody)
-    {
-        // evita seleccionar las paredes
-        String name = rigidBody->GetNode()->GetName();
-        if (name != "Ball")
-            return;
-
-        pickedNode_ = rigidBody->GetNode();
-        auto* staticSprite = pickedNode_->GetComponent<StaticSprite2D>();
-        Ball2D *ball = pickedNode_->GetComponent<Ball2D>();
-        ball->SetMagnetized(true);
-        // staticSprite->SetColor(Color(1.0f, 0.0f, 0.0f, 1.0f)); // Temporary modify color of the picked sprite
-
-        // Create a ConstraintMouse2D - Temporary apply this constraint to the pickedNode to allow grasping and moving with the mouse
-        ConstraintMouse2D* constraintMouse = pickedNode_->CreateComponent<ConstraintMouse2D>();
-        constraintMouse->SetTarget(GetMousePositionXY());
-        constraintMouse->SetMaxForce(1000 * rigidBody->GetMass());
-        constraintMouse->SetCollideConnected(true);
-        constraintMouse->SetOtherBody(dummyBody_);
-
-        Vector2 p3 = ToVector2(rigidBody->GetBody()->GetLocalPoint(ToB2Vec2(GetMousePositionXY())));
-        URHO3D_LOGERRORF("p3 <%f, %f>", p3.x_, p3.y_);
-    }
-//    Vector2 v2 = ToVector2(rigidBody->GetBody()->GetLocalPoint(ToB2Vec2(GetMousePositionXY())));
-//    URHO3D_LOGERRORF("shape coords <%f, %f>", v2.x_, v2.y_);
-
-    SubscribeToEvent(E_MOUSEMOVE, URHO3D_HANDLER(Balls2DPhysics, HandleMouseMove));
-    SubscribeToEvent(E_MOUSEBUTTONUP, URHO3D_HANDLER(Balls2DPhysics, HandleMouseButtonUp));
-}
-
-void Balls2DPhysics::HandleMouseButtonUp(StringHash eventType, VariantMap& eventData)
-{
-    if (pickedNode_)
-    {
-        auto* staticSprite = pickedNode_->GetComponent<StaticSprite2D>();
-        Ball2D *ball = pickedNode_->GetComponent<Ball2D>();
-        ball->SetMagnetized(false);
-        ball->SetChained(false);
-        // staticSprite->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f)); // Restore picked sprite color
-
-        pickedNode_->RemoveComponent<ConstraintMouse2D>(); // Remove temporary constraint
-        pickedNode_->RemoveComponent<ConstraintDistance2D>();
-//        PODVector<ConstraintMouse2D*> comps;
-//        pickedNode_->GetComponents<ConstraintMouse2D>(comps);
-//        URHO3D_LOGERRORF("comps count <%i>", comps.Size());
-        while (ball->next_)
-        {
-            Node* node = ball->next_;
-            node->RemoveComponent<ConstraintDistance2D>();
-
-            ball->next_ = nullptr;
-            ball->SetChained(false);
-            ball = node->GetComponent<Ball2D>();
-        }
-        pickedNode_ = nullptr;
-        tailNode_ = nullptr;
-
-        // sigsegv
-//        volatile int *p = reinterpret_cast<volatile int*>(0);
-//        *p = 0x1337D00D;
-    }
-    UnsubscribeFromEvent(E_MOUSEMOVE);
-    UnsubscribeFromEvent(E_MOUSEBUTTONUP);
-}
-
-void Balls2DPhysics::HandleMouseMove(StringHash eventType, VariantMap& eventData)
-{
-    if (pickedNode_)
-    {
-        auto* constraintMouse = pickedNode_->GetComponent<ConstraintMouse2D>();
-        constraintMouse->SetTarget(GetMousePositionXY());
-    }
-}
-
-void Balls2DPhysics::HandleTouchBegin3(StringHash eventType, VariantMap& eventData)
-{
-//    URHO3D_LOGERRORF("Balls2DPhysics::HandleTouchBegin3");
-
-    auto* graphics = GetSubsystem<Graphics>();
-    auto* input = GetSubsystem<Input>();
-    auto* physicsWorld = scene_->GetComponent<PhysicsWorld2D>();
-    using namespace TouchBegin;
-    RigidBody2D* rigidBody = physicsWorld->GetRigidBody(eventData[P_X].GetInt(), eventData[P_Y].GetInt()); // Raycast for RigidBody2Ds to pick
-    if (rigidBody)
-    {
-        String name = rigidBody->GetNode()->GetName();
-        if (name == "TopGround" || name == "LeftGround" || name == "RightGround")
-            return;
-
-        pickedNode_ = rigidBody->GetNode();
-        auto* staticSprite = pickedNode_->GetComponent<StaticSprite2D>();
-        // staticSprite->SetColor(Color(1.0f, 0.0f, 0.0f, 1.0f)); // Temporary modify color of the picked sprite
-
-        // Create a ConstraintMouse2D - Temporary apply this constraint to the pickedNode to allow grasping and moving with the mouse
-        ConstraintMouse2D* constraintMouse = pickedNode_->CreateComponent<ConstraintMouse2D>();
-        Vector3 pos = camera_->ScreenToWorldPoint(Vector3((float)eventData[P_X].GetInt() / graphics->GetWidth(), (float)eventData[P_Y].GetInt() / graphics->GetHeight(), 0.0f));
-        constraintMouse->SetTarget(Vector2(pos.x_, pos.y_));
-        constraintMouse->SetMaxForce(1000 * rigidBody->GetMass());
-        constraintMouse->SetCollideConnected(true);
-        constraintMouse->SetOtherBody(dummyBody_);
-    }
-//    Vector2 v2 = ToVector2(rigidBody->GetBody()->GetLocalPoint(ToB2Vec2(GetMousePositionXY())));
-//    URHO3D_LOGERRORF("shape coords <%f, %f>", v2.x_, v2.y_);
-
-    SubscribeToEvent(E_TOUCHMOVE, URHO3D_HANDLER(Balls2DPhysics, HandleTouchMove3));
-    SubscribeToEvent(E_TOUCHEND, URHO3D_HANDLER(Balls2DPhysics, HandleTouchEnd3));
-}
-
-void Balls2DPhysics::HandleTouchMove3(StringHash eventType, VariantMap& eventData)
-{
-    URHO3D_LOGERRORF("Balls2DPhysics::HandleTouchMove3");
-
-    if (pickedNode_)
-    {
-        auto* constraintMouse = pickedNode_->GetComponent<ConstraintMouse2D>();
-        auto* graphics = GetSubsystem<Graphics>();
-        using namespace TouchMove;
-        Vector3 pos = camera_->ScreenToWorldPoint(Vector3(float(eventData[P_X].GetInt()) / graphics->GetWidth(), float(eventData[P_Y].GetInt()) / graphics->GetHeight(), 0.0f));
-        constraintMouse->SetTarget(Vector2(pos.x_, pos.y_));
-    }
-}
-
-void Balls2DPhysics::HandleTouchEnd3(StringHash eventType, VariantMap& eventData)
-{
-//    URHO3D_LOGERRORF("Balls2DPhysics::HandleTouchEnd3");
-
-    if (pickedNode_)
-    {
-        auto* staticSprite = pickedNode_->GetComponent<StaticSprite2D>();
-        // staticSprite->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f)); // Restore picked sprite color
-
-        pickedNode_->RemoveComponent<ConstraintMouse2D>(); // Remove temporary constraint
-        pickedNode_->RemoveComponent<ConstraintDistance2D>();
-//        PODVector<ConstraintMouse2D*> comps;
-//        pickedNode_->GetComponents<ConstraintMouse2D>(comps);
-//        URHO3D_LOGERRORF("comps count <%i>", comps.Size());
-        Ball2D* ball = pickedNode_->GetComponent<Ball2D>();
-        while (ball->next_)
-        {
-            Node* node = ball->next_;
-            node->RemoveComponent<ConstraintDistance2D>();
-
-            ball->next_ = nullptr;
-            ball->SetChained(false);
-            ball = node->GetComponent<Ball2D>();
-        }
-        pickedNode_ = nullptr;
-        tailNode_ = nullptr;
-    }
-
-    UnsubscribeFromEvent(E_TOUCHMOVE);
-    UnsubscribeFromEvent(E_TOUCHEND);
-}
-
-void Balls2DPhysics::HandlePhysicsBegin2D(StringHash eventType, VariantMap& eventData)
-{
-    using namespace PhysicsBeginContact2D;
-    Node* nodeA = static_cast<Node*>(eventData[P_NODEA].GetPtr());
-    Node* nodeB = static_cast<Node*>(eventData[P_NODEB].GetPtr());
-
-    if (!nodeA || !nodeB)
-        return;
-
-    String typeA, typeB;
-    if (!nodeA->GetVar("Type").IsEmpty())
-        typeA = nodeA->GetVar("Type").GetString();
-
-    if (!nodeB->GetVar("Type").IsEmpty())
-        typeB = nodeB->GetVar("Type").GetString();
-
-    unsigned colorA = nodeA->GetVar("Color").GetUInt();
-    unsigned colorB = nodeB->GetVar("Color").GetUInt();
-
-    // collision with sink
-    if (typeA.StartsWith("Sink") || typeB.StartsWith("Sink"))
-    {
-        if (colorA == colorB)
-        {
-            Node* node = typeA.StartsWith("Sink") ? nodeB : nodeA;
-
-            if (pickedNode_ == node)
-            {
-                while (node)
-                {
-                    Ball2D *ball = node->GetComponent<Ball2D>();
-
-                    Node* node2 = ball->next_;
-                    node->Remove();
-
-                    ball = node2 ? node2->GetComponent<Ball2D>() : nullptr;
-                    node = node2;
-                }
-
-                pickedNode_ = nullptr;
-                tailNode_ = nullptr;
-            }
-            return;
-        }
-    }
-
-    // collision between same colors balls
-    if (pickedNode_ && colorA == colorB && (nodeA == pickedNode_ || nodeB == pickedNode_) && !typeA.StartsWith("Ground") && !typeB.StartsWith("Ground")
-            && typeA.Length() && typeB.Length())
-    {
-        if (tailNode_ && (tailNode_ == nodeA || tailNode_ == nodeB))
-            return;
-
-        Node* otherNode = nodeA == pickedNode_ ? nodeB : nodeA;
-        Ball2D* ball = otherNode->GetComponent<Ball2D>();
-        if (!ball)
-            return;
-
-        if (ball->IsChained())
-            return;
-
-        ball->SetChained(true);
-        RigidBody2D* otherRigidBody = otherNode->GetComponent<RigidBody2D>();
-
-        Node* followNode = tailNode_ ? tailNode_ : pickedNode_;
-        auto* graphics = GetSubsystem<Graphics>();
-        float aspectRatio = (float)graphics->GetWidth() / (float)graphics->GetHeight();
-        // chequear que no quede fuera de la cancha
-        CollisionCircle2D *shape = followNode->GetComponent<CollisionCircle2D>();
-
-        Vector2 newPos(followNode->GetPosition2D() + Vector2(0.32f * scalePhysics_, 0.0f));
-        if (!field_.IsInside(newPos)) {
-            Vector2 min = field_.min_;
-            Vector2 max = field_.max_;
-
-            // right
-            if (newPos.x_ > max.x_)
-                newPos = followNode->GetPosition2D() + Vector2(0.0f, 0.32f * scalePhysics_);
-        }
-
-        otherNode->SetPosition2D(newPos);
-
-        ConstraintDistance2D* constraintDistance = followNode->CreateComponent<ConstraintDistance2D>();
-//        constraintDistance->SetCollideConnected(true);
-        constraintDistance->SetOtherBody(otherRigidBody);
-        Vector2 p1 = followNode->GetPosition2D();
-        Vector2 p2 = otherNode->GetPosition2D();
-        constraintDistance->SetOwnerBodyAnchor(p1);
-        constraintDistance->SetOtherBodyAnchor(p2);
-
-        Ball2D* otherBall = followNode->GetComponent<Ball2D>();
-        otherBall->next_ = otherNode;
-
-        tailNode_ = otherNode;
-
-//        MemoryBuffer contacts(eventData[P_CONTACTS].GetBuffer());
-//        while(!contacts.IsEof())
-//        {
-//            Vector2 contactPosition = contacts.ReadVector2();
-//            Vector2 contactNormal = contacts.ReadVector2();
-//            float overlapDistance = contacts.ReadFloat();
-
-//            Vector2 p3 = ToVector2(otherRigidBody->GetBody()->GetLocalPoint(ToB2Vec2(contactPosition)));
-//            Vector2 p4 = ToVector2(followNode->GetComponent<RigidBody2D>()->GetBody()->GetLocalPoint(ToB2Vec2(contactPosition)));
-
-////            constraintDistance->SetOwnerBodyAnchor(contactPosition);
-////            constraintDistance->SetOtherBodyAnchor(contactPosition);
-//        }
-        // Make the constraint soft (comment to make it rigid, which is its basic behavior)
-//        constraintDistance->SetFrequencyHz(1.0f);
-//        constraintDistance->SetDampingRatio(0.1f);
     }
 }
 
@@ -832,5 +524,11 @@ void Balls2DPhysics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 
     if (key == KEY_R)
         debugDraw_ = !debugDraw_;
+
+    if (key == KEY_P)
+    {
+        bool enabled = scene_->IsUpdateEnabled();
+        scene_->SetUpdateEnabled(!enabled);
+    }
 }
 

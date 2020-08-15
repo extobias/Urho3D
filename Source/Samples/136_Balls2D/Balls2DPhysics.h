@@ -84,8 +84,6 @@ private:
 
     void CreateRacket(const Vector2 &pos);
 
-    void CreateBall();
-
     void CreateSink();
 
     void CreateEditor();
@@ -97,38 +95,18 @@ private:
     void SubscribeToEvents();
 
     void DebugDraw();
-    /// Handle the logic update event.
-    void HandleSceneUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
-
-    void HandleMouseButtonDown(StringHash eventType, VariantMap& eventData);
-
-    void HandleMouseButtonUp(StringHash eventType, VariantMap& eventData);
-
-    void HandleMouseMove(StringHash eventType, VariantMap& eventData);
-
-    void HandleTouchBegin3(StringHash eventType, VariantMap& eventData);
-
-    void HandleTouchMove3(StringHash eventType, VariantMap& eventData);
-
-    void HandleTouchEnd3(StringHash eventType, VariantMap& eventData);
 
     void HandlePhysicsBegin2D(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
-    Vector2 GetMousePositionXY();
-
     void TestNodes();
-
-    Vector<Color> colors_;
 
     Camera* camera_;
 
-    Node* pickedNode_;
-
-    Node* tailNode_;
+    class InputManager* inputManager_;
 
     Node* sinkNode_;
 
@@ -142,15 +120,8 @@ private:
 
     Node* ballRacketNode_;
 
-    RigidBody2D* dummyBody_;
-
     Text* timerText_;
 
-    Rect field_;
-
-    float ballTimer_;
-
-    float scalePhysics_;
-
     bool debugDraw_;
+
 };

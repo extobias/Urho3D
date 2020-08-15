@@ -42,8 +42,6 @@ private:
 
     WeakPtr<CollisionShape2D> shape_;
 
-    float scaleFactor_;
-
     float rotationVelocity_;
 
     bool clockwise_;

@@ -7,7 +7,7 @@ namespace Urho3D
     class LogicComponent;
     class RigidBody2D;
     class StaticSprite2D;
-    class CollisionCircle2D;
+    class CollisionShape2D;
     class Sprite2D;
 }
 
@@ -27,13 +27,7 @@ public:
 
     void FixedUpdate(float timeStep) override;
 
-    void SetColor(const Color& color);
-
-    const Color& GetColor() const { return color_; }
-
-    void SetScaleFactor(float scaleFactor);
-
-    void SetSprite(Sprite2D* sprite);
+    void SetType(unsigned type);
 
     float GetArea() const { return area_; }
 
@@ -53,17 +47,15 @@ protected:
 
 private:
 
+    void HandleBeginContact2D(StringHash eventType, VariantMap& eventData);
+
     void UpdateArea();
 
     WeakPtr<RigidBody2D> body_;
 
     WeakPtr<StaticSprite2D> sprite_;
 
-    WeakPtr<CollisionCircle2D> shape_;
-
-    Color color_;
-
-    float scaleFactor_;
+    WeakPtr<CollisionShape2D> shape_;
 
     float area_;
 

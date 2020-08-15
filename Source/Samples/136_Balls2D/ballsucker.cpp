@@ -13,6 +13,7 @@
 
 #include "BallSucker.h"
 #include "Ball2D.h"
+#include "BallDefs.h"
 
 namespace Urho3D
 {
@@ -22,7 +23,6 @@ extern const char* URHO2D_CATEGORY;
 BallSucker::BallSucker(Context* context)
     : LogicComponent (context),
       balls_(nullptr),
-      scaleFactor_(1.0f),
       magnetRadius_(1.5f),
       magnetForce_(1.0f)
 {
@@ -63,7 +63,7 @@ void BallSucker::FixedUpdate(float timeStep)
         Vector2 d = pos - ballPos;
         float distance = d.Length();
 
-        if (distance < magnetRadius_ * scaleFactor_)
+        if (distance < magnetRadius_ * gPhysicsScale)
         {
             RigidBody2D* rigidBody = node->GetComponent<RigidBody2D>();
             CollisionCircle2D* shape = node->GetComponent<CollisionCircle2D>();
@@ -85,7 +85,7 @@ void BallSucker::DebugDraw()
     auto* graphics = GetSubsystem<Graphics>();
     float aspectRatio = (float)graphics->GetWidth() / (float)graphics->GetHeight();
 
-    debug->AddCircle(node_->GetPosition(), Vector3::FORWARD, GetMagnetRadius() * scaleFactor_, Color::RED, 64, false);
+    debug->AddCircle(node_->GetPosition(), Vector3::FORWARD, GetMagnetRadius() * gPhysicsScale, Color::RED, 64, false);
 }
 
 void BallSucker::OnNodeSet(Node* node)
@@ -119,13 +119,6 @@ void BallSucker::OnNodeSet(Node* node)
     shape->SetRestitution(0.1f);
 
     shape_ = shape;
-}
-
-void BallSucker::SetScaleFactor(float scaleFactor)
-{
-    scaleFactor_ = scaleFactor;
-
-   node_->SetScale(scaleFactor);
 }
 
 void BallSucker::SetBalls(Vector<WeakPtr<class Ball2D> >& balls)
