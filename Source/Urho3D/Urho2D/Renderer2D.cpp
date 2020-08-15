@@ -48,7 +48,7 @@ namespace Urho3D
 
 extern const char* blendModeNames[];
 
-static const unsigned MASK_VERTEX2D = MASK_POSITION | MASK_COLOR | MASK_TEXCOORD1;
+static const unsigned MASK_VERTEX2D = MASK_POSITION | MASK_NORMAL | MASK_COLOR | MASK_TEXCOORD1 | MASK_TANGENT;
 
 ViewBatchInfo2D::ViewBatchInfo2D() :
     vertexBufferUpdateFrameNumber_(0),
@@ -205,7 +205,9 @@ void Renderer2D::UpdateGeometry(const FrameInfo& frame)
                 {
                     const Vector<Vertex2D>& vertices = sourceBatches[b]->vertices_;
                     for (unsigned i = 0; i < vertices.Size(); ++i)
+                    {
                         dest[i] = vertices[i];
+                    }
                     dest += vertices.Size();
                 }
 

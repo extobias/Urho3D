@@ -38,10 +38,14 @@ struct Vertex2D
 {
     /// Position.
     Vector3 position_;
+    /// Normal
+    Vector3 normal_;
     /// Color.
     unsigned color_;
     /// UV.
     Vector2 uv_;
+    /// Tangent
+    Vector4 tangent_;
 };
 
 /// 2D source batch.
