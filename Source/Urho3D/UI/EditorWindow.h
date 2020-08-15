@@ -22,6 +22,68 @@ using ResourceDir = HashMap<String, Vector<ResourceFile>>;
 
 using ResourceMap = HashMap<String, ResourceFile>;
 
+struct ResourceContainer
+{
+    ResourceContainer(const String& name, const String& dirfilter)
+        : name_(name),
+          dirFilter_(dirfilter)
+    {
+        type_ = StringHash(name);
+    }
+
+    ResourceContainer(const String& name, const String& dirfilter, const String& filter)
+        : name_(name),
+          dirFilter_(dirfilter)
+    {
+        type_ = StringHash(name);
+        extFilter_.Push(filter);
+    }
+
+    ResourceContainer(const String& name, const String& dirfilter, const Vector<String>& filter)
+        : name_(name),
+          dirFilter_(dirfilter)
+    {
+        type_ = StringHash(name);
+        extFilter_ = filter;
+    }
+
+    ResourceContainer(const String& name, const Vector<String>& filter)
+        : name_(name)
+    {
+        type_ = StringHash(name);
+        extFilter_ = filter;
+    }
+
+    int FindResourceIndex(const String& name) const
+    {
+        Vector<ResourceFile> values = resources_.Values();
+        int index = 0;
+        for (ResourceFile& resource: values)
+        {
+            if (resource.name == name)
+            {
+                return index;
+            }
+            index++;
+        }
+        return -1;
+    }
+
+    ResourceMap resources_;
+
+    String resourcesString_;
+
+    String name_;
+
+    StringHash type_;
+
+    String dirFilter_;
+
+    Vector<String> extFilter_;
+
+    int currentIndex_;
+};
+
 enum EditorMode
 {
     SELECT_OBJECT,
@@ -144,6 +206,14 @@ private:
 
     void LoadResources();
 
+    void ConfigResources();
+
+    bool SavePrefab(Node* node);
+
+    bool LoadPrefab(Node* node);
+
+    ResourceContainer& FindContainer(const StringHash& type);
+
     SharedPtr<EditorSelection> selection_;
 
     SharedPtr<EditorGuizmo> guizmo_;
@@ -169,6 +239,8 @@ private:
     ResourceMap spriteResources_;
 
     String spriteResourcesString_;
+
+    Vector<ResourceContainer> resourcesContainer_;
 
     int currentModel_;
 
