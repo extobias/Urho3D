@@ -42,12 +42,14 @@ void Pumper::CreateBall()
     Node* ballsNode = GetScene()->GetChild("Balls");
 
     Node* node  = ballsNode->CreateChild("Ball");
+    node->SetTemporary(true);
     node->SetVar("Type", "Ball");
 
     unsigned type = (unsigned)Random(0, 3);
     node->SetVar("Color", type);
 
     Ball2D* ball = node->CreateComponent<Ball2D>();
+    ball->SetTemporary(true);
     ball->SetType(type);
 
 

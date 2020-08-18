@@ -107,6 +107,21 @@ void Sinkhole::OnNodeSet(Node* node)
     sprite_ = node->CreateComponent<StaticSprite2D>();
     sprite_->SetTemporary(true);
 
+    CreateShapes();
+
+    UpdateSprite(0);
+
+    auto* cache = GetSubsystem<ResourceCache>();
+    Node* textNode = node->CreateChild("TextNode");
+    textNode->SetPosition(Vector3(-0.15f, 0.3f, 0.0));
+    text3d_ = textNode->CreateComponent<Text3D>();
+    text3d_ ->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 10.0f);
+
+    SubscribeToEvent(GetNode(), E_NODEBEGINCONTACT2D, URHO3D_HANDLER(Sinkhole, HandlePhysicsBegin2D));
+}
+
+void Sinkhole::CreateShapes()
+{
     for(unsigned i = 0; i < 3; i++)
     {
         ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -136,16 +151,6 @@ void Sinkhole::OnNodeSet(Node* node)
 
         shapes_.Push(SharedPtr<CollisionShape2D>(shape));
     }
-
-    UpdateSprite(0);
-
-    auto* cache = GetSubsystem<ResourceCache>();
-    Node* textNode = node->CreateChild("TextNode");
-    textNode->SetPosition(Vector3(-0.15f, 0.3f, 0.0));
-    text3d_ = textNode->CreateComponent<Text3D>();
-    text3d_ ->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 10.0f);
-
-    SubscribeToEvent(GetNode(), E_NODEBEGINCONTACT2D, URHO3D_HANDLER(Sinkhole, HandlePhysicsBegin2D));
 }
 
 void Sinkhole::HandlePhysicsBegin2D(StringHash eventType, VariantMap& eventData)

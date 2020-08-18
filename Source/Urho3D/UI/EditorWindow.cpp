@@ -296,8 +296,6 @@ EditorWindow::EditorWindow(Context* context) :
 
     LoadResources();
 
-//    SubscribeToEvent(E_GUIZMO_NODE_SELECTED, URHO3D_HANDLER(EditorWindow, HandleNodeSelected));
-
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
 }
 
@@ -314,13 +312,6 @@ void EditorWindow::SetCameraNode(Node* node)
 
     if (guizmo_)
         guizmo_->SetCameraNode(node);
-}
-
-void EditorWindow::HandleNodeSelected(StringHash eventType, VariantMap& eventData)
-{
-//    selectedNode_ = eventData[P_GUIZMO_NODE_SELECTED].GetUInt();
-//    selectedSubElementIndex_ = eventData[P_GUIZMO_NODE_SELECTED_SUBELEMENTINDEX].GetUInt();
-//    hitPosition_ = eventData[P_GUIZMO_NODE_SELECTED_POSITION].GetVector3();
 }
 
 void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
@@ -443,6 +434,7 @@ void EditorWindow::ConfigResources()
     resourcesContainer_.Push(ResourceContainer("Material", "Materials", materialFilters));
     resourcesContainer_.Push(ResourceContainer("Sprite2D", "Urho2D"));
     resourcesContainer_.Push(ResourceContainer("Object", "Objects", "xml"));
+    resourcesContainer_.Push(ResourceContainer("Scene", "Scenes", "xml"));
 
     //resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
     //resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
@@ -465,6 +457,73 @@ void EditorWindow::ConfigResources()
     //resourcePickers.Push(ResourcePicker("AnimationSet2D", anmSetFilters, ACTION_PICK | ACTION_OPEN));
     //resourcePickers.Push(ResourcePicker("ParticleEffect2D", pexFilters, ACTION_PICK | ACTION_OPEN));
     //resourcePickers.Push(ResourcePicker("TmxFile2D", tmxFilters, ACTION_PICK | ACTION_OPEN));
+}
+
+bool EditorWindow::SaveScene()
+{
+    const char* hideLabel = "##hidelabel";
+
+    ImGui::PushID("save_scene");
+    int total_w = (int)ImGui::GetContentRegionAvail().x;
+    ImGui::Text("Save scene");
+    ImGui::SameLine(total_w / 2.0f);
+    ImGui::SetNextItemWidth(total_w / 4.0f);
+
+    static char buf[32] = "";
+    ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
+    ImGui::SameLine();
+    bool ret = false;
+    if (ImGui::Button("Save"))
+    {
+        String fileName(buf);
+        if (fileName.Length())
+        {
+            fileName += ".xml";
+            File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileName, FILE_WRITE);
+            SharedPtr<XMLFile> xml(new XMLFile(context_));
+            ret = scene_->SaveXML(fileWrite);
+        }
+    }
+
+    ImGui::PopID();
+
+    return ret;
+
+}
+
+bool EditorWindow::LoadScene()
+{
+    const char* hideLabel = "##hidelabel";
+
+    ImGui::PushID("load_scene");
+    int total_w = (int)ImGui::GetContentRegionAvail().x;
+    ImGui::Text("Scene");
+    ImGui::SameLine(total_w / 2.0f);
+    ImGui::SetNextItemWidth(total_w / 2.0f);
+
+    ResourceContainer& rc = FindContainer("Scene");
+    int ci = rc.currentIndex_;
+
+    bool ret = false;
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    if (ImGui::Combo(hideLabel, &ci, rc.resourcesString_.CString()))
+    {
+        ResourceFile resource = rc.resources_.Values().At(ci);
+        SharedPtr<File> file = cache->GetFile(resource.path + resource.name);
+
+//        XMLFile* file = cache->GetResource<XMLFile>(resource.path + resource.name);
+
+        URHO3D_LOGERRORF("EditorWindow: load scene  path <%s> name <%s>", resource.path.CString(), resource.name.CString());
+        cameraNode_ = nullptr;
+        if (scene_->LoadAsyncXML(file))
+        {
+            rc.currentIndex_ = ci;
+            ret = true;
+        }
+    }
+    ImGui::PopID();
+
+    return ret;
 }
 
 bool EditorWindow::SavePrefab(Node* node)
@@ -788,13 +847,16 @@ void EditorWindow::Render(float timeStep)
 
     ImGui::Separator();
 
-    if(ImGui::Button("Save scene"))
-    {
-        String fileNameWrite = "SaveTest";
-        File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileNameWrite + ".xml", FILE_WRITE);
-        SharedPtr<XMLFile> xml(new XMLFile(context_));
-        scene_->SaveXML(fileWrite);
-    }
+    SaveScene();
+
+    LoadScene();
+//    if(ImGui::Button("Save scene"))
+//    {
+//        String fileNameWrite = "SaveTest";
+//        File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileNameWrite + ".xml", FILE_WRITE);
+//        SharedPtr<XMLFile> xml(new XMLFile(context_));
+//        scene_->SaveXML(fileWrite);
+//    }
 
     // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
     // ImGui::PlotLines("Lines", );
@@ -965,13 +1027,13 @@ void EditorWindow::DrawNodeSelected()
         return;
     }
 
-    Node* cameraNode = cameraNode_;
-    if(!cameraNode)
-        return;
+//    Node* cameraNode = cameraNode_;
+//    if(!cameraNode)
+//        return;
 
-    Camera* camera = cameraNode->GetComponent<Camera>();
-    if(!camera)
-        return;
+//    Camera* camera = cameraNode->GetComponent<Camera>();
+//    if(!camera)
+//        return;
 
     AttributeEdit(node);
 

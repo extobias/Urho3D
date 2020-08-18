@@ -41,6 +41,8 @@ private:
 
     void UpdateSprite(unsigned type);
 
+    void CreateShapes();
+
     WeakPtr<RigidBody2D> body_;
 
     WeakPtr<StaticSprite2D> sprite_;

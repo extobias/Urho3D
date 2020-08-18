@@ -57,12 +57,14 @@ void Ball2D::OnNodeSet(Node* node)
 
     // Create rigid body
     body_ = node->CreateComponent<RigidBody2D>();
+    body_->SetTemporary(true);
     body_->SetBodyType(BT_DYNAMIC);
 
     Vector2 force(Random(-10.0f, 10.0f), Random(-10.0f, 10.0f));
     body_->ApplyForce(force, Vector2::ZERO, true);
 
     sprite_ = node->CreateComponent<StaticSprite2D>();
+    sprite_->SetTemporary(true);
 
     UpdateArea();
 
@@ -80,6 +82,7 @@ void Ball2D::SetType(unsigned type)
     if (type == 0)
     {
         CollisionBox2D* boxShape = node_->CreateComponent<CollisionBox2D>();
+        boxShape->SetTemporary(true);
         boxShape->SetSize(Vector2(r.Bottom() * PIXEL_SIZE, r.Right() * PIXEL_SIZE));
 
         shape_ = boxShape;
@@ -87,6 +90,7 @@ void Ball2D::SetType(unsigned type)
     else
     {
         CollisionCircle2D* circleShape = node_->CreateComponent<CollisionCircle2D>();
+        circleShape->SetTemporary(true);
         circleShape->SetRadius((float )r.Right() * PIXEL_SIZE / 2.0f);
 
         shape_ = circleShape;

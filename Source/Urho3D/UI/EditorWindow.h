@@ -160,8 +160,6 @@ public:
 
     void SetCameraNode(Node* node);
 
-    void HandleNodeSelected(StringHash eventType, VariantMap& eventData);
-
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
     void CreateGuizmo();
@@ -207,6 +205,10 @@ private:
     void LoadResources();
 
     void ConfigResources();
+
+    bool SaveScene();
+
+    bool LoadScene();
 
     bool SavePrefab(Node* node);
 

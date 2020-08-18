@@ -90,9 +90,10 @@ Balls2DPhysics::Balls2DPhysics(Context* context) :
     sinkNode_(nullptr),
     textNode_(nullptr),
     ballsNode_(nullptr),
-    ballSuckerNode_(nullptr),
-    ballRacketNode_(nullptr),
-    debugDraw_(true)
+    suckerNode_(nullptr),
+    racketNode_(nullptr),
+    wallsNode_(nullptr),
+    debugDraw_(false)
 {
     gLevelTargets[0] = 5;
     gLevelTargets[1] = 5;
@@ -134,61 +135,32 @@ void Balls2DPhysics::Start()
 
 void Balls2DPhysics::CreateScene()
 {
-    // inputManager_ = new (context_);
-
     scene_ = new Scene(context_);
     scene_->CreateComponent<Octree>();
     scene_->CreateComponent<DebugRenderer>();
     scene_->CreateComponent<InputManager>();
-
-    // Create camera node
-    gCameraNode = scene_->CreateChild("Camera");
-    // Set camera's position
-    gCameraNode->SetPosition(Vector3(0.0f, 0.0f, -10.0f));
-
-    camera_ = gCameraNode->CreateComponent<Camera>();
-    camera_->SetOrthographic(true);
-
     editor_->SetScene(scene_);
-    editor_->SetCameraNode(gCameraNode);
 
-    auto* graphics = GetSubsystem<Graphics>();
-    Vector3 dpi = graphics->GetDisplayDPI();
-    //scalePhysics_ = dpi.z_ / 160.0f;
-    gPhysicsScale = dpi.z_ / 160.0f;
-
-    URHO3D_LOGERRORF("dpi ddpi <%f> hdpi <%f> vdpi <%f> width <%i> height <%i>", dpi.x_, dpi.y_, dpi.z_, graphics->GetWidth(), graphics->GetHeight());
-
-    camera_->SetOrthoSize((float)graphics->GetHeight() * PIXEL_SIZE);
-//    camera_->SetOrthoSize(10.0f);
-    // Set zoom according to user's resolution to ensure full visibility (initial zoom (1.2) is set for full visibility at 1280x800 resolution)
-//     camera_->SetZoom(Min((float)graphics->GetWidth() / 1280.0f, (float)graphics->GetHeight() / 800.0f));
-    camera_->SetZoom(1.0f);
+    gCameraNode = CreateCameraNode();
 
     // Create 2D physics world component
     PhysicsWorld2D* physicsWorld = scene_->CreateComponent<PhysicsWorld2D>();
     physicsWorld->SetGravity(Vector2(0.0f, 0.0f));
     physicsWorld->SetDrawJoint(true);
 
-    CreateWalls();
+//    ballsNode_ = scene_->CreateChild("Balls");
 
-    CreateScore();
+//    suckerNode_ = scene_->CreateChild("Suckers");
 
-    CreateSink();
+//    racketNode_ = scene_->CreateChild("Rackets");
 
-    ballsNode_ = scene_->CreateChild("Balls");
+//    wallsNode_ = scene_->CreateChild("Walls");
 
-    ballSuckerNode_ = scene_->CreateChild("Suckers");
+//    CreateWalls();
 
-    ballRacketNode_ = scene_->CreateChild("Rackets");
+//    CreateScore();
 
-    // CreateSucker();
-
-//    CreateRacket(Vector2(0.0f, 2.0f * scalePhysics_));
-
-//    CreateRacket(Vector2(0.0f, 0.0f * scalePhysics_));
-
-//    CreateRacket(Vector2(0.0f, -2.0f * scalePhysics_));
+//    CreateSink();
 
 //    auto* spriterAnimationSet = cache->GetResource<AnimationSet2D>("Urho2D/red-ball/red-ball.scml");
 //    if (!spriterAnimationSet)
@@ -198,29 +170,29 @@ void Balls2DPhysics::CreateScene()
 //    auto* spriterAnimatedSprite = spriterNode_->CreateComponent<AnimatedSprite2D>();
 //    spriterAnimatedSprite->SetAnimationSet(spriterAnimationSet);
 //    spriterAnimatedSprite->SetAnimation(spriterAnimationSet->GetAnimation(0));
+}
 
-    // Create ground.
-//    for (int i = 0; i < 3; i++)
-//    {
-//        String name;
-//        Node* groundNode = scene_->CreateChild(name.AppendWithFormat("GroundNode-%i", i));
-//        groundNode->SetPosition(Vector3(1.0f * (i - 1), 2.5f, 0.0f));
-//        groundNode->SetScale(Vector3(1.0f, 1.0f, 0.0f));
-//        groundNode->CreateComponent<RigidBody2D>();
-//        groundNode->SetVar("Type", name);
-//        groundNode->SetVar("Color", i);
+Node* Balls2DPhysics::CreateCameraNode()
+{
+    Node* node = scene_->CreateChild("Camera");
+    node->SetPosition(Vector3(0.0f, 0.0f, -10.0f));
 
-//        // Create box collider for ground
-//        CollisionCircle2D* groundShape = groundNode->CreateComponent<CollisionCircle2D>();
-//        // Set box size
-//        groundShape->SetRadius(0.16f);
-//        // Set friction
-//        groundShape->SetFriction(1.0f);
+    camera_ = node->CreateComponent<Camera>();
+    camera_->SetOrthographic(true);
 
-//        auto* groundSprite = groundNode->CreateComponent<StaticSprite2D>();
-//        groundSprite->SetColor(colors_[i]);
-//        groundSprite->SetSprite(ballSprite);
-//    }
+
+    editor_->SetCameraNode(node);
+
+    Graphics* graphics = GetSubsystem<Graphics>();
+    Vector3 dpi = graphics->GetDisplayDPI();
+    gPhysicsScale = dpi.z_ / 160.0f;
+
+//    URHO3D_LOGERRORF("dpi ddpi <%f> hdpi <%f> vdpi <%f> width <%i> height <%i>", dpi.x_, dpi.y_, dpi.z_, graphics->GetWidth(), graphics->GetHeight());
+
+    camera_->SetOrthoSize((float)graphics->GetHeight() * PIXEL_SIZE);
+    camera_->SetZoom(1.0f);
+
+    return node;
 }
 
 void Balls2DPhysics::TestNodes()
@@ -286,7 +258,7 @@ void Balls2DPhysics::CreateWalls()
     //    auto* topSprite = topNode->CreateComponent<StaticSprite2D>();
     //    topSprite->SetSprite(boxSprite);
 
-    auto* graphics = GetSubsystem<Graphics>();
+    Graphics* graphics = GetSubsystem<Graphics>();
 
     bool mobile = GetPlatform() == "Android" || GetPlatform() == "iOS";
     float screenWidth = mobile ? (float)graphics->GetWidth() : 360;
@@ -300,7 +272,7 @@ void Balls2DPhysics::CreateWalls()
     float paddingX = screenHeight * PIXEL_SIZE * 0.1f;
 
     // left
-    Node* edgeNode = scene_->CreateChild("VerticalEdge");
+    Node* edgeNode = wallsNode_->CreateChild("VerticalEdge");
     auto* edgeBody = edgeNode->CreateComponent<RigidBody2D>();
     auto* edgeShape = edgeNode->CreateComponent<CollisionEdge2D>();
     edgeShape->SetVertices(Vector2((-halfViewSize + paddingX) * aspect, -halfViewSize + paddingY), Vector2((-halfViewSize + paddingX) * aspect, halfViewSize - paddingY));
@@ -309,21 +281,21 @@ void Balls2DPhysics::CreateWalls()
     gDummyBody = edgeNode->CreateComponent<RigidBody2D>();
 
     // right
-    edgeNode = scene_->CreateChild("VerticalEdge");
+    edgeNode = wallsNode_->CreateChild("VerticalEdge");
     edgeBody = edgeNode->CreateComponent<RigidBody2D>();
     edgeShape = edgeNode->CreateComponent<CollisionEdge2D>();
     edgeShape->SetVertices(Vector2((halfViewSize - paddingX) * aspect, -halfViewSize + paddingY), Vector2((halfViewSize - paddingX) * aspect, halfViewSize - paddingY));
     edgeShape->SetFriction(0.5f); // Set friction
 
     // top
-    edgeNode = scene_->CreateChild("VerticalEdge");
+    edgeNode = wallsNode_->CreateChild("VerticalEdge");
     edgeBody = edgeNode->CreateComponent<RigidBody2D>();
     edgeShape = edgeNode->CreateComponent<CollisionEdge2D>();
     edgeShape->SetVertices(Vector2((-halfViewSize + paddingX) * aspect, halfViewSize - paddingY), Vector2((halfViewSize - paddingX) * aspect, halfViewSize - paddingY));
     edgeShape->SetFriction(0.5f); // Set friction
 
     // bottom
-    edgeNode = scene_->CreateChild("VerticalEdge");
+    edgeNode = wallsNode_->CreateChild("VerticalEdge");
     edgeBody = edgeNode->CreateComponent<RigidBody2D>();
     edgeShape = edgeNode->CreateComponent<CollisionEdge2D>();
     edgeShape->SetVertices(Vector2((-halfViewSize + paddingX) * aspect, -halfViewSize + paddingY), Vector2((halfViewSize - paddingX) * aspect, -halfViewSize + paddingY));
@@ -404,7 +376,7 @@ void Balls2DPhysics::CreateSucker()
     auto* graphics = GetSubsystem<Graphics>();
     float aspectRatio = (float)graphics->GetWidth() / (float)graphics->GetHeight();
 
-    Node* node  = ballSuckerNode_->CreateChild("Sucker");
+    Node* node  = suckerNode_->CreateChild("Sucker");
     node->SetPosition2D(1.0f * aspectRatio * gPhysicsScale, 0.0f);
     BallSucker* sucker = node->CreateComponent<BallSucker>();
 }
@@ -484,6 +456,8 @@ void Balls2DPhysics::SubscribeToEvents()
     SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(Balls2DPhysics, HandlePostUpdate));
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Balls2DPhysics, HandleKeyDown));
+
+    SubscribeToEvent(E_ASYNCLOADFINISHED, URHO3D_HANDLER(Balls2DPhysics, HandleSceneLoaded));
 }
 
 void Balls2DPhysics::DebugDraw()
@@ -491,7 +465,10 @@ void Balls2DPhysics::DebugDraw()
     PhysicsWorld2D* physicsWorld = scene_->GetComponent<PhysicsWorld2D>();
     physicsWorld->DrawDebugGeometry();
 
-    const Vector<SharedPtr<Node> > children = ballSuckerNode_->GetChildren();
+    if (!suckerNode_)
+        return;
+
+    const Vector<SharedPtr<Node> > children = suckerNode_->GetChildren();
     for (Node* suckerNode: children) {
         BallSucker* sucker = suckerNode->GetComponent<BallSucker>();
         if (sucker)
@@ -506,7 +483,7 @@ void Balls2DPhysics::HandlePostUpdate(StringHash eventType, VariantMap& eventDat
     {
         counterText.AppendWithFormat("type %i: %i\n", c.first_, c.second_);
     }
-    timerText_->SetText(counterText);
+//    timerText_->SetText(counterText);
 
     if (debugDraw_)
     {
@@ -529,6 +506,26 @@ void Balls2DPhysics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
     {
         bool enabled = scene_->IsUpdateEnabled();
         scene_->SetUpdateEnabled(!enabled);
+    }
+}
+
+void Balls2DPhysics::HandleSceneLoaded(StringHash eventType, VariantMap& eventData)
+{
+    using namespace AsyncLoadFinished;
+
+    URHO3D_LOGERRORF("async scene loaded!");
+    Scene* scene = static_cast<Scene*>(eventData[P_SCENE].GetPtr());
+    editor_->SetScene(scene);
+
+    Node* camNode = scene->GetChild("Camera", true);
+    if (camNode)
+    {
+        gCameraNode = camNode;
+        editor_->SetCameraNode(camNode);
+    }
+    else
+    {
+        gCameraNode = CreateCameraNode();
     }
 }
 

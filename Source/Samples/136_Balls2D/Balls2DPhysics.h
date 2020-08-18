@@ -75,6 +75,8 @@ protected:
 private:
     /// Construct the scene content.
     void CreateScene();
+
+    Node* CreateCameraNode();
     /// Construct an instruction text to the UI.
     void CreateInstructions();
 
@@ -102,6 +104,8 @@ private:
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
+    void HandleSceneLoaded(StringHash eventType, VariantMap& eventData);
+
     void TestNodes();
 
     Camera* camera_;
@@ -116,9 +120,11 @@ private:
 
     Node* ballsNode_;
 
-    Node* ballSuckerNode_;
+    Node* suckerNode_;
 
-    Node* ballRacketNode_;
+    Node* racketNode_;
+
+    Node* wallsNode_;
 
     Text* timerText_;
 
