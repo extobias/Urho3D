@@ -12,6 +12,7 @@
 #include "../IO/MemoryBuffer.h"
 #include "../Resource/ResourceCache.h"
 #include "../UI/EditorWindow.h"
+#include "../UI/EditorSelection.h"
 #include "../UI/EditorModelDebug.h"
 #include "../UI/UI.h"
 #include "../Urho2D/StaticSprite2D.h"
@@ -517,8 +518,8 @@ void EditorGuizmo::Render(float timeStep)
     Matrix4 gridMatrix;
     gridMatrix.SetRotation(gridRotation.RotationMatrix());
 //    gridMatrix.SetTranslation(Vector3(0.0f, 0.0, -1.0f));
-    float gridSize = 10.0f;
 
+    float gridSize = 10.0f;
     ImGuizmo::DrawGrid(&view.m00_, &projection.m00_, &gridMatrix.m00_, gridSize);
 
     //  || !selection_->GetSelectedNodes().Size()
@@ -533,8 +534,9 @@ void EditorGuizmo::Render(float timeStep)
         {
             ImGuizmo::Manipulate(&view.m00_, &projection.m00_, (ImGuizmo::OPERATION)currentOperation_, (ImGuizmo::MODE)currentMode_, &transform.m00_, &delta.m00_);
 
+            // URHO3D_LOGERRORF("delta translation <%s>", delta.Transpose().Translation().ToString().CString());
             selection_->SetTransform(Matrix3x4(transform.Transpose()));
-            selection_->SetDelta(Matrix3x4(delta.Transpose()));
+            selection_->SetDelta(delta.Transpose());
         }
     }
     else if (currentEditMode_ == SELECT_MESH_VERTEX)

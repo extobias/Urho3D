@@ -10,7 +10,7 @@ namespace Urho3D
 {
 
 class CollisionPolygon2D;
-
+class EditorSelection;
 class EditorBrush;
 
 class URHO3D_API EditorGuizmo : public ImGuiElement
@@ -47,7 +47,7 @@ public:
 
     void SetScene(Scene* scene);
 
-    void SetEditorSelection(EditorSelection* selection) { selection_ = selection; }
+    void SetEditorSelection(class EditorSelection* selection) { selection_ = selection; }
 
     int buttons_;
 

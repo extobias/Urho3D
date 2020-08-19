@@ -9,6 +9,7 @@ class Model;
 class ParticleEmitter;
 class EditorGuizmo;
 class EditorModelDebug;
+class EditorSelection;
 
 struct ResourceFile
 {
@@ -91,55 +92,6 @@ enum EditorMode
     SELECT_POLYGON_VERTEX
 };
 
-class URHO3D_API EditorSelection : public Object
-{
-    URHO3D_OBJECT(EditorSelection, Object);
-
-public:
-
-    explicit EditorSelection(Context* context);
-
-    ~EditorSelection() override;
-
-    void Add(Node* node);
-
-    void Clear();
-
-    bool IsEmpty() const { return !selectedNodes_.Size(); }
-
-    String ToString();
-
-    void SetScene(Scene* scene) { scene_ = scene; }
-
-    void SetTransform(const Matrix3x4& matrix);
-
-    void SetDelta(const Matrix3x4& matrix);
-
-    void Render();
-
-    const PODVector<Node*>& GetSelectedNodes() const { return selectedNodes_; }
-
-    const Matrix3x4& GetTransform() const { return transform_; }
-
-private:
-
-    void UpdateTransform();
-
-    bool PointAboveLine(Vector3 point, Vector3 p1, Vector3 p2);
-
-    void PoligonPoints(Vector<Vector3>& points);
-
-    Vector3 CalculateCentroid(const Vector<Vector3>& points);
-
-    PODVector<Node*> selectedNodes_;
-
-    Matrix3x4 transform_;
-
-    Scene* scene_;
-
-//        unsigned selectedSubElementIndex_{ M_MAX_UNSIGNED };
-};
-
 class URHO3D_API EditorWindow : public ImGuiElement
 {
     URHO3D_OBJECT(EditorWindow, ImGuiElement);
@@ -161,6 +113,8 @@ public:
     void SetCameraNode(Node* node);
 
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
+
+    void HandleSceneLoaded(StringHash eventType, VariantMap& eventData);
 
     void CreateGuizmo();
 
@@ -251,6 +205,8 @@ private:
     float yaw_;
 
     float pitch_;
+
+    bool sceneLoading_;
 };
 
 }
