@@ -18,6 +18,8 @@
 #include "../UI/UI.h"
 #include "../Urho2D/StaticSprite2D.h"
 
+#include "ImGuizmo.h"
+
 namespace Urho3D
 {
 
@@ -66,14 +68,16 @@ void EditorSelection::SetTransform(const Matrix3x4 &matrix)
     transform_ = matrix;
 }
 
-void EditorSelection::SetDelta(const Matrix4 &matrix)
+void EditorSelection::SetDelta(const Matrix4 &matrix, unsigned operation)
 {
     for(Node* node: selectedNodes_)
     {
-        node->Translate(matrix.Translation(), TS_WORLD);
-        // node->Rotate(matrix.Rotation());
-        node->RotateAround(transform_.Translation(), -matrix.Rotation(), TS_WORLD);
-        node->Scale(matrix.Scale());
+        if (operation == ImGuizmo::TRANSLATE)
+            node->Translate(matrix.Translation(), TS_WORLD);
+        else if (operation == ImGuizmo::ROTATE)
+            node->RotateAround(transform_.Translation(), -matrix.Rotation(), TS_WORLD);
+        else
+            node->Scale(matrix.Scale());
     }
 }
 

@@ -536,7 +536,7 @@ void EditorGuizmo::Render(float timeStep)
 
             // URHO3D_LOGERRORF("delta translation <%s>", delta.Transpose().Translation().ToString().CString());
             selection_->SetTransform(Matrix3x4(transform.Transpose()));
-            selection_->SetDelta(delta.Transpose());
+            selection_->SetDelta(delta.Transpose(), currentOperation_);
         }
     }
     else if (currentEditMode_ == SELECT_MESH_VERTEX)

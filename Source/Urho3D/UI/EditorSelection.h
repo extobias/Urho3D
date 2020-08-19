@@ -27,7 +27,7 @@ public:
 
     void SetTransform(const Matrix3x4& matrix);
 
-    void SetDelta(const Matrix4 &matrix);
+    void SetDelta(const Matrix4 &matrix, unsigned operation);
 
     void Render();
 
