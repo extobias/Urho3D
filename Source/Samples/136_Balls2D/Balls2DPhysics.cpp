@@ -435,7 +435,7 @@ void Balls2DPhysics::CreateInstructions()
 
 void Balls2DPhysics::SetupViewport()
 {
-    auto* renderer = GetSubsystem<Renderer>();
+    Renderer* renderer = GetSubsystem<Renderer>();
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, gCameraNode->GetComponent<Camera>()));
@@ -521,11 +521,15 @@ void Balls2DPhysics::HandleSceneLoaded(StringHash eventType, VariantMap& eventDa
     if (camNode)
     {
         gCameraNode = camNode;
-        editor_->SetCameraNode(camNode);
     }
     else
     {
         gCameraNode = CreateCameraNode();
     }
+    editor_->SetCameraNode(gCameraNode);
+
+    Camera* camera = gCameraNode->GetComponent<Camera>();
+    Renderer* renderer = GetSubsystem<Renderer>();
+    renderer->GetViewport(0)->SetCamera(camera);
 }
 
