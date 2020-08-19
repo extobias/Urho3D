@@ -43,6 +43,7 @@
 #include <Urho3D/IO/Log.h>
 #include <Urho3D/UI/EditorWindow.h>
 #include <Urho3D/UI/EditorGuizmo.h>
+#include <Urho3D/UI/EditorSelection.h>
 
 Sample::Sample(Context* context) :
     Application(context),
