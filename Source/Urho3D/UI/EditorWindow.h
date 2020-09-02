@@ -134,6 +134,8 @@ private:
 
     void AttributeEdit(Serializable *c);
 
+    bool VariantEdit(const StringHash& key, Variant& v);
+
     void AddComponentMenu(Node *node);
 
     void EditParticleEmitter(ParticleEmitter* emitter);

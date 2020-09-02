@@ -551,7 +551,9 @@ void EditorWindow::SetScene(Scene* scene)
     selection_->SetScene(scene);
 
     if (guizmo_)
+    {
         guizmo_->SetScene(scene);
+    }
 }
 
 void EditorWindow::Render(float timeStep)
@@ -816,6 +818,15 @@ void EditorWindow::DrawNodeSelected()
 
     AttributeEdit(node);
 
+//    Variant vars = node->GetAttribute("Variables");
+//    VariantMap* map = vars.GetVariantMapPtr();
+//    Vector<StringHash> keys = map->Keys();
+//    ImGui::Text("keys size <%i> map size <%i>", keys.Size(), map->Size());
+//    for(unsigned i = 0; i < map->Size(); i++)
+//    {
+//        ImGui::Text(" <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
+//    }
+
     // prefabs
     SavePrefab(node);
 
@@ -892,12 +903,12 @@ void EditorWindow::AttributeEdit(Serializable* c)
         int total_w = (int)ImGui::GetContentRegionAvail().x;
         ImGui::Text("%s", info.name_.CString());
         ImGui::SameLine(total_w / 2.0f);
-        ImGui::SetNextItemWidth(total_w / 2.0f);
 
         switch (info.type_)
         {
         case VAR_BOOL:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             bool v = c->GetAttribute(info.name_).GetBool();
             if (ImGui::Checkbox(hideLabel, &v))
             {
@@ -907,6 +918,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_INT:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             unsigned int v = c->GetAttribute(info.name_).GetUInt();
             if (info.enumNames_)
             {
@@ -938,6 +950,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_FLOAT:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             float v = c->GetAttribute(info.name_).GetFloat();
             if (ImGui::InputFloat(hideLabel, &v))
             {
@@ -947,6 +960,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_STRING:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             String v = c->GetAttribute(info.name_).GetString();
             char buffer[512];
             strncpy(buffer, v.CString(), v.Length());
@@ -959,6 +973,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_COLOR:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             float col[4];
             Color color = c->GetAttribute(info.name_).GetColor();
             memcpy(col, color.Data(), sizeof(col));
@@ -970,6 +985,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_VECTOR2:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             float v[2];
             Vector2 value = c->GetAttribute(info.name_).GetVector2();
             memcpy(v, value.Data(), sizeof(v));
@@ -981,6 +997,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_VECTOR3:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             float v[3];
             Vector3 value = c->GetAttribute(info.name_).GetVector3();
             memcpy(v, value.Data(), sizeof(v));
@@ -992,6 +1009,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_VECTOR4:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             float v[4];
             Vector4 value = c->GetAttribute(info.name_).GetVector4();
             memcpy(v, value.Data(), sizeof(v));
@@ -1001,8 +1019,21 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
         }
         break;
+        case VAR_RECT:
+        {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
+            float v[4];
+            Rect value = c->GetAttribute(info.name_).GetRect();
+            memcpy(v, value.Data(), sizeof(v));
+            if (ImGui::InputFloat4(hideLabel, (float*)&v))
+            {
+                c->SetAttribute(info.name_, Rect(v));
+            }
+        }
+        break;
         case VAR_QUATERNION:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             float q[4];
             Quaternion value = c->GetAttribute(info.name_).GetQuaternion();
             memcpy(q, value.Data(), sizeof(q));
@@ -1014,6 +1045,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_BUFFER:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             if (info.name_ == "Vertices")
             {
                 const PODVector<unsigned char> value = c->GetAttribute(info.name_).GetBuffer();
@@ -1081,6 +1113,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_RESOURCEREF:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
             ResourceCache* cache = GetSubsystem<ResourceCache>();
 
@@ -1166,6 +1199,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_RESOURCEREFLIST:
         {
+            ImGui::SetNextItemWidth(total_w / 2.0f);
             ResourceRefList v = c->GetAttribute(info.name_).GetResourceRefList();
             // ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
             currentMaterialList_.Resize(v.names_.Size());
@@ -1194,6 +1228,101 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
         }
         break;
+        case VAR_VARIANTMAP:
+        {
+            float width = total_w / 2.0f;
+            Variant vars = c->GetAttribute(info.name_);
+            VariantMap* map = vars.GetVariantMapPtr();
+            if (map)
+            {
+                static char buf[32] = "";
+                ImGui::SetNextItemWidth(width / 3.0f);
+                ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
+
+                Vector<String> variantTypes;
+                variantTypes.Push("int");
+                variantTypes.Push("bool");
+                variantTypes.Push("float");
+                variantTypes.Push("String");
+                variantTypes.Push("Vector3");
+                variantTypes.Push("Color");
+
+                String variantName;
+                variantName.Join(variantTypes, "@");
+                variantName.Replace('@', '\0');
+                variantName.Append('\0');
+
+                ImGui::SetNextItemWidth(width / 3.0f);
+                ImGui::SameLine();
+                static int variantSelected = 0;
+                if (ImGui::Combo(hideLabel, &variantSelected, variantName.CString()))
+                {
+                }
+
+                ImGui::SetNextItemWidth(width / 3.0f);
+                ImGui::SameLine();
+                if(ImGui::Button("Add"))
+                {
+                    // int, bool, float, String, Vector3, Color
+                    Variant v;
+                    if (variantSelected == 0)
+                    {
+                        v = 0;
+                    }
+                    else if (variantSelected == 1)
+                    {
+                        v = false;
+                    }
+                    else if (variantSelected == 2)
+                    {
+                        v = 0.0f;
+                    }
+                    else if (variantSelected == 3)
+                    {
+                        v = String("");
+                    }
+                    else if (variantSelected == 4)
+                    {
+                        v = Vector3::ZERO;
+                    }
+                    else if (variantSelected == 5)
+                    {
+                        v = Color::WHITE;
+                    }
+
+//                    map->Insert(Pair<StringHash, Variant>(StringHash(buf), v));
+                    // FIXME
+                    scene_->RegisterVar(buf);
+                    (*map)[StringHash(buf)] = v;
+
+                    c->SetAttribute(info.name_, vars);
+                }
+
+                ImGui::SetNextItemWidth(width / 3.0f);
+                ImGui::SameLine();
+                if(ImGui::Button("Del"))
+                {
+                    map->Erase(StringHash(buf));
+                    c->SetAttribute(info.name_, vars);
+                }
+
+                Vector<StringHash> keys = map->Keys();
+                for (unsigned i = 0; i < keys.Size(); i++)
+                {
+//                    ImGui::Text("variant <%s> type <%s>", keys.At(i).Reverse().CString(), (*map)[keys.At(i)].GetTypeName().CString());
+                    ImGui::SetCursorPosX(width);
+                    ImGui::SetNextItemWidth(width / 2.0f);
+
+                    Variant v = (*map)[keys.At(i)];
+                    if (VariantEdit(keys.At(i), v))
+                    {
+                        (*map)[keys.At(i)] = v;
+                        c->SetAttribute(info.name_, vars);
+                    }
+                }
+            }
+        }
+        break;
         default:
         {
             ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
@@ -1202,6 +1331,82 @@ void EditorWindow::AttributeEdit(Serializable* c)
         }
         ImGui::PopID();
     }
+}
+
+bool EditorWindow::VariantEdit(const StringHash& key, Variant& v)
+{
+    const String& name = scene_->GetVarName(key);
+    const char* hideLabel = "##hidelabel";
+
+    ImGui::PushID(name.CString());
+    int total_w = (int)ImGui::GetContentRegionAvail().x;
+    ImGui::Text("%s", name.CString());
+    ImGui::SetNextItemWidth(total_w / 2.0f);
+    ImGui::SameLine();
+
+    // nombre
+    bool ret = false;
+    switch (v.GetType())
+    {
+        case VAR_BOOL:
+        {
+            bool val = v.GetBool();
+            if (ImGui::Checkbox(hideLabel, &val))
+            {
+                v = val;
+                ret = true;
+            }
+        }
+        break;
+        case VAR_INT:
+        {
+            unsigned int val = v.GetUInt();
+            if (ImGui::InputInt(hideLabel, (int*)&val))
+            {
+                v = val;
+                ret = true;
+            }
+        }
+        break;
+        case VAR_FLOAT:
+        {
+            float val = v.GetFloat();
+            if (ImGui::InputFloat(hideLabel, &val))
+            {
+                v = val;
+                ret = true;
+            }
+        }
+        break;
+        case VAR_VECTOR3:
+        {
+            float val[3];
+            Vector3 value = v.GetVector3();
+            memcpy(val, value.Data(), sizeof(v));
+            if (ImGui::InputFloat3(hideLabel, (float*)&val))
+            {
+                v = Vector3(val);
+                ret = true;
+            }
+        }
+        break;
+        case VAR_STRING:
+        {
+            String val = v.GetString();
+            char buffer[512];
+            strncpy(buffer, val.CString(), val.Length());
+            buffer[val.Length()] = '\0';
+            if (ImGui::InputText(hideLabel, buffer, 512))
+            {
+                v = buffer;
+                ret = true;
+            }
+        }
+        break;
+    }
+    ImGui::PopID();
+
+    return ret;
 }
 
 void EditorWindow::AddComponentMenu(Node* node)

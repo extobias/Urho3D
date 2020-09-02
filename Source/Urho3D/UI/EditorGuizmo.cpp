@@ -481,6 +481,9 @@ void EditorGuizmo::RegisterObject(Context* context)
 
 void EditorGuizmo::Render(float timeStep)
 {
+    if (!scene_)
+        return;
+
     Graphics* g = GetSubsystem<Graphics>();
 
     Octree* octree = scene_->GetComponent<Octree>();
