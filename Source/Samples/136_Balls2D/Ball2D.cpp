@@ -4,6 +4,7 @@
 #include <Urho3D/Urho2D/CollisionBox2D.h>
 #include <Urho3D/Urho2D/CollisionCircle2D.h>
 #include <Urho3D/Urho2D/ConstraintDistance2D.h>
+#include <Urho3D/Urho2D/ConstraintRevolute2D.h>
 #include <Urho3D/Urho2D/PhysicsEvents2D.h>
 #include <Urho3D/Urho2D/RigidBody2D.h>
 #include <Urho3D/Urho2D/Sprite2D.h>
@@ -52,16 +53,15 @@ void Ball2D::OnNodeSet(Node* node)
     if (!node)
         return;
 
-    node->SetPosition(Vector3::ZERO);
+//    URHO3D_LOGERRORF("Ball2D::OnNodeSet: physics scale <%f> node scale <%s>", gPhysicsScale, node->GetScale().ToString().CString());
+
     node->SetScale(gPhysicsScale);
 
     // Create rigid body
     body_ = node->CreateComponent<RigidBody2D>();
     body_->SetTemporary(true);
     body_->SetBodyType(BT_DYNAMIC);
-
-    Vector2 force(Random(-10.0f, 10.0f), Random(-10.0f, 10.0f));
-    body_->ApplyForce(force, Vector2::ZERO, true);
+    body_->SetMass(10.0f);
 
     sprite_ = node->CreateComponent<StaticSprite2D>();
     sprite_->SetTemporary(true);
@@ -96,11 +96,16 @@ void Ball2D::SetType(unsigned type)
         shape_ = circleShape;
     }
 
-    shape_->SetDensity(1.0f);
+//    shape_->SetDensity(1.0f);
     shape_->SetFriction(0.5f);
     shape_->SetRestitution(0.1f);
 
     shape_->SetTemporary(true);
+}
+
+void Ball2D::SetForce(const Vector2& force)
+{
+    body_->ApplyForce(force, Vector2::ZERO, true);
 }
 
 void Ball2D::UpdateArea()
@@ -156,13 +161,26 @@ void Ball2D::HandleBeginContact2D(StringHash eventType, VariantMap& eventData)
 
         other->SetPosition2D(newPos);
 
-        ConstraintDistance2D* constraintDistance = followNode->CreateComponent<ConstraintDistance2D>();
-//        constraintDistance->SetCollideConnected(true);
-        constraintDistance->SetOtherBody(otherRigidBody);
-        Vector2 p1 = followNode->GetPosition2D();
-        Vector2 p2 = other->GetPosition2D();
-        constraintDistance->SetOwnerBodyAnchor(p1);
-        constraintDistance->SetOtherBodyAnchor(p2);
+        ConstraintRevolute2D* constraintRevolute = followNode->CreateComponent<ConstraintRevolute2D>();
+        constraintRevolute->SetEnableMotor(false);
+        constraintRevolute->SetCollideConnected(false);
+//        constraintRevolute->SetEnableLimit(true);
+//        constraintRevolute->SetLowerAngle(0.0f);
+//        constraintRevolute->SetUpperAngle(90.0f);
+        constraintRevolute->SetOtherBody(otherRigidBody);
+        constraintRevolute->SetAnchor(other->GetPosition2D());
+        // constraintRevolute->SetAnchor(followNode->GetPosition2D() + Vector2(shapeRadius - 0.01f, 0.0f));
+
+//        ConstraintDistance2D* constraintDistance = followNode->CreateComponent<ConstraintDistance2D>();
+////        constraintDistance->SetCollideConnected(true);
+//        constraintDistance->SetOtherBody(otherRigidBody);
+//        Vector2 p1 = followNode->GetPosition2D();
+//        Vector2 p2 = other->GetPosition2D();
+//        constraintDistance->SetOwnerBodyAnchor(p1);
+//        constraintDistance->SetOtherBodyAnchor(p2);
+
+//        constraintDistance->SetFrequencyHz(60.0f);
+//        constraintDistance->SetDampingRatio(0.0f);
 
         Ball2D* otherBall = followNode->GetComponent<Ball2D>();
         otherBall->next_ = other;

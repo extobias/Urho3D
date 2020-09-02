@@ -26,6 +26,8 @@ public:
 
     void FixedUpdate(float timeStep) override;
 
+    void DelayedStart() override;
+
     void DebugDraw();
 
     void SetScaleFactor(float scale);

@@ -39,7 +39,7 @@ void BallLaser::FixedUpdate(float timeStep)
     for (int i = 0; i < balls_->Size(); i++)
     {
         Ball2D* b = balls_->At(i);
-        if (b->IsMagnetized())
+        if (b->IsChained())
             continue;
 
         Node* node = b->GetNode();

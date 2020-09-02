@@ -63,32 +63,39 @@ void BallRacket::OnNodeSet(Node* node)
     if (!node)
         return;
 
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    node_->SetScale(gPhysicsScale);
+    node->SetScale(gPhysicsScale);
 
+    node->SetPosition(node->GetPosition() * gScreenRatio);
+
+    URHO3D_LOGERRORF("BallRacket::OnNodeSet: node position <%s>", node->GetPosition().ToString().CString());
+}
+
+void BallRacket::DelayedStart()
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
     // Create rigid body
-    body_ = node->CreateComponent<RigidBody2D>();
-    body_->SetTemporary(true);
+    body_ = node_->GetOrCreateComponent<RigidBody2D>();
+//    body_->SetTemporary(true);
     body_->SetBodyType(BT_STATIC);
 
-    sprite_ = node->CreateComponent<StaticSprite2D>();
-    sprite_->SetTemporary(true);
+    sprite_ = node_->GetOrCreateComponent<StaticSprite2D>();
+//    sprite_->SetTemporary(true);
     Sprite2D* ballSprite = cache->GetResource<Sprite2D>("Urho2D/Racket.png");
     IntRect r = ballSprite->GetRectangle();
 
     sprite_->SetSprite(ballSprite);
 
     // Create circle
-    CollisionBox2D *shape = node->CreateComponent<CollisionBox2D>();
-    shape->SetTemporary(true);
-    shape->SetCenter(0.0f, 0.0f);
-    shape->SetSize(Vector2((float )r.Width() * PIXEL_SIZE, r.Height() * PIXEL_SIZE));
+    CollisionBox2D *shape = node_->GetOrCreateComponent<CollisionBox2D>();
+//    shape->SetTemporary(true);
+//    shape->SetCenter(0.0f, 0.0f);
+//    shape->SetSize(Vector2((float )r.Width() * PIXEL_SIZE, r.Height() * PIXEL_SIZE));
     shape->SetDensity(1.0f);
     shape->SetFriction(0.5f);
     shape->SetRestitution(0.1f);
 
-    CollisionCircle2D *circle = node->CreateComponent<CollisionCircle2D>();
-    circle->SetTemporary(true);
+    CollisionCircle2D *circle = node_->GetOrCreateComponent<CollisionCircle2D>();
+//    circle->SetTemporary(true);
     circle->SetRadius(0.32f);
     circle->SetDensity(1.0f);
     circle->SetFriction(0.5f);

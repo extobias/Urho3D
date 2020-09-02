@@ -13,6 +13,8 @@ using namespace Urho3D;
 
 extern float gPhysicsScale;
 
+extern float gScreenRatio;
+
 extern Node* gPickedNode;
 
 extern Node* gTailNode;

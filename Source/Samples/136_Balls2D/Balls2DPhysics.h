@@ -80,17 +80,10 @@ private:
     /// Construct an instruction text to the UI.
     void CreateInstructions();
 
-    void CreateWalls();
-
-    void CreateSucker();
-
-    void CreateRacket(const Vector2 &pos);
-
-    void CreateSink();
-
     void CreateEditor();
 
-    void CreateScore();
+    void CreateWalls();
+
     /// Set up a viewport for displaying the scene.
     void SetupViewport();
     /// Subscribe to application-wide logic update events.
@@ -100,33 +93,19 @@ private:
 
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
-    void HandlePhysicsBegin2D(StringHash eventType, VariantMap& eventData);
-
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     void HandleSceneLoaded(StringHash eventType, VariantMap& eventData);
 
+    void LoadLevelGoals();
+
     void TestNodes();
+
+    void CalcSizeScales();
 
     Camera* camera_;
 
-    class InputManager* inputManager_;
-
-    Node* sinkNode_;
-
-    Node* textNode_;
-
-    Node* spriterNode_;
-
-    Node* ballsNode_;
-
-    Node* suckerNode_;
-
-    Node* racketNode_;
-
     Node* wallsNode_;
-
-    Text* timerText_;
 
     bool debugDraw_;
 

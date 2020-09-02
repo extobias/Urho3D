@@ -11,6 +11,7 @@ namespace Urho3D
     class CollisionShape2D;
     class Sprite2D;
     class Text3D;
+    class Text;
 }
 
 using namespace Urho3D;
@@ -30,6 +31,8 @@ public:
     void FixedUpdate(float timeStep) override;
 
     void PostUpdate(float timeStep) override;
+
+    void DelayedStart() override;
 
 protected:
 
@@ -51,9 +54,15 @@ private:
 
     Text3D* text3d_;
 
+    Text* scoreText_;
+
     Vector<Color> colors_;
 
     float sinkTimer_;
 
     float sinkMaxTimer_;
+
+    bool started_;
+
+    bool staticPosition_;
 };

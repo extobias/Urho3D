@@ -25,9 +25,19 @@ public:
 
     void CreateBall();
 
+protected:
+
+    void OnNodeSet(Node* node) override;
+
 private:
 
     float ballTimer_;
 
     float pumpTimerMax_;
+
+    Vector2 maxInitForce_;
+
+    Vector2 minInitForce_;
+
+    Node* nodeBalls_;
 };

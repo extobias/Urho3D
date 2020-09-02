@@ -7,6 +7,7 @@
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/Urho2D/ConstraintMouse2D.h>
 #include <Urho3D/Urho2D/ConstraintDistance2D.h>
+#include <Urho3D/Urho2D/ConstraintRevolute2D.h>
 #include <Urho3D/Urho2D/PhysicsWorld2D.h>
 #include <Urho3D/Urho2D/PhysicsUtils2D.h>
 //#include <Urho3D/Urho2D/StaticSprite2D.h>
@@ -146,14 +147,14 @@ void InputManager::HandleButtonUp()
     if (gPickedNode)
     {
         gPickedNode->RemoveComponent<ConstraintMouse2D>();
-        gPickedNode->RemoveComponent<ConstraintDistance2D>();
+        gPickedNode->RemoveComponent<ConstraintRevolute2D>();
 
         Ball2D* ball = gPickedNode->GetComponent<Ball2D>();
         ball->SetChained(false);
         while (ball->next_)
         {
             Node* node = ball->next_;
-            node->RemoveComponent<ConstraintDistance2D>();
+            node->RemoveComponent<ConstraintRevolute2D>();
 
             ball->next_ = nullptr;
             ball = node->GetComponent<Ball2D>();

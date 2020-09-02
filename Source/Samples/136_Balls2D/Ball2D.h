@@ -15,7 +15,7 @@ using namespace Urho3D;
 
 class Ball2D : public LogicComponent
 {
-    URHO3D_OBJECT(Ball2D, LogicComponent);
+    URHO3D_OBJECT(Ball2D, LogicComponent)
 
 public:
 
@@ -28,6 +28,8 @@ public:
     void FixedUpdate(float timeStep) override;
 
     void SetType(unsigned type);
+
+    void SetForce(const Vector2& force);
 
     float GetArea() const { return area_; }
 
