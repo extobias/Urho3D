@@ -1121,6 +1121,7 @@ void b2World::DrawJoint(b2Joint* joint)
 	b2Vec2 p2 = joint->GetAnchorB();
 
 	b2Color color(0.5f, 0.8f, 0.8f);
+    b2Color colorA(1.0f, 0.0f, 0.0f);
 
 	switch (joint->GetType())
 	{
@@ -1154,7 +1155,7 @@ void b2World::DrawJoint(b2Joint* joint)
 
 	default:
 		m_debugDraw->DrawSegment(x1, p1, color);
-		m_debugDraw->DrawSegment(p1, p2, color);
+        m_debugDraw->DrawSegment(p1, p2, colorA);
 		m_debugDraw->DrawSegment(x2, p2, color);
 	}
 }

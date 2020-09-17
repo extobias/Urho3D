@@ -21,9 +21,9 @@
 #include "../Resource/ResourceCache.h"
 #include "../Scene/SceneEvents.h"
 #include "../UI/EditorGuizmo.h"
-#include "../UI/UI.h"
 #include "../UI/EditorSelection.h"
 #include "../UI/EditorModelDebug.h"
+#include "../UI/UI.h"
 
 #include "imgui.h"
 #include "ImGuizmo.h"

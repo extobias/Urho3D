@@ -44,6 +44,7 @@ namespace Urho3D
 extern const char* SUBSYSTEM_CATEGORY;
 static const Vector2 DEFAULT_GRAVITY(0.0f, -9.81f);
 static const int DEFAULT_VELOCITY_ITERATIONS = 8;
+// static const int DEFAULT_POSITION_ITERATIONS = 3;
 static const int DEFAULT_POSITION_ITERATIONS = 3;
 
 PhysicsWorld2D::PhysicsWorld2D(Context* context) :

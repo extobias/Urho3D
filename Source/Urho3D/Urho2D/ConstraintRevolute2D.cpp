@@ -36,7 +36,9 @@ extern const char* URHO2D_CATEGORY;
 
 ConstraintRevolute2D::ConstraintRevolute2D(Context* context) :
     Constraint2D(context),
-    anchor_(Vector2::ZERO)
+    anchor_(Vector2::ZERO),
+    localAnchorA_(Vector2::ZERO),
+    localAnchorB_(Vector2::ZERO)
 {
 }
 
@@ -169,6 +171,14 @@ b2JointDef* ConstraintRevolute2D::GetJointDef()
         return nullptr;
 
     jointDef_.Initialize(bodyA, bodyB, ToB2Vec2(anchor_));
+
+    jointDef_.localAnchorA = ToB2Vec2(localAnchorA_);
+
+    jointDef_.localAnchorB = ToB2Vec2(localAnchorB_);
+
+    jointDef_.referenceAngle = M_PI;
+
+    InitializeJointDef(&jointDef_);
 
     return &jointDef_;
 }

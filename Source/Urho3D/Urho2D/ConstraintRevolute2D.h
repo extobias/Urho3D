@@ -55,6 +55,10 @@ public:
     /// Set max motor torque.
     void SetMaxMotorTorque(float maxMotorTorque);
 
+    void SetLocalAnchorA(const Vector2& localAnchorA) { localAnchorA_ = localAnchorA; };
+
+    void SetLocalAnchorB(const Vector2& localAnchorB) { localAnchorB_ = localAnchorB; };
+
     /// Return anchor.
     const Vector2& GetAnchor() const { return anchor_; }
 
@@ -84,6 +88,10 @@ private:
     b2RevoluteJointDef jointDef_;
     /// Anchor.
     Vector2 anchor_;
+    /// local anchor A
+    Vector2 localAnchorA_;
+    /// local anchor B
+    Vector2 localAnchorB_;
 };
 
 }
