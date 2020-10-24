@@ -46,7 +46,7 @@ public:
 		Remember that the widget may still be deleted prematurely for many other reasons (f.ex if its parent is
 		deleted or several listeners respond true and take on the task to delete it at some point). You can
 		use TBWidgetSafePointer to safely handle that. */
-	virtual bool OnWidgetDying(TBWidget *widget) { return false; }
+    virtual bool OnWidgetDying(TBWidget *widget) { return false; }
 
 	/** Called when the child has been added to parent, after its parents OnChildAdded.
 		Local listeners are invoked on the parent widget. */

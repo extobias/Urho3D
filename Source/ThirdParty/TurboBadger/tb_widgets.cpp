@@ -148,6 +148,8 @@ void TBWidget::SetRect(const TBRect &rect)
     TBRect old_rect = m_rect;
     m_rect = rect;
 
+    // TBDebugPrint("TBWidget.SetRect: widget <%p> rect <%u,%u,%u,%u>\n", this, m_rect.x, m_rect.y, m_rect.w, m_rect.h);
+
     if (old_rect.w != m_rect.w || old_rect.h != m_rect.h)
         OnResized(old_rect.w, old_rect.h);
 
@@ -806,7 +808,7 @@ bool TBWidget::HasListener(TBWidgetListener *listener) const
 {
     return m_listeners.ContainsLink(listener);
 }
-#include <stdio.h>
+
 void TBWidget::OnPaintChildren(const PaintProps &paint_props)
 {
     if (!m_children.GetFirst())
@@ -1204,7 +1206,8 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
     // Paint background skin
     TBRect local_rect(0, 0, m_rect.w, m_rect.h);
 
-//     TBDebugPrint("TBWidget.InvokePaint: rect <%u,%u,%u,%u>\n", local_rect.x, local_rect.y, local_rect.w, local_rect.h);
+    // TBDebugPrint("TBWidget.InvokePaint: widget <%p> rect <%u,%u,%u,%u>\n", this, m_rect.x, m_rect.y, m_rect.w, m_rect.h);
+
     TBWidgetSkinConditionContext context(this);
     TBSkinElement *used_element = core_->tb_skin_->PaintSkin(local_rect, skin_element, static_cast<SKIN_STATE>(state), context);
     assert(!!used_element == !!skin_element);
@@ -1384,7 +1387,8 @@ bool TBWidget::InvokePointerUp(int x, int y, MODIFIER_KEYS modifierkeys, bool to
         TBWidgetEvent ev_up(EVENT_TYPE_POINTER_UP, x, y, touch, modifierkeys);
         TBWidgetEvent ev_click(EVENT_TYPE_CLICK, x, y, touch, modifierkeys);
         core_->captured_widget->InvokeEvent(ev_up);
-        if (!core_->cancel_click && core_->captured_widget && core_->captured_widget->GetHitStatus(x, y))
+        WIDGET_HIT_STATUS hitStatus = core_->captured_widget->GetHitStatus(x, y);
+        if (!core_->cancel_click && core_->captured_widget && hitStatus)
             core_->captured_widget->InvokeEvent(ev_click);
         if (core_->captured_widget) // && button == captured_button
             core_->captured_widget->ReleaseCapture();

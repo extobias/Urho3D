@@ -35,9 +35,9 @@ public:
 	void SetValueAnimated(float value) { src_val = GetValue(); dst_val = value; TBAnimationManager::StartAnimation(this, animation_curve, animation_duration); }
 	void SetValueImmediately(float value) { TBAnimationManager::AbortAnimation(this, false); src_val = dst_val = value; OnAnimationUpdate(1.0f); }
 
-	virtual void OnAnimationStart() { current_progress = 0; }
-	virtual void OnAnimationUpdate(float progress) { current_progress = progress; }
-	virtual void OnAnimationStop(bool aborted) {}
+    virtual void OnAnimationStart() override { current_progress = 0; }
+    virtual void OnAnimationUpdate(float progress) override { current_progress = progress; }
+    virtual void OnAnimationStop(bool aborted) override {}
 };
 
 // TBFloatAnimator - Animates a external float value, which address is given in the constructor.
@@ -55,8 +55,8 @@ public:
 					double animation_duration = ANIMATION_DEFAULT_DURATION)
 		: TBAnimatedFloat(*target_value), target_value(target_value) {}
 
-	virtual void OnAnimationStart() { TBAnimatedFloat::OnAnimationStart(); *target_value = GetValue(); }
-	virtual void OnAnimationUpdate(float progress) { TBAnimatedFloat::OnAnimationUpdate(progress); *target_value = GetValue(); }
+    virtual void OnAnimationStart() override { TBAnimatedFloat::OnAnimationStart(); *target_value = GetValue(); }
+    virtual void OnAnimationUpdate(float progress) override { TBAnimatedFloat::OnAnimationUpdate(progress); *target_value = GetValue(); }
 };
 
 } // namespace tb

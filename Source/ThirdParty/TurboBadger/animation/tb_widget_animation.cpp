@@ -10,6 +10,8 @@
 #include "tb_message_window.h"
 #include "tb_list.h"
 
+#include "tb_system.h"
+
 namespace tb {
 
 TBLinkListOf<TBWidgetAnimationObject> widget_animations;
@@ -128,6 +130,7 @@ void TBWidgetAnimationRect::OnAnimationUpdate(float progress)
 	rect.y = (int) LERP(m_src_rect.y, m_dst_rect.y, progress);
 	rect.w = (int) LERP(m_src_rect.w, m_dst_rect.w, progress);
 	rect.h = (int) LERP(m_src_rect.h, m_dst_rect.h, progress);
+    // TBDebugPrint("animation update widget <%p> rect <%d, %d, %d, %d>\n", m_widget, rect.x, rect.y, rect.w, rect.h);
 	m_widget->SetRect(rect);
 }
 
@@ -139,16 +142,16 @@ void TBWidgetAnimationRect::OnAnimationStop(bool aborted)
 
 // == TBWidgetsAnimationManager =====================================================
 
-//TBWidgetsAnimationManager widgets_animation_manager;
+TBWidgetsAnimationManager widgets_animation_manager;
 
-void TBWidgetsAnimationManager::Init()
+void TBWidgetsAnimationManager::Init(TBCore* core)
 {
-//	TBWidgetListener::AddGlobalListener(&widgets_animation_manager);
+    TBWidgetListener::AddGlobalListener(core, &widgets_animation_manager);
 }
 
-void TBWidgetsAnimationManager::Shutdown()
+void TBWidgetsAnimationManager::Shutdown(TBCore* core)
 {
-//	TBWidgetListener::RemoveGlobalListener(&widgets_animation_manager);
+    TBWidgetListener::RemoveGlobalListener(core, &widgets_animation_manager);
 }
 
 void TBWidgetsAnimationManager::AbortAnimations(TBWidget *widget)

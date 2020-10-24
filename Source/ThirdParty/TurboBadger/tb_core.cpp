@@ -16,7 +16,7 @@ namespace tb {
 
 bool TBCore::tb_core_init(TBRenderer *renderer)
 {
-	TBDebugPrint("Initiating Turbo Badger - version %s\n", TB_VERSION_STR);
+    TBDebugPrint("Initiating Turbo Badger - version %s\n", TB_VERSION_STR);
     renderer_ = renderer;
     tb_lng_ = new TBLanguage;
     font_manager_ = new TBFontManager(this);
@@ -26,7 +26,7 @@ bool TBCore::tb_core_init(TBRenderer *renderer)
     image_manager_ = new TBImageManager(this);
 #endif
 
-//    g_tb_debug.settings[TBDebugInfo::LAYOUT_BOUNDS] = true;
+    g_tb_debug.settings[TBDebugInfo::LAYOUT_BOUNDS] = true;
 //    g_tb_debug.settings[TBDebugInfo::LAYOUT_PS_DEBUGGING] = true;
 
 	return true;

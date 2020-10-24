@@ -40,9 +40,9 @@ public:
 	TBOBJECT_SUBCLASS(TBWidgetAnimationOpacity, TBWidgetAnimationObject);
 
 	TBWidgetAnimationOpacity(TBWidget *widget, float src_opacity, float dst_opacity, bool die);
-	virtual void OnAnimationStart();
-	virtual void OnAnimationUpdate(float progress);
-	virtual void OnAnimationStop(bool aborted);
+    virtual void OnAnimationStart() override;
+    virtual void OnAnimationUpdate(float progress) override;
+    virtual void OnAnimationStop(bool aborted) override;
 private:
 	float m_src_opacity;
 	float m_dst_opacity;
@@ -70,9 +70,10 @@ public:
 		rectangle and a delta. The reference rectangle will be taken from
 		the target widget on the first OnAnimationUpdate. */
 	TBWidgetAnimationRect(TBWidget *widget, const TBRect &delta_rect, MODE mode);
-	virtual void OnAnimationStart();
-	virtual void OnAnimationUpdate(float progress);
-	virtual void OnAnimationStop(bool aborted);
+
+    virtual void OnAnimationStart() override;
+    virtual void OnAnimationUpdate(float progress) override;
+    virtual void OnAnimationStop(bool aborted) override;
 private:
 	TBRect m_src_rect;
 	TBRect m_dst_rect;
@@ -84,10 +85,10 @@ class TBWidgetsAnimationManager : public TBWidgetListener
 {
 public:
 	/** Init the widgets animation manager. */
-	static void Init();
+        static void Init(TBCore* core);
 
 	/** Shutdown the widgets animation manager. */
-	static void Shutdown();
+        static void Shutdown(TBCore* core);
 
 	/** Abort all animations that are running for the given widget. */
 	static void AbortAnimations(TBWidget *widget);

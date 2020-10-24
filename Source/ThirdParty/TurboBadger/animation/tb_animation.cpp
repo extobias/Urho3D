@@ -81,6 +81,8 @@ void TBAnimationManager::Update()
 			obj->adjust_start_time = false;
 		}
 
+        // TBDebugPrint("animation start %f time %f", obj->animation_duration, time_now);
+
 		// Calculate current progress
 		// If animation_duration is 0, it should just complete immediately.
 		float progress = 1.0f;
