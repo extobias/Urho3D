@@ -357,7 +357,7 @@ void TBUIElement::LoadResources()
     // Give the root widget a background skin
     root_->SetSkinBg("background_solid");
 
-    TBWidgetsAnimationManager::Init();
+    TBWidgetsAnimationManager::Init(core_);
 }
 
 void TBUIElement::Clear()
@@ -549,7 +549,8 @@ bool TBUIElement::IsWithinScissor(const IntRect& currentScissor)
 const IntVector2& TBUIElement::GetScreenPosition() const
 {
     UIElement::GetScreenPosition();
-    root_->SetPosition(TBPoint(screenPosition_.x_, screenPosition_.y_));
+    // esto estaba sin comentar para los multiples ui
+    // root_->SetPosition(TBPoint(screenPosition_.x_, screenPosition_.y_));
     return screenPosition_;
 }
 
