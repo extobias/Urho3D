@@ -84,6 +84,9 @@ void EditorSelection::SetDelta(const Matrix4 &matrix, unsigned operation)
 void EditorSelection::Render()
 {
     DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+    if (!debugRenderer)
+        return;
+
     for(Node* node: selectedNodes_)
     {
         if (node)
