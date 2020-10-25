@@ -65,6 +65,10 @@
 #define ENCODING_PCM_16BIT  2
 #define ENCODING_PCM_FLOAT  4
 
+// extobias
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(setupAssetManager)(
+        JNIEnv *env, jclass cls, jobject assetManager);
+
 /* Java class SDLActivity */
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeSetupJNI)(
         JNIEnv *env, jclass cls);
@@ -453,6 +457,16 @@ const char* SDL_Android_GetFilesDir()
     return mFilesDir;
 }
 
+// extobias
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+extern AAssetManager *g_pManager;
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(setupAssetManager)(JNIEnv* env, jclass cls, jobject assetManager)
+{
+    g_pManager = AAssetManager_fromJava(env, assetManager);
+}
+
 /* Activity initialization -- called before SDL_main() to initialize JNI bindings */
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeSetupJNI)(JNIEnv* env, jclass cls)
 {
@@ -624,6 +638,208 @@ JNIEXPORT void JNICALL SDL_JAVA_CONTROLLER_INTERFACE(nativeSetupJNI)(JNIEnv *env
     checkJNIReady();
 }
 
+#include <unwind.h> 
+#include <dlfcn.h> 
+
+#define STACK_MAX_SIZE 1024 * 4
+
+struct BacktraceState 
+{ 
+    void** current; 
+    void** end; 
+}; 
+
+static _Unwind_Reason_Code unwindCallback(struct _Unwind_Context* context, void* arg) 
+{ 
+    struct BacktraceState* state = (struct BacktraceState*)(arg); 
+    uintptr_t pc = _Unwind_GetIP(context); 
+    if (pc) 
+    { 
+        if (state->current == state->end) 
+        { 
+            return _URC_END_OF_STACK; 
+        } else { 
+            // *state->current++ = reinterpret_cast<void*>(pc);
+            *state->current++ = (void*)(pc); 
+        } 
+    } 
+    return _URC_NO_REASON; 
+}
+
+size_t captureBacktrace(void** buffer, size_t max) 
+{ 
+    struct BacktraceState state = {buffer, buffer + max}; 
+    _Unwind_Backtrace(unwindCallback, &state); 
+
+    return state.current - buffer; 
+} 
+
+void dumpBacktrace(void** buffer, size_t count, char* stack, int* size) 
+{ 
+    unsigned int offset = 0;
+    __android_log_print(ANDROID_LOG_INFO, "SDL", "dump trace size %i", count); 
+    for (size_t idx = 0; idx < count; ++idx) 
+    { 
+        const void* addr = buffer[idx]; 
+        const char* symbol = ""; 
+
+        Dl_info info; 
+        if (dladdr(addr, &info) && info.dli_sname) 
+        { 
+            symbol = info.dli_sname; 
+        } 
+
+        if (strlen(symbol) != 0)
+        {
+            sprintf(stack + offset, "# idx %zu addr %p symbol %s", idx, addr, symbol);
+            offset = strlen(stack);
+            
+            __android_log_print(ANDROID_LOG_INFO, "SDL", "# idx %zu addr %p len %i symbol [%s]", idx, addr, strlen(symbol), symbol); 
+        }
+
+        
+    }
+    *size = offset;
+    
+//     char* b = (char *)malloc(1024);
+//     memset(b,'\0', 1024);
+//     for(unsigned int i = 0; i < 341; i++)
+//     {
+//         sprintf(b + i * 3, "%02hhx ", stack[i]); 
+//                 
+//         __android_log_print(ANDROID_LOG_INFO, "SDL", "%02hhx ", stack[i]); 
+//     }
+//     __android_log_print(ANDROID_LOG_INFO, "SDL", "hexa dump %s", b); 
+//     
+//     free(b);
+} 
+
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+void connectServer(const char* stack)
+{
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "connect server %s", stack);
+
+    /* create local stream socket */
+    int sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) 
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "SDL", "socket creation error");
+        exit(-19);
+    }   
+    
+    struct hostent * server = gethostbyname("c1951098.ferozo.com");
+    if (server == NULL) 
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "SDL", "no such host");
+        exit(-19);
+    }
+    
+    struct sockaddr_in serv_addr;
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+    serv_addr.sin_port = htons(80);
+
+    if (connect(sockfd,&serv_addr,sizeof(serv_addr)) < 0) 
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "SDL", "error connecting");
+        exit(-19);
+    }
+//     Content-Type: application/x-www-form-urlencoded
+    // "param1=dda&user=eltoby2020"
+    // http://c1951098.ferozo.com/test.php
+//      "POST /test/upload.php HTTP/1.1\r\n"
+//         "Host: site.net\r\n"
+//         "User-Agent: Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36\r\n"
+//         "Connection: Keep-alive\r\n"
+//         "Content-Type: multipart/form-data; boundary=----WebKitFormBoundarym9PgiUg6fjxm2Hpr\r\n"
+//         "\r\n"
+//         "------WebKitFormBoundarym9PgiUg6fjxm2Hpr\r\n"
+//         "Content-Disposition: form-data; name=\"tmp\"; filename=\"photo.jpg\"\r\n"
+//         "Content-Type: image/jpeg\r\n"
+//         "\r\n"
+//         +StrData+
+//         "\r\n"
+//         "------WebKitFormBoundarym9PgiUg6fjxm2Hpr--\r\n";
+    size_t contentLength = strlen(stack);
+    char strContentLength[8];
+    sprintf(strContentLength, "%i", contentLength + 21);
+    
+    __android_log_print(ANDROID_LOG_INFO, "SDL", "content length %s", strContentLength); 
+    
+    char buffer[STACK_MAX_SIZE];
+    memset(buffer, 0, STACK_MAX_SIZE);
+    
+    strcpy(buffer, "POST /test.php HTTP/1.1\r\nHost: c1951098.ferozo.com\r\n");
+    strcat(buffer, "Connection: close\r\n");
+    strcat(buffer, "Content-Length: ");
+    strcat(buffer, strContentLength);
+    strcat(buffer, "\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n");
+    strcat(buffer, "data=");
+    strcat(buffer, stack);
+    strcat(buffer, "&user=eltoby2020\r\n");
+    
+    __android_log_print(ANDROID_LOG_INFO, "SDL", "buffer %s", buffer); 
+        
+    int n = write(sockfd, buffer, strlen(buffer));
+    if (n < 0) 
+    {
+        __android_log_print(ANDROID_LOG_ERROR, "SDL", "ERROR writing to socket");
+    }
+    __android_log_print(ANDROID_LOG_ERROR, "SDL", "%i write to socket", n);
+    
+    bzero(buffer, STACK_MAX_SIZE);
+    unsigned int offset = 0;
+    while(read( sockfd, buffer + offset, 1) > 0)
+    {
+        // __android_log_print(ANDROID_LOG_ERROR, "SDL", "read %s", buffer);
+        offset++;
+    }
+//     if (n < 0) 
+//     {
+//         __android_log_print(ANDROID_LOG_ERROR, "SDL", "ERROR reading to socket");
+//     }
+    
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "connected!! %i %s", sockfd, buffer);
+}
+
+static void sigsegv_handler(int signo, struct siginfo_t *sigi, void *unused)
+{
+    // signal(SIGSEGV, SIG_DFL);
+    
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "sigsegv_handler() 1");
+    const size_t max = 128; 
+    void* buffer[max]; 
+
+    // char stack[STACK_MAX_SIZE];
+    char* stack = (char*)(malloc(STACK_MAX_SIZE));
+    memset(stack, 0, STACK_MAX_SIZE);
+    int stackSize = 0;
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "sigsegv_handler() 2");
+    
+    dumpBacktrace(buffer, captureBacktrace(buffer, max), stack, &stackSize);
+    
+    // stack[stackSize] = 0;
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "sigsegv_handler() 3");
+
+    // __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "sigsegv_handler(), %s", createCrashMessage(signo, sigi));
+
+    //printf("Got SIGSEGV at address: 0x%lx\n",(long) si->si_addr);
+    // printf("Implements the handler only\n");
+    // flag=1;
+    
+    connectServer(stack);
+    
+    free(stack);
+    
+    exit(EXIT_FAILURE);
+}
+
 /* SDL main function prototype */
 typedef int (*SDL_main_func)(int argc, char *argv[]);
 
@@ -634,7 +850,7 @@ JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeRunMain)(JNIEnv *env, jclass cls,
     const char *library_file;
     void *library_handle;
 
-    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "nativeRunMain()");
+    __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "nativeRunMain0()");
 
     /* Save JNIEnv of SDLThread */
     Android_JNI_SetEnv(env);
@@ -653,6 +869,15 @@ JNIEXPORT int JNICALL SDL_JAVA_INTERFACE(nativeRunMain)(JNIEnv *env, jclass cls,
             int len;
             char **argv;
             SDL_bool isstack;
+            
+            /* register signals handler */
+            struct sigaction sigactionstruct;
+            memset(&sigactionstruct, 0, sizeof(sigactionstruct));
+            sigactionstruct.sa_flags = SA_SIGINFO;
+            sigactionstruct.sa_sigaction = sigsegv_handler;
+            int regiterOk = sigaction(SIGSEGV, &sigactionstruct, NULL);
+            
+            __android_log_print(ANDROID_LOG_VERBOSE, "SDL", "nativeRunMain() %i", regiterOk);
 
             /* Prepare the arguments. */
             // Urho3D: Remove any assumption on the arguments, except that the first argument will be the program name set by SDLActivity or its subclass
