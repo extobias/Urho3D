@@ -110,7 +110,7 @@ public:
 
     void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
-    void SetCameraNode(Node* node);
+    // void SetCameraNode(Node* node);
 
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
@@ -172,6 +172,10 @@ private:
 
     ResourceContainer& FindContainer(const StringHash& type);
 
+    void AttachCamera();
+
+    SharedPtr<Node> cameraNode_;
+
     SharedPtr<EditorSelection> selection_;
 
     SharedPtr<EditorGuizmo> guizmo_;
@@ -181,8 +185,6 @@ private:
     Vector3 hitPosition_{ Vector3::ZERO };
 
     EditorMode mode_ { SELECT_OBJECT };
-
-    Node* cameraNode_;
 
     ResourceDir resources_;
 

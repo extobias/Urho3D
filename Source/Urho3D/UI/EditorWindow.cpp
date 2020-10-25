@@ -24,6 +24,7 @@
 #include "../UI/EditorSelection.h"
 #include "../UI/EditorModelDebug.h"
 #include "../UI/UI.h"
+#include "../Urho2D/Drawable2D.h"
 
 #include "imgui.h"
 #include "ImGuizmo.h"
@@ -35,9 +36,9 @@ extern const char* UI_CATEGORY;
 
 EditorWindow::EditorWindow(Context* context) :
     ImGuiElement(context),
+    cameraNode_(new Node(context)),
     selection_(new EditorSelection(context)),
 //    debugText_(""),
-    cameraNode_(nullptr),
     guizmo_(nullptr),
     currentModel_(0),
     currentSprite_(0),
@@ -49,6 +50,11 @@ EditorWindow::EditorWindow(Context* context) :
 //    {
 //        plotVarsOffset_[i] = 0;
 //    }
+
+    cameraNode_->SetName("EditorCamera");
+    cameraNode_->SetTemporary(true);
+    Camera* camera = cameraNode_->CreateComponent<Camera>();
+    camera->SetOrthographic(true);
 
     LoadResources();
 
@@ -64,13 +70,13 @@ void EditorWindow::RegisterObject(Context* context)
     context->RegisterFactory<EditorWindow>(UI_CATEGORY);
 }
 
-void EditorWindow::SetCameraNode(Node* node)
-{
-    cameraNode_ = node;
+//void EditorWindow::SetCameraNode(Node* node)
+//{
+//    cameraNode_ = node;
 
-    if (guizmo_)
-        guizmo_->SetCameraNode(node);
-}
+//    if (guizmo_)
+//        guizmo_->SetCameraNode(node);
+//}
 
 void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
@@ -274,7 +280,7 @@ bool EditorWindow::LoadScene()
         ResourceFile resource = rc.resources_.Values().At(ci);
         SharedPtr<File> file = cache->GetFile(resource.path + resource.name);
 
-        cameraNode_ = nullptr;
+        // cameraNode_ = nullptr;
         selection_->Clear();
 
         if (scene_->LoadAsyncXML(file))
@@ -554,6 +560,27 @@ void EditorWindow::SetScene(Scene* scene)
     {
         guizmo_->SetScene(scene);
     }
+
+    AttachCamera();
+}
+
+void EditorWindow::AttachCamera()
+{
+    // editor_->SetCameraNode(gCameraNode);
+    Graphics* graphics = GetSubsystem<Graphics>();
+
+    cameraNode_->SetParent(scene_);
+    Camera* camera = cameraNode_->GetComponent<Camera>();
+    camera->SetOrthoSize((float)graphics->GetHeight() * PIXEL_SIZE);
+    camera->SetZoom(1.0f);
+
+    Renderer* renderer = GetSubsystem<Renderer>();
+
+    // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
+    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
+    unsigned index = renderer->GetNumViewports();
+    URHO3D_LOGERRORF("EditorWindow.AttachCamera: viewport size <%u>", index);
+    renderer->SetViewport(0, viewport);
 }
 
 void EditorWindow::Render(float timeStep)
