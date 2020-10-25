@@ -142,16 +142,16 @@ void TBWidgetAnimationRect::OnAnimationStop(bool aborted)
 
 // == TBWidgetsAnimationManager =====================================================
 
-TBWidgetsAnimationManager widgets_animation_manager;
+// TBWidgetsAnimationManager widgets_animation_manager;
 
 void TBWidgetsAnimationManager::Init(TBCore* core)
 {
-    TBWidgetListener::AddGlobalListener(core, &widgets_animation_manager);
+    TBWidgetListener::AddGlobalListener(core, &core->widgets_animation_manager);
 }
 
 void TBWidgetsAnimationManager::Shutdown(TBCore* core)
 {
-    TBWidgetListener::RemoveGlobalListener(core, &widgets_animation_manager);
+    TBWidgetListener::RemoveGlobalListener(core, &core->widgets_animation_manager);
 }
 
 void TBWidgetsAnimationManager::AbortAnimations(TBWidget *widget)
