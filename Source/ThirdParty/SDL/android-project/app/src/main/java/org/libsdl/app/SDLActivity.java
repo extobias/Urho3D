@@ -32,6 +32,7 @@ import android.hardware.*;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ApplicationInfo;
+import android.content.res.AssetManager;
 
 import com.github.urho3d.UrhoActivity;
 
@@ -92,6 +93,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
     // This is what SDL runs in. It invokes SDL_main(), eventually
     protected static Thread mSDLThread;
+    
+    protected static AssetManager mAssetManager;
 
     protected static SDLGenericMotionListener_API12 getMotionListener() {
         if (mMotionListener == null) {
@@ -210,10 +213,10 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
            return;
         }
-
+     
         // Set up JNI
         SDL.setupJNI();
-
+        
         // Initialize state
         SDL.initialize();
 
@@ -235,6 +238,9 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         mCurrentOrientation = SDLActivity.getCurrentOrientation();
         // Only record current orientation
         SDLActivity.onNativeOrientationChanged(mCurrentOrientation);
+        
+        mAssetManager = this.getAssets();
+        SDLActivity.setupAssetManager(mAssetManager);
 
         setContentView(mLayout);
 
@@ -757,7 +763,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     public static native void nativeSetenv(String name, String value);
     public static native void onNativeOrientationChanged(int orientation);
     public static native void nativeAddTouch(int touchId, String name);
-
+    public static native void setupAssetManager(Object assetManager);
+    
     /**
      * This method is called by SDL using JNI.
      */
