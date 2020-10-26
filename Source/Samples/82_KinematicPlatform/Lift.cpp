@@ -44,7 +44,7 @@ Lift::Lift(Context* context)
     , buttonPressedHeight_(15.0f)
     , standingOnButton_(false)
 {
-    SetUpdateEventMask(0);
+    SetUpdateEventMask(USE_NO_EVENT);
 }
 
 Lift::~Lift()

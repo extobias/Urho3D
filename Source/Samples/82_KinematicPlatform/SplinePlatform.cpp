@@ -36,7 +36,7 @@ SplinePlatform::SplinePlatform(Context* context)
     : LogicComponent(context)
     , rotation_(0.3f)
 {
-    SetUpdateEventMask(0);
+    SetUpdateEventMask(USE_NO_EVENT);
 }
 
 SplinePlatform::~SplinePlatform()

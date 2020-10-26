@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2017 the Urho3D project.
+// Copyright (c) 2008-2020 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@
 #include "../Physics/PhysicsWorld.h"
 #include "../Physics/RaycastVehicle.h"
 #include "../Physics/RigidBody.h"
+#include "../Physics/SoftBody.h"
 #include "../Scene/Scene.h"
 #include "../Scene/SceneEvents.h"
 
@@ -44,9 +45,15 @@
 #include <Bullet/BulletCollision/CollisionDispatch/btInternalEdgeUtility.h>
 #include <Bullet/BulletCollision/CollisionShapes/btBoxShape.h>
 #include <Bullet/BulletCollision/CollisionShapes/btSphereShape.h>
+#include <Bullet/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 #include <Bullet/BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
 #include <Bullet/BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <Bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
+
+#include <Bullet/BulletDynamics/Dynamics/btRigidBody.h>
+#include <Bullet/BulletCollision/CollisionShapes/btScaledBvhTriangleMeshShape.h>
+#include <Bullet/BulletCollision/CollisionShapes/btMaterial.h>
 
 extern ContactAddedCallback gContactAddedCallback;
 
@@ -57,7 +64,6 @@ const char* PHYSICS_CATEGORY = "Physics";
 extern const char* SUBSYSTEM_CATEGORY;
 
 static const int MAX_SOLVER_ITERATIONS = 256;
-static const int DEFAULT_FPS = 60;
 static const Vector3 DEFAULT_GRAVITY = Vector3(0.0f, -9.81f, 0.0f);
 
 PhysicsWorldConfig PhysicsWorld::config;
@@ -80,13 +86,40 @@ void InternalTickCallback(btDynamicsWorld* world, btScalar timeStep)
 static bool CustomMaterialCombinerCallback(btManifoldPoint& cp, const btCollisionObjectWrapper* colObj0Wrap, int partId0,
     int index0, const btCollisionObjectWrapper* colObj1Wrap, int partId1, int index1)
 {
-    btAdjustInternalEdgeContacts(cp, colObj1Wrap, colObj0Wrap, partId1, index1);
+    // Ensure that shape type of colObj1Wrap is either btScaledBvhTriangleMeshShape or btBvhTriangleMeshShape
+    // because btAdjustInternalEdgeContacts doesn't check types properly. Bug in the Bullet?
+    const int shapeType = colObj1Wrap->getCollisionObject()->getCollisionShape()->getShapeType();
+    if (shapeType == SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE || shapeType == TRIANGLE_SHAPE_PROXYTYPE
+        || shapeType == MULTIMATERIAL_TRIANGLE_MESH_PROXYTYPE)
+    {
+        btAdjustInternalEdgeContacts(cp, colObj1Wrap, colObj0Wrap, partId1, index1);
+    }
 
     cp.m_combinedFriction = colObj0Wrap->getCollisionObject()->getFriction() * colObj1Wrap->getCollisionObject()->getFriction();
     cp.m_combinedRestitution =
         colObj0Wrap->getCollisionObject()->getRestitution() * colObj1Wrap->getCollisionObject()->getRestitution();
 
     return true;
+}
+
+void RemoveCachedGeometryImpl(CollisionGeometryDataCache& cache, Model* model)
+{
+    for (auto i = cache.Begin(); i != cache.End();)
+    {
+        auto current = i++;
+        if (current->first_.first_ == model)
+            cache.Erase(current);
+    }
+}
+
+void CleanupGeometryCacheImpl(CollisionGeometryDataCache& cache)
+{
+    for (auto i = cache.Begin(); i != cache.End();)
+    {
+        auto current = i++;
+        if (current->second_.Refs() == 1)
+            cache.Erase(current);
+    }
 }
 
 /// Callback for physics world queries.
@@ -101,9 +134,9 @@ struct PhysicsQueryCallback : public btCollisionWorld::ContactResultCallback
 
     /// Add a contact result.
     virtual btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* colObj0Wrap, int, int,
-        const btCollisionObjectWrapper* colObj1Wrap, int, int)
+        const btCollisionObjectWrapper* colObj1Wrap, int, int) override
     {
-        RigidBody* body = reinterpret_cast<RigidBody*>(colObj0Wrap->getCollisionObject()->getUserPointer());
+        auto* body = reinterpret_cast<RigidBody*>(colObj0Wrap->getCollisionObject()->getUserPointer());
         if (body && !result_.Contains(body) && (body->GetCollisionLayer() & collisionMask_))
             result_.Push(body);
         body = reinterpret_cast<RigidBody*>(colObj1Wrap->getCollisionObject()->getUserPointer());
@@ -118,48 +151,17 @@ struct PhysicsQueryCallback : public btCollisionWorld::ContactResultCallback
     unsigned collisionMask_;
 };
 
-
-PhysicsWorld::PhysicsWorld(Context* context) :
+PhysicsWorld::PhysicsWorld(Context* context, bool softbodyWorld) :
     Component(context),
-    collisionConfiguration_(0),
     fps_(DEFAULT_FPS),
-    maxSubSteps_(0),
-    timeAcc_(0.0f),
-    maxNetworkAngularVelocity_(DEFAULT_MAX_NETWORK_ANGULAR_VELOCITY),
-    updateEnabled_(true),
-    interpolation_(true),
-    internalEdge_(true),
-    applyingTransforms_(false),
-    simulating_(false),
-    debugRenderer_(0),
-    ghostPairCallback(0),
-    debugMode_(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawConstraints | btIDebugDraw::DBG_DrawConstraintLimits)
+    debugMode_(btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawConstraints | btIDebugDraw::DBG_DrawConstraintLimits),
+    useSoftBodyWorld_(softbodyWorld),
+    ghostPairCallback(0)
 {
     gContactAddedCallback = CustomMaterialCombinerCallback;
 
-    if (PhysicsWorld::config.collisionConfig_)
-        collisionConfiguration_ = PhysicsWorld::config.collisionConfig_;
-    else
-        collisionConfiguration_ = new btDefaultCollisionConfiguration();
-
-    collisionDispatcher_ = new btCollisionDispatcher(collisionConfiguration_);
-    broadphase_ = new btDbvtBroadphase();
-    solver_ = new btSequentialImpulseConstraintSolver();
-    world_ = new btDiscreteDynamicsWorld(collisionDispatcher_.Get(), broadphase_.Get(), solver_.Get(), collisionConfiguration_);
-
-    world_->setGravity(ToBtVector3(DEFAULT_GRAVITY));
-    world_->getDispatchInfo().m_useContinuous = true;
-    world_->getSolverInfo().m_splitImpulse = false; // Disable by default for performance
-    world_->setDebugDrawer(this);
-    world_->setInternalTickCallback(InternalPreTickCallback, static_cast<void*>(this), true);
-    world_->setInternalTickCallback(InternalTickCallback, static_cast<void*>(this), false);
-    world_->setSynchronizeAllMotionStates(true);
-
-    // Add ghost pair callback
-    ghostPairCallback = new btGhostPairCallback();
-    world_->getBroadphase()->getOverlappingPairCache()->setInternalGhostPairCallback(ghostPairCallback);
+    CreateDynaymicWorld();
 }
-
 
 PhysicsWorld::~PhysicsWorld()
 {
@@ -174,6 +176,13 @@ PhysicsWorld::~PhysicsWorld()
 
         for (PODVector<CollisionShape*>::Iterator i = collisionShapes_.Begin(); i != collisionShapes_.End(); ++i)
             (*i)->ReleaseShape();
+
+        // sparsesdf must be reset before removing softbodies
+        if (softBodyWorldInfo_)
+            softBodyWorldInfo_->m_sparsesdf.Reset();
+
+        for (PODVector<SoftBody*>::Iterator i = softBodies_.Begin(); i != softBodies_.End(); ++i)
+            (*i)->ReleaseBody();
     }
 
     world_.Reset();
@@ -184,7 +193,7 @@ PhysicsWorld::~PhysicsWorld()
     // Delete configuration only if it was the default created by PhysicsWorld
     if (!PhysicsWorld::config.collisionConfig_)
         delete collisionConfiguration_;
-    collisionConfiguration_ = 0;
+    collisionConfiguration_ = nullptr;
 
     // Delete GhostPair callback
     if (ghostPairCallback)
@@ -206,8 +215,75 @@ void PhysicsWorld::RegisterObject(Context* context)
     URHO3D_ATTRIBUTE("Interpolation", bool, interpolation_, true, AM_FILE);
     URHO3D_ATTRIBUTE("Internal Edge Utility", bool, internalEdge_, true, AM_DEFAULT);
     URHO3D_ACCESSOR_ATTRIBUTE("Split Impulse", GetSplitImpulse, SetSplitImpulse, bool, false, AM_DEFAULT);
+    URHO3D_ATTRIBUTE("SoftBody World", bool, useSoftBodyWorld_, false, AM_DEFAULT);
 }
 
+void PhysicsWorld::OnSetAttribute(const AttributeInfo& attr, const Variant& src)
+{
+    Serializable::OnSetAttribute(attr, src);
+
+    if (useSoftBodyWorld_ && !softBodyWorldInfo_)
+    {
+        CreateDynaymicWorld();
+    }
+}
+
+void PhysicsWorld::CreateDynaymicWorld()
+{
+    // Delete configuration only if it was the default created by PhysicsWorld
+    if (collisionConfiguration_)
+        delete collisionConfiguration_;
+    collisionConfiguration_ = 0;
+
+    // create common classes
+    broadphase_ = new btDbvtBroadphase();
+    solver_ = new btSequentialImpulseConstraintSolver();
+
+    if (!useSoftBodyWorld_)
+    {
+        if (PhysicsWorld::config.collisionConfig_)
+            collisionConfiguration_ = PhysicsWorld::config.collisionConfig_;
+        else
+            collisionConfiguration_ = new btDefaultCollisionConfiguration();
+
+        collisionDispatcher_ = new btCollisionDispatcher(collisionConfiguration_);
+        world_ = new btDiscreteDynamicsWorld(collisionDispatcher_.Get(), broadphase_.Get(), solver_.Get(), collisionConfiguration_);
+    }
+    else
+    {
+        collisionConfiguration_ = new btSoftBodyRigidBodyCollisionConfiguration();
+        collisionDispatcher_ = new btCollisionDispatcher(collisionConfiguration_);
+        world_ = new btSoftRigidDynamicsWorld(collisionDispatcher_.Get(), broadphase_.Get(), solver_.Get(), collisionConfiguration_);
+    }
+
+    world_->setGravity(ToBtVector3(DEFAULT_GRAVITY));
+    world_->getDispatchInfo().m_useContinuous = true;
+    world_->getSolverInfo().m_splitImpulse = false; // Disable by default for performance
+    world_->setDebugDrawer(this);
+    world_->setInternalTickCallback(InternalPreTickCallback, static_cast<void*>(this), true);
+    world_->setInternalTickCallback(InternalTickCallback, static_cast<void*>(this), false);
+    world_->setSynchronizeAllMotionStates(true);
+
+    if (useSoftBodyWorld_)
+    {
+        softBodyWorldInfo_ = &((btSoftRigidDynamicsWorld*)world_.Get())->getWorldInfo();
+        softBodyWorldInfo_->m_dispatcher = collisionDispatcher_.Get();
+        softBodyWorldInfo_->m_broadphase = broadphase_.Get();
+        softBodyWorldInfo_->air_density = (btScalar)1.0;
+        softBodyWorldInfo_->water_density = 0;
+        softBodyWorldInfo_->water_offset = 0;
+        softBodyWorldInfo_->water_normal = btVector3(0, 0, 0);
+        softBodyWorldInfo_->m_gravity = world_->getGravity();
+        softBodyWorldInfo_->m_sparsesdf.Initialize();
+    }
+
+        colors.m_activeObject = btVector3(0.0f, 0.0f, 0.0f);
+        colors.m_deactivatedObject = btVector3(0.0f, 0.0f, 1.0f);
+	
+    // Add ghost pair callback
+    ghostPairCallback = new btGhostPairCallback();
+    world_->getBroadphase()->getOverlappingPairCache()->setInternalGhostPairCallback(ghostPairCallback);
+}
 bool PhysicsWorld::isVisible(const btVector3& aabbMin, const btVector3& aabbMax)
 {
     if (debugRenderer_)
@@ -231,7 +307,7 @@ void PhysicsWorld::DrawDebugGeometry(DebugRenderer* debug, bool depthTest)
         debugRenderer_ = debug;
         debugDepthTest_ = depthTest;
         world_->debugDrawWorld();
-        debugRenderer_ = 0;
+        debugRenderer_ = nullptr;
     }
 }
 
@@ -298,6 +374,11 @@ void PhysicsWorld::Update(float timeStep)
             else
                 ++i;
         }
+    }
+    // SoftBody clean up
+    if (softBodyWorldInfo_)
+    {
+        softBodyWorldInfo_->m_sparsesdf.GarbageCollect();
     }
 }
 
@@ -421,27 +502,177 @@ void PhysicsWorld::RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, f
         result.normal_ = Vector3::ZERO;
         result.distance_ = M_INFINITY;
         result.hitFraction_ = 0.0f;
-        result.body_ = 0;
+        result.body_ = nullptr;
     }
 }
 
-void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask)
+struct VertexAccessor
+{
+        const unsigned char* base;
+        unsigned int stride;
+
+        VertexAccessor(const unsigned char* ptr, unsigned int stride, unsigned int offset)
+                : base(ptr + offset)
+                , stride(stride)
+        {
+        }
+
+        btVector3 operator[](unsigned int i) const
+        {
+
+                float *ptr = (float*)(base + stride * i);
+                return btVector3(ptr[0], ptr[1], ptr[2]);
+                //            return *(const btVector3*) (base + stride * i);
+        }
+
+        float GetFloat(unsigned int i) const
+        {
+                float *ptr = (float*)(base + stride * i);
+                return ptr[0];
+        }
+
+        unsigned GetUnsigned(unsigned int i) const
+        {
+                unsigned *ptr = (unsigned*)(base + stride * i);
+                return ptr[0];
+        }
+};
+
+btVector3 BarycentricCoordinates(const btVector3& position, const btVector3& p1, const btVector3& p2, const btVector3& p3)
+{
+    btVector3 edge1 = p2 - p1;
+    btVector3 edge2 = p3 - p1;
+
+    // Area of triangle ABC
+    btScalar p1p2p3 = edge1.cross(edge2).length2();
+    // Area of BCP
+    btScalar p2p3p = (p3 - p2).cross(position - p2).length2();
+    // Area of CAP
+    btScalar p3p1p = edge2.cross(position - p3).length2();
+
+    btScalar s = btSqrt(p2p3p / p1p2p3);
+    btScalar t = btSqrt(p3p1p / p1p2p3);
+    btScalar w = 1.0f - s - t;
+
+    //#ifdef BUILD_DEBUG
+    //              // Unit test...
+    //              btVector3 regen_position = s * p1 + t * p2 + w * p3;
+    //              btAssert((regen_position - position).length2() < 0.0001f);
+    //#endif
+
+    return btVector3(s, t, w);
+}
+
+btVector3 PhysicsWorld::InterpolateMeshNormal(const btTransform& transform, btCollisionShape* shape,
+                              int subpart, int triangle, const btVector3& position, DebugRenderer* debug)
+{
+    URHO3D_PROFILE(PhysicsInterpolateMeshNormal);
+    // Get the geometry from somewhere...
+//    btAssert(shape->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE);
+
+//    btTriangleMeshShape* mesh_shape = static_cast<btTriangleMeshShape *>(shape);
+//    btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
+    btScaledBvhTriangleMeshShape* scaled_mesh = static_cast<btScaledBvhTriangleMeshShape*>(shape);
+    btBvhTriangleMeshShape* mesh_shape = scaled_mesh->getChildShape();
+    btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
+
+    const unsigned char* vertexbase;
+    int numverts;
+    PHY_ScalarType type;
+    int stride;
+
+    const unsigned char *indexbase;
+    int indexstride;
+    int numfaces;
+    PHY_ScalarType indicestype;
+
+    mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
+                                                     &indexbase, indexstride, numfaces, indicestype, subpart);
+
+//     FIXME: handle unsigned int indices
+//    long int offset = (unsigned int)(triangle * indexstride);
+//    unsigned int* ptr = (unsigned int*)(indexbase);
+
+    const unsigned short* ptr = (const unsigned short*)(indexbase + triangle * indexstride);
+    unsigned int i = ptr[0];
+    unsigned int j = ptr[1];
+    unsigned int k = ptr[2];
+//    URHO3D_LOGERRORF("physicsworld.interpolatemeshnormal: indices <%u,%u,%u>", i, j, k);
+
+    MaterialTriangleMeshInterface* my_mesh = static_cast<MaterialTriangleMeshInterface*>(mesh_interface);
+    btAssert(my_mesh);
+
+    VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
+    VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
+
+    btVector3 barry = BarycentricCoordinates(transform.invXform(position), positions[i], positions[j], positions[k]);
+
+//    URHO3D_LOGERRORF("barry <%f, %f, %f> sum <%f>", barry.x(), barry.y(), barry.z(), barry.x() + barry.y() + barry.z());
+//    URHO3D_LOGERRORF("normali <%f, %f, %f> normalj <%f, %f, %f> normalk <%f, %f, %f>"
+//                     ,normals[i].getX(), normals[i].getY(), normals[i].getZ()
+//                     ,normals[j].getX(), normals[j].getY(), normals[j].getZ()
+//                     ,normals[k].getX(), normals[k].getY(), normals[k].getZ() );
+    // Interpolate from barycentric coordinates
+    btVector3 result = barry.x() * normals[i] + barry.y() * normals[j] + barry.z() * normals[k];
+
+    // Transform back into world space
+    result = transform.getBasis() * result;
+    result.normalize();
+
+    mesh_interface->unLockReadOnlyVertexBase(subpart);
+
+    if (debug)
+    {
+        // positions
+        Vector3 p0 = ToVector3(transform.getOrigin() + transform.getBasis() * positions[i]);
+//        Sphere s0(p0, 1.0f);
+//        debug->AddSphere(s0, Color::RED);
+
+        Vector3 p1 = ToVector3(transform.getOrigin() + transform.getBasis() * positions[j]);
+//        Sphere s1(p1, 1.0f);
+//        debug->AddSphere(s1, Color::GREEN);
+
+        Vector3 p2 = ToVector3(transform.getOrigin() + transform.getBasis() * positions[k]);
+//        Sphere s2(p2, 1.0f);
+//        debug->AddSphere(s2, Color::BLUE);
+
+        // normals
+//        debug->AddLine(p0, p0 + ToVector3(normals[i]), Color::RED);
+//        debug->AddLine(p1, p1 + ToVector3(normals[j]), Color::GREEN);
+//        debug->AddLine(p2, p2 + ToVector3(normals[k]), Color::BLUE);
+
+//        Vector3 pos = ToVector3(position);
+//        debug->AddLine(pos, pos + ToVector3(result), Color::BLUE);
+
+//        Sphere sb(ToVector3(transform.invXform(position) + barry), 0.5f);
+//        Sphere sb(ToVector3(position), 0.5f);
+//        debug->AddSphere(sb, Color::MAGENTA);
+    }
+
+    return result;
+}
+
+void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask, float overlapDistance, bool interpolateNormal)
 {
     URHO3D_PROFILE(PhysicsRaycastSingleSegmented);
+
+    assert(overlapDistance < segmentDistance);
 
     if (maxDistance >= M_INFINITY)
         URHO3D_LOGWARNING("Infinite maxDistance in physics raycast is not supported");
 
+    const btVector3 direction = ToBtVector3(ray.direction_);
+    const auto count = CeilToInt(maxDistance / segmentDistance);
+
     btVector3 start = ToBtVector3(ray.origin_);
-    btVector3 end;
-    btVector3 direction = ToBtVector3(ray.direction_);
-    float distance;
+    // overlap a bit with the previous segment for better precision, to avoid missing hits
+    const btVector3 overlap = direction * overlapDistance;
+    float remainingDistance = maxDistance;
 
-    for (float remainingDistance = maxDistance; remainingDistance > 0; remainingDistance -= segmentDistance)
+    for (auto i = 0; i < count; ++i)
     {
-        distance = Min(remainingDistance, segmentDistance);
-
-        end = start + distance * direction;
+        const float distance = Min(remainingDistance, segmentDistance); // The last segment may be shorter
+        const btVector3 end = start + distance * direction;
 
         btCollisionWorld::ClosestRayResultCallback rayCallback(start, end);
         rayCallback.m_collisionFilterGroup = (short)0xffff;
@@ -452,16 +683,48 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
         if (rayCallback.hasHit())
         {
             result.position_ = ToVector3(rayCallback.m_hitPointWorld);
-            result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
             result.distance_ = (result.position_ - ray.origin_).Length();
             result.hitFraction_ = rayCallback.m_closestHitFraction;
             result.body_ = static_cast<RigidBody*>(rayCallback.m_collisionObject->getUserPointer());
-            // No need to cast the rest of the segments
+
+            result.shapePart_ = rayCallback.m_shapePart;
+            result.triangleIndex_ = rayCallback.m_triangleIndex;
+
+            if (interpolateNormal)
+            {
+                const btRigidBody* hitBody = btRigidBody::upcast(rayCallback.m_collisionObject);
+                btCollisionShape* hitShape = (btCollisionShape*)hitBody->getCollisionShape();
+                if (hitShape->getShapeType() == SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE)
+                {
+                    btVector3 in = InterpolateMeshNormal(hitBody->getWorldTransform(),
+                                                  hitShape, result.shapePart_, result.triangleIndex_,
+                                                  rayCallback.m_hitPointWorld, GetComponent<DebugRenderer>());
+
+                    //URHO3D_LOGERRORF("shapepart <%u> triangleindex <%u>", result.shapePart_, result.triangleIndex_);
+                    //URHO3D_LOGERRORF("interpolated normal <%f, %f, %f>", in.getX(), in.getY(), in.getZ());
+                    result.normal_ = ToVector3(in);
+                    // result.normalOld_ = ToVector3(rayCallback.m_hitNormalWorld);
+                }
+                else
+                    result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
+            }
+            else
+            {
+                result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
+            }
+
+            Node* node = result.body_->GetNode();
+            Vector3 scale = node->GetScale();
+
+            result.collisionMask_ = GetCollisionMask(rayCallback.m_collisionObject, rayCallback.m_hitPointWorld,
+                                                     rayCallback.m_shapePart, rayCallback.m_triangleIndex, ToBtVector3(scale), result.vc_);
+
             return;
         }
 
         // Use the end position as the new start position
-        start = end;
+        start = end - overlap;
+        remainingDistance -= segmentDistance;
     }
 
     // Didn't hit anything
@@ -469,7 +732,7 @@ void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ra
     result.normal_ = Vector3::ZERO;
     result.distance_ = M_INFINITY;
     result.hitFraction_ = 0.0f;
-    result.body_ = 0;
+    result.body_ = nullptr;
 }
 
 void PhysicsWorld::SphereCast(PhysicsRaycastResult& result, const Ray& ray, float radius, float maxDistance, unsigned collisionMask)
@@ -500,7 +763,7 @@ void PhysicsWorld::SphereCast(PhysicsRaycastResult& result, const Ray& ray, floa
     }
     else
     {
-        result.body_ = 0;
+        result.body_ = nullptr;
         result.position_ = Vector3::ZERO;
         result.normal_ = Vector3::ZERO;
         result.distance_ = M_INFINITY;
@@ -514,7 +777,7 @@ void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, CollisionShape* shap
     if (!shape || !shape->GetCollisionShape())
     {
         URHO3D_LOGERROR("Null collision shape for convex cast");
-        result.body_ = 0;
+        result.body_ = nullptr;
         result.position_ = Vector3::ZERO;
         result.normal_ = Vector3::ZERO;
         result.distance_ = M_INFINITY;
@@ -523,9 +786,9 @@ void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, CollisionShape* shap
     }
 
     // If shape is attached in a rigidbody, set its collision group temporarily to 0 to make sure it is not returned in the sweep result
-    RigidBody* bodyComp = shape->GetComponent<RigidBody>();
-    btRigidBody* body = bodyComp ? bodyComp->GetBody() : (btRigidBody*)0;
-    btBroadphaseProxy* proxy = body ? body->getBroadphaseProxy() : (btBroadphaseProxy*)0;
+    auto* bodyComp = shape->GetComponent<RigidBody>();
+    btRigidBody* body = bodyComp ? bodyComp->GetBody() : nullptr;
+    btBroadphaseProxy* proxy = body ? body->getBroadphaseProxy() : nullptr;
     short group = 0;
     if (proxy)
     {
@@ -555,7 +818,7 @@ void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, btCollisionShape* sh
     if (!shape)
     {
         URHO3D_LOGERROR("Null collision shape for convex cast");
-        result.body_ = 0;
+        result.body_ = nullptr;
         result.position_ = Vector3::ZERO;
         result.normal_ = Vector3::ZERO;
         result.distance_ = M_INFINITY;
@@ -566,7 +829,7 @@ void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, btCollisionShape* sh
     if (!shape->isConvex())
     {
         URHO3D_LOGERROR("Can not use non-convex collision shape for convex cast");
-        result.body_ = 0;
+        result.body_ = nullptr;
         result.position_ = Vector3::ZERO;
         result.normal_ = Vector3::ZERO;
         result.distance_ = M_INFINITY;
@@ -594,7 +857,7 @@ void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, btCollisionShape* sh
     }
     else
     {
-        result.body_ = 0;
+        result.body_ = nullptr;
         result.position_ = Vector3::ZERO;
         result.normal_ = Vector3::ZERO;
         result.distance_ = M_INFINITY;
@@ -604,20 +867,9 @@ void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, btCollisionShape* sh
 
 void PhysicsWorld::RemoveCachedGeometry(Model* model)
 {
-    for (HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator i = triMeshCache_.Begin();
-         i != triMeshCache_.End();)
-    {
-        HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator current = i++;
-        if (current->first_.first_ == model)
-            triMeshCache_.Erase(current);
-    }
-    for (HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator i = convexCache_.Begin();
-         i != convexCache_.End();)
-    {
-        HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator current = i++;
-        if (current->first_.first_ == model)
-            convexCache_.Erase(current);
-    }
+    RemoveCachedGeometryImpl(triMeshCache_, model);
+    RemoveCachedGeometryImpl(convexCache_, model);
+    RemoveCachedGeometryImpl(gimpactTrimeshCache_, model);
 }
 
 void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const Sphere& sphere, unsigned collisionMask)
@@ -627,7 +879,7 @@ void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const Sphere& s
     result.Clear();
 
     btSphereShape sphereShape(sphere.radius_);
-    UniquePtr<btRigidBody> tempRigidBody(new btRigidBody(1.0f, 0, &sphereShape));
+    UniquePtr<btRigidBody> tempRigidBody(new btRigidBody(1.0f, nullptr, &sphereShape));
     tempRigidBody->setWorldTransform(btTransform(btQuaternion::getIdentity(), ToBtVector3(sphere.center_)));
     // Need to activate the temporary rigid body to get reliable results from static, sleeping objects
     tempRigidBody->activate();
@@ -646,7 +898,7 @@ void PhysicsWorld::GetRigidBodies(PODVector<RigidBody*>& result, const BoundingB
     result.Clear();
 
     btBoxShape boxShape(ToBtVector3(box.HalfSize()));
-    UniquePtr<btRigidBody> tempRigidBody(new btRigidBody(1.0f, 0, &boxShape));
+    UniquePtr<btRigidBody> tempRigidBody(new btRigidBody(1.0f, nullptr, &boxShape));
     tempRigidBody->setWorldTransform(btTransform(btQuaternion::getIdentity(), ToBtVector3(box.Center())));
     tempRigidBody->activate();
     world_->addRigidBody(tempRigidBody.Get());
@@ -729,6 +981,16 @@ void PhysicsWorld::RemoveRigidBody(RigidBody* body)
     delayedWorldTransforms_.Erase(body);
 }
 
+void PhysicsWorld::AddSoftBody(SoftBody* body)
+{
+    softBodies_.Push(body);
+}
+
+void PhysicsWorld::RemoveSoftBody(SoftBody* body)
+{
+    softBodies_.Remove(body);
+}
+
 void PhysicsWorld::AddCollisionShape(CollisionShape* shape)
 {
     collisionShapes_.Push(shape);
@@ -756,7 +1018,7 @@ void PhysicsWorld::AddDelayedWorldTransform(const DelayedWorldTransform& transfo
 
 void PhysicsWorld::DrawDebugGeometry(bool depthTest)
 {
-    DebugRenderer* debug = GetComponent<DebugRenderer>();
+    auto* debug = GetComponent<DebugRenderer>();
     DrawDebugGeometry(debug, depthTest);
 }
 
@@ -773,20 +1035,9 @@ void PhysicsWorld::SetDebugDepthTest(bool enable)
 void PhysicsWorld::CleanupGeometryCache()
 {
     // Remove cached shapes whose only reference is the cache itself
-    for (HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator i = triMeshCache_.Begin();
-         i != triMeshCache_.End();)
-    {
-        HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator current = i++;
-        if (current->second_.Refs() == 1)
-            triMeshCache_.Erase(current);
-    }
-    for (HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator i = convexCache_.Begin();
-         i != convexCache_.End();)
-    {
-        HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >::Iterator current = i++;
-        if (current->second_.Refs() == 1)
-            convexCache_.Erase(current);
-    }
+    CleanupGeometryCacheImpl(triMeshCache_);
+    CleanupGeometryCacheImpl(convexCache_);
+    CleanupGeometryCacheImpl(gimpactTrimeshCache_);
 }
 
 void PhysicsWorld::OnSceneSet(Scene* scene)
@@ -822,7 +1073,7 @@ void PhysicsWorld::PreStep(float timeStep)
 
     // Start profiling block for the actual simulation step
 #ifdef URHO3D_PROFILING
-    Profiler* profiler = GetSubsystem<Profiler>();
+    auto* profiler = GetSubsystem<Profiler>();
     if (profiler)
         profiler->BeginBlock("StepSimulation");
 #endif
@@ -831,7 +1082,7 @@ void PhysicsWorld::PreStep(float timeStep)
 void PhysicsWorld::PostStep(float timeStep)
 {
 #ifdef URHO3D_PROFILING
-    Profiler* profiler = GetSubsystem<Profiler>();
+    auto* profiler = GetSubsystem<Profiler>();
     if (profiler)
         profiler->EndBlock();
 #endif
@@ -871,15 +1122,14 @@ void PhysicsWorld::SendCollisionEvents()
             const btCollisionObject* objectA = contactManifold->getBody0();
             const btCollisionObject* objectB = contactManifold->getBody1();
 
-            RigidBody* bodyA = static_cast<RigidBody*>(objectA->getUserPointer());
-            RigidBody* bodyB = static_cast<RigidBody*>(objectB->getUserPointer());
+            auto* bodyA = static_cast<RigidBody*>(objectA->getUserPointer());
+            auto* bodyB = static_cast<RigidBody*>(objectB->getUserPointer());
             // If it's not a rigidbody, maybe a ghost object
             if (!bodyA || !bodyB)
                 continue;
 
-            // Skip collision event signaling if both objects are static, or if collision 
-            // event mode does not match but allow when two triggers collide
-            if ((bodyA->GetMass() == 0.0f && bodyB->GetMass() == 0.0f) && (!bodyA->IsTrigger() || !bodyB->IsTrigger()))
+            // Skip collision event signaling if both objects are static, or if collision event mode does not match
+            if (bodyA->GetMass() == 0.0f && bodyB->GetMass() == 0.0f)
                 continue;
             if (bodyA->GetCollisionEventMode() == COLLISION_NEVER || bodyB->GetCollisionEventMode() == COLLISION_NEVER)
                 continue;
@@ -1048,9 +1298,8 @@ void PhysicsWorld::SendCollisionEvents()
 
                 bool trigger = bodyA->IsTrigger() || bodyB->IsTrigger();
 
-                // Skip collision event signaling if both objects are static, or if collision 
-                // event mode does not match but allow when two triggers collide
-                if ((bodyA->GetMass() == 0.0f && bodyB->GetMass() == 0.0f) && (!bodyA->IsTrigger() || !bodyB->IsTrigger()))
+                // Skip collision event signaling if both objects are static, or if collision event mode does not match
+                if (bodyA->GetMass() == 0.0f && bodyB->GetMass() == 0.0f)
                     continue;
                 if (bodyA->GetCollisionEventMode() == COLLISION_NEVER || bodyB->GetCollisionEventMode() == COLLISION_NEVER)
                     continue;
@@ -1102,6 +1351,158 @@ void RegisterPhysicsLibrary(Context* context)
     Constraint::RegisterObject(context);
     PhysicsWorld::RegisterObject(context);
     RaycastVehicle::RegisterObject(context);
+    SoftBody::RegisterObject(context);
+}
+
+bool PhysicsWorld::GetCollisionMask(const btCollisionObject* collisionObject,
+                                        const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc)
+{
+    const btRigidBody* hitBody = btRigidBody::upcast(collisionObject);
+    btCollisionShape* hitShape = (btCollisionShape*)hitBody->getCollisionShape();
+    if (hitShape->getShapeType() == SCALED_TRIANGLE_MESH_SHAPE_PROXYTYPE)
+    {
+        btScaledBvhTriangleMeshShape* scaled_mesh = static_cast<btScaledBvhTriangleMeshShape*>(hitShape);
+        btBvhTriangleMeshShape* mesh_shape = scaled_mesh->getChildShape();
+        btStridingMeshInterface* mesh_interface = mesh_shape->getMeshInterface();
+
+        ////     FIXME: handle unsigned int indices
+        ////    long int offset = (unsigned int)(triangle * indexstride);
+        ////    unsigned int* ptr = (unsigned int*)(indexbase);
+
+        //const unsigned short* ptr = (const unsigned short*)(indexbase + result.triangleIndex_ * indexstride);
+        //unsigned int i = ptr[0];
+        //unsigned int j = ptr[1];
+        //unsigned int k = ptr[2];
+        //    URHO3D_LOGERRORF("physicsworld.interpolatemeshnormal: indices <%u,%u,%u>", i, j, k);
+
+        MaterialTriangleMeshInterface* my_mesh = static_cast<MaterialTriangleMeshInterface*>(mesh_interface);
+        // btAssert(my_mesh);
+        if (my_mesh->GetColorOffset() != M_MAX_UNSIGNED)
+        {
+            const unsigned char* materialBase = nullptr;
+            int numMaterials;
+            PHY_ScalarType materialType;
+            int materialStride;
+            const unsigned char* triangleMaterialBase = nullptr;
+            int numTriangles;
+            int triangleMaterialStride;
+            PHY_ScalarType triangleType;
+
+            my_mesh->getLockedReadOnlyMaterialBase(&materialBase, numMaterials, materialType, materialStride,
+                &triangleMaterialBase, numTriangles, triangleMaterialStride, triangleType, shapePart);
+
+            const unsigned char* vertexbase;
+            int numverts;
+            PHY_ScalarType type;
+            int stride;
+
+            const unsigned char *indexbase;
+            int indexstride;
+            int numfaces;
+            PHY_ScalarType indicestype;
+
+            mesh_interface->getLockedReadOnlyVertexIndexBase(&vertexbase, numverts, type, stride,
+                &indexbase, indexstride, numfaces, indicestype, shapePart);
+
+            // VertexAccessor normals(vertexbase, stride, my_mesh->GetNormalOffset());
+            VertexAccessor positions(vertexbase, stride, my_mesh->GetPositionOffset());
+            VertexAccessor colors(materialBase, materialStride, my_mesh->GetColorOffset());
+
+            // ptr[0, 1, 2] -> indices de result.triangleIndex_
+            // const unsigned short* ptr = (const unsigned short*)(triangleMaterialBase + result.triangleIndex_ * triangleMaterialStride);
+            unsigned ci, cj, ck;
+            if (indicestype == PHY_SHORT)
+            {
+                const unsigned short* ptr = (const unsigned short*)(indexbase + triangleIndex * indexstride);
+                unsigned short i = ptr[0];
+                unsigned short j = ptr[1];
+                unsigned short k = ptr[2];
+
+                // search the near vertex
+    //            btVector3 vi = positions[i] * scale.x();
+    //            btVector3 vj = positions[j] * scale.y();
+    //            btVector3 vk = positions[k] * scale.z();
+
+    //            btScalar di = vi.distance(hitPointWorld);
+    //            btScalar dj = vj.distance(hitPointWorld);
+    //            btScalar dk = vk.distance(hitPointWorld);
+
+                unsigned colorIndex;
+    //                    if(di < dj && di < dk)
+    //                        colorIndex = i;
+    //                    else if(dj < di && dj < dk)
+    //                        colorIndex = j;
+    //                    else
+    //                        colorIndex = k;
+
+                ci = colors.GetUnsigned(i);
+                cj = colors.GetUnsigned(j);
+                ck = colors.GetUnsigned(k);
+
+                vc.x_ = ci;
+                vc.y_ = cj;
+                vc.z_ = ck;
+
+                if(ci > cj && ci > ck)
+                    colorIndex = i;
+                else if(cj > ci && cj > ck)
+                    colorIndex = j;
+                else
+                    colorIndex = k;
+                // return colors.GetUnsigned(colorIndex);
+            }
+            else if(indicestype == PHY_INTEGER)
+            {
+                const unsigned* ptr = (const unsigned*)(indexbase + triangleIndex * indexstride);
+                unsigned i = ptr[0];
+                unsigned j = ptr[1];
+                unsigned k = ptr[2];
+
+                // search the near vertex
+    //            btVector3 vi = positions[i] * scale.x();
+    //            btVector3 vj = positions[j] * scale.y();
+    //            btVector3 vk = positions[k] * scale.z();
+
+    //            btScalar di = vi.distance(hitPointWorld);
+    //            btScalar dj = vj.distance(hitPointWorld);
+    //            btScalar dk = vk.distance(hitPointWorld);
+
+                unsigned colorIndex;
+    //                    if(di < dj && di < dk)
+    //                        colorIndex = i;
+    //                    else if(dj < di && dj < dk)
+    //                        colorIndex = j;
+    //                    else
+    //                        colorIndex = k;
+
+                ci = colors.GetUnsigned(i);
+                cj = colors.GetUnsigned(j);
+                ck = colors.GetUnsigned(k);
+
+                vc.x_ = ci;
+                vc.y_ = cj;
+                vc.z_ = ck;
+
+                if(ci > cj && ci > ck)
+                    colorIndex = i;
+                else if(cj > ci && cj > ck)
+                    colorIndex = j;
+                else
+                    colorIndex = k;
+            }
+
+//            if((ci & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
+//               && (cj & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
+//               && (ck & (TRACK_ROAD | TRACK_BORDER | OFFTRACK_WEAK | OFFTRACK_HEAVY))
+//               && ci == cj && ci == ck && cj == ck)
+//            {
+//                return ci;
+//            }
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }

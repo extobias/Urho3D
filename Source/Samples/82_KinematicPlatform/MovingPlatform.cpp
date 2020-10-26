@@ -42,7 +42,7 @@ MovingPlatform::MovingPlatform(Context* context)
     , minLiftSpeed_(1.5f)
     , curLiftSpeed_(0.0f)
 {
-    SetUpdateEventMask(0);
+    SetUpdateEventMask(USE_NO_EVENT);
 }
 
 MovingPlatform::~MovingPlatform()
