@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2020 the Urho3D project.
+// Copyright (c) 2008-2017 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@
 #include "../Scene/Component.h"
 
 #include <Bullet/LinearMath/btIDebugDraw.h>
-#include <Bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 
 class btCollisionConfiguration;
 class btCollisionShape;
@@ -40,6 +39,7 @@ class btDiscreteDynamicsWorld;
 class btDispatcher;
 class btDynamicsWorld;
 class btPersistentManifold;
+class btGhostPairCallback;
 
 namespace Urho3D
 {
@@ -54,13 +54,18 @@ class RigidBody;
 class Scene;
 class Serializer;
 class XMLElement;
-class SoftBody;
 
 struct CollisionGeometryData;
 
 /// Physics raycast hit.
 struct URHO3D_API PhysicsRaycastResult
 {
+    /// Construct with defaults.
+    PhysicsRaycastResult() :
+        body_(0)
+    {
+    }
+
     /// Test for inequality, added to prevent GCC from complaining.
     bool operator !=(const PhysicsRaycastResult& rhs) const
     {
@@ -72,19 +77,11 @@ struct URHO3D_API PhysicsRaycastResult
     /// Hit worldspace normal.
     Vector3 normal_;
     /// Hit distance from ray origin.
-    float distance_{};
+    float distance_;
     /// Hit fraction.
-    float hitFraction_{};
+    float hitFraction_;
     /// Rigid body that was hit.
-    RigidBody* body_{};
-
-    int shapePart_{};
-
-    int triangleIndex_{};
-
-    unsigned collisionMask_{};
-
-    IntVector3 vc_{};
+    RigidBody* body_;
 };
 
 /// Delayed world transform assignment for parented rigidbodies.
@@ -105,8 +102,8 @@ struct ManifoldPair
 {
     /// Construct with defaults.
     ManifoldPair() :
-        manifold_(nullptr),
-        flippedManifold_(nullptr)
+        manifold_(0),
+        flippedManifold_(0)
     {
     }
 
@@ -120,7 +117,7 @@ struct ManifoldPair
 struct PhysicsWorldConfig
 {
     PhysicsWorldConfig() :
-        collisionConfig_(nullptr)
+        collisionConfig_(0)
     {
     }
 
@@ -128,11 +125,7 @@ struct PhysicsWorldConfig
     btCollisionConfiguration* collisionConfig_;
 };
 
-static const int DEFAULT_FPS = 60;
 static const float DEFAULT_MAX_NETWORK_ANGULAR_VELOCITY = 100.0f;
-
-/// Cache of collision geometry data.
-using CollisionGeometryDataCache = HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >;
 
 /// Physics simulation world component. Should be added only to the root scene node.
 class URHO3D_API PhysicsWorld : public Component, public btIDebugDraw
@@ -144,34 +137,32 @@ class URHO3D_API PhysicsWorld : public Component, public btIDebugDraw
 
 public:
     /// Construct.
-    explicit PhysicsWorld(Context* context, bool softbodyWorld = false);
+    PhysicsWorld(Context* scontext);
     /// Destruct.
-    ~PhysicsWorld() override;
+    virtual ~PhysicsWorld();
     /// Register object factory.
     static void RegisterObject(Context* context);
-    /// Handle attribute write access. Default implementation writes to the variable at offset, or invokes the set accessor.
-    virtual void OnSetAttribute(const AttributeInfo& attr, const Variant& src);
 
     /// Check if an AABB is visible for debug drawing.
-    bool isVisible(const btVector3& aabbMin, const btVector3& aabbMax) override;
+    virtual bool isVisible(const btVector3& aabbMin, const btVector3& aabbMax);
     /// Draw a physics debug line.
-    void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) override;
+    virtual void drawLine(const btVector3& from, const btVector3& to, const btVector3& color);
     /// Log warning from the physics engine.
-    void reportErrorWarning(const char* warningString) override;
+    virtual void reportErrorWarning(const char* warningString);
     /// Draw a physics debug contact point. Not implemented.
-    void drawContactPoint
-        (const btVector3& pointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color) override;
+    virtual void drawContactPoint
+        (const btVector3& pointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color);
     /// Draw physics debug 3D text. Not implemented.
-    void draw3dText(const btVector3& location, const char* textString) override;
+    virtual void draw3dText(const btVector3& location, const char* textString);
 
     /// Set debug draw flags.
-    void setDebugMode(int debugMode) override { debugMode_ = debugMode; }
+    virtual void setDebugMode(int debugMode) { debugMode_ = debugMode; }
 
     /// Return debug draw flags.
-    int getDebugMode() const override { return debugMode_; }
+    virtual int getDebugMode() const { return debugMode_; }
 
     /// Visualize the component as debug geometry.
-    void DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override;
+    virtual void DrawDebugGeometry(DebugRenderer* debug, bool depthTest);
 
     /// Step the simulation forward.
     void Update(float timeStep);
@@ -201,8 +192,7 @@ public:
     /// Perform a physics world raycast and return the closest hit.
     void RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, unsigned collisionMask = M_MAX_UNSIGNED);
     /// Perform a physics world segmented raycast and return the closest hit. Useful for big scenes with many bodies.
-    /// overlapDistance is used to make sure there are no gap between segments, and must be smaller than segmentDistance.
-    void RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask = M_MAX_UNSIGNED, float overlapDistance = 0.1f, bool interpolateNormal = false);
+    void RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask = M_MAX_UNSIGNED);
     /// Perform a physics world swept sphere test and return the closest hit.
     void SphereCast
         (PhysicsRaycastResult& result, const Ray& ray, float radius, float maxDistance, unsigned collisionMask = M_MAX_UNSIGNED);
@@ -254,18 +244,14 @@ public:
     void AddRigidBody(RigidBody* body);
     /// Remove a rigid body. Called by RigidBody.
     void RemoveRigidBody(RigidBody* body);
-    // Add soft body
-    void AddSoftBody(SoftBody* body);
-    // Remove soft body
-    void RemoveSoftBody(SoftBody* body);
     /// Add a collision shape to keep track of. Called by CollisionShape.
     void AddCollisionShape(CollisionShape* shape);
     /// Remove a collision shape. Called by CollisionShape.
     void RemoveCollisionShape(CollisionShape* shape);
     /// Add a constraint to keep track of. Called by Constraint.
-    void AddConstraint(Constraint* constraint);
+    void AddConstraint(Constraint* joint);
     /// Remove a constraint. Called by Constraint.
-    void RemoveConstraint(Constraint* constraint);
+    void RemoveConstraint(Constraint* joint);
     /// Add a delayed world transform assignment. Called by RigidBody.
     void AddDelayedWorldTransform(const DelayedWorldTransform& transform);
     /// Add debug geometry to the debug renderer.
@@ -282,13 +268,10 @@ public:
     void CleanupGeometryCache();
 
     /// Return trimesh collision geometry cache.
-    CollisionGeometryDataCache& GetTriMeshCache() { return triMeshCache_; }
+    HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >& GetTriMeshCache() { return triMeshCache_; }
 
     /// Return convex collision geometry cache.
-    CollisionGeometryDataCache& GetConvexCache() { return convexCache_; }
-
-    /// Return GImpact trimesh collision geometry cache.
-    CollisionGeometryDataCache& GetGImpactTrimeshCache() { return gimpactTrimeshCache_; }
+    HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> >& GetConvexCache() { return convexCache_; }
 
     /// Set node dirtying to be disregarded.
     void SetApplyingTransforms(bool enable) { applyingTransforms_ = enable; }
@@ -299,19 +282,12 @@ public:
     /// Return whether is currently inside the Bullet substep loop.
     bool IsSimulating() const { return simulating_; }
 
-    /// Soft body world info
-    btSoftBodyWorldInfo* GetWorldInfo() const { return softBodyWorldInfo_; }
     /// Overrides of the internal configuration.
     static struct PhysicsWorldConfig config;
 
-    static bool GetCollisionMask(const btCollisionObject* collisionObject, const btVector3& hitPointWorld, int shapePart, int triangleIndex, const btVector3& scale, IntVector3& vc);
-
-    btVector3 InterpolateMeshNormal(const btTransform& transform, btCollisionShape* shape, int subpart, int triangle, const btVector3& position, DebugRenderer* debug);
-
 protected:
-    void CreateDynaymicWorld();
     /// Handle scene being assigned.
-    void OnSceneSet(Scene* scene) override;
+    virtual void OnSceneSet(Scene* scene);
 
 private:
     /// Handle the scene subsystem update event, step simulation here.
@@ -324,7 +300,7 @@ private:
     void SendCollisionEvents();
 
     /// Bullet collision configuration.
-    btCollisionConfiguration* collisionConfiguration_{};
+    btCollisionConfiguration* collisionConfiguration_;
     /// Bullet collision dispatcher.
     UniquePtr<btDispatcher> collisionDispatcher_;
     /// Bullet collision broadphase.
@@ -348,11 +324,9 @@ private:
     /// Delayed (parented) world transform assignments.
     HashMap<RigidBody*, DelayedWorldTransform> delayedWorldTransforms_;
     /// Cache for trimesh geometry data by model and LOD level.
-    CollisionGeometryDataCache triMeshCache_;
+    HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> > triMeshCache_;
     /// Cache for convex geometry data by model and LOD level.
-    CollisionGeometryDataCache convexCache_;
-    /// Cache for GImpact trimesh geometry data by model and LOD level.
-    CollisionGeometryDataCache gimpactTrimeshCache_;
+    HashMap<Pair<Model*, unsigned>, SharedPtr<CollisionGeometryData> > convexCache_;
     /// Preallocated event data map for physics collision events.
     VariantMap physicsCollisionData_;
     /// Preallocated event data map for node collision events.
@@ -360,35 +334,31 @@ private:
     /// Preallocated buffer for physics collision contact data.
     VectorBuffer contacts_;
     /// Simulation substeps per second.
-    unsigned fps_{DEFAULT_FPS};
+    unsigned fps_;
     /// Maximum number of simulation substeps per frame. 0 (default) unlimited, or negative values for adaptive timestep.
-    int maxSubSteps_{};
+    int maxSubSteps_;
     /// Time accumulator for non-interpolated mode.
-    float timeAcc_{};
+    float timeAcc_;
     /// Maximum angular velocity for network replication.
-    float maxNetworkAngularVelocity_{DEFAULT_MAX_NETWORK_ANGULAR_VELOCITY};
+    float maxNetworkAngularVelocity_;
     /// Automatic simulation update enabled flag.
-    bool updateEnabled_{true};
+    bool updateEnabled_;
     /// Interpolation flag.
-    bool interpolation_{true};
+    bool interpolation_;
     /// Use internal edge utility flag.
-    bool internalEdge_{true};
+    bool internalEdge_;
     /// Applying transforms flag.
-    bool applyingTransforms_{};
+    bool applyingTransforms_;
     /// Simulating flag.
-    bool simulating_{};
+    bool simulating_;
     /// Debug draw depth test mode.
-    bool debugDepthTest_{};
+    bool debugDepthTest_;
     /// Debug renderer.
-    DebugRenderer* debugRenderer_{};
+    DebugRenderer* debugRenderer_;
     /// Debug draw flags.
-    int debugMode_{};
-    /// SoftBody world.
-    bool useSoftBodyWorld_;
-    /// SoftBody world info.
-    btSoftBodyWorldInfo* softBodyWorldInfo_{};
-    /// Soft bodies in the world.
-    PODVector<SoftBody*> softBodies_;
+    int debugMode_;
+    /// GhostPair Callback
+    btGhostPairCallback *ghostPairCallback;
 };
 
 /// Register Physics library objects.
