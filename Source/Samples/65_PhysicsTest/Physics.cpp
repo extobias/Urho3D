@@ -51,6 +51,7 @@
 
 #include "Physics.h"
 #include "Raycastest.h"
+#include "ConvexCast.h"
 
 #include <Urho3D/DebugNew.h>
 
@@ -68,13 +69,13 @@ Physics::Physics(Context* context) :
     maxHeight_(0.0f),
     updateLinSuspension_(false),
     updateRotSuspension_(false),
-    floatHeight_(1.0f),
-    k_(350.0f),
+    floatHeight_(1.2f),
+    k_(3500.0f),
     kFactor_(0),
     maxImpulse_(0.0f),
     timeElapsed_(0.0f)
 {
-    Raycastest::RegisterObject(context);
+    ConvexCast::RegisterObject(context);
 }
 
 void Physics::Start()
@@ -85,6 +86,16 @@ void Physics::Start()
     // Create the scene content
     CreateScene();
 
+    editor_ = new EditorWindow(context_);
+    UI* ui = GetSubsystem<UI>();
+    ui->GetRootModalElement()->AddChild(editor_);
+
+    editor_->SetName("editor");
+    editor_->SetScene(scene_);
+    editor_->BringToFront();
+    editor_->SetPriority(100);
+    editor_->CreateGuizmo();
+    editor_->SetOrthographic(false);
     // Create the UI content
     // CreateInstructions();
     CreateDebugText();
@@ -103,7 +114,6 @@ void Physics::CreateScene()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     scene_ = new Scene(context_);
-    editor_->SetScene(scene_);
 
     engine_->SetMaxFps(60);
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
@@ -181,12 +191,15 @@ void Physics::CreateScene()
     }
 
     Node* boxNode;
+    Vector3 targetPosition;
     if(1)
     {
         int x = 0, y = 0;
         boxNode = scene_->CreateChild("Box");
         boxNode->SetScale(Vector3(width_, 1.0f, length_));
-        boxNode->SetPosition(Vector3((float)x, -(float)y + 0.5f, 0.0f));
+        targetPosition = Vector3((float)x, -(float)y + 0.5f, 0.0f);
+        boxNode->SetPosition(targetPosition);
+
         StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
         boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
         boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
@@ -199,7 +212,7 @@ void Physics::CreateScene()
         body_->SetCollisionLayer(1 << 1);
         body_->SetMass(mass_);
         body_->SetRestitution(1.0f);
-        body_->SetKinematic(true);
+//        body_->SetKinematic(true);
         // body_->SetFriction(0.75f);
         // body_->SetAngularFactor(Vector3::ZERO);
         // body_->SetLinearFactor(Vector3::UP);
@@ -219,8 +232,8 @@ void Physics::CreateScene()
 
     for (int i = 0; i < wheelPos.Size(); i++)
     {
-        Raycastest* rt = boxNode->CreateComponent<Raycastest>();
-        rt->SetOffset(wheelPos.At(i));
+        ConvexCast* rt = boxNode->CreateComponent<ConvexCast>();
+        // rt->SetOffset(wheelPos.At(i));
         convexCastTest_.Push(rt);
     }
 
@@ -250,12 +263,15 @@ void Physics::CreateScene()
     cameraNode_ = new Node(context_);
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(500.0f);
+    cameraNode_->SetPosition(Vector3(-7.0f, -45.0f, 10.0f));
+    cameraNode_->LookAt(targetPosition);
 
     // Set an initial position for the camera scene node above the floor
-    cameraNode_->SetPosition(Vector3(5.0f, 0.5f, 0.0f));
+//    cameraNode_->SetPosition(Vector3(5.0f, 0.5f, 0.0f));
     //cameraNode_->SetRotation(Quaternion(90.0f, Vector3::UP));
 
-    editor_->SetCameraNode(cameraNode_);
+
+    // editor_->SetCameraNode(cameraNode_);
 }
 
 void Physics::CreateInstructions()
@@ -562,61 +578,63 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 
     if (debugText_ && convexCastTest_.Size())
     {
-        Raycastest* caster = convexCastTest_.At(0);
-        int index = caster->hitIndex_;
-        if (index < 0)
-            return;
+        ConvexCast* caster = convexCastTest_.At(0);
+        caster->DebugDraw();
 
-        float posy = caster->hitDistance_.At(index) + caster->GetRadius();
+//        int index = caster->hitIndex_;
+//        if (index < 0)
+//            return;
 
-        String text;
-        char buff[128];
+//        float posy = caster->hitDistance_.At(index) + caster->GetRadius();
 
-        float vel = body_->GetLinearVelocity().y_;
-        sprintf(buff, "height <%.2f>\n max height <%.2f>\n vel <%.2f>\n k <%.2f>\n c <%.2f>\n error <%.2f>\n",
-            posy, maxHeight_, vel, k_, c_, floatHeight_ - posy);
-        text.AppendWithFormat("%s", buff);
+//        String text;
+//        char buff[128];
 
-        text.AppendWithFormat("\nhits <%i> index <%i>", caster->hitPoints_, caster->hitIndex_);
+//        float vel = body_->GetLinearVelocity().y_;
+//        sprintf(buff, "height <%.2f>\n max height <%.2f>\n vel <%.2f>\n k <%.2f>\n c <%.2f>\n error <%.2f>\n",
+//            posy, maxHeight_, vel, k_, c_, floatHeight_ - posy);
+//        text.AppendWithFormat("%s", buff);
 
-        text.AppendWithFormat("\nradius <%f> ", caster->GetRadius());
-        memset(buff, 0, 128);
-        Vector3 hp = caster->hardPointWS_;
-        sprintf(buff, "\nfrom <%.2f,%.2f,%.2f> ", hp.x_, hp.y_, hp.z_);
-        text.AppendWithFormat("%s", buff);
+//        text.AppendWithFormat("\nhits <%i> index <%i>", caster->hitPoints_, caster->hitIndex_);
 
-        Vector3 to = hp + caster->suspensionRest_ * caster->direction_;
-        memset(buff, 0, 128);
-        sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
-        text.AppendWithFormat("%s", buff);
+//        text.AppendWithFormat("\nradius <%f> ", caster->GetRadius());
+//        memset(buff, 0, 128);
+//        Vector3 hp = caster->hardPointWS_;
+//        sprintf(buff, "\nfrom <%.2f,%.2f,%.2f> ", hp.x_, hp.y_, hp.z_);
+//        text.AppendWithFormat("%s", buff);
 
-        if(convexCastTest_.Size() <= 4)
-            return;
+//        Vector3 to = hp + caster->suspensionRest_ * caster->direction_;
+//        memset(buff, 0, 128);
+//        sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
+//        text.AppendWithFormat("%s", buff);
 
-        // for (int i = 0; i < convexCastTest_->hitPoints_; i++)
-        int i = index;
-        {
-            Vector3 h = caster->hitPointWorld_.At(i);
-            char buff[128];
-            memset(buff, 0, 128);
-            sprintf(buff, "\nhit <%.2f,%.2f,%.2f> ", h.x_, h.y_, h.z_);
-            text.AppendWithFormat("%s", buff);
+//        if(convexCastTest_.Size() <= 4)
+//            return;
 
-            Vector3 l = caster->hitPointLocal_.At(i);
-            memset(buff, 0, 128);
-            sprintf(buff, "local <%.2f,%.2f    ,%.2f> ", l.x_, l.y_, l.z_);
-            text.AppendWithFormat("%s", buff);
+//        // for (int i = 0; i < convexCastTest_->hitPoints_; i++)
+//        int i = index;
+//        {
+//            Vector3 h = caster->hitPointWorld_.At(i);
+//            char buff[128];
+//            memset(buff, 0, 128);
+//            sprintf(buff, "\nhit <%.2f,%.2f,%.2f> ", h.x_, h.y_, h.z_);
+//            text.AppendWithFormat("%s", buff);
 
-            memset(buff, 0, 128);
-            float d = caster->hitDistance_.At(i);
-            sprintf(buff, "f <%.2f> d <%.2f>", caster->hitFraction_.At(i), d);
-            text.AppendWithFormat("%s", buff);
-        }
+//            Vector3 l = caster->hitPointLocal_.At(i);
+//            memset(buff, 0, 128);
+//            sprintf(buff, "local <%.2f,%.2f    ,%.2f> ", l.x_, l.y_, l.z_);
+//            text.AppendWithFormat("%s", buff);
 
-        if(caster->hitBody_ && caster->hitBody_->GetNode())
-            text.AppendWithFormat("\nbody <%s> ", caster->hitBody_->GetNode()->GetName().CString());
+//            memset(buff, 0, 128);
+//            float d = caster->hitDistance_.At(i);
+//            sprintf(buff, "f <%.2f> d <%.2f>", caster->hitFraction_.At(i), d);
+//            text.AppendWithFormat("%s", buff);
+//        }
 
-        debugText_->SetText(text);
+//        if(caster->hitBody_ && caster->hitBody_->GetNode())
+//            text.AppendWithFormat("\nbody <%s> ", caster->hitBody_->GetNode()->GetName().CString());
+
+//        debugText_->SetText(text);
     }
 }
 
@@ -645,7 +663,7 @@ void Physics::UpdateLineal(float timeStep)
     body_->ApplyForce(impulse_);
 }
 
-void Physics::UpdateLinealCast(float timeStep, Raycastest* caster)
+void Physics::UpdateLinealCast(float timeStep, ConvexCast* caster)
 {
     float mass = mass_ / convexCastTest_.Size();
 

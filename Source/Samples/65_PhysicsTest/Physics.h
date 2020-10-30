@@ -32,6 +32,8 @@ class Scene;
 
 }
 
+class ConvexCast;
+
 /// Physics example.
 /// This sample demonstrates:
 ///     - Creating both static and moving physics objects to a scene
@@ -94,7 +96,7 @@ private:
 	void HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData);
 
 	void UpdateLineal(float timeStep);
-	void UpdateLinealCast(float timeStep, class Raycastest* caster);
+    void UpdateLinealCast(float timeStep, ConvexCast* caster);
 	void UpdateRotation(float timeStep);
 
 	float GetVelocity(const Vector3& relPos);
@@ -117,5 +119,5 @@ private:
 
 	Vector<Node*> boxNodes_;
 
-	Vector<class Raycastest*> convexCastTest_;
+    Vector<ConvexCast*> convexCastTest_;
 };
