@@ -14,6 +14,7 @@
 #include "../IO/MemoryBuffer.h"
 #include "../Math/Polyhedron.h"
 #include "../Resource/ResourceCache.h"
+#include "../Scene/Scene.h"
 #include "../Scene/SceneEvents.h"
 #include "../UI/UI.h"
 #include "../Urho2D/StaticSprite2D.h"
