@@ -1,9 +1,11 @@
 #pragma once
 
-#include "../UI/ImGuiElement.h"
+#include "../Core/Object.h"
 
 namespace Urho3D
 {
+class Node;
+class Scene;
 
 class URHO3D_API EditorSelection : public Object
 {

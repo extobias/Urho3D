@@ -46,10 +46,10 @@ EditorWindow::EditorWindow(Context* context) :
     pitch_(0.0f),
     sceneLoading_(false)
 {
-//    for (int i = 0; i < 4; i++)
-//    {
-//        plotVarsOffset_[i] = 0;
-//    }
+    for (int i = 0; i < 4; i++)
+    {
+        plotVarsOffset_[i] = 0;
+    }
 
     cameraNode_->SetName("EditorCamera");
     cameraNode_->SetTemporary(true);
@@ -141,6 +141,11 @@ void EditorWindow::MoveCamera(float timeStep)
 //        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
 //        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
 //        cameraNode_->SetPosition(cameraTargetPos);
+    }
+
+    if (input->GetKeyDown(KEY_SHIFT))
+    {
+        moveSpeed *= 10.0f;
     }
 
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
@@ -546,8 +551,8 @@ void EditorWindow::SetVisible(bool visible)
 
 void EditorWindow::SetPlotVar(int index, float value)
 {
-//    plotVars_[index][plotVarsOffset_[index]] = value;
-//    plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
+    plotVars_[index][plotVarsOffset_[index]] = value;
+    plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
 }
 
 void EditorWindow::SetScene(Scene* scene)
@@ -562,6 +567,22 @@ void EditorWindow::SetScene(Scene* scene)
     }
 
     AttachCamera();
+}
+
+void EditorWindow::SetOrthographic(bool orthographic)
+{
+    Camera* camera = cameraNode_->GetComponent<Camera>();
+    camera->SetOrthographic(orthographic);
+}
+
+void EditorWindow::SetCameraPosition(const Vector3& position)
+{
+    cameraNode_->SetPosition(position);
+}
+
+void EditorWindow::SetCameraRotation(const Quaternion& rotation)
+{
+    cameraNode_->SetRotation(rotation);
 }
 
 void EditorWindow::AttachCamera()
@@ -721,14 +742,14 @@ void EditorWindow::Render(float timeStep)
     ImGui::Separator();
 
     // FIXME make these dinamyc
-//    for(int i = 0; i < 4; i++)
-//    {
-//        char buf[32];
-//        int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
-//        sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
-////        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
-//        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -2.0f, 2.0f, ImVec2(0, 60));
-//    }
+    for(int i = 0; i < 4; i++)
+    {
+        char buf[32];
+        int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
+        sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
+//        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
+        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -10000.0f, 10000.0f, ImVec2(0, 60));
+    }
 
     ImVec2 windowPos = ImGui::GetWindowPos();
     SetPosition(windowPos.x, windowPos.y);

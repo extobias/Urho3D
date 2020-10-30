@@ -110,8 +110,6 @@ public:
 
     void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
-    // void SetCameraNode(Node* node);
-
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleSceneLoaded(StringHash eventType, VariantMap& eventData);
@@ -124,11 +122,17 @@ public:
 
     void SetScene(Scene* scene);
 
+    void SetOrthographic(bool orthographics);
+
+    void SetCameraPosition(const Vector3& position);
+
+    void SetCameraRotation(const Quaternion& rotation);
+
 //    String debugText_;
 
-//    float plotVars_[4][100];
+    float plotVars_[4][100];
 
-//    int plotVarsOffset_[4];
+    int plotVarsOffset_[4];
 
 private:
 
