@@ -65,7 +65,6 @@ Physics::Physics(Context* context) :
     mass_(100.0f),
     length_(3.0f),
     width_(2.0f),
-    debugText_(nullptr),
     maxHeight_(0.0f),
     updateLinSuspension_(false),
     updateRotSuspension_(false),
@@ -73,7 +72,8 @@ Physics::Physics(Context* context) :
     k_(3500.0f),
     kFactor_(0),
     maxImpulse_(0.0f),
-    timeElapsed_(0.0f)
+    timeElapsed_(0.0f),
+    debugText_(nullptr)
 {
     ConvexCast::RegisterObject(context);
 }
@@ -152,110 +152,87 @@ void Physics::CreateScene()
     //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
-    {
-        // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
-        Node* floorNode = scene_->CreateChild("Floor");
-        floorNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-        floorNode->SetScale(Vector3(1000.0f, 0.0f, 1000.0f));
-        StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
-        floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        floorObject->SetMaterial(cache->GetResource<Material>("Materials/FloorBlackWhite.xml"));
+    // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
+    Node* floorNode = scene_->CreateChild("Floor");
+    floorNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+    floorNode->SetScale(Vector3(1000.0f, 0.0f, 1000.0f));
+    StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
+    floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    floorObject->SetMaterial(cache->GetResource<Material>("Materials/FloorBlackWhite.xml"));
 
-        // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
-        // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
-        // in the physics simulation
-        RigidBody* body = floorNode->CreateComponent<RigidBody>();
-        body->SetCollisionLayer(1 << 0);
-        body->SetMass(0.0f);
-        CollisionShape* shape = floorNode->CreateComponent<CollisionShape>();
-        // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
-        // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
-        shape->SetBox(Vector3::ONE);
+    // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
+    // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
+    // in the physics simulation
+    RigidBody* body = floorNode->CreateComponent<RigidBody>();
+    body->SetCollisionLayer(1 << 0);
+    body->SetMass(0.0f);
+    CollisionShape* shape = floorNode->CreateComponent<CollisionShape>();
+    // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
+    // rendering and physics representation sizes should match (the box model is also 1 x 1 x 1.)
+    shape->SetBox(Vector3::ONE);
 
-        //Node* terrainNode = scene_->CreateChild("Terrain");
-        //terrainNode->SetPosition(Vector3::ZERO);
-        //auto* terrain = terrainNode->CreateComponent<Terrain>();
-        //terrain->SetPatchSize(64);
-        //terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
-        //terrain->SetSmoothing(true);
-        //terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
-        //terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
-        //// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
-        //// terrain patches and other objects behind it
-        //terrain->SetOccluder(true);
+    //Node* terrainNode = scene_->CreateChild("Terrain");
+    //terrainNode->SetPosition(Vector3::ZERO);
+    //auto* terrain = terrainNode->CreateComponent<Terrain>();
+    //terrain->SetPatchSize(64);
+    //terrain->SetSpacing(Vector3(2.0f, 0.1f, 2.0f)); // Spacing between vertices and vertical resolution of the height map
+    //terrain->SetSmoothing(true);
+    //terrain->SetHeightMap(cache->GetResource<Image>("Textures/HeightMap.png"));
+    //terrain->SetMaterial(cache->GetResource<Material>("Materials/Terrain.xml"));
+    //// The terrain consists of large triangles, which fits well for occlusion rendering, as a hill can occlude all
+    //// terrain patches and other objects behind it
+    //terrain->SetOccluder(true);
 
-        //auto* body = terrainNode->CreateComponent<RigidBody>();
-        //body->SetCollisionLayer(1 << 0); // Use layer bitmask 2 for static geometry
-        //auto* shape = terrainNode->CreateComponent<CollisionShape>();
-        //shape->SetTerrain();
-    }
+    //auto* body = terrainNode->CreateComponent<RigidBody>();
+    //body->SetCollisionLayer(1 << 0); // Use layer bitmask 2 for static geometry
+    //auto* shape = terrainNode->CreateComponent<CollisionShape>();
+    //shape->SetTerrain();
 
-    Node* boxNode;
-    Vector3 targetPosition;
-    if(1)
-    {
-        int x = 0, y = 0;
-        boxNode = scene_->CreateChild("Box");
-        boxNode->SetScale(Vector3(width_, 1.0f, length_));
-        targetPosition = Vector3((float)x, -(float)y + 0.5f, 0.0f);
-        boxNode->SetPosition(targetPosition);
+    Vector3 targetPosition(Vector3::ZERO);
 
-        StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-        boxObject->SetCastShadows(true);
+    Node* boxNode = scene_->CreateChild("Box");
+    boxNode->SetScale(Vector3(width_, 1.0f, length_));
+    boxNode->SetPosition(targetPosition);
 
-        // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
-        // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
-        // objects are significant
-        body_ = boxNode->CreateComponent<RigidBody>();
-        body_->SetCollisionLayer(1 << 1);
-        body_->SetMass(mass_);
-        body_->SetRestitution(1.0f);
+    StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
+    boxObject->SetCastShadows(true);
+
+    // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
+    // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
+    // objects are significant
+    body_ = boxNode->CreateComponent<RigidBody>();
+    body_->SetCollisionLayer(1 << 1);
+    body_->SetMass(mass_);
+    body_->SetRestitution(1.0f);
 //        body_->SetKinematic(true);
-        // body_->SetFriction(0.75f);
-        // body_->SetAngularFactor(Vector3::ZERO);
-        // body_->SetLinearFactor(Vector3::UP);
-        CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-        shape->SetBox(Vector3::ONE);
-    }
+    // body_->SetFriction(0.75f);
+    // body_->SetAngularFactor(Vector3::ZERO);
+    // body_->SetLinearFactor(Vector3::UP);
 
-    // Node* rtNode = scene_->CreateChild("RT");
-    // Node* boxNode = scene_->CreateChild("Box");
-    // boxNode->SetScale(Vector3(width_, 1.0f, length_));
-    // boxNode->SetPosition(Vector3(0.0f, 0.5f, 0.0f));
     Vector<Vector3> wheelPos;
     wheelPos.Push(Vector3(0.5f, 0.0f, 1.0f));
     wheelPos.Push(Vector3(-0.5f, 0.0f, 1.0f));
     wheelPos.Push(Vector3(0.5f, 0.0f, -1.0f));
     wheelPos.Push(Vector3(-0.5f, 0.0f, -1.0f));
 
-    for (int i = 0; i < wheelPos.Size(); i++)
+    float suspensionLength = 1.8f;
+    float suspensionMinRest = 0.5f;
+    for (unsigned i = 0; i < wheelPos.Size(); i++)
     {
+        WheelInfo wheel;
+        wheel.chassisConnectionPointCS_ = wheelPos.At(i);
+        wheel.raycastInfo_.suspensionLength_ = suspensionLength;
+        wheel.raycastInfo_.suspensionMinRest_ = suspensionMinRest;
+        wheel.raycastInfo_.suspensionRelativeVelocity_ = 0.0f;
+        wheel.raycastInfo_.suspensionMaxRest_ = 0.8f;
+        wheel.wheelDirectionCS_ = Vector3::DOWN;
+        wheel.wheelAxle_ = Vector3::RIGHT;
+        wheelsInfo_.Push(wheel);
+
         ConvexCast* rt = boxNode->CreateComponent<ConvexCast>();
-        // rt->SetOffset(wheelPos.At(i));
         convexCastTest_.Push(rt);
-    }
-
-    {
-        //for (int i = 1; i < 8; ++i)
-        //{
-        //    Node* boxNode = scene_->CreateChild("SmallBox");
-        //    boxNode->SetPosition(Vector3(0.0f, 1.0f, 5.0f * i));
-        //    boxNode->SetScale(0.25f);
-        //    StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-        //    boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        //    boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
-        //    boxObject->SetCastShadows(true);
-
-        //    // Create physics components, use a smaller mass also
-        //    RigidBody* body = boxNode->CreateComponent<RigidBody>();
-        //    body->SetMass(0.25f);
-        //    // body->SetFriction(0.75f);
-        //    body->SetCollisionLayer(1 << 0);
-        //    CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-        //    shape->SetBox(Vector3::ONE);
-        //}
     }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
@@ -578,8 +555,14 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 
     if (debugText_ && convexCastTest_.Size())
     {
-        ConvexCast* caster = convexCastTest_.At(0);
-        caster->DebugDraw();
+        Vector3 com = Vector3::ZERO;
+
+        for(unsigned i = 0; i < convexCastTest_.Size(); i++)
+        {
+            ConvexCast* caster = convexCastTest_.At(i);
+            const WheelInfo& wheel = wheelsInfo_.At(i);
+            caster->DebugDraw(wheel, com);
+        }
 
 //        int index = caster->hitIndex_;
 //        if (index < 0)

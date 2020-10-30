@@ -1,6 +1,4 @@
 #include "ConvexCast.h"
-#include "GameManager.h"
-#include "SpeedKartDefs.h"
 
 #include <Urho3D/Core/Profiler.h>
 #include <Urho3D/IO/Log.h>
@@ -108,9 +106,6 @@ struct AllConvexResultCallback : public btCollisionWorld::ConvexResultCallback
     }
 };
 
-namespace SpeedKart
-{
-
 ConvexCast::ConvexCast(Context* context)
     : Component(context),
     hasHit_(false),
@@ -193,7 +188,7 @@ float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steeringTi
 
     AllConvexResultCallback convexCallback(ToBtVector3(startPos), ToBtVector3(endPos));
     convexCallback.m_collisionFilterGroup = (short)0xffff;
-    convexCallback.m_collisionFilterMask = (short)CollisionLayer::Static;
+    convexCallback.m_collisionFilterMask = (short)1 << 0;
 
     btCollisionShape* shape = shape_->GetCollisionShape();
 
@@ -435,4 +430,3 @@ void ConvexCast::DebugDraw(const WheelInfo& wheel, Vector3 centerOfMass, bool fi
 //    pw->SetDebugRenderer(nullptr);
 }
 
-}

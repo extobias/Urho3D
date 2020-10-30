@@ -26,14 +26,13 @@
 
 namespace Urho3D
 {
-
 class Node;
 class Scene;
-
+class RigidBody;
 }
 
 class ConvexCast;
-
+struct WheelInfo;
 /// Physics example.
 /// This sample demonstrates:
 ///     - Creating both static and moving physics objects to a scene
@@ -79,7 +78,8 @@ private:
     void CreateScene();
     /// Construct an instruction text to the UI.
     void CreateInstructions();
-	void CreateDebugText();
+
+    void CreateDebugText();
     /// Set up a viewport for displaying the scene.
     void SetupViewport();
     /// Subscribe to application-wide logic update and post-render update events.
@@ -92,32 +92,37 @@ private:
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
     /// Handle the post-render update event.
     void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
-	void HandleKeyDown(StringHash eventType, VariantMap& eventData);
-	void HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData);
 
-	void UpdateLineal(float timeStep);
+    void HandleKeyDown(StringHash eventType, VariantMap& eventData);
+
+    void HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData);
+
+    void UpdateLineal(float timeStep);
+
     void UpdateLinealCast(float timeStep, ConvexCast* caster);
-	void UpdateRotation(float timeStep);
 
-	float GetVelocity(const Vector3& relPos);
+    void UpdateRotation(float timeStep);
+
+    float GetVelocity(const Vector3& relPos);
     /// Flag for drawing debug geometry.
     bool drawDebug_;
 
-	RigidBody* body_;
-	float mass_;
-	float length_, width_;
-	float floatHeight_;
-	Vector3 impulse_;
-	float k_, c_;
-	int kFactor_;
-	float maxHeight_;
-	float maxImpulse_;
-	bool updateLinSuspension_;
-	bool updateRotSuspension_;
-	float timeElapsed_;
-	Text* debugText_;
+    RigidBody* body_;
+    float mass_;
+    float length_, width_;
+    float floatHeight_;
+    Vector3 impulse_;
+    float k_, c_;
+    int kFactor_;
+    float maxHeight_;
+    float maxImpulse_;
+    bool updateLinSuspension_;
+    bool updateRotSuspension_;
+    float timeElapsed_;
+    Text* debugText_;
 
-	Vector<Node*> boxNodes_;
+    Vector<Node*> boxNodes_;
 
     Vector<ConvexCast*> convexCastTest_;
+    Vector<WheelInfo> wheelsInfo_;
 };
