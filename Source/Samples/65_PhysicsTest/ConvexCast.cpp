@@ -161,7 +161,7 @@ void ConvexCast::UpdateTransform(WheelInfo& wheel, float steeringTimer)
 //    hardPointWS_ = node_->GetPosition() + rot * offset_;
 }
 
-float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steerngTimer, bool debug, bool interpolateNormal)
+float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steeringTimer, bool debug, bool interpolateNormal)
 {
     URHO3D_PROFILE(ConvexCastUpdate);
 
@@ -363,7 +363,7 @@ void ConvexCast::DebugDraw(const WheelInfo& wheel, Vector3 centerOfMass, bool fi
     PhysicsWorld* pw = GetScene()->GetComponent<PhysicsWorld>();
     btCollisionWorld* world = pw->GetWorld();
 
-    Ray ray(wheel.raycastInfo_.hardPointWS_, wheel.wheelDirectionCS_);
+    Ray ray(wheel.raycastInfo_.hardPointWS_, wheel.raycastInfo_.wheelDirectionWS_);
     Vector3 startPos = ray.origin_;
     Vector3 endPos = ray.origin_ + wheel.raycastInfo_.suspensionLength_ * 1.0f * ray.direction_;
 

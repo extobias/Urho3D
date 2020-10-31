@@ -102,6 +102,7 @@ void Physics::Start()
     editor_->SetPriority(100);
     editor_->CreateGuizmo();
     editor_->SetOrthographic(false);
+    editor_->SetVisible(false);
     // Create the UI content
     // CreateInstructions();
     CreateDebugText();
@@ -211,7 +212,7 @@ void Physics::CreateScene()
     // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
     // objects are significant
     body_ = node_->CreateComponent<RigidBody>();
-//    body_->SetCollisionLayer(1 << 0);
+    body_->SetCollisionLayer(1 << 1);
     body_->SetCollisionMask(collisionMask);
     body_->SetMass(mass_);
     body_->SetRestitution(1.0f);
@@ -245,14 +246,12 @@ void Physics::CreateScene()
         Node* wheelNode = scene_->CreateChild(String().AppendWithFormat("wheel-%i", i));
         wheelsNode_.Push(SharedPtr<Node>(wheelNode));
 
-        ConvexCast* rt = wheelNode->CreateComponent<ConvexCast>();
-        convexCastTest_.Push(rt);
+        wheelNode->CreateComponent<ConvexCast>();
     }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
-    cameraNode_ = new Node(context_);
-    cameraNode_->SetName("CameraNode");
+    cameraNode_ = scene_->CreateChild("CameraNode");
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(500.0f);
     cameraNode_->SetPosition(Vector3(0.0f, 7.0f, -5.0f));
@@ -348,8 +347,10 @@ void Physics::MoveCamera(float timeStep)
     {
         // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
         IntVector2 mouseMove = input->GetMouseMove();
-        yaw_ += MOUSE_SENSITIVITY * mouseMove.x_;
-        pitch_ += MOUSE_SENSITIVITY * mouseMove.y_;
+        Quaternion camRot = cameraNode_->GetRotation();
+
+        yaw_ = camRot.YawAngle() + MOUSE_SENSITIVITY * mouseMove.x_;
+        pitch_ = camRot.PitchAngle() + MOUSE_SENSITIVITY * mouseMove.y_;
         pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
         // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
@@ -519,24 +520,6 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
         scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
     }
 
-    if (key == KEY_UP)
-    {
-        //kFactor_++;
-        //k_ = kFactor_ * 10.0f;
-
-        //float radius = convexCastTest_->GetRadius();
-        //convexCastTest_->SetRadius(radius + 0.05f);
-    }
-
-    if (key == KEY_DOWN)
-    {
-        //kFactor_--;
-        //k_ = kFactor_ * 10.0f;
-
-        //float radius = convexCastTest_->GetRadius();
-        //convexCastTest_->SetRadius(radius - 0.05f);
-    }
-
     if (key == KEY_Z)
     {
         Quaternion rot = body_->GetRotation();
@@ -576,15 +559,19 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
     if (drawDebug_)
         scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(false);
 
-    if (debugText_ && convexCastTest_.Size())
+    if (debugText_)
     {
         Vector3 com = Vector3::ZERO;
+        DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
 
-        for(unsigned i = 0; i < convexCastTest_.Size(); i++)
+        for(unsigned i = 0; i < wheelsNode_.Size(); i++)
         {
-            ConvexCast* caster = convexCastTest_.At(i);
+            Node* node = wheelsNode_.At(i);
+            ConvexCast* caster = node->GetComponent<ConvexCast>();
             const WheelInfo& wheel = wheelsInfo_.At(i);
             caster->DebugDraw(wheel, com);
+
+            debug->AddNode(node, 1.0f, false);
         }
 
 //        int index = caster->hitIndex_;
@@ -613,9 +600,6 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
 //        memset(buff, 0, 128);
 //        sprintf(buff, "\nto <%.2f,%.2f,%.2f> ", to.x_, to.y_, to.z_);
 //        text.AppendWithFormat("%s", buff);
-
-//        if(convexCastTest_.Size() <= 4)
-//            return;
 
 //        // for (int i = 0; i < convexCastTest_->hitPoints_; i++)
 //        int i = index;
@@ -671,7 +655,7 @@ void Physics::UpdateLineal(float timeStep)
 
 void Physics::UpdateLinealCast(float timeStep, ConvexCast* caster)
 {
-    float mass = mass_ / convexCastTest_.Size();
+    float mass = mass_ / wheelsNode_.Size();
 
     if (caster->hasHit_)
     {
@@ -696,7 +680,6 @@ void Physics::UpdateLinealCast(float timeStep, ConvexCast* caster)
         float suspensionForce = springForce + dampingForce + antiG;
 
         Vector3 direction = Vector3::UP;
-        //Vector3 local(convexCastTest_->hitPointLocal_.At(index));
         Vector3 normal(caster->hitNormalWorld_.At(index));
         //Vector3 direction = normal;
         impulse_ = direction * suspensionForce; // *timeStep;

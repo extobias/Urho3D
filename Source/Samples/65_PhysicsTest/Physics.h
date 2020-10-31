@@ -112,10 +112,9 @@ private:
     bool drawDebug_;
 
     SharedPtr<Node> node_;
-    Vector<Node*> boxNodes_;
-    Vector<ConvexCast*> convexCastTest_;
     Vector<WheelInfo> wheelsInfo_;
     Vector<SharedPtr<Node>> wheelsNode_;
+    Vector<Node*> boxNodes_;
 
     RigidBody* body_;
     float mass_;
