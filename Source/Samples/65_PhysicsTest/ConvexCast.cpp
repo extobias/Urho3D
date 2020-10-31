@@ -161,7 +161,7 @@ void ConvexCast::UpdateTransform(WheelInfo& wheel, float steeringTimer)
 //    hardPointWS_ = node_->GetPosition() + rot * offset_;
 }
 
-float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steeringTimer, bool debug, bool interpolateNormal)
+float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steerngTimer, bool debug, bool interpolateNormal)
 {
     URHO3D_PROFILE(ConvexCastUpdate);
 
@@ -180,7 +180,7 @@ float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steeringTi
     // Ray ray(wheel.raycastInfo_.hardPointWS_, wheel.wheelDirectionCS_);
     Ray ray(wheel.raycastInfo_.hardPointWS_, direction);
     Vector3 startPos = ray.origin_;
-    Vector3 endPos = ray.origin_ + wheel.raycastInfo_.suspensionLength_ * 2.0f * ray.direction_;
+    Vector3 endPos = ray.origin_ + wheel.raycastInfo_.suspensionLength_ * 1.0f * ray.direction_;
     //Vector3 startPos = Vector3(0.0f, 1.0f, 0.0f);
     //Vector3 endPos = Vector3(0.0f, -1.0f, 0.0f);
     Quaternion startRot = worldRotation;
@@ -282,7 +282,6 @@ float ConvexCast::Update(WheelInfo& wheel, RigidBody* hullBody, float steeringTi
 //                    result.normal_ = ToVector3(rayCallback.m_hitNormalWorld);
                     wheel.raycastInfo_.contactNormal_ = hitNormalWorld_.At(hitIndex_);
                 }
-
             }
             else
             {
@@ -366,7 +365,7 @@ void ConvexCast::DebugDraw(const WheelInfo& wheel, Vector3 centerOfMass, bool fi
 
     Ray ray(wheel.raycastInfo_.hardPointWS_, wheel.wheelDirectionCS_);
     Vector3 startPos = ray.origin_;
-    Vector3 endPos = ray.origin_ + wheel.raycastInfo_.suspensionLength_ * 2.0f * ray.direction_;
+    Vector3 endPos = ray.origin_ + wheel.raycastInfo_.suspensionLength_ * 1.0f * ray.direction_;
 
     Sphere startSphere(startPos, 0.1f);
     debug->AddSphere(startSphere, Color::GREEN, false);
@@ -389,7 +388,7 @@ void ConvexCast::DebugDraw(const WheelInfo& wheel, Vector3 centerOfMass, bool fi
     Vector3 local(wheel.raycastInfo_.contactPointLocal_);
     // Color color = colors.At(i % 9);
     Sphere sphere(local, 0.01f);
-    debug->AddSphere(sphere, colors.At(0), false);
+    debug->AddSphere(sphere, Color::YELLOW, false);
 
 //    Vector3 hit(wheel.raycastInfo_.contactPoint_ - centerOfMass);
     Vector3 hit(wheel.raycastInfo_.contactPoint_);

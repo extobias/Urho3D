@@ -95,7 +95,11 @@ private:
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
+    void UpdateWheelTransformsWS(WheelInfo& wheel);
+
     void HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData);
+
+    void HandlePhysicsPostStep(StringHash eventType, VariantMap& eventData);
 
     void UpdateLineal(float timeStep);
 
@@ -106,6 +110,12 @@ private:
     float GetVelocity(const Vector3& relPos);
     /// Flag for drawing debug geometry.
     bool drawDebug_;
+
+    SharedPtr<Node> node_;
+    Vector<Node*> boxNodes_;
+    Vector<ConvexCast*> convexCastTest_;
+    Vector<WheelInfo> wheelsInfo_;
+    Vector<SharedPtr<Node>> wheelsNode_;
 
     RigidBody* body_;
     float mass_;
@@ -121,8 +131,10 @@ private:
     float timeElapsed_;
     Text* debugText_;
 
-    Vector<Node*> boxNodes_;
-
-    Vector<ConvexCast*> convexCastTest_;
-    Vector<WheelInfo> wheelsInfo_;
+    float suspensionStiffness_;
+    float suspensionLength_;
+    float suspensionRest_;
+    float suspensionMinRest_;
+    float suspensionDelta_;
+    float suspensionDamping_;
 };

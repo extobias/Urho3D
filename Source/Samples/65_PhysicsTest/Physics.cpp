@@ -63,9 +63,14 @@ Physics::Physics(Context* context) :
     Sample(context),
     drawDebug_(false),
     mass_(100.0f),
-    length_(3.0f),
-    width_(2.0f),
-    maxHeight_(0.0f),
+    length_(2.0f),
+    width_(1.0f),
+    suspensionStiffness_(500.0f),
+    suspensionLength_(2.0f),
+    suspensionRest_(0.8f),
+    suspensionMinRest_(0.5f),
+    suspensionDelta_(0.1f),
+    suspensionDamping_(1.0f),
     updateLinSuspension_(false),
     updateRotSuspension_(false),
     floatHeight_(1.2f),
@@ -80,6 +85,7 @@ Physics::Physics(Context* context) :
 
 void Physics::Start()
 {
+    engine_->SetMaxFps(60.0f);
     // Execute base class startup
     Sample::Start();
 
@@ -115,13 +121,14 @@ void Physics::CreateScene()
 
     scene_ = new Scene(context_);
 
-    engine_->SetMaxFps(60);
+    engine_->SetMaxFps(30);
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
     // Create a physics simulation world with default parameters, which will update at 60fps. Like the Octree must
     // exist before creating drawable components, the PhysicsWorld must exist before creating physics components.
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
-    scene_->CreateComponent<PhysicsWorld>();
+    PhysicsWorld* pw = scene_->CreateComponent<PhysicsWorld>();
+    pw->SetFps(30.0f);
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -146,25 +153,26 @@ void Physics::CreateScene()
     // Create skybox. The Skybox component is used like StaticModel, but it will be always located at the camera, giving the
     // illusion of the box planes being far away. Use just the ordinary Box model and a suitable material, whose shader will
     // generate the necessary 3D texture coordinates for cube mapping
-    //Node* skyNode = scene_->CreateChild("Sky");
-    //skyNode->SetScale(500.0f); // The scale actually does not matter
-    //Skybox* skybox = skyNode->CreateComponent<Skybox>();
-    //skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    //skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+//    Node* skyNode = scene_->CreateChild("Sky");
+//    skyNode->SetScale(500.0f); // The scale actually does not matter
+//    Skybox* skybox = skyNode->CreateComponent<Skybox>();
+//    skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+//    skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
+    unsigned collisionMask = 1 << 0;
     // Create a floor object, 1000 x 1000 world units. Adjust position so that the ground is at zero Y
     Node* floorNode = scene_->CreateChild("Floor");
     floorNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-    floorNode->SetScale(Vector3(1000.0f, 0.0f, 1000.0f));
+    floorNode->SetScale(Vector3(100.0f, 0.0f, 100.0f));
     StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
     floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    floorObject->SetMaterial(cache->GetResource<Material>("Materials/FloorBlackWhite.xml"));
+    floorObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
 
     // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
     // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
     // in the physics simulation
     RigidBody* body = floorNode->CreateComponent<RigidBody>();
-    body->SetCollisionLayer(1 << 0);
+    body->SetCollisionLayer(collisionMask);
     body->SetMass(0.0f);
     CollisionShape* shape = floorNode->CreateComponent<CollisionShape>();
     // Set a box shape of size 1 x 1 x 1 for collision. The shape will be scaled with the scene node scale, so the
@@ -188,13 +196,13 @@ void Physics::CreateScene()
     //auto* shape = terrainNode->CreateComponent<CollisionShape>();
     //shape->SetTerrain();
 
-    Vector3 targetPosition(Vector3::ZERO);
+    Vector3 targetPosition(Vector3(0.0f, 5.0f, 0.0f));
 
-    Node* boxNode = scene_->CreateChild("Box");
-    boxNode->SetScale(Vector3(width_, 1.0f, length_));
-    boxNode->SetPosition(targetPosition);
+    node_ = scene_->CreateChild("Box");
+    node_->SetScale(Vector3(width_, 0.7f, length_));
+    node_->SetPosition(targetPosition);
 
-    StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+    StaticModel* boxObject = node_->CreateComponent<StaticModel>();
     boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
     boxObject->SetMaterial(cache->GetResource<Material>("Materials/StoneEnvMapSmall.xml"));
     boxObject->SetCastShadows(true);
@@ -202,53 +210,54 @@ void Physics::CreateScene()
     // Create RigidBody and CollisionShape components like above. Give the RigidBody mass to make it movable
     // and also adjust friction. The actual mass is not important; only the mass ratios between colliding
     // objects are significant
-    body_ = boxNode->CreateComponent<RigidBody>();
-    body_->SetCollisionLayer(1 << 1);
+    body_ = node_->CreateComponent<RigidBody>();
+//    body_->SetCollisionLayer(1 << 0);
+    body_->SetCollisionMask(collisionMask);
     body_->SetMass(mass_);
     body_->SetRestitution(1.0f);
-//        body_->SetKinematic(true);
+    // body_->SetKinematic(true);
     // body_->SetFriction(0.75f);
     // body_->SetAngularFactor(Vector3::ZERO);
     // body_->SetLinearFactor(Vector3::UP);
 
-    Vector<Vector3> wheelPos;
-    wheelPos.Push(Vector3(0.5f, 0.0f, 1.0f));
-    wheelPos.Push(Vector3(-0.5f, 0.0f, 1.0f));
-    wheelPos.Push(Vector3(0.5f, 0.0f, -1.0f));
-    wheelPos.Push(Vector3(-0.5f, 0.0f, -1.0f));
+    CollisionShape* boxShape = node_->CreateComponent<CollisionShape>();
+    boxShape->SetBox(Vector3::ONE);
 
-    float suspensionLength = 1.8f;
-    float suspensionMinRest = 0.5f;
+    Vector<Vector3> wheelPos;
+    float offset = suspensionDelta_;
+    wheelPos.Push(Vector3(0.5f - offset, 0.0f, 1.0f - offset));
+    wheelPos.Push(Vector3(-0.5f + offset, 0.0f, 1.0f - offset));
+    wheelPos.Push(Vector3(0.5f - offset, 0.0f, -1.0f + offset));
+    wheelPos.Push(Vector3(-0.5f + offset, 0.0f, -1.0f + offset));
+
     for (unsigned i = 0; i < wheelPos.Size(); i++)
     {
         WheelInfo wheel;
         wheel.chassisConnectionPointCS_ = wheelPos.At(i);
-        wheel.raycastInfo_.suspensionLength_ = suspensionLength;
-        wheel.raycastInfo_.suspensionMinRest_ = suspensionMinRest;
+        wheel.raycastInfo_.suspensionLength_ = suspensionLength_;
+        wheel.raycastInfo_.suspensionMinRest_ = suspensionMinRest_;
         wheel.raycastInfo_.suspensionRelativeVelocity_ = 0.0f;
         wheel.raycastInfo_.suspensionMaxRest_ = 0.8f;
         wheel.wheelDirectionCS_ = Vector3::DOWN;
         wheel.wheelAxle_ = Vector3::RIGHT;
         wheelsInfo_.Push(wheel);
 
-        ConvexCast* rt = boxNode->CreateComponent<ConvexCast>();
+        Node* wheelNode = scene_->CreateChild(String().AppendWithFormat("wheel-%i", i));
+        wheelsNode_.Push(SharedPtr<Node>(wheelNode));
+
+        ConvexCast* rt = wheelNode->CreateComponent<ConvexCast>();
         convexCastTest_.Push(rt);
     }
 
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
     cameraNode_ = new Node(context_);
+    cameraNode_->SetName("CameraNode");
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(500.0f);
-    cameraNode_->SetPosition(Vector3(-7.0f, -45.0f, 10.0f));
-    cameraNode_->LookAt(targetPosition);
-
-    // Set an initial position for the camera scene node above the floor
-//    cameraNode_->SetPosition(Vector3(5.0f, 0.5f, 0.0f));
-    //cameraNode_->SetRotation(Quaternion(90.0f, Vector3::UP));
-
-
-    // editor_->SetCameraNode(cameraNode_);
+    cameraNode_->SetPosition(Vector3(0.0f, 7.0f, -5.0f));
+    cameraNode_->LookAt(Vector3::ZERO);
+    cameraNode_->SetRotation(Quaternion(45.0f, Vector3::RIGHT));
 }
 
 void Physics::CreateInstructions()
@@ -300,10 +309,9 @@ void Physics::SetupViewport()
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, cameraNode_->GetComponent<Camera>()));
     renderer->SetViewport(0, viewport);
 
-    SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-        effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
-
-    viewport->SetRenderPath(effectRenderPath);
+//    SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+//    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
+//    viewport->SetRenderPath(effectRenderPath);
 }
 
 void Physics::SubscribeToEvents()
@@ -319,6 +327,8 @@ void Physics::SubscribeToEvents()
 
     Component* world = scene_->GetComponent<PhysicsWorld>();
     SubscribeToEvent(world, E_PHYSICSPRESTEP, URHO3D_HANDLER(Physics, HandlePhysicsPreStep));
+
+    SubscribeToEvent(world, E_PHYSICSPOSTSTEP, URHO3D_HANDLER(Physics, HandlePhysicsPostStep));
 }
 
 void Physics::MoveCamera(float timeStep)
@@ -368,9 +378,22 @@ void Physics::MoveCamera(float timeStep)
         cameraNode_->SetPosition(Vector3(5.0f, 0.0f, 0.0f));
     }
 
+    if (input->GetKeyDown(KEY_DOWN))
+    {
+        pitch_ += MOUSE_SENSITIVITY * 10.0f;
+        pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
+    if (input->GetKeyDown(KEY_UP))
+    {
+        pitch_ -= MOUSE_SENSITIVITY * 10.0f;
+        pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
+
     // "Shoot" a physics object with left mousebutton
-    if (input->GetMouseButtonDown(MOUSEB_LEFT))
-        SpawnObject();
+//    if (input->GetMouseButtonDown(MOUSEB_LEFT))
+//        SpawnObject();
 
     // Check for loading/saving the scene. Save the scene to the file Data/Scenes/Physics.xml relative to the executable
     // directory
@@ -720,6 +743,15 @@ void Physics::UpdateRotation(float timeStep)
     body_->ApplyTorque(impulse);
 }
 
+void Physics::UpdateWheelTransformsWS(WheelInfo& wheel)
+{
+    Vector3 wsPos = body_->GetPosition();
+    Quaternion wsRot = body_->GetRotation();
+
+    wheel.raycastInfo_.hardPointWS_ = wsRot * wheel.chassisConnectionPointCS_ + wsPos;
+    wheel.raycastInfo_.wheelDirectionWS_ = wsRot * wheel.wheelDirectionCS_;
+}
+
 void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 {
     using namespace PhysicsPreStep;
@@ -727,14 +759,86 @@ void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 
     if (updateLinSuspension_)
     {
-        for (int i = 0; i < convexCastTest_.Size(); i++)
+        Vector3 comPos = body_->GetPosition();
+        float mass = (mass_ / 4.0f);
+
+        float suspension[4];
+        unsigned ll = 0;
+        for (unsigned i = 0; i < wheelsInfo_.Size(); i++)
         {
-            UpdateLinealCast(timeStep, convexCastTest_.At(i));
+            WheelInfo& wheel = wheelsInfo_[i];
+            Vector3 impulse;
+            float suspensionForce = 0.0;
+
+            Vector3 relpos = wheel.raycastInfo_.contactPoint_ - comPos;
+            Vector3 forceDir = wheel.raycastInfo_.contactNormal_;
+
+            if(wheel.raycastInfo_.isInContact_)
+            {
+                float distance = wheel.raycastInfo_.distance_ + suspensionDelta_;
+                float currentDiff = suspensionRest_ - distance + (mass * 9.81f / suspensionStiffness_);
+
+                // float x = currentDiff > 0.0f ? currentDiff : 0.0f;
+                float x = currentDiff;
+                float springForce = suspensionStiffness_ * x;
+
+                float suspensionDampStiffness = suspensionStiffness_;
+                float c = -sqrt(mass * suspensionDampStiffness * 4) * suspensionDamping_;
+                float v = wheel.raycastInfo_.suspensionRelativeVelocity_;
+                float dampingForce = c * v;
+
+                float maxSuspensionForce = 6000.0f;
+                if (dampingForce > maxSuspensionForce)
+                {
+                    dampingForce = maxSuspensionForce;
+                }
+
+                if ((springForce + dampingForce) > 0.0f)
+                {
+                    suspensionForce = (springForce + dampingForce);
+
+                    if (suspensionForce > maxSuspensionForce)
+                    {
+                        suspensionForce = maxSuspensionForce;
+                    }
+                }
+                else
+                {
+                    suspensionForce = -1.0f;
+                }
+            }
+            else
+            {
+                ll = 1;
+                suspensionForce = -1.0f;
+            }
+            suspension[i] =  wheel.raycastInfo_.suspensionRelativeVelocity_;
+
+            impulse =  forceDir * suspensionForce * timeStep;
+
+            body_->ApplyImpulse(impulse, relpos);
         }
     }
     if (updateRotSuspension_)
     {
         UpdateRotation(timeStep);
+    }
+}
+
+void Physics::HandlePhysicsPostStep(StringHash eventType, VariantMap& eventData)
+{
+    for (unsigned i = 0; i < wheelsInfo_.Size(); i++)
+    {
+        WheelInfo& wheel = wheelsInfo_[i];
+        Node* node = wheelsNode_.At(i);
+
+        UpdateWheelTransformsWS(wheel);
+
+        ConvexCast* cc = node->GetComponent<ConvexCast>();
+        cc->Update(wheel, body_);
+
+        node->SetRotation(node_->GetRotation());
+        node->SetPosition(wheel.raycastInfo_.hardPointWS_);
     }
 }
 
