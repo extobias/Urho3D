@@ -42,11 +42,13 @@
 #include <Urho3D/Physics/PhysicsWorld.h>
 #include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
+#include <Urho3D/Physics/PhysicsUtils.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Resource/ResourceCache.h>
 #include <Urho3D/Scene/Scene.h>
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
+#include <Urho3D/UI/Text3D.h>
 #include <Urho3D/UI/UI.h>
 
 #include "Physics.h"
@@ -65,15 +67,17 @@ Physics::Physics(Context* context) :
     mass_(100.0f),
     length_(2.0f),
     width_(1.0f),
-    suspensionStiffness_(500.0f),
+    height_(0.7f),
+    suspensionStiffness_(12500.0f),
     suspensionLength_(2.0f),
-    suspensionRest_(0.8f),
-    suspensionMinRest_(0.5f),
+    suspensionRest_(1.2f),
+    suspensionMinRest_(0.8f),
     suspensionDelta_(0.1f),
     suspensionDamping_(1.0f),
     updateLinSuspension_(false),
     updateRotSuspension_(false),
-    floatHeight_(1.2f),
+    applySuspensionForce_(false),
+    floatHeight_(2.5f),
     k_(3500.0f),
     kFactor_(0),
     maxImpulse_(0.0f),
@@ -85,7 +89,6 @@ Physics::Physics(Context* context) :
 
 void Physics::Start()
 {
-    engine_->SetMaxFps(60.0f);
     // Execute base class startup
     Sample::Start();
 
@@ -129,7 +132,7 @@ void Physics::CreateScene()
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
     PhysicsWorld* pw = scene_->CreateComponent<PhysicsWorld>();
-    pw->SetFps(30.0f);
+    pw->SetFps(60.0f);
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control
@@ -167,7 +170,7 @@ void Physics::CreateScene()
     floorNode->SetScale(Vector3(100.0f, 0.0f, 100.0f));
     StaticModel* floorObject = floorNode->CreateComponent<StaticModel>();
     floorObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-    floorObject->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
+    floorObject->SetMaterial(cache->GetResource<Material>("Materials/StoneTiledMetric.xml"));
 
     // Make the floor physical by adding RigidBody and CollisionShape components. The RigidBody's default
     // parameters make the object static (zero mass.) Note that a CollisionShape by itself will not participate
@@ -200,7 +203,7 @@ void Physics::CreateScene()
     Vector3 targetPosition(Vector3(0.0f, 5.0f, 0.0f));
 
     node_ = scene_->CreateChild("Box");
-    node_->SetScale(Vector3(width_, 0.7f, length_));
+    node_->SetScale(Vector3(width_, height_, length_));
     node_->SetPosition(targetPosition);
 
     StaticModel* boxObject = node_->CreateComponent<StaticModel>();
@@ -249,14 +252,27 @@ void Physics::CreateScene()
         wheelNode->CreateComponent<ConvexCast>();
     }
 
+    // node text
+    Node* textNode = node_->CreateChild("TextNode");
+    textNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
+    nodeText_ = textNode->CreateComponent<Text3D>();
+    nodeText_->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.sdf"), 65);
+    nodeText_->SetColor(Color::RED);
+    nodeText_->SetAlignment(HA_CENTER, VA_CENTER);
+    nodeText_->SetFaceCameraMode(FC_LOOKAT_XYZ);
+
+
     // Create the camera. Set far clip to match the fog. Note: now we actually create the camera node outside the scene, because
     // we want it to be unaffected by scene load / save
     cameraNode_ = scene_->CreateChild("CameraNode");
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(500.0f);
-    cameraNode_->SetPosition(Vector3(0.0f, 7.0f, -5.0f));
-    cameraNode_->LookAt(Vector3::ZERO);
-    cameraNode_->SetRotation(Quaternion(45.0f, Vector3::RIGHT));
+    cameraNode_->SetPosition(Vector3(10.0f, 7.0f, 0.0f));
+    Quaternion camRot(Quaternion(-90.0f, Vector3::UP));
+    camRot = camRot * Quaternion(45.0f, Vector3::RIGHT);
+    cameraNode_->SetRotation(camRot);
+//    cameraNode_->LookAt(Vector3::ZERO);
+
 }
 
 void Physics::CreateInstructions()
@@ -296,7 +312,7 @@ void Physics::CreateDebugText()
     // Position the text relative to the screen center
     debugText_->SetHorizontalAlignment(HA_LEFT);
     debugText_->SetVerticalAlignment(VA_CENTER);
-    debugText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
+    debugText_->SetPosition(10, 10);
 }
 
 void Physics::SetupViewport()
@@ -317,8 +333,6 @@ void Physics::SubscribeToEvents()
 {
     // Subscribe HandleUpdate() function for processing update events
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(Physics, HandleUpdate));
-
-    // Subscribe HandlePostRenderUpdate() function for processing the post-render update event, during which we request
     // debug geometry
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(Physics, HandlePostRenderUpdate));
 
@@ -339,7 +353,9 @@ void Physics::MoveCamera(float timeStep)
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
-    const float MOVE_SPEED = 1.0f;
+    float MOVE_SPEED = 1.0f;
+    if (input->GetKeyDown(KEY_SHIFT))
+        MOVE_SPEED *= 10.0f;
     // Mouse sensitivity as degrees per pixel
     const float MOUSE_SENSITIVITY = 0.1f;
 
@@ -372,23 +388,32 @@ void Physics::MoveCamera(float timeStep)
     if (input->GetKeyDown(KEY_Q))
         cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
 
-    if (input->GetKeyDown(KEY_C))
-    {
-        Vector3 camPos = cameraNode_->GetPosition();
-        // cameraNode_->SetPosition(Vector3(camPos.x_, 0.0f, camPos.z_));
-        cameraNode_->SetPosition(Vector3(5.0f, 0.0f, 0.0f));
-    }
-
     if (input->GetKeyDown(KEY_DOWN))
     {
-        pitch_ += MOUSE_SENSITIVITY * 10.0f;
+        Quaternion camRot = cameraNode_->GetRotation();
+        pitch_ = camRot.PitchAngle() + MOUSE_SENSITIVITY * 10.0f;
         pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+        yaw_ = camRot.YawAngle();
         cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
     }
     if (input->GetKeyDown(KEY_UP))
     {
-        pitch_ -= MOUSE_SENSITIVITY * 10.0f;
+        Quaternion camRot = cameraNode_->GetRotation();
+        pitch_ = camRot.PitchAngle() - MOUSE_SENSITIVITY * 10.0f;
         pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+        yaw_ = camRot.YawAngle();
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
+    if (input->GetKeyDown(KEY_RIGHT))
+    {
+        Quaternion camRot = cameraNode_->GetRotation();
+        yaw_ = camRot.YawAngle() + MOUSE_SENSITIVITY * 10.0f;
+        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+    }
+    if (input->GetKeyDown(KEY_LEFT))
+    {
+        Quaternion camRot = cameraNode_->GetRotation();
+        yaw_ = camRot.YawAngle() - MOUSE_SENSITIVITY * 10.0f;
         cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
     }
 
@@ -515,7 +540,7 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
         // scene_->SetTimeScale(0.1f);
     }
 
-    if (key == KEY_M)
+    if (key == KEY_P)
     {
         scene_->SetUpdateEnabled(!scene_->IsUpdateEnabled());
     }
@@ -532,9 +557,31 @@ void Physics::HandleKeyDown(StringHash eventType, VariantMap& eventData)
         body_->ApplyForce(vel * forwardFactor_, relPos);
     }
 
-    if (key == KEY_LEFT)
+    if (key == KEY_X)
     {
-        SpawnObject(false);
+        Quaternion rot = body_->GetRotation();
+        Vector3 pos = body_->GetPosition();
+        Vector3 vel = rot * Vector3::FORWARD;
+
+        Vector3 relPos = rot * Vector3::ZERO;
+        float forwardFactor_ = 2000.0f;
+
+        body_->ApplyForce(-vel * forwardFactor_, relPos);
+    }
+
+    if (key == KEY_C)
+    {
+//        Vector3 angVel = body_->GetAngularVelocity();
+//        btMatrix3x3 inertia = body_->GetBody()->getInvInertiaTensorWorld().inverse();
+//        Vector3 impulse = ToVector3(inertia * ToBtVector3(angVel));
+//        body_->ApplyTorqueImpulse(-impulse);
+
+        Vector3 vel = body_->GetLinearVelocity();
+//        btMatrix3x3 inertia = body_->GetBody()->getInvInertiaTensorWorld().inverse();
+//        Vector3 impulse = ToVector3(inertia * ToBtVector3(vel));
+//        body_->ApplyImpulse(-impulse);
+        vel = Quaternion(90.0f, Vector3::UP) * vel;
+        body_->SetLinearVelocity(vel);
     }
 
     // Toggle physics debug geometry with space
@@ -559,11 +606,19 @@ void Physics::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData
     if (drawDebug_)
         scene_->GetComponent<PhysicsWorld>()->DrawDebugGeometry(false);
 
-    if (debugText_)
+    DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
+
+    CollisionShape* boxShape = node_->GetComponent<CollisionShape>();
+    debug->AddBoundingBox(boxShape->GetWorldBoundingBox(), Color::RED);
+
+    float vel = body_->GetLinearVelocity().Length();
+    char buf[32];
+    sprintf(buf, "%.2f", vel);
+    nodeText_->SetText(buf);
+
+    if (applySuspensionForce_)
     {
         Vector3 com = Vector3::ZERO;
-        DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
-
         for(unsigned i = 0; i < wheelsNode_.Size(); i++)
         {
             Node* node = wheelsNode_.At(i);
@@ -696,6 +751,29 @@ void Physics::UpdateLinealCast(float timeStep, ConvexCast* caster)
     //URHO3D_LOGERRORF("time, pos <%f, %f>", timeElapsed_, posy);
 }
 
+bool Physics::RotateBody(float angleTarget, float rotAngle, float moi, float velocity, const Vector3& direction, float k)
+{
+    float x = (angleTarget - rotAngle) * M_DEGTORAD;
+    float springForce = k * x;
+    // btMatrix3x3 inertia =  hullBody_->GetBody()->getInvInertiaTensorWorld();
+    float d = 1.0f;
+
+    // float c = -sqrt(moiY * k * 4.0f) * d;
+    float c = -sqrt(moi * k * 4.0f) * d;
+    float v = velocity;
+    float dampingForce = c * v;
+
+    float steeringForce = springForce + dampingForce;
+
+    Quaternion rot = body_->GetRotation();
+    Vector3 torqueDir = rot * direction;
+    Vector3 impulse = torqueDir * steeringForce;// *timeStep;
+
+    body_->ApplyTorque(impulse);
+
+    return false;
+}
+
 void Physics::UpdateRotation(float timeStep)
 {
     timeElapsed_ += timeStep;
@@ -703,27 +781,27 @@ void Physics::UpdateRotation(float timeStep)
     Quaternion rot = body_->GetRotation();
     Vector3 angVel = body_->GetAngularVelocity();
 
-    float k = 500.0f;
-    float x = (45.0f - rot.EulerAngles().y_) * M_DEGTORAD;
-    float springForce = k * x;
-    // btMatrix3x3 inertia =  hullBody_->GetBody()->getInvInertiaTensorWorld();
-    float d = 1.0f;
-    float moi = mass_ / 12.0f * (width_ * width_ + length_ * length_);
+    // float rotAngle = rot.YawAngle();
+    float rotAngle = rot.RollAngle();
+    float k = 5000.0f;
+    float angleTarget = 45.0f;
 
-    float c = -sqrt(moi * k * 4.0f) * d;
-    float v = angVel.y_;
-    float dampingForce = c * v;
+    float moiX = mass_ / 12.0f * (height_ * height_ + length_ * length_);
+    float moiY = mass_ / 12.0f * (width_ * width_ + length_ * length_);
+    float moiZ = mass_ / 12.0f * (width_ * width_ + height_ * height_);
 
-    float steeringForce = springForce + dampingForce;
+//    RotateBody(angleTarget, rotAngle, moiX, angVel.x_, Vector3::RIGHT, k);
 
     char buff[512];
-    sprintf(buff, "x <%.3f> timestep <%.3f> moi <%.2f>", (45.0f - rot.EulerAngles().y_), timeElapsed_, moi);
-    // URHO3D_LOGERRORF("%s", buff);
+    sprintf(buff, "timestep <%.3f> x <%.3f> moi <%.2f>", timeElapsed_, (angleTarget - rotAngle), moiX);
+    debugText_->SetText(buff);
 
-    Vector3 torqueDir = rot * Vector3::UP;
-    Vector3 impulse = torqueDir * steeringForce;// *timeStep;
+    static bool goal = false;
+    if (!goal)
+        goal = (angleTarget - rotAngle) < 0.01f;
 
-    body_->ApplyTorque(impulse);
+    if (!goal)
+        RotateBody(angleTarget, rotAngle, moiX, angVel.z_, Vector3::FORWARD, k);
 }
 
 void Physics::UpdateWheelTransformsWS(WheelInfo& wheel)
@@ -742,73 +820,26 @@ void Physics::HandlePhysicsPreStep(StringHash eventType, VariantMap& eventData)
 
     if (updateLinSuspension_)
     {
-        Vector3 comPos = body_->GetPosition();
-        float mass = (mass_ / 4.0f);
-
-        float suspension[4];
-        unsigned ll = 0;
-        for (unsigned i = 0; i < wheelsInfo_.Size(); i++)
-        {
-            WheelInfo& wheel = wheelsInfo_[i];
-            Vector3 impulse;
-            float suspensionForce = 0.0;
-
-            Vector3 relpos = wheel.raycastInfo_.contactPoint_ - comPos;
-            Vector3 forceDir = wheel.raycastInfo_.contactNormal_;
-
-            if(wheel.raycastInfo_.isInContact_)
-            {
-                float distance = wheel.raycastInfo_.distance_ + suspensionDelta_;
-                float currentDiff = suspensionRest_ - distance + (mass * 9.81f / suspensionStiffness_);
-
-                // float x = currentDiff > 0.0f ? currentDiff : 0.0f;
-                float x = currentDiff;
-                float springForce = suspensionStiffness_ * x;
-
-                float suspensionDampStiffness = suspensionStiffness_;
-                float c = -sqrt(mass * suspensionDampStiffness * 4) * suspensionDamping_;
-                float v = wheel.raycastInfo_.suspensionRelativeVelocity_;
-                float dampingForce = c * v;
-
-                float maxSuspensionForce = 6000.0f;
-                if (dampingForce > maxSuspensionForce)
-                {
-                    dampingForce = maxSuspensionForce;
-                }
-
-                if ((springForce + dampingForce) > 0.0f)
-                {
-                    suspensionForce = (springForce + dampingForce);
-
-                    if (suspensionForce > maxSuspensionForce)
-                    {
-                        suspensionForce = maxSuspensionForce;
-                    }
-                }
-                else
-                {
-                    suspensionForce = -1.0f;
-                }
-            }
-            else
-            {
-                ll = 1;
-                suspensionForce = -1.0f;
-            }
-            suspension[i] =  wheel.raycastInfo_.suspensionRelativeVelocity_;
-
-            impulse =  forceDir * suspensionForce * timeStep;
-
-            body_->ApplyImpulse(impulse, relpos);
-        }
+        if (applySuspensionForce_)
+            ApplySuspensionForce(timeStep);
+        else
+            UpdateLineal(timeStep);
     }
     if (updateRotSuspension_)
     {
+        updateLinSuspension_ = false;
+
         UpdateRotation(timeStep);
     }
 }
 
 void Physics::HandlePhysicsPostStep(StringHash eventType, VariantMap& eventData)
+{
+    if (applySuspensionForce_)
+        UpdateSuspension();
+}
+
+void Physics::UpdateSuspension()
 {
     for (unsigned i = 0; i < wheelsInfo_.Size(); i++)
     {
@@ -848,4 +879,67 @@ float Physics::GetVelocity(const Vector3& relPos)
     }
 
     return vel;
+}
+
+void Physics::ApplySuspensionForce(float timeStep)
+{
+    Vector3 comPos = body_->GetPosition();
+    float mass = (mass_ / 4.0f);
+
+    float suspension[4];
+    unsigned ll = 0;
+    for (unsigned i = 0; i < wheelsInfo_.Size(); i++)
+    {
+        WheelInfo& wheel = wheelsInfo_[i];
+        Vector3 impulse;
+        float suspensionForce = 0.0;
+
+        Vector3 relpos = wheel.raycastInfo_.contactPoint_ - comPos;
+        Vector3 forceDir = wheel.raycastInfo_.contactNormal_;
+
+        if(wheel.raycastInfo_.isInContact_)
+        {
+            float distance = wheel.raycastInfo_.distance_ + suspensionDelta_;
+            float currentDiff = suspensionRest_ - distance + (mass * 9.81f / suspensionStiffness_);
+
+            // float x = currentDiff > 0.0f ? currentDiff : 0.0f;
+            float x = currentDiff;
+            float springForce = suspensionStiffness_ * x;
+
+            float suspensionDampStiffness = suspensionStiffness_;
+            float c = -sqrt(mass * suspensionDampStiffness * 4) * suspensionDamping_;
+            float v = wheel.raycastInfo_.suspensionRelativeVelocity_;
+            float dampingForce = c * v;
+
+            float maxSuspensionForce = 6000.0f;
+            if (dampingForce > maxSuspensionForce)
+            {
+                dampingForce = maxSuspensionForce;
+            }
+
+            if ((springForce + dampingForce) > 0.0f)
+            {
+                suspensionForce = (springForce + dampingForce);
+
+                if (suspensionForce > maxSuspensionForce)
+                {
+                    suspensionForce = maxSuspensionForce;
+                }
+            }
+            else
+            {
+                suspensionForce = -1.0f;
+            }
+        }
+        else
+        {
+            ll = 1;
+            suspensionForce = -1.0f;
+        }
+        suspension[i] =  wheel.raycastInfo_.suspensionRelativeVelocity_;
+
+        impulse =  forceDir * suspensionForce * timeStep;
+
+        body_->ApplyImpulse(impulse, relpos);
+    }
 }
