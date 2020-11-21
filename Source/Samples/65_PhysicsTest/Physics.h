@@ -29,6 +29,7 @@ namespace Urho3D
 class Node;
 class Scene;
 class RigidBody;
+class Text3D;
 }
 
 class ConvexCast;
@@ -108,6 +109,13 @@ private:
     void UpdateRotation(float timeStep);
 
     float GetVelocity(const Vector3& relPos);
+
+    void ApplySuspensionForce(float timeStep);
+
+    void UpdateSuspension();
+
+    bool RotateBody(float angleTarget, float rotAngle, float moi, float velocity, const Vector3& direction, float k);
+
     /// Flag for drawing debug geometry.
     bool drawDebug_;
 
@@ -118,7 +126,7 @@ private:
 
     RigidBody* body_;
     float mass_;
-    float length_, width_;
+    float length_, width_, height_;
     float floatHeight_;
     Vector3 impulse_;
     float k_, c_;
@@ -127,8 +135,11 @@ private:
     float maxImpulse_;
     bool updateLinSuspension_;
     bool updateRotSuspension_;
+    bool applySuspensionForce_;
     float timeElapsed_;
+
     Text* debugText_;
+    Text3D* nodeText_;
 
     float suspensionStiffness_;
     float suspensionLength_;
