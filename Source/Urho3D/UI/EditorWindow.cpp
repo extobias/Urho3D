@@ -25,6 +25,8 @@
 #include "../UI/EditorModelDebug.h"
 #include "../UI/UI.h"
 #include "../Urho2D/Drawable2D.h"
+#include "../Urho2D/ParticleEffect2D.h"
+#include "../Urho2D/ParticleEmitter2D.h"
 
 #include "imgui.h"
 #include "ImGuizmo.h"
@@ -102,9 +104,9 @@ void EditorWindow::HandleSceneLoaded(StringHash eventType, VariantMap& eventData
 void EditorWindow::MoveCamera(float timeStep)
 {
     // Do not move if the UI has a focused element (the console)
-    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
-    if (focusElement)
-        return;
+//    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
+//    if (focusElement)
+//        return;
 
     if (!cameraNode_)
         return;
@@ -1161,7 +1163,6 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_RESOURCEREF:
         {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
             ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
             ResourceCache* cache = GetSubsystem<ResourceCache>();
 
@@ -1169,11 +1170,29 @@ void EditorWindow::AttributeEdit(Serializable* c)
 
             if (v.type_ == StringHash("ParticleEffect"))
             {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
                 ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
                 EditParticleEmitter(emitter);
             }
+            if (v.type_ == StringHash("ParticleEffect2D"))
+            {
+                ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
+
+                if (ImGui::Button("Save Effect"))
+                {
+                    ParticleEffect2D* effect = emitter->GetEffect();
+
+                    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + effect->GetName();
+                    File file(context_, fileName, FILE_WRITE);
+                    effect->Save(file);
+                    URHO3D_LOGERRORF("Save effect name <%s>", effect->GetName().CString());
+                }
+
+                EditParticleEmitter2D(emitter);
+            }
             else if (v.type_ == StringHash("Model"))
             {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
                 currentModel_ = FindModel(v.name_);
                 if (ImGui::Combo(hideLabel, &currentModel_, modelResourcesString_.CString()))
                 {
@@ -1184,10 +1203,11 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
             else if (v.type_ == StringHash("Sprite2D"))
             {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
                 const ResourceContainer& rc = FindContainer(v.type_);
 
-                static int lines = 1;
-                ImGui::SliderInt("Lines", &lines, 1, 15);
+//                static int lines = 1;
+//                ImGui::SliderInt("Lines", &lines, 1, 15);
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
                 ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 50), true, ImGuiWindowFlags_HorizontalScrollbar);
@@ -1224,6 +1244,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
             else if (v.type_ == StringHash("XMLFile"))
             {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
                 currentModel_ = FindModel(v.name_);
                 if (ImGui::Combo(hideLabel, &currentModel_, modelResourcesString_.CString()))
                 {
@@ -1234,6 +1255,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
             else if (v.type_ == StringHash("Material"))
             {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
                  const ResourceContainer& rc = FindContainer(v.type_);
                  int index = rc.FindResourceIndex(v.name_);
                  if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
@@ -1634,6 +1656,285 @@ void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
     ImGui::Combo("Face Mode", &cameraMode, faceCameraModes, IM_ARRAYSIZE(faceCameraModes));
     effect->SetFaceCameraMode((FaceCameraMode)cameraMode);
     emitter->ApplyEffect();
+}
+
+void EditorWindow::EditParticleEmitter2D(ParticleEmitter2D* emitter)
+{
+    if (!emitter)
+        return;
+
+    ParticleEffect2D* effect = emitter->GetEffect();
+
+//    ImGui::NewLine();
+    int total_w = (int)ImGui::GetContentRegionAvail().x;
+
+    Vector2 sourcePositionVariance = effect->GetSourcePositionVariance();
+    if (EditAttribute("Source Position Variance", sourcePositionVariance, total_w))
+    {
+        effect->SetSourcePositionVariance(sourcePositionVariance);
+    }
+
+    float speed = effect->GetSpeed();
+    if (EditAttribute("Speed", speed, total_w))
+    {
+        effect->SetSpeed(speed);
+    }
+
+    float speedVariance = effect->GetSpeedVariance();
+    if (EditAttribute("SpeedVariance", speedVariance, total_w))
+    {
+        effect->SetSpeedVariance(speedVariance);
+    }
+
+    float particleLifeSpan = effect->GetParticleLifeSpan();
+    if (EditAttribute("Particle Life Span", particleLifeSpan, total_w))
+    {
+        effect->SetParticleLifeSpan(particleLifeSpan);
+    }
+
+    float particleLifeSpanVariance = effect->GetParticleLifespanVariance();
+    if (EditAttribute("Particle Life Span Variance", particleLifeSpanVariance, total_w))
+    {
+        effect->SetParticleLifespanVariance(particleLifeSpanVariance);
+    }
+
+    float angle = effect->GetAngle();
+    if (EditAttribute("Angle", angle, total_w))
+    {
+        effect->SetAngle(angle);
+    }
+
+    float angleVariance = effect->GetAngleVariance();
+    if (EditAttribute("Angle Variance", angleVariance, total_w))
+    {
+        effect->SetAngleVariance(angleVariance);
+    }
+
+    Vector2 gravity = effect->GetGravity();
+    if (EditAttribute("Gravity", gravity, total_w))
+    {
+        effect->SetGravity(gravity);
+    }
+
+    float radialAcceleration = effect->GetRadialAcceleration();
+    if (EditAttribute("Radial Accel", radialAcceleration, total_w))
+    {
+        effect->SetRadialAcceleration(radialAcceleration);
+    }
+
+    float radialAccelerationVariance = effect->GetRadialAccelVariance();
+    if (EditAttribute("Radial Accel Variance", radialAccelerationVariance, total_w))
+    {
+        effect->SetRadialAccelVariance(radialAccelerationVariance);
+    }
+
+    float tangentialAcceleration = effect->GetTangentialAcceleration();
+    if (EditAttribute("Tangential Accel", tangentialAcceleration, total_w))
+    {
+        effect->SetTangentialAcceleration(tangentialAcceleration);
+    }
+
+    float tangentialAccelerationVariance = effect->GetTangentialAccelVariance();
+    if (EditAttribute("tangential Accel Variance", tangentialAccelerationVariance, total_w))
+    {
+        effect->SetTangentialAccelVariance(tangentialAccelerationVariance);
+    }
+
+    Color startColor = effect->GetStartColor();
+    if (EditAttribute("Start Color", startColor, total_w))
+    {
+        effect->SetStartColor(startColor);
+    }
+
+    Color startColorVariance = effect->GetStartColorVariance();
+    if (EditAttribute("Start Color Variance", startColorVariance, total_w))
+    {
+        effect->SetStartColorVariance(startColorVariance);
+    }
+
+    Color finishColor = effect->GetFinishColor();
+    if (EditAttribute("Finish Color", finishColor, total_w))
+    {
+        effect->SetFinishColor(finishColor);
+    }
+
+    Color finishColorVariance = effect->GetFinishColorVariance();
+    if (EditAttribute("Finish Color Variance", finishColorVariance, total_w))
+    {
+        effect->SetFinishColorVariance(finishColorVariance);
+    }
+
+    int maxParticles = effect->GetMaxParticles();
+    if (EditAttribute("Max Particles", maxParticles, total_w))
+    {
+        effect->SetMaxParticles(maxParticles);
+    }
+
+    float startParticleSize = effect->GetStartParticleSize();
+    if (EditAttribute("Start Particle Size", startParticleSize, total_w))
+    {
+        effect->SetStartParticleSize(startParticleSize);
+    }
+
+    float startParticleSizeVariance = effect->GetStartParticleSizeVariance();
+    if (EditAttribute("Start Particle Size Variance", startParticleSizeVariance, total_w))
+    {
+        effect->SetStartParticleSizeVariance(startParticleSizeVariance);
+    }
+
+    float finishParticleSize = effect->GetFinishParticleSize();
+    if (EditAttribute("Finish Particle Size", finishParticleSize, total_w))
+    {
+        effect->SetFinishParticleSize(finishParticleSize);
+    }
+
+    float finishParticleSizeVariance = effect->GetFinishParticleSizeVariance();
+    if (EditAttribute("Finish Particle Size Variance", finishParticleSizeVariance, total_w))
+    {
+        effect->SetFinishParticleSizeVariance(finishParticleSizeVariance);
+    }
+
+    float duration = effect->GetDuration();
+    if (EditAttribute("Duration", duration, total_w))
+    {
+        effect->SetDuration(duration);
+    }
+
+    // emitter type
+
+    float maxRadius = effect->GetMaxRadius();
+    if (EditAttribute("Max Radius", maxRadius, total_w))
+    {
+        effect->SetMaxRadius(maxRadius);
+    }
+
+    float maxRadiusVariance = effect->GetMaxRadiusVariance();
+    if (EditAttribute("Max Radius Variance", maxRadiusVariance, total_w))
+    {
+        effect->SetMaxRadiusVariance(maxRadiusVariance);
+    }
+
+    float minRadius = effect->GetMinRadius();
+    if (EditAttribute("Min Radius", minRadius, total_w))
+    {
+        effect->SetMinRadius(minRadius);
+    }
+
+    float minRadiusVariance = effect->GetMinRadiusVariance();
+    if (EditAttribute("Min Radius Variance", minRadiusVariance, total_w))
+    {
+        effect->SetMinRadiusVariance(minRadiusVariance);
+    }
+
+    float rotatePerSecond = effect->GetRotatePerSecond();
+    if (EditAttribute("Rotate per Second", rotatePerSecond, total_w))
+    {
+        effect->SetRotatePerSecond(rotatePerSecond);
+    }
+
+    float rotatePerSecondVariance = effect->GetRotatePerSecondVariance();
+    if (EditAttribute("Rotate per Second Variance", rotatePerSecondVariance, total_w))
+    {
+        effect->SetRotatePerSecondVariance(rotatePerSecondVariance);
+    }
+
+    // blendFuncSource/blendFuncDestination
+
+    float rotationStart = effect->GetRotationStart();
+    if (EditAttribute("Rotation Start", rotationStart, total_w))
+    {
+        effect->SetRotationStart(rotationStart);
+    }
+
+    float rotationStartVariance = effect->GetRotationStartVariance();
+    if (EditAttribute("Rotation Start Variance", rotationStartVariance, total_w))
+    {
+        effect->SetRotationStartVariance(rotationStartVariance);
+    }
+
+    float rotationEnd = effect->GetRotationEnd();
+    if (EditAttribute("Rotation End", rotationEnd, total_w))
+    {
+        effect->SetRotationEnd(rotationEnd);
+    }
+
+    float rotationEndVariance = effect->GetRotationEndVariance();
+    if (EditAttribute("Rotation End Variance", rotationEndVariance, total_w))
+    {
+        effect->SetRotationEndVariance(rotationEndVariance);
+    }
+}
+
+bool EditorWindow::EditAttribute(const String& name, int& value, int totalWidth)
+{
+    ImGui::PushID(name.CString());
+    ImGui::Text("%s", name.CString());
+    ImGui::SameLine(totalWidth / 2.0f);
+    ImGui::SetNextItemWidth(totalWidth / 2.0f);
+    bool edited = ImGui::InputInt(hideLabel_, &value);
+    ImGui::PopID();
+
+    return edited;
+}
+
+bool EditorWindow::EditAttribute(const String& name, float& value, int totalWidth)
+{
+    ImGui::PushID(name.CString());
+    ImGui::Text("%s", name.CString());
+    ImGui::SameLine(totalWidth / 2.0f);
+    ImGui::SetNextItemWidth(totalWidth / 2.0f);
+    bool edited = ImGui::InputFloat(hideLabel_, &value);
+    ImGui::PopID();
+
+    return edited;
+}
+
+bool EditorWindow::EditAttribute(const String& name, Vector2& value, int totalWidth)
+{
+    float arrayValue[2];
+    memcpy(arrayValue, value.Data(), sizeof(arrayValue));
+
+    ImGui::PushID(name.CString());
+    ImGui::Text("%s", name.CString());
+    ImGui::SameLine(totalWidth / 2.0f);
+    ImGui::SetNextItemWidth(totalWidth / 2.0f);
+    bool edited = ImGui::InputFloat2(hideLabel_, arrayValue);
+    value = Vector2(arrayValue);
+    ImGui::PopID();
+
+    return edited;
+}
+
+bool EditorWindow::EditAttribute(const String& name, Vector3& value, int totalWidth)
+{
+    float arrayValue[3];
+    memcpy(arrayValue, value.Data(), sizeof(arrayValue));
+
+    ImGui::PushID(name.CString());
+    ImGui::Text("%s", name.CString());
+    ImGui::SameLine(totalWidth / 2.0f);
+    ImGui::SetNextItemWidth(totalWidth / 2.0f);
+    bool edited = ImGui::InputFloat3(hideLabel_, arrayValue);
+    value = Vector3(arrayValue);
+    ImGui::PopID();
+
+    return edited;
+}
+
+bool EditorWindow::EditAttribute(const String& name, Color& value, int totalWidth)
+{
+    float arrayValue[4];
+    memcpy(arrayValue, value.Data(), sizeof(arrayValue));
+
+    ImGui::PushID(name.CString());
+    ImGui::Text("%s", name.CString());
+    ImGui::SameLine(totalWidth / 2.0f);
+    ImGui::SetNextItemWidth(totalWidth / 2.0f);
+    bool edited = ImGui::ColorEdit4(hideLabel_, (float*)&arrayValue);
+    value = Color(arrayValue);
+    ImGui::PopID();
+
+    return edited;
 }
 
 void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)

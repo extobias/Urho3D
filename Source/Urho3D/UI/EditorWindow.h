@@ -4,12 +4,12 @@
 
 namespace Urho3D
 {
-
-class Model;
-class ParticleEmitter;
-class EditorGuizmo;
-class EditorModelDebug;
-class EditorSelection;
+    class Model;
+    class ParticleEmitter;
+    class ParticleEmitter2D;
+    class EditorGuizmo;
+    class EditorModelDebug;
+    class EditorSelection;
 
 struct ResourceFile
 {
@@ -144,6 +144,18 @@ private:
 
     void EditParticleEmitter(ParticleEmitter* emitter);
 
+    void EditParticleEmitter2D(ParticleEmitter2D* emitter);
+
+    bool EditAttribute(const String& name, int& value, int totalWidth);
+
+    bool EditAttribute(const String& name, float& value, int totalWidth);
+
+    bool EditAttribute(const String& name, Vector2& value, int totalWidth);
+
+    bool EditAttribute(const String& name, Vector3& value, int totalWidth);
+
+    bool EditAttribute(const String& name, Color& value, int totalWidth);
+
     void EditModelDebug(EditorModelDebug* model);
 
     void DebugModelSubPart();
@@ -215,6 +227,8 @@ private:
     float pitch_;
 
     bool sceneLoading_;
+
+    const char* hideLabel_ {"##hidelabel"};
 };
 
 }
