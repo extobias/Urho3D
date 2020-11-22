@@ -13,7 +13,9 @@ extern const char* URHO2D_CATEGORY;
 Pumper::Pumper(Context* context)
     : LogicComponent (context),
       ballTimer_(0.0f),
-      pumpTimerMax_(1.0f),
+      pumpTimerMax_(0.5f),
+      pumpCount_(0),
+      pumpCountMax_(30),
       nodeBalls_(nullptr)
 {
     SetUpdateEventMask(USE_FIXEDUPDATE);
@@ -25,7 +27,7 @@ void Pumper::RegisterObject(Context* context)
 {
     context->RegisterFactory<Pumper>(URHO2D_CATEGORY);
 
-    URHO3D_ATTRIBUTE("Pump Timer", float, pumpTimerMax_, 1.0f, AM_FILE);
+    URHO3D_ATTRIBUTE("Pump Timer", float, pumpTimerMax_, 0.5f, AM_FILE);
 
     URHO3D_ATTRIBUTE("Max Init Force", Vector2, maxInitForce_, Vector2(-5.0f, 5.0f), AM_FILE);
 
@@ -35,9 +37,10 @@ void Pumper::RegisterObject(Context* context)
 void Pumper::FixedUpdate(float timeStep)
 {
     ballTimer_ += timeStep;
-    if (ballTimer_ > pumpTimerMax_ && GetScene()->IsUpdateEnabled())
+    if (ballTimer_ > pumpTimerMax_ && GetScene()->IsUpdateEnabled() && pumpCount_ < pumpCountMax_)
     {
         ballTimer_ = 0.0f;
+        pumpCount_++;
 
         CreateBall();
     }
@@ -50,7 +53,8 @@ void Pumper::CreateBall()
     node->SetTemporary(true);
     node->SetVar("Type", "Ball");
 
-    unsigned type = (unsigned)Random(0, 3);
+    // unsigned type = (unsigned)Random(0, 3);
+    unsigned type = 2;
     node->SetVar("Color", type);
 
     Ball2D* ball = node->CreateComponent<Ball2D>();

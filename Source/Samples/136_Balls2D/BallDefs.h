@@ -33,5 +33,5 @@ const static char* gSprites[] =
 {
     "Urho2D/Box.png",
     "Urho2D/Ball.png",
-    "Urho2D/Aster.png"
+    "Urho2D/ball-axis.png"
 };

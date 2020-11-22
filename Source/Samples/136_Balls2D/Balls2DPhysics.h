@@ -97,6 +97,8 @@ private:
 
     void HandleSceneLoaded(StringHash eventType, VariantMap& eventData);
 
+    void HandlePhysicsPostStep(StringHash eventType, VariantMap& eventData);
+
     void LoadLevelGoals();
 
     void TestNodes();
@@ -108,5 +110,7 @@ private:
     Node* wallsNode_;
 
     bool debugDraw_;
+
+    Text* debugText_;
 
 };

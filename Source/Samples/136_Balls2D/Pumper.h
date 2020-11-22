@@ -35,6 +35,10 @@ private:
 
     float pumpTimerMax_;
 
+    unsigned pumpCount_;
+
+    unsigned pumpCountMax_;
+
     Vector2 maxInitForce_;
 
     Vector2 minInitForce_;

@@ -64,7 +64,8 @@ void Sinkhole::FixedUpdate(float timeStep)
             node_->SetPosition(Vector3(x, y, 0.0f));
         }
 
-        unsigned color = (unsigned)Random(0, 3);
+//        unsigned color = (unsigned)Random(0, 3);
+        unsigned color = 2;
         node_->SetVar("Color", color);
 
         UpdateSprite(color);

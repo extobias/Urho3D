@@ -136,7 +136,9 @@ void InputManager::HandleButtonDown(const IntVector2& screenPos, const Vector3& 
         // Create a ConstraintMouse2D - Temporary apply this constraint to the pickedNode to allow grasping and moving with the mouse
         ConstraintMouse2D* constraintMouse = gPickedNode->CreateComponent<ConstraintMouse2D>();
         constraintMouse->SetTarget(Vector2(worldPos.x_, worldPos.y_));
-        constraintMouse->SetMaxForce(100000 * rigidBody->GetMass());
+        constraintMouse->SetMaxForce(10000 * rigidBody->GetMass());
+//        constraintMouse->SetFrequencyHz();
+        constraintMouse->SetDampingRatio(0.0f);
 //        constraintMouse->SetCollideConnected(true);
         constraintMouse->SetOtherBody(gDummyBody);
     }

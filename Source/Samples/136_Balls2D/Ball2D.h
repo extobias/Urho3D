@@ -27,13 +27,23 @@ public:
 
     void FixedUpdate(float timeStep) override;
 
+    void PostUpdate(float timeStep) override;
+
     void SetType(unsigned type);
+
+    float GetAnchorLength() const;
+
+    void Unanchored();
 
     void SetForce(const Vector2& force);
 
+    void SetNextAnchor(const Vector2& prevAnchor);
+
+    Vector2 GetAnchor() const;
+
     float GetArea() const { return area_; }
 
-    void SetChained(bool chain) { chained_ = chain; }
+    void SetChained(bool chain);
 
     bool IsChained() const { return chained_; }
 
@@ -58,6 +68,8 @@ private:
     WeakPtr<StaticSprite2D> sprite_;
 
     WeakPtr<CollisionShape2D> shape_;
+
+    Vector2 anchor_;
 
     float area_;
 

@@ -48,7 +48,6 @@
 #include <Urho3D/Urho2D/StaticSprite2D.h>
 #include <Urho3D/Urho2D/ConstraintMouse2D.h>
 #include <Urho3D/Urho2D/ConstraintDistance2D.h>
-#include <Urho3D/Urho2D/ConstraintRevolute2D.h>
 #include <Urho3D/Urho2D/CollisionEdge2D.h>
 #include <Urho3D/Urho2D/PhysicsEvents2D.h>
 #include <Urho3D/Urho2D/PhysicsUtils2D.h>
@@ -71,11 +70,17 @@ URHO3D_DEFINE_APPLICATION_MAIN(Balls2DPhysics)
 static const unsigned NUM_OBJECTS = 100;
 
 Node* gPickedNode = nullptr;
+
 Node* gTailNode = nullptr;
+
 Node* gCameraNode = nullptr;
+
 RigidBody2D* gDummyBody = nullptr;
+
 float gPhysicsScale;
+
 float gScreenRatio;
+
 Rect gField;
 /// type/count
 HashMap<unsigned, unsigned> gCounters;
@@ -106,7 +111,7 @@ void Balls2DPhysics::Start()
     CreateScene();
 
     // Create the UI content
-    CreateInstructions();
+    // CreateInstructions();
 
     // Setup the viewport for displaying the scene
 //    SetupViewport();
@@ -148,6 +153,8 @@ Node* Balls2DPhysics::CreateCameraNode()
 
     camera_ = node->CreateComponent<Camera>();
     camera_->SetOrthographic(true);
+
+    editor_->SetCameraNode(node);
 
     Graphics* graphics = GetSubsystem<Graphics>();
 
@@ -315,24 +322,14 @@ void Balls2DPhysics::CreateInstructions()
     auto* ui = GetSubsystem<UI>();
 
     // Construct new Text object, set string to display and font to use
-//    auto* instructionText = ui->GetRoot()->CreateChild<Text>();
-//    instructionText->SetText("Use WASD keys to move, use PageUp PageDown keys to zoom.");
-//    instructionText->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 15);
-
-//    // Position the text relative to the screen center
-//    instructionText->SetHorizontalAlignment(HA_CENTER);
-//    instructionText->SetVerticalAlignment(VA_CENTER);
-//    instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
-
-    debugText_ = ui->GetRoot()->CreateChild<Text>();
-    debugText_->SetText("0.0f");
-    debugText_->SetFont(cache->GetResource<Font>("Fonts/BarcadeBrawlRegular-plYD.ttf"), 15);
+    auto* instructionText = ui->GetRoot()->CreateChild<Text>();
+    instructionText->SetText("Use WASD keys to move, use PageUp PageDown keys to zoom.");
+    instructionText->SetFont(cache->GetResource<Font>("Fonts/Anonymous Pro.ttf"), 15);
 
     // Position the text relative to the screen center
-    debugText_->SetHorizontalAlignment(HA_RIGHT);
-    debugText_->SetVerticalAlignment(VA_CENTER);
-    // scoreText_->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
-    debugText_->SetPosition(0, 0);
+    instructionText->SetHorizontalAlignment(HA_CENTER);
+    instructionText->SetVerticalAlignment(VA_CENTER);
+    instructionText->SetPosition(0, ui->GetRoot()->GetHeight() / 4);
 }
 
 void Balls2DPhysics::SetupViewport()
@@ -360,8 +357,6 @@ void Balls2DPhysics::SubscribeToEvents()
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Balls2DPhysics, HandleKeyDown));
 
     SubscribeToEvent(E_ASYNCLOADFINISHED, URHO3D_HANDLER(Balls2DPhysics, HandleSceneLoaded));
-
-    SubscribeToEvent(E_PHYSICSPOSTSTEP, URHO3D_HANDLER(Balls2DPhysics, HandlePhysicsPostStep));
 }
 
 void Balls2DPhysics::DebugDraw()
@@ -416,6 +411,7 @@ void Balls2DPhysics::HandleSceneLoaded(StringHash eventType, VariantMap& eventDa
 
     gCameraNode = CreateCameraNode();
 
+    editor_->SetCameraNode(gCameraNode);
     editor_->SetScene(scene);
 
     SetupViewport();
@@ -430,54 +426,6 @@ void Balls2DPhysics::HandleSceneLoaded(StringHash eventType, VariantMap& eventDa
     gDummyBody = edgeNode->CreateComponent<RigidBody2D>();
 
     LoadLevelGoals();
-}
-
-void Balls2DPhysics::HandlePhysicsPostStep(StringHash eventType, VariantMap& eventData)
-{
-    using namespace PhysicsPostStep;
-    float timeStep = eventData[P_TIMESTEP].GetFloat();
-
-    if (gPickedNode)
-    {
-        float max = 0.3f;
-        float maxLenght = 0.0f;
-        unsigned count = 0;
-
-        // Node* newTail = nullptr;
-        Ball2D* ball = gPickedNode->GetComponent<Ball2D>();
-        bool finish = false;
-        while(ball->IsChained() && !finish)
-        {
-            if (ball->GetAnchorLength() > max)
-//            if (count > 10)
-            {
-                maxLenght = ball->GetAnchorLength();
-
-                ball->Unanchored();
-                gTailNode = ball->GetNode();
-
-                char buffer[32];
-                sprintf(buffer, "%.5f", maxLenght);
-                debugText_->SetText(String().AppendWithFormat("count <%i> maxlen <%s>", count, buffer));
-            }
-
-            if (ball->next_)
-            {
-                ball = ball->next_->GetComponent<Ball2D>();
-            }
-            else
-            {
-                finish = true;
-            }
-            count++;
-        }
-
-        ball = gPickedNode->GetComponent<Ball2D>();
-        if (!ball->next_)
-        {
-            gTailNode = nullptr;
-        }
-    }
 }
 
 void Balls2DPhysics::LoadLevelGoals()
@@ -538,11 +486,6 @@ void Balls2DPhysics::CalcSizeScales()
     Vector3 dpi = graphics->GetDisplayDPI();
     // 160.0f normal screen densities
     gPhysicsScale = dpi.z_ / 160.0f;
-
-    // FIXME
-    if (gPhysicsScale > 2.0f) {
-        gPhysicsScale = 2.0f;
-    }
 
     float screenRatio = (float)graphics->GetWidth() / (float)graphics->GetHeight();
 
