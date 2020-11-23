@@ -268,8 +268,8 @@ void PhysicsWorld::CreateDynaymicWorld()
         softBodyWorldInfo_->m_sparsesdf.Initialize();
     }
 
-        colors.m_activeObject = btVector3(0.0f, 0.0f, 0.0f);
-        colors.m_deactivatedObject = btVector3(0.0f, 0.0f, 1.0f);
+    getDefaultColors().m_activeObject = btVector3(0.0f, 0.0f, 0.0f);
+    getDefaultColors().m_deactivatedObject = btVector3(0.0f, 0.0f, 1.0f);
 }
 bool PhysicsWorld::isVisible(const btVector3& aabbMin, const btVector3& aabbMax)
 {

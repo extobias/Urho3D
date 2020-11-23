@@ -341,20 +341,20 @@ void Urho2DConstraints::CreateScene()
     CreateFlag("ConstraintRevolute2D", -2.45f, 3.0f); // Display Text3D flag
     Node* boxRevoluteNode = box->Clone();
     tempBody = boxRevoluteNode->GetComponent<RigidBody2D>(); // Get body to make it static
-    tempBody->SetBodyType(BT_STATIC);
+    tempBody->SetBodyType(BT_DYNAMIC);
     Node* ballRevoluteNode = ball->Clone();
     boxRevoluteNode->SetPosition(Vector3(-2.0f, 1.5f, 0.0f));
-    ballRevoluteNode->SetPosition(Vector3(-1.0f, 2.0f, 0.0f));
+    ballRevoluteNode->SetPosition(Vector3(-2.0f, 2.0f, 0.0f));
 
     auto* constraintRevolute = boxRevoluteNode->CreateComponent<ConstraintRevolute2D>(); // Apply constraint to box
     constraintRevolute->SetOtherBody(ballRevoluteNode->GetComponent<RigidBody2D>()); // Constrain ball to box
     constraintRevolute->SetAnchor(Vector2(-1.0f, 1.5f));
-    constraintRevolute->SetLowerAngle(-1.0f); // In radians
-    constraintRevolute->SetUpperAngle(0.5f); // In radians
-    constraintRevolute->SetEnableLimit(true);
-    constraintRevolute->SetMaxMotorTorque(10.0f);
-    constraintRevolute->SetMotorSpeed(0.0f);
-    constraintRevolute->SetEnableMotor(true);
+//    constraintRevolute->SetLowerAngle(-1.0f); // In radians
+//    constraintRevolute->SetUpperAngle(0.5f); // In radians
+//    constraintRevolute->SetEnableLimit(true);
+//    constraintRevolute->SetMaxMotorTorque(10.0f);
+//    constraintRevolute->SetMotorSpeed(0.0f);
+//    constraintRevolute->SetEnableMotor(true);
 
     // Create a ConstraintRope2D
     CreateFlag("ConstraintRope2D", -4.97f, 1.0f); // Display Text3D flag

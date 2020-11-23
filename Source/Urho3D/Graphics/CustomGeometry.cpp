@@ -95,11 +95,11 @@ void CustomGeometry::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQ
         float distance = localRay.HitDistance(boundingBox_);
         Vector3 normal = -query.ray_.direction_;
 
+        unsigned subObjectElementIndex = M_MAX_UNSIGNED;
         if (level == RAY_TRIANGLE && distance < query.maxDistance_)
         {
             distance = M_INFINITY;
 
-            unsigned subObjectElementIndex = M_MAX_UNSIGNED;
             for (unsigned i = 0; i < batches_.Size(); ++i)
             {
                 Geometry* geometry = batches_[i].geometry_;
@@ -116,18 +116,18 @@ void CustomGeometry::ProcessRayQuery(const RayOctreeQuery& query, PODVector<RayQ
             }
         }
 
-            if (distance < query.maxDistance_)
-            {
-                RayQueryResult result;
-                result.position_ = query.ray_.origin_ + distance * query.ray_.direction_;
-                result.normal_ = normal;
-                result.distance_ = distance;
-                result.drawable_ = this;
-                result.node_ = node_;
-                result.subObject_ = M_MAX_UNSIGNED;
-                result.subObjectElementIndex_ = subObjectElementIndex;
-                results.Push(result);
-            }
+        if (distance < query.maxDistance_)
+        {
+            RayQueryResult result;
+            result.position_ = query.ray_.origin_ + distance * query.ray_.direction_;
+            result.normal_ = normal;
+            result.distance_ = distance;
+            result.drawable_ = this;
+            result.node_ = node_;
+            result.subObject_ = M_MAX_UNSIGNED;
+            result.subObjectElementIndex_ = subObjectElementIndex;
+            results.Push(result);
+        }
     }
     break;
 

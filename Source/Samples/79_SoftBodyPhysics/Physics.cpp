@@ -251,21 +251,32 @@ void Physics::SpawnObject(int objtype)
     }
     else if (objtype == 1)
     {
-        boxNode->SetPosition(cameraNode_->GetPosition() + cameraNode_->GetDirection());
-        boxNode->SetRotation(cameraNode_->GetRotation());
-        boxNode->SetScale(0.5f);
-        StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
-        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        boxObject->SetMaterial(cache->GetResource<Material>("Materials/cubeMat.xml"));
+        StaticModel *boxObject = boxNode->CreateComponent<StaticModel>();
+        boxObject->SetModel(cache->GetResource<Model>("Models/Kachujin/Kachujin.mdl"));
+        boxObject->SetMaterial(cache->GetResource<Material>("Models/Kachujin/Materials/Kachujin.xml"));
         boxObject->SetCastShadows(true);
 
-        // Create physics components, use a smaller mass also
-        RigidBody* body = boxNode->CreateComponent<RigidBody>();
-        body->SetMass(0.25f);
-        body->SetFriction(0.75f);
-        CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
-        shape->SetBox(Vector3::ONE);
-        body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+        SoftBody *softbody = boxNode->CreateComponent<SoftBody>();
+        softbody->CreateFromStaticModel();
+        softbody->SetTransform(cameraNode_->GetPosition() + cameraNode_->GetDirection(), cameraNode_->GetRotation());
+        softbody->SetMass(10.0f);
+        softbody->SetVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
+
+//        boxNode->SetPosition(cameraNode_->GetPosition() + cameraNode_->GetDirection());
+//        boxNode->SetRotation(cameraNode_->GetRotation());
+//        boxNode->SetScale(0.5f);
+//        StaticModel* boxObject = boxNode->CreateComponent<StaticModel>();
+//        boxObject->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+//        boxObject->SetMaterial(cache->GetResource<Material>("Materials/cubeMat.xml"));
+//        boxObject->SetCastShadows(true);
+
+//        // Create physics components, use a smaller mass also
+//        RigidBody* body = boxNode->CreateComponent<RigidBody>();
+//        body->SetMass(0.25f);
+//        body->SetFriction(0.75f);
+//        CollisionShape* shape = boxNode->CreateComponent<CollisionShape>();
+//        shape->SetBox(Vector3::ONE);
+//        body->SetLinearVelocity(cameraNode_->GetRotation() * Vector3(0.0f, 0.25f, 1.0f) * OBJECT_VELOCITY);
     }
     else
     {

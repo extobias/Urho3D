@@ -592,7 +592,7 @@ void EditorGuizmo::Render(float timeStep)
 //    }
 }
 
-void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
+void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     ImGuiElement::OnClickBegin(position, screenPosition, button, buttons, qualifiers, cursor);
 
@@ -631,14 +631,14 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
     }
 }
 
-void EditorGuizmo::OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
+void EditorGuizmo::OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor, UIElement* beginElement)
 {
     ImGuiElement::OnClickEnd(position, screenPosition, button, buttons, qualifiers, cursor, beginElement);
 
     clicked_ = false;
 }
 
-void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor)
+void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenPosition, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     ImGuiElement::OnHover(position, screenPosition, buttons, qualifiers, cursor);
 

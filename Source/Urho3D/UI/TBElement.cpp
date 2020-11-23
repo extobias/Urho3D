@@ -504,12 +504,12 @@ int TBUIElement::FindQualMap(int key)
     return TB_KEY_UNDEFINED;
 }
 
-void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
+void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     root_->InvokePointerDown(position.x_, position.y_, 0, GetModifierKeys(), ShouldEmulateTouchEvent());
 }
 
-void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
+void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor, UIElement* beginElement)
 {
     root_->InvokePointerUp(position.x_, position.y_, GetModifierKeys(), ShouldEmulateTouchEvent());
 }

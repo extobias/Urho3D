@@ -104,9 +104,9 @@ void EditorWindow::HandleSceneLoaded(StringHash eventType, VariantMap& eventData
 void EditorWindow::MoveCamera(float timeStep)
 {
     // Do not move if the UI has a focused element (the console)
-//    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
-//    if (focusElement)
-//        return;
+    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
+    if (focusElement && focusElement->IsVisible())
+        return;
 
     if (!cameraNode_)
         return;
@@ -603,7 +603,7 @@ void EditorWindow::AttachCamera()
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
     unsigned index = renderer->GetNumViewports();
     URHO3D_LOGERRORF("EditorWindow.AttachCamera: viewport size <%u>", index);
-    renderer->SetViewport(0, viewport);
+    renderer->SetViewport(1, viewport);
 }
 
 void EditorWindow::Render(float timeStep)

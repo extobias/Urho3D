@@ -243,9 +243,6 @@ public:
 		btVector3 m_hitNormalWorld;
 		btVector3 m_hitPointWorld;
 
-		btVector3	m_hitNormalWorld;
-		btVector3	m_hitPointWorld;
-
 		// @extobias modification
 		int m_shapePart;
 		int m_triangleIndex;
