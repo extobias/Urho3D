@@ -53,6 +53,12 @@
 #endif
 
 #ifdef __EMSCRIPTEN__
+#include "../../Input/Input.h"
+#include "../../UI/Cursor.h"
+#include "../../UI/UI.h"
+#include <emscripten/emscripten.h>
+#include <emscripten/bind.h>
+
 // Emscripten provides even all GL extension functions via static linking. However there is
 // no GLES2-specific extension header at the moment to include instanced rendering declarations,
 // so declare them manually from GLES3 gl2ext.h. Emscripten will provide these when linking final output.
@@ -61,6 +67,71 @@ extern "C"
     GL_APICALL void GL_APIENTRY glDrawArraysInstancedANGLE (GLenum mode, GLint first, GLsizei count, GLsizei primcount);
     GL_APICALL void GL_APIENTRY glDrawElementsInstancedANGLE (GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount);
     GL_APICALL void GL_APIENTRY glVertexAttribDivisorANGLE (GLuint index, GLuint divisor);
+}
+
+// Helper functions to support emscripten canvas resolution change
+static const Urho3D::Context *appContext;
+
+static void JSCanvasSize(int width, int height, bool fullscreen, float scale)
+{
+    URHO3D_LOGINFOF("JSCanvasSize: width=%d height=%d fullscreen=%d ui scale=%f", width, height, fullscreen, scale);
+
+    using namespace Urho3D;
+
+    if (appContext)
+    {
+        bool uiCursorVisible = false;
+        bool systemCursorVisible = false;
+        MouseMode mouseMode{};
+
+        // Detect current system pointer state
+        Input* input = appContext->GetSubsystem<Input>();
+        if (input)
+        {
+            systemCursorVisible = input->IsMouseVisible();
+            mouseMode = input->GetMouseMode();
+        }
+
+        UI* ui = appContext->GetSubsystem<UI>();
+        if (ui)
+        {
+            ui->SetScale(scale);
+
+            // Detect current UI pointer state
+            Cursor* cursor = ui->GetCursor();
+            if (cursor)
+                uiCursorVisible = cursor->IsVisible();
+        }
+
+        // Apply new resolution
+        appContext->GetSubsystem<Graphics>()->SetMode(width, height);
+
+        // Reset the pointer state as it was before resolution change
+        if (input)
+        {
+            if (uiCursorVisible)
+                input->SetMouseVisible(false);
+            else
+                input->SetMouseVisible(systemCursorVisible);
+
+            input->SetMouseMode(mouseMode);
+        }
+
+        if (ui)
+        {
+            Cursor* cursor = ui->GetCursor();
+            if (cursor)
+            {
+                cursor->SetVisible(uiCursorVisible);
+                cursor->SetPosition(input->GetMousePosition());
+            }
+        }
+    }
+}
+
+using namespace emscripten;
+EMSCRIPTEN_BINDINGS(Module) {
+    function("JSCanvasSize", &JSCanvasSize);
 }
 #endif
 
@@ -242,6 +313,10 @@ Graphics::Graphics(Context* context) :
 
     // Register Graphics library object factories
     RegisterGraphicsLibrary(context_);
+
+#ifdef __EMSCRIPTEN__
+    appContext = context_;
+#endif
 }
 
 Graphics::~Graphics()
@@ -286,7 +361,6 @@ bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& para
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 #ifndef GL_ES_VERSION_2_0
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
@@ -315,17 +389,6 @@ bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& para
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 #endif
 
-        if (newParams.multiSample_ > 1)
-        {
-            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, newParams.multiSample_);
-        }
-        else
-        {
-            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-            SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-        }
-
         SDL_Rect display_rect;
         SDL_GetDisplayBounds(newParams.monitor_, &display_rect);
         reposition = newParams.fullscreen_ || (newParams.borderless_ && width >= display_rect.w && height >= display_rect.h);
@@ -340,41 +403,60 @@ bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& para
             flags |= SDL_WINDOW_BORDERLESS;
         if (newParams.resizable_)
             flags |= SDL_WINDOW_RESIZABLE;
+
+#ifndef __EMSCRIPTEN__
         if (newParams.highDPI_)
             flags |= SDL_WINDOW_ALLOW_HIGHDPI;
+#endif
 
         SDL_SetHint(SDL_HINT_ORIENTATIONS, orientations_.CString());
 
-        for (;;)
+        // Try 24-bit depth first, fallback to 16-bit
+        for (const int depthSize : { 24, 16 })
         {
-            if (!externalWindow_)
-                window_ = SDL_CreateWindow(windowTitle_.CString(), x, y, width, height, flags);
-            else
+            SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthSize);
+
+            // Try requested multisample level first, fallback to lower levels and no multisample
+            for (int multiSample = newParams.multiSample_; multiSample > 0; multiSample /= 2)
             {
-#ifndef __EMSCRIPTEN__
-                if (!window_)
-                    window_ = SDL_CreateWindowFrom(externalWindow_, SDL_WINDOW_OPENGL);
-                newParams.fullscreen_ = false;
-#endif
+                if (multiSample > 1)
+                {
+                    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+                    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, multiSample);
+                }
+                else
+                {
+                    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+                    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+                }
+
+                if (!externalWindow_)
+                    window_ = SDL_CreateWindow(windowTitle_.CString(), x, y, width, height, flags);
+                else
+                {
+    #ifndef __EMSCRIPTEN__
+                    if (!window_)
+                        window_ = SDL_CreateWindowFrom(externalWindow_, SDL_WINDOW_OPENGL);
+                    newParams.fullscreen_ = false;
+    #endif
+                }
+
+                if (window_)
+                {
+                    // TODO: We probably want to keep depthSize as well
+                    newParams.multiSample_ = multiSample;
+                    break;
+                }
             }
 
             if (window_)
                 break;
-            else
-            {
-                if (newParams.multiSample_ > 1)
-                {
-                    // If failed with multisampling, retry first without
-                    newParams.multiSample_ = 1;
-                    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-                    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-                }
-                else
-                {
-                    URHO3D_LOGERRORF("Could not create window, root cause: '%s'", SDL_GetError());
-                    return false;
-                }
-            }
+        }
+
+        if (!window_)
+        {
+            URHO3D_LOGERRORF("Could not create window, root cause: '%s'", SDL_GetError());
+            return false;
         }
 
         // Reposition the window on the specified monitor
@@ -2151,6 +2233,12 @@ void Graphics::OnWindowResized()
     ResetRenderTargets();
 
     URHO3D_LOGDEBUGF("Window was resized to %dx%d", width_, height_);
+
+#ifdef __EMSCRIPTEN__
+    EM_ASM({
+        Module.SetRendererSize($0, $1);
+    }, width_, height_);
+#endif
 
     using namespace ScreenMode;
 
