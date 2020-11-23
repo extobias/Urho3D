@@ -1258,30 +1258,7 @@ macro (enable_pch HEADER_PATHNAME)
                     endif ()
                 endforeach ()
                 unset (${TARGET_NAME}_HEADER_PATHNAME)
-<<<<<<< HEAD:CMake/Modules/UrhoCommon.cmake
-            else ()
-                # The target has not been created yet, so set an internal variable to come back here again later
-                set (${TARGET_NAME}_HEADER_PATHNAME ${ARGV})
-                # But proceed to add the dummy C++ or C implementation file if necessary
-                set (${LANG}_FILENAME ${NAME_WE}.${EXT})
-                get_filename_component (PATH ${HEADER_PATHNAME} PATH)
-                if (PATH)
-                    set (PATH ${PATH}/)
-                endif ()
-                list (FIND SOURCE_FILES ${PATH}${${LANG}_FILENAME} ${LANG}_FILENAME_FOUND)
-                if (${LANG}_FILENAME_FOUND STREQUAL -1)
-                    if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${${LANG}_FILENAME})
-                        # Only generate it once so that its timestamp is not touched unnecessarily
-                        file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/${${LANG}_FILENAME} "// This is a generated file. DO NOT EDIT!\n\n#include \"${HEADER_FILENAME}\"")
-                    endif ()
-                    list (INSERT SOURCE_FILES 0 ${${LANG}_FILENAME})
-                endif ()
-            endif ()
-        elseif (XCODE)
-            if (TARGET ${TARGET_NAME})
-=======
             elseif (XCODE)
->>>>>>> upstream/master:cmake/Modules/UrhoCommon.cmake
                 # Precompiling and using precompiled header file
                 set_target_properties (${TARGET_NAME} PROPERTIES XCODE_ATTRIBUTE_GCC_PRECOMPILE_PREFIX_HEADER YES XCODE_ATTRIBUTE_GCC_PREFIX_HEADER ${ABS_HEADER_PATHNAME})
                 unset (${TARGET_NAME}_HEADER_PATHNAME)
