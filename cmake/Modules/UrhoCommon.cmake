@@ -571,8 +571,8 @@ if (MSVC)
     set (CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF")
 else ()
     # GCC/Clang-specific setup
-    # set (CMAKE_CXX_VISIBILITY_PRESET hidden)
-    # set (CMAKE_VISIBILITY_INLINES_HIDDEN true)
+    set (CMAKE_CXX_VISIBILITY_PRESET hidden)
+    set (CMAKE_VISIBILITY_INLINES_HIDDEN true)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-offsetof")
     if (NOT ANDROID)    # Most of the flags are already setup in Android toolchain file
         if (ARM AND CMAKE_SYSTEM_NAME STREQUAL Linux)
