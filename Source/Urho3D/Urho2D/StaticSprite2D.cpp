@@ -300,8 +300,8 @@ void StaticSprite2D::UpdateSourceBatches()
     Vector<Vertex2D>& vertices = sourceBatches_[0].vertices_;
     vertices.Clear();
 
-    if (!sprite_)
-        return;
+//    if (!sprite_)
+//        return;
 
     if (!useTextureRect_)
     {

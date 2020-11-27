@@ -20,7 +20,7 @@
 
 #ifndef NDEBUG
 /** Enable compilation of unit tests. */
-#define TB_UNIT_TESTING
+// #define TB_UNIT_TESTING
 #endif
 
 /** Enable if the focus state should automatically be set on edit fields even
