@@ -2627,7 +2627,7 @@ void ASRegisterGenerated_Members_P(asIScriptEngine* engine)
     // void PhysicsWorld::RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, unsigned collisionMask=M_MAX_UNSIGNED) | File: ../Physics/PhysicsWorld.h
     engine->RegisterObjectMethod("PhysicsWorld", "void RaycastSingle(PhysicsRaycastResult&, const Ray&in, float, uint = M_MAX_UNSIGNED)", asMETHODPR(PhysicsWorld, RaycastSingle, (PhysicsRaycastResult&, const Ray&, float, unsigned), void), asCALL_THISCALL);
     // void PhysicsWorld::RaycastSingleSegmented(PhysicsRaycastResult& result, const Ray& ray, float maxDistance, float segmentDistance, unsigned collisionMask=M_MAX_UNSIGNED, float overlapDistance=0.1f) | File: ../Physics/PhysicsWorld.h
-    engine->RegisterObjectMethod("PhysicsWorld", "void RaycastSingleSegmented(PhysicsRaycastResult&, const Ray&in, float, float, uint = M_MAX_UNSIGNED, float = 0.1f)", asMETHODPR(PhysicsWorld, RaycastSingleSegmented, (PhysicsRaycastResult&, const Ray&, float, float, unsigned, float), void), asCALL_THISCALL);
+    engine->RegisterObjectMethod("PhysicsWorld", "void RaycastSingleSegmented(PhysicsRaycastResult&, const Ray&in, float, float, uint = M_MAX_UNSIGNED, float = 0.1f, bool interpolateNormal = false)", asMETHODPR(PhysicsWorld, RaycastSingleSegmented, (PhysicsRaycastResult&, const Ray&, float, float, unsigned, float, bool), void), asCALL_THISCALL);
     // bool Serializable::ReadDeltaUpdate(Deserializer& source) | File: ../Scene/Serializable.h
     engine->RegisterObjectMethod("PhysicsWorld", "bool ReadDeltaUpdate(Deserializer&)", asMETHODPR(PhysicsWorld, ReadDeltaUpdate, (Deserializer&), bool), asCALL_THISCALL);
     // bool Serializable::ReadLatestDataUpdate(Deserializer& source) | File: ../Scene/Serializable.h
