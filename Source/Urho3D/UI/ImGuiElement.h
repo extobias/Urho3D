@@ -13,7 +13,7 @@ namespace Urho3D
 {
 // TB UI Element hook to the Urho3D UI System
 // tiene crear el root widget tb y tomar los datos para renderizar 
-class ImGuiElement : public UIElement
+class URHO3D_API ImGuiElement : public UIElement
 {
    URHO3D_OBJECT(ImGuiElement, UIElement)
 

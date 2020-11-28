@@ -98,7 +98,6 @@ void PBRMaterials::CreateInstructions()
 
 	EditorWindow* imgui = new EditorWindow(context_);
 	imgui->SetName("editor");
-	imgui->SetCameraNode(cameraNode_);
 	ui->GetRoot()->AddChild(imgui);
 	imgui->SetScene(scene_);
 

@@ -22,7 +22,7 @@
         <attribute name="Draw Joint" value="true" />
 		<attribute name="Allow Sleeping" value="true" />
 		<attribute name="Warm Starting" value="true" />
-		<attribute name="Gravity" value="0 0" />
+		<attribute name="Gravity" value="0 -10" />
 		<attribute name="Auto Clear Forces" value="true" />
 	</component>
 	<component type="Renderer2D" id="15" />
@@ -30,7 +30,7 @@
 		<attribute name="Is Enabled" value="true" />
 		<attribute name="Name" value="Sink" />
 		<attribute name="Tags" />
-		<attribute name="Position" value="0.00282973 -2.97633 0" />
+		<attribute name="Position" value="0.00282973 2.97633 0" />
 		<attribute name="Rotation" value="1 0 0 0" />
 		<attribute name="Scale" value="0.6 0.6 0.6" />
 		<attribute name="Variables">
