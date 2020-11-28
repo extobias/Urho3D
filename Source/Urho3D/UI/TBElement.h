@@ -121,7 +121,7 @@ private:
 
 // TB UI Element hook to the Urho3D UI System
 // tiene crear el root widget tb y tomar los datos para renderizar 
-class TBUIElement : public UIElement
+class URHO3D_API TBUIElement : public UIElement
 {
    URHO3D_OBJECT(TBUIElement, UIElement)
 
