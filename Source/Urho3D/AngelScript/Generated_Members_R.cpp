@@ -3,34 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Container/RefCounted.h"
-#include "../Core/Variant.h"
-#include "../Graphics/OctreeQuery.h"
-#include "../Graphics/RenderPath.h"
-#include "../Graphics/RenderSurface.h"
-#include "../Graphics/Renderer.h"
-#include "../Graphics/RibbonTrail.h"
-#include "../Math/Ray.h"
-#include "../Math/Rect.h"
-#ifdef URHO3D_NETWORK
-#include "../Network/Connection.h"
-#endif
-#ifdef URHO3D_PHYSICS
-#include "../Physics/RaycastVehicle.h"
-#endif
-#ifdef URHO3D_PHYSICS
-#include "../Physics/RigidBody.h"
-#endif
-#include "../Resource/Resource.h"
-#include "../Resource/ResourceCache.h"
-#include "../Scene/ReplicationState.h"
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/Renderer2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/RigidBody2D.h"
-#endif
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -457,7 +430,7 @@ void ASRegisterGenerated_Members_R(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("RaycastVehicle", "void CleanupConnection(Connection@+)", asMETHODPR(RaycastVehicle, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
     engine->RegisterObjectMethod("RaycastVehicle", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(RaycastVehicle, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // void RaycastVehicle::FixedPostUpdate(float timeStep) override | File: ../Physics/RaycastVehicle.h
@@ -1548,7 +1521,7 @@ void ASRegisterGenerated_Members_R(asIScriptEngine* engine)
     // bool Renderer2D::CheckVisibility(Drawable2D* drawable) const | File: ../Urho2D/Renderer2D.h
     engine->RegisterObjectMethod("Renderer2D", "bool CheckVisibility(Drawable2D@+) const", asMETHODPR(Renderer2D, CheckVisibility, (Drawable2D*) const, bool), asCALL_THISCALL);
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("Renderer2D", "void CleanupConnection(Connection@+)", asMETHODPR(Renderer2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("Renderer2D", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(Renderer2D, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // virtual bool Drawable::DrawOcclusion(OcclusionBuffer* buffer) | File: ../Graphics/Drawable.h
@@ -2507,7 +2480,7 @@ void ASRegisterGenerated_Members_R(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("RibbonTrail", "void CleanupConnection(Connection@+)", asMETHODPR(RibbonTrail, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void RibbonTrail::Commit() | File: ../Graphics/RibbonTrail.h
     engine->RegisterObjectMethod("RibbonTrail", "void Commit()", asMETHODPR(RibbonTrail, Commit, (), void), asCALL_THISCALL);
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
@@ -3044,7 +3017,7 @@ void ASRegisterGenerated_Members_R(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("RigidBody", "void CleanupConnection(Connection@+)", asMETHODPR(RigidBody, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void RigidBody::DisableMassUpdate() | File: ../Physics/RigidBody.h
     engine->RegisterObjectMethod("RigidBody", "void DisableMassUpdate()", asMETHODPR(RigidBody, DisableMassUpdate, (), void), asCALL_THISCALL);
     // void RigidBody::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Physics/RigidBody.h
@@ -3536,7 +3509,7 @@ void ASRegisterGenerated_Members_R(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("RigidBody2D", "void CleanupConnection(Connection@+)", asMETHODPR(RigidBody2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void RigidBody2D::CreateBody() | File: ../Urho2D/RigidBody2D.h
     engine->RegisterObjectMethod("RigidBody2D", "void CreateBody()", asMETHODPR(RigidBody2D, CreateBody, (), void), asCALL_THISCALL);
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h

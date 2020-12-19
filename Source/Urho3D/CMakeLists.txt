@@ -168,7 +168,7 @@ if (URHO3D_GENERATEBINDINGS)
     set (XML_AST_DIR "${CMAKE_BINARY_DIR}/Source/Tools/BindingGenerator/generated/xml")
     set (BINDING_GENERATOR_PATH "${CMAKE_BINARY_DIR}/bin/tool/BindingGenerator")
 
-    set (AS_GENERATED_FILES "AngelScript/Generated_Enums.cpp"
+    set (AS_GENERATED_FILES "AngelScript/GeneratedEnums.cpp"
                             "AngelScript/Generated_Classes.cpp"
                             "AngelScript/Generated_Members_HighPriority.cpp"
                             "AngelScript/Generated_Members_A.cpp"
@@ -204,6 +204,7 @@ if (URHO3D_GENERATEBINDINGS)
                             "AngelScript/Generated_Members_Other.cpp"
                             "AngelScript/Generated_GlobalVariables.cpp"
                             "AngelScript/Generated_GlobalFunctions.cpp"
+                            "AngelScript/GeneratedIncludes.h"
                             "AngelScript/Generated_Templates.h")
 
     set (AS_GENERATED_FILES_FULL_PATHS "${AS_GENERATED_FILES}")

@@ -3,28 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Graphics/Batch.h"
-#include "../Graphics/Graphics.h"
-#include "../Graphics/Material.h"
-#include "../Graphics/Shader.h"
-#include "../Graphics/ShaderPrecache.h"
-#include "../Graphics/ShaderVariation.h"
-#include "../Graphics/Skeleton.h"
-#include "../Graphics/Skybox.h"
-#include "../Graphics/View.h"
-#include "../IO/Serializer.h"
-#ifdef URHO3D_NAVIGATION
-#include "../Navigation/NavBuildData.h"
-#endif
-#include "../Scene/ReplicationState.h"
-#include "../Scene/Scene.h"
-#include "../Scene/SceneResolver.h"
-#include "../Scene/Serializable.h"
-#include "../Scene/SmoothedTransform.h"
-#include "../UI/ScrollBar.h"
-#include "../UI/ScrollView.h"
-#include "../UI/Slider.h"
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -425,7 +404,7 @@ void ASRegisterGenerated_Members_Sa_Sm(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Scene::CleanupConnection(Connection* connection) | File: ../Scene/Scene.h
-    engine->RegisterObjectMethod("Scene", "void CleanupConnection(Connection@+)", asMETHODPR(Scene, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Scene::Clear(bool clearReplicated=true, bool clearLocal=true) | File: ../Scene/Scene.h
     engine->RegisterObjectMethod("Scene", "void Clear(bool = true, bool = true)", asMETHODPR(Scene, Clear, (bool, bool), void), asCALL_THISCALL);
     // void Scene::ClearRequiredPackageFiles() | File: ../Scene/Scene.h
@@ -615,8 +594,7 @@ void ASRegisterGenerated_Members_Sa_Sm(asIScriptEngine* engine)
     // template<class T> T*  Node::GetOrCreateComponent(CreateMode mode=REPLICATED, unsigned id=0) | File: ../Scene/Node.h
     // Not registered because template
     // Connection* Node::GetOwner() const | File: ../Scene/Node.h
-    engine->RegisterObjectMethod("Scene", "Connection@+ GetOwner() const", asMETHODPR(Scene, GetOwner, () const, Connection*), asCALL_THISCALL);
-    engine->RegisterObjectMethod("Scene", "Connection@+ get_owner() const", asMETHODPR(Scene, GetOwner, () const, Connection*), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // Node* Node::GetParent() const | File: ../Scene/Node.h
     engine->RegisterObjectMethod("Scene", "Node@+ GetParent() const", asMETHODPR(Scene, GetParent, () const, Node*), asCALL_THISCALL);
     engine->RegisterObjectMethod("Scene", "Node@+ get_parent() const", asMETHODPR(Scene, GetParent, () const, Node*), asCALL_THISCALL);
@@ -992,8 +970,7 @@ void ASRegisterGenerated_Members_Sa_Sm(asIScriptEngine* engine)
     // void Animatable::SetObjectAnimationAttr(const ResourceRef& value) | File: ../Scene/Animatable.h
     engine->RegisterObjectMethod("Scene", "void SetObjectAnimationAttr(const ResourceRef&in)", asMETHODPR(Scene, SetObjectAnimationAttr, (const ResourceRef&), void), asCALL_THISCALL);
     // void Node::SetOwner(Connection* owner) | File: ../Scene/Node.h
-    engine->RegisterObjectMethod("Scene", "void SetOwner(Connection@+)", asMETHODPR(Scene, SetOwner, (Connection*), void), asCALL_THISCALL);
-    engine->RegisterObjectMethod("Scene", "void set_owner(Connection@+)", asMETHODPR(Scene, SetOwner, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Node::SetParent(Node* parent) | File: ../Scene/Node.h
     engine->RegisterObjectMethod("Scene", "void SetParent(Node@+)", asMETHODPR(Scene, SetParent, (Node*), void), asCALL_THISCALL);
     engine->RegisterObjectMethod("Scene", "void set_parent(Node@+)", asMETHODPR(Scene, SetParent, (Node*), void), asCALL_THISCALL);
@@ -3659,7 +3636,7 @@ void ASRegisterGenerated_Members_Sa_Sm(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("Skybox", "void CleanupConnection(Connection@+)", asMETHODPR(Skybox, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("Skybox", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(Skybox, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool StaticModel::DrawOcclusion(OcclusionBuffer* buffer) override | File: ../Graphics/StaticModel.h
@@ -4988,7 +4965,7 @@ void ASRegisterGenerated_Members_Sa_Sm(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("SmoothedTransform", "void CleanupConnection(Connection@+)", asMETHODPR(SmoothedTransform, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
     engine->RegisterObjectMethod("SmoothedTransform", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(SmoothedTransform, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool Animatable::GetAnimationEnabled() const | File: ../Scene/Animatable.h

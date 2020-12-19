@@ -34,16 +34,8 @@ namespace ASBindingGenerator
 class ASGeneratedFile_Base
 {
 protected:
-    // List of all required header files
-    vector<string> headers_;
-
-    // Discarded header files for statistic
-    vector<string> ignoredHeaders_;
-
     // Result file path
     string outputFilePath_;
-
-    void WriteHeaders(ofstream& stream);
 
 public:
     // Wrappers
@@ -51,10 +43,6 @@ public:
 
     // Registration function body
     stringstream reg_;
-
-    // Add header to list if not added yet
-    void AddHeader(const string& headerFile);
-    void AddIgnoredHeader(const string& headerFile);
 
     // Write result to file
     virtual void Save() {};
@@ -68,14 +56,6 @@ protected:
 
 public:
     ASGeneratedFile_WithRegistrationFunction(const string& outputFilePath, const string& functionName);
-};
-
-class ASGeneratedFile_Enums : public ASGeneratedFile_WithRegistrationFunction
-{
-public:
-    using ASGeneratedFile_WithRegistrationFunction::ASGeneratedFile_WithRegistrationFunction;
-    
-    void Save() override;
 };
 
 class ASGeneratedFile_Classes : public ASGeneratedFile_WithRegistrationFunction
@@ -128,4 +108,26 @@ public:
     void Save() override;
 };
 
+struct ProcessedEnum
+{
+    // Used for alphabetical sorting
+    string name_;
+
+    string comment_;
+    vector<string> glue_; // Can be empty
+    string insideDefine_; // Can be empty
+    vector<string> registration_;
+
+    // Used for alphabetical sorting
+    bool operator <(const ProcessedEnum& rhs) const;
+};
+
+namespace Result
+{
+    extern vector<ProcessedEnum> enums_;
+
+    // Add header to lists if not added yet
+    void AddHeader(const string& headerFile);
 }
+
+} // namespace ASBindingGenerator

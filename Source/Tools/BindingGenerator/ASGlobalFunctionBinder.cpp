@@ -200,11 +200,11 @@ static void ProcessGlobalFunction(const GlobalFunctionAnalyzer& functionAnalyzer
     string header = functionAnalyzer.GetHeaderFile();
     if (IsIgnoredHeader(header))
     {
-        _result->AddIgnoredHeader(header);
+        Result::AddHeader(header); (header);
         return;
     }
 
-    _result->AddHeader(header);
+    Result::AddHeader(header); (header);
 
     string insideDefine = InsideDefine(header);
     if (!insideDefine.empty())

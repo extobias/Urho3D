@@ -3,30 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#ifdef URHO3D_DATABASE
-#include "../Database/Database.h"
-#endif
-#include "../Engine/DebugHud.h"
-#include "../Graphics/DebugRenderer.h"
-#include "../Graphics/DecalSet.h"
-#include "../Graphics/Drawable.h"
-#include "../Graphics/OcclusionBuffer.h"
-#include "../IO/Deserializer.h"
-#ifdef URHO3D_NAVIGATION
-#include "../Navigation/DynamicNavigationMesh.h"
-#endif
-#ifdef URHO3D_PHYSICS
-#include "../Physics/PhysicsWorld.h"
-#endif
-#include "../Scene/ReplicationState.h"
-#include "../UI/DropDownList.h"
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/Drawable2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/PhysicsWorld2D.h"
-#endif
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -629,7 +606,7 @@ void ASRegisterGenerated_Members_D(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("DebugRenderer", "void CleanupConnection(Connection@+)", asMETHODPR(DebugRenderer, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit DebugRenderer::DebugRenderer(Context* context) | File: ../Graphics/DebugRenderer.h
     engine->RegisterObjectBehaviour("DebugRenderer", asBEHAVE_FACTORY, "DebugRenderer@+ f()", asFUNCTION(DebugRenderer_DebugRenderer_Context), asCALL_CDECL);
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
@@ -931,7 +908,7 @@ void ASRegisterGenerated_Members_D(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("DecalSet", "void CleanupConnection(Connection@+)", asMETHODPR(DecalSet, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit DecalSet::DecalSet(Context* context) | File: ../Graphics/DecalSet.h
     engine->RegisterObjectBehaviour("DecalSet", asBEHAVE_FACTORY, "DecalSet@+ f()", asFUNCTION(DecalSet_DecalSet_Context), asCALL_CDECL);
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
@@ -1513,7 +1490,7 @@ void ASRegisterGenerated_Members_D(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("Drawable", "void CleanupConnection(Connection@+)", asMETHODPR(Drawable, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("Drawable", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(Drawable, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // virtual bool Drawable::DrawOcclusion(OcclusionBuffer* buffer) | File: ../Graphics/Drawable.h
@@ -1934,7 +1911,7 @@ void ASRegisterGenerated_Members_D(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("Drawable2D", "void CleanupConnection(Connection@+)", asMETHODPR(Drawable2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("Drawable2D", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(Drawable2D, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // virtual bool Drawable::DrawOcclusion(OcclusionBuffer* buffer) | File: ../Graphics/Drawable.h
@@ -3330,7 +3307,7 @@ void ASRegisterGenerated_Members_D(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("DynamicNavigationMesh", "void CleanupConnection(Connection@+)", asMETHODPR(DynamicNavigationMesh, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void DynamicNavigationMesh::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Navigation/DynamicNavigationMesh.h
     engine->RegisterObjectMethod("DynamicNavigationMesh", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(DynamicNavigationMesh, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // void DynamicNavigationMesh::DrawDebugGeometry(bool depthTest) | File: ../Navigation/DynamicNavigationMesh.h

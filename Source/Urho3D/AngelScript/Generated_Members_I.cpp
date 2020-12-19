@@ -3,24 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Graphics/Batch.h"
-#include "../Graphics/IndexBuffer.h"
-#include "../Graphics/Model.h"
-#ifdef URHO3D_IK
-#include "../IK/IKConstraint.h"
-#endif
-#ifdef URHO3D_IK
-#include "../IK/IKEffector.h"
-#endif
-#ifdef URHO3D_IK
-#include "../IK/IKSolver.h"
-#endif
-#include "../Input/Input.h"
-#include "../Math/Rect.h"
-#include "../Math/Vector2.h"
-#include "../Math/Vector3.h"
-#include "../Resource/Image.h"
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -211,7 +194,7 @@ void ASRegisterGenerated_Members_I(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("IKConstraint", "void CleanupConnection(Connection@+)", asMETHODPR(IKConstraint, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
     engine->RegisterObjectMethod("IKConstraint", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(IKConstraint, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool Animatable::GetAnimationEnabled() const | File: ../Scene/Animatable.h
@@ -501,7 +484,7 @@ void ASRegisterGenerated_Members_I(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("IKEffector", "void CleanupConnection(Connection@+)", asMETHODPR(IKEffector, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void IKEffector::DrawDebugGeometry(bool depthTest) | File: ../IK/IKEffector.h
     engine->RegisterObjectMethod("IKEffector", "void DrawDebugGeometry(bool)", asMETHODPR(IKEffector, DrawDebugGeometry, (bool), void), asCALL_THISCALL);
     // void IKEffector::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../IK/IKEffector.h
@@ -857,7 +840,7 @@ void ASRegisterGenerated_Members_I(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("IKSolver", "void CleanupConnection(Connection@+)", asMETHODPR(IKSolver, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void IKSolver::DrawDebugGeometry(bool depthTest) | File: ../IK/IKSolver.h
     engine->RegisterObjectMethod("IKSolver", "void DrawDebugGeometry(bool)", asMETHODPR(IKSolver, DrawDebugGeometry, (bool), void), asCALL_THISCALL);
     // void IKSolver::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../IK/IKSolver.h

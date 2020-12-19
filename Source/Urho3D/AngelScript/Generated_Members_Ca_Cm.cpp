@@ -3,11 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Graphics/Camera.h"
-#include "../Graphics/Light.h"
-#include "../UI/CheckBox.h"
-#include "../UI/Text.h"
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -99,7 +95,7 @@ void ASRegisterGenerated_Members_Ca_Cm(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("Camera", "void CleanupConnection(Connection@+)", asMETHODPR(Camera, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Camera::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Camera.h
     engine->RegisterObjectMethod("Camera", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(Camera, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool Animatable::GetAnimationEnabled() const | File: ../Scene/Animatable.h

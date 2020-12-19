@@ -3,34 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Core/Profiler.h"
-#include "../Graphics/ParticleEffect.h"
-#include "../Graphics/ParticleEmitter.h"
-#include "../Graphics/Technique.h"
-#include "../Graphics/View.h"
-#include "../IO/PackageFile.h"
-#include "../Math/Plane.h"
-#include "../Math/Polyhedron.h"
-#ifdef URHO3D_NETWORK
-#include "../Network/Connection.h"
-#endif
-#ifdef URHO3D_PHYSICS
-#include "../Physics/PhysicsWorld.h"
-#endif
-#include "../UI/ProgressBar.h"
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/ParticleEffect2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/ParticleEmitter2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/PhysicsWorld2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/TileMapDefs2D.h"
-#endif
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -1263,7 +1236,7 @@ void ASRegisterGenerated_Members_P(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("ParticleEmitter", "void CleanupConnection(Connection@+)", asMETHODPR(ParticleEmitter, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void BillboardSet::Commit() | File: ../Graphics/BillboardSet.h
     engine->RegisterObjectMethod("ParticleEmitter", "void Commit()", asMETHODPR(ParticleEmitter, Commit, (), void), asCALL_THISCALL);
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
@@ -1813,7 +1786,7 @@ void ASRegisterGenerated_Members_P(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("ParticleEmitter2D", "void CleanupConnection(Connection@+)", asMETHODPR(ParticleEmitter2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("ParticleEmitter2D", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(ParticleEmitter2D, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // virtual bool Drawable::DrawOcclusion(OcclusionBuffer* buffer) | File: ../Graphics/Drawable.h
@@ -2421,7 +2394,7 @@ void ASRegisterGenerated_Members_P(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("PhysicsWorld", "void CleanupConnection(Connection@+)", asMETHODPR(PhysicsWorld, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void PhysicsWorld::CleanupGeometryCache() | File: ../Physics/PhysicsWorld.h
     engine->RegisterObjectMethod("PhysicsWorld", "void CleanupGeometryCache()", asMETHODPR(PhysicsWorld, CleanupGeometryCache, (), void), asCALL_THISCALL);
     // void PhysicsWorld::ConvexCast(PhysicsRaycastResult& result, CollisionShape* shape, const Vector3& startPos, const Quaternion& startRot, const Vector3& endPos, const Quaternion& endRot, unsigned collisionMask=M_MAX_UNSIGNED) | File: ../Physics/PhysicsWorld.h
@@ -2825,7 +2798,7 @@ void ASRegisterGenerated_Members_P(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("PhysicsWorld2D", "void CleanupConnection(Connection@+)", asMETHODPR(PhysicsWorld2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void PhysicsWorld2D::DrawCircle(const b2Vec2& center, float32 radius, const b2Color& color) override | File: ../Urho2D/PhysicsWorld2D.h
     // Error: type "const b2Vec2&" can not automatically bind
     // void PhysicsWorld2D::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Urho2D/PhysicsWorld2D.h

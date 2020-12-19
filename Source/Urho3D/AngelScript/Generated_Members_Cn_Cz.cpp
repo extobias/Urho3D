@@ -3,49 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Core/Condition.h"
-#include "../Core/Context.h"
-#include "../Engine/Console.h"
-#include "../Graphics/ConstantBuffer.h"
-#include "../Graphics/CustomGeometry.h"
-#include "../Graphics/ParticleEffect.h"
-#include "../Input/Controls.h"
-#include "../Math/Color.h"
-#ifdef URHO3D_NAVIGATION
-#include "../Navigation/CrowdAgent.h"
-#endif
-#ifdef URHO3D_NAVIGATION
-#include "../Navigation/CrowdManager.h"
-#endif
-#ifdef URHO3D_NETWORK
-#include "../Network/Connection.h"
-#endif
-#ifdef URHO3D_PHYSICS
-#include "../Physics/CollisionShape.h"
-#endif
-#include "../Resource/Image.h"
-#include "../Scene/Component.h"
-#include "../Scene/ReplicationState.h"
-#include "../UI/Cursor.h"
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/CollisionBox2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/CollisionChain2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/CollisionCircle2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/CollisionEdge2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/CollisionPolygon2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/CollisionShape2D.h"
-#endif
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -504,7 +462,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionBox2D", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionBox2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CollisionBox2D::CollisionBox2D(Context* context) | File: ../Urho2D/CollisionBox2D.h
     engine->RegisterObjectBehaviour("CollisionBox2D", asBEHAVE_FACTORY, "CollisionBox2D@+ f()", asFUNCTION(CollisionBox2D_CollisionBox2D_Context), asCALL_CDECL);
     // void CollisionShape2D::CreateFixture() | File: ../Urho2D/CollisionShape2D.h
@@ -865,7 +823,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionChain2D", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionChain2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CollisionChain2D::CollisionChain2D(Context* context) | File: ../Urho2D/CollisionChain2D.h
     engine->RegisterObjectBehaviour("CollisionChain2D", asBEHAVE_FACTORY, "CollisionChain2D@+ f()", asFUNCTION(CollisionChain2D_CollisionChain2D_Context), asCALL_CDECL);
     // void CollisionShape2D::CreateFixture() | File: ../Urho2D/CollisionShape2D.h
@@ -1228,7 +1186,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionCircle2D", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionCircle2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CollisionCircle2D::CollisionCircle2D(Context* context) | File: ../Urho2D/CollisionCircle2D.h
     engine->RegisterObjectBehaviour("CollisionCircle2D", asBEHAVE_FACTORY, "CollisionCircle2D@+ f()", asFUNCTION(CollisionCircle2D_CollisionCircle2D_Context), asCALL_CDECL);
     // void CollisionShape2D::CreateFixture() | File: ../Urho2D/CollisionShape2D.h
@@ -1581,7 +1539,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionEdge2D", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionEdge2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CollisionEdge2D::CollisionEdge2D(Context* context) | File: ../Urho2D/CollisionEdge2D.h
     engine->RegisterObjectBehaviour("CollisionEdge2D", asBEHAVE_FACTORY, "CollisionEdge2D@+ f()", asFUNCTION(CollisionEdge2D_CollisionEdge2D_Context), asCALL_CDECL);
     // void CollisionShape2D::CreateFixture() | File: ../Urho2D/CollisionShape2D.h
@@ -1934,7 +1892,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionPolygon2D", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionPolygon2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CollisionPolygon2D::CollisionPolygon2D(Context* context) | File: ../Urho2D/CollisionPolygon2D.h
     engine->RegisterObjectBehaviour("CollisionPolygon2D", asBEHAVE_FACTORY, "CollisionPolygon2D@+ f()", asFUNCTION(CollisionPolygon2D_CollisionPolygon2D_Context), asCALL_CDECL);
     // void CollisionShape2D::CreateFixture() | File: ../Urho2D/CollisionShape2D.h
@@ -2291,7 +2249,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionShape", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionShape, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CollisionShape::CollisionShape(Context* context) | File: ../Physics/CollisionShape.h
     engine->RegisterObjectBehaviour("CollisionShape", asBEHAVE_FACTORY, "CollisionShape@+ f()", asFUNCTION(CollisionShape_CollisionShape_Context), asCALL_CDECL);
     // void CollisionShape::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Physics/CollisionShape.h
@@ -2656,7 +2614,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CollisionShape2D", "void CleanupConnection(Connection@+)", asMETHODPR(CollisionShape2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void CollisionShape2D::CreateFixture() | File: ../Urho2D/CollisionShape2D.h
     engine->RegisterObjectMethod("CollisionShape2D", "void CreateFixture()", asMETHODPR(CollisionShape2D, CreateFixture, (), void), asCALL_THISCALL);
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
@@ -3152,7 +3110,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("Component", "void CleanupConnection(Connection@+)", asMETHODPR(Component, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit Component::Component(Context* context) | File: ../Scene/Component.h
     engine->RegisterObjectBehaviour("Component", asBEHAVE_FACTORY, "Component@+ f()", asFUNCTION(Component_Component_Context), asCALL_CDECL);
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
@@ -4121,7 +4079,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CrowdAgent", "void CleanupConnection(Connection@+)", asMETHODPR(CrowdAgent, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CrowdAgent::CrowdAgent(Context* context) | File: ../Navigation/CrowdAgent.h
     engine->RegisterObjectBehaviour("CrowdAgent", asBEHAVE_FACTORY, "CrowdAgent@+ f()", asFUNCTION(CrowdAgent_CrowdAgent_Context), asCALL_CDECL);
     // void CrowdAgent::DrawDebugGeometry(bool depthTest) | File: ../Navigation/CrowdAgent.h
@@ -4498,7 +4456,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CrowdManager", "void CleanupConnection(Connection@+)", asMETHODPR(CrowdManager, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // explicit CrowdManager::CrowdManager(Context* context) | File: ../Navigation/CrowdManager.h
     engine->RegisterObjectBehaviour("CrowdManager", asBEHAVE_FACTORY, "CrowdManager@+ f()", asFUNCTION(CrowdManager_CrowdManager_Context), asCALL_CDECL);
     // void CrowdManager::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Navigation/CrowdManager.h
@@ -5716,7 +5674,7 @@ void ASRegisterGenerated_Members_Cn_Cz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("CustomGeometry", "void CleanupConnection(Connection@+)", asMETHODPR(CustomGeometry, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void CustomGeometry::Clear() | File: ../Graphics/CustomGeometry.h
     engine->RegisterObjectMethod("CustomGeometry", "void Clear()", asMETHODPR(CustomGeometry, Clear, (), void), asCALL_THISCALL);
     // void CustomGeometry::Commit() | File: ../Graphics/CustomGeometry.h

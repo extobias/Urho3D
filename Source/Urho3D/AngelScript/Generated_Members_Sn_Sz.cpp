@@ -3,38 +3,7 @@
 #include "../Precompiled.h"
 #include "../AngelScript/APITemplates.h"
 
-#include "../Audio/Sound.h"
-#include "../Audio/SoundListener.h"
-#include "../Audio/SoundSource.h"
-#include "../Audio/SoundSource3D.h"
-#include "../Audio/SoundStream.h"
-#include "../Container/Str.h"
-#include "../Core/Spline.h"
-#include "../Core/StringHashRegister.h"
-#include "../Graphics/Drawable.h"
-#include "../Graphics/StaticModel.h"
-#include "../Graphics/StaticModelGroup.h"
-#include "../IO/Log.h"
-#include "../Math/Sphere.h"
-#include "../Math/StringHash.h"
-#include "../Scene/SplinePath.h"
-#include "../UI/Sprite.h"
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/Drawable2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/Sprite2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/SpriteSheet2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/StaticSprite2D.h"
-#endif
-#ifdef URHO3D_URHO2D
-#include "../Urho2D/StretchableSprite2D.h"
-#endif
-
+#include "../AngelScript/GeneratedIncludes.h"
 #include "../AngelScript/Manual.h"
 
 namespace Urho3D
@@ -782,7 +751,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("SoundListener", "void CleanupConnection(Connection@+)", asMETHODPR(SoundListener, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
     engine->RegisterObjectMethod("SoundListener", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(SoundListener, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool Animatable::GetAnimationEnabled() const | File: ../Scene/Animatable.h
@@ -1058,7 +1027,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("SoundSource", "void CleanupConnection(Connection@+)", asMETHODPR(SoundSource, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // virtual void Component::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) | File: ../Scene/Component.h
     engine->RegisterObjectMethod("SoundSource", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(SoundSource, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool Animatable::GetAnimationEnabled() const | File: ../Scene/Animatable.h
@@ -1414,7 +1383,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("SoundSource3D", "void CleanupConnection(Connection@+)", asMETHODPR(SoundSource3D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void SoundSource3D::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Audio/SoundSource3D.h
     engine->RegisterObjectMethod("SoundSource3D", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(SoundSource3D, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool Animatable::GetAnimationEnabled() const | File: ../Scene/Animatable.h
@@ -1959,7 +1928,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("SplinePath", "void CleanupConnection(Connection@+)", asMETHODPR(SplinePath, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void SplinePath::ClearControlPoints() | File: ../Scene/SplinePath.h
     engine->RegisterObjectMethod("SplinePath", "void ClearControlPoints()", asMETHODPR(SplinePath, ClearControlPoints, (), void), asCALL_THISCALL);
     // void SplinePath::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Scene/SplinePath.h
@@ -3461,7 +3430,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("StaticModel", "void CleanupConnection(Connection@+)", asMETHODPR(StaticModel, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("StaticModel", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(StaticModel, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool StaticModel::DrawOcclusion(OcclusionBuffer* buffer) override | File: ../Graphics/StaticModel.h
@@ -3929,7 +3898,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("StaticModelGroup", "void CleanupConnection(Connection@+)", asMETHODPR(StaticModelGroup, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("StaticModelGroup", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(StaticModelGroup, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // bool StaticModelGroup::DrawOcclusion(OcclusionBuffer* buffer) override | File: ../Graphics/StaticModelGroup.h
@@ -4412,7 +4381,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("StaticSprite2D", "void CleanupConnection(Connection@+)", asMETHODPR(StaticSprite2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("StaticSprite2D", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(StaticSprite2D, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // virtual bool Drawable::DrawOcclusion(OcclusionBuffer* buffer) | File: ../Graphics/Drawable.h
@@ -4952,7 +4921,7 @@ void ASRegisterGenerated_Members_Sn_Sz(asIScriptEngine* engine)
     // template<typename T> const T* Object::Cast() const | File: ../Core/Object.h
     // Not registered because template
     // void Component::CleanupConnection(Connection* connection) | File: ../Scene/Component.h
-    engine->RegisterObjectMethod("StretchableSprite2D", "void CleanupConnection(Connection@+)", asMETHODPR(StretchableSprite2D, CleanupConnection, (Connection*), void), asCALL_THISCALL);
+    // Not registered because have @manualbind mark
     // void Drawable::DrawDebugGeometry(DebugRenderer* debug, bool depthTest) override | File: ../Graphics/Drawable.h
     engine->RegisterObjectMethod("StretchableSprite2D", "void DrawDebugGeometry(DebugRenderer@+, bool)", asMETHODPR(StretchableSprite2D, DrawDebugGeometry, (DebugRenderer*, bool), void), asCALL_THISCALL);
     // virtual bool Drawable::DrawOcclusion(OcclusionBuffer* buffer) | File: ../Graphics/Drawable.h
