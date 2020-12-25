@@ -332,6 +332,7 @@ Graphics::~Graphics()
 bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& params, bool maximize)
 {
     URHO3D_PROFILE(SetScreenMode);
+    // SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
 
     // Ensure that parameters are properly filled
     ScreenModeParams newParams = params;
@@ -387,6 +388,7 @@ bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& para
 #else
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 #endif
 
         SDL_Rect display_rect;
@@ -477,6 +479,11 @@ bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& para
         // Specific error message is already logged by Restore() when context creation or OpenGL extensions check fails
         if (!impl_->context_)
             return false;
+
+        SDL_Log("Vendor     : %s\n", glGetString(GL_VENDOR));
+        SDL_Log("Renderer   : %s\n", glGetString(GL_RENDERER));
+        SDL_Log("Version    : %s\n", glGetString(GL_VERSION));
+        SDL_Log("Extensions : %s\n", glGetString(GL_EXTENSIONS));
     }
 
     // Set vsync

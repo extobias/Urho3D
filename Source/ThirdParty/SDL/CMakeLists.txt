@@ -286,7 +286,8 @@ set_option(VIDEO_DUMMY         "Use dummy video driver" ON)
 # Urho3D - hide OpenGL option from all non-desktop platforms
 dep_option(VIDEO_OPENGL        "Include OpenGL support" ON "NOT ANDROID AND NOT IOS AND NOT TVOS AND NOT ARM AND NOT WEB" OFF)
 # Urho3D - hide OpenGLES option from all desktop platforms, although a few of them appears to have the necessary header file to build SDL OpenGLES video driver
-dep_option(VIDEO_OPENGLES      "Include OpenGL ES support" ON "ANDROID OR IOS OR TVOS OR ARM OR WEB" OFF)
+# dep_option(VIDEO_OPENGLES      "Include OpenGL ES support" ON "ANDROID OR IOS OR TVOS OR ARM OR WEB" OFF)
+set_option(VIDEO_OPENGLES      "Include OpenGL ES support" ON)
 # Urho3D - only make PTHREADS option available on UNIX-like platforms
 dep_option(PTHREADS            "Use POSIX threads for multi-threading" ON UNIX OFF)
 dep_option(PTHREADS_SEM        "Use pthread semaphores" ON PTHREADS OFF)
@@ -1419,6 +1420,14 @@ elseif(WINDOWS)
       set(HAVE_SDL_HAPTIC TRUE)
     endif()
   endif()
+  
+  #if(VIDEO_OPENGLES)
+      #CheckOpenGLES()
+
+      #find_library(OpenGLES1_LIBRARY GLESv1_CM)
+      #find_library(OpenGLES2_LIBRARY GLESv2)
+      #list(APPEND EXTRA_LIBS ${OpenGLES1_LIBRARY} ${OpenGLES2_LIBRARY})
+  #endif()
 
   # Urho3D - commented out adding main entry point for Windows platform
   # Urho3D - commented out '-mwindows' linker flags setup as it appears to be automatically added by CMake; also commented out 'mingw32' library dependency as it does not appear to be needed, at least that the case for MinGW
