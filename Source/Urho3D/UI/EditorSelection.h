@@ -33,7 +33,9 @@ public:
 
     void Render();
 
-    const PODVector<Node*>& GetSelectedNodes() const { return selectedNodes_; }
+    // const PODVector<Node*>& GetSelectedNodes() const { return selectedNodes_; }
+
+    const Vector<SharedPtr<Node> >& GetSelectedNodes() const { return selectedNodes_; }
 
     const Matrix3x4& GetTransform() const { return transform_; }
 
@@ -47,7 +49,9 @@ private:
 
     Vector3 CalculateCentroid(const Vector<Vector3>& points);
 
-    PODVector<Node*> selectedNodes_;
+    // PODVector<Node*> selectedNodes_;
+
+    Vector<SharedPtr<Node> > selectedNodes_;
 
     Matrix3x4 transform_;
 

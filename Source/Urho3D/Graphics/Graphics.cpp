@@ -423,7 +423,7 @@ void* Graphics::ReserveScratchBuffer(unsigned size)
             i->size_ = size;
             i->reserved_ = true;
 
-            URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(size));
+            // URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(size));
 
             return i->data_.Get();
         }
@@ -467,7 +467,7 @@ void Graphics::CleanupScratchBuffers()
             i->data_ = maxScratchBufferRequest_ > 0 ? (new unsigned char[maxScratchBufferRequest_]) : nullptr;
             i->size_ = maxScratchBufferRequest_;
 
-            URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(maxScratchBufferRequest_));
+            // URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(maxScratchBufferRequest_));
         }
     }
 

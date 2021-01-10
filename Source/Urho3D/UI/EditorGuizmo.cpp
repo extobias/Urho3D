@@ -103,8 +103,8 @@ EditorBrush::EditorBrush(Context *context)
     selectionImage_->SetSize(size_, size_);
     selectionImage_->SetBorder(IntRect(3, 3, 3, 3));
     selectionImage_->SetImageBorder(IntRect(10, 10, 10, 10));
-    selectionImage_->SetPosition(0, 0);
-    selectionImage_->SetOpacity(0.3);
+    selectionImage_->SetPosition(0.0f, 0.0f);
+    selectionImage_->SetOpacity(0.3f);
     selectionImage_->SetColor(Color::GREEN);
 
     UI* ui = GetSubsystem<UI>();
@@ -507,10 +507,6 @@ void EditorGuizmo::Render(float timeStep)
 
     ImGuizmo::SetOrthographic(camera->IsOrthographic());
 
-//    Node* node = scene_->GetNode(selectedNode_);
-//    if (brush_)
-//        brush_->SetVisible(currentEditMode_ == SELECT_VERTEX && node);
-
     Matrix4 projection = camera->GetProjection().Transpose();
     Matrix4 view = camera->GetView().ToMatrix4().Transpose();
     Matrix4 transform = selection_->GetTransform().ToMatrix4().Transpose();
@@ -519,7 +515,7 @@ void EditorGuizmo::Render(float timeStep)
     // grid
     Quaternion gridRotation(90.0f, Vector3::RIGHT);
     Matrix4 gridMatrix;
-    gridMatrix.SetRotation(gridRotation.RotationMatrix());
+    // gridMatrix.SetRotation(gridRotation.RotationMatrix());
 //    gridMatrix.SetTranslation(Vector3(0.0f, 0.0, -1.0f));
 
     float gridSize = 10.0f;
@@ -716,7 +712,7 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
     else
         SetFocusMode(FM_NOTFOCUSABLE);
 
-    const PODVector<Node*>& s = selection_->GetSelectedNodes();
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
     if (s.Size() == 1)
     {
         Node* node = s.At(0);

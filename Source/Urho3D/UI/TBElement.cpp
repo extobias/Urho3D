@@ -313,10 +313,15 @@ void TBUIElement::LoadWidgets(TBWidget* stateWidget, const String& filename)
 void TBUIElement::LoadWidgets(const String& filename)
 {
     root_->SetGravity(WIDGET_GRAVITY_ALL);
+    // FIXME el core puede cambiar por eso se vuelve a setear
     core_->widgets_reader_->core_ = core_;
     if(!core_->widgets_reader_->LoadFile(root_, filename.CString()))
     {
         URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
+    }
+    else
+    {
+        URHO3D_LOGERRORF("TBUIElement::LoadWidgets: loaded <%s>", filename.CString());
     }
 }
 

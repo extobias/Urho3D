@@ -154,7 +154,7 @@ cmake_dependent_option (URHO3D_NETWORK "Enable networking support" TRUE "NOT WEB
 option (URHO3D_PHYSICS "Enable physics support" TRUE)
 option (URHO3D_URHO2D "Enable 2D graphics and physics support" TRUE)
 option (URHO3D_WEBP "Enable WebP support" TRUE)
-option (URHO3D_OPENGLES "Enable OpenGLES support" TRUE)
+option (URHO3D_OPENGLES "Enable OpenGLES support" FALSE)
 if (ARM AND NOT ANDROID AND NOT RPI AND NOT APPLE)
     set (ARM_ABI_FLAGS "" CACHE STRING "Specify ABI compiler flags (ARM on Linux platform only); e.g. Orange-Pi Mini 2 could use '-mcpu=cortex-a7 -mfpu=neon-vfpv4'")
 endif ()

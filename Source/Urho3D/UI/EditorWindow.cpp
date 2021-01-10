@@ -468,12 +468,12 @@ void EditorWindow::LoadResources()
     for(ResourceContainer& rc: resourcesContainer_)
     {
         StringVector keys = rc.resources_.Keys();
-        URHO3D_LOGERRORF("Container Name: <%s> Size <%i>", rc.name_.CString(), rc.resources_.Size());
+        // URHO3D_LOGERRORF("Container Name: <%s> Size <%i>", rc.name_.CString(), rc.resources_.Size());
 
         for(String key: keys)
         {
             ResourceFile rf = rc.resources_[key];
-            URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
+            // URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
         }
 
         rc.resourcesString_.Join(rc.resources_.Keys(), "@");
@@ -602,7 +602,7 @@ void EditorWindow::AttachCamera()
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
     unsigned index = renderer->GetNumViewports();
-    URHO3D_LOGERRORF("EditorWindow.AttachCamera: viewport size <%u>", index);
+    
     renderer->SetViewport(1, viewport);
 }
 
@@ -681,7 +681,7 @@ void EditorWindow::Render(float timeStep)
 
     // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
     // ImGui::PlotLines("Lines", );
-    const PODVector<Node*>& s = selection_->GetSelectedNodes();
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
 
     ImGui::Text("Node selected <%s> guizmoBtn <%i>", selection_->ToString().CString(), guizmoBtn);
     // ImGui::SameLine();
@@ -766,10 +766,10 @@ void EditorWindow::DrawChild(Node* node, int& i)
 {
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-    const PODVector<Node*>& s = selection_->GetSelectedNodes();
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
     // selected node
     // if (selectedNode_ == node->GetID())
-    if (s.Contains(node))
+    if (s.Contains(SharedPtr<Node>(node)))
     {
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
     }
@@ -778,7 +778,7 @@ void EditorWindow::DrawChild(Node* node, int& i)
     auto children = node->GetChildren();
     for (Node* child : children)
     {
-        if (s.Size() == 1 && s.Contains(child))
+        if (s.Size() == 1 && s.Contains(SharedPtr<Node>(child)))
         {
             nodeFlags |= ImGuiTreeNodeFlags_DefaultOpen;
             break;
@@ -810,8 +810,8 @@ void EditorWindow::DrawNodeTree()
 
     ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
 
-    const PODVector<Node*>& s = selection_->GetSelectedNodes();
-    if (s.Size() == 1 && s.Contains(scene_))
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
+    if (s.Size() == 1 && s.Contains(SharedPtr<Node>(scene_)))
         nodeFlags |= ImGuiTreeNodeFlags_Selected;
 
     String sceneName = scene_->GetName();
@@ -847,11 +847,11 @@ void EditorWindow::DrawNodeTree()
 
 void EditorWindow::DrawNodeSelected()
 {
-    const PODVector<Node*> selected = selection_->GetSelectedNodes();
-    if (selected.Size() != 1)
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
+    if (s.Size() != 1)
         return;
 
-    Node* node = selected.At(0);
+    Node* node = s.At(0);
     if (!node)
     {
         URHO3D_LOGERRORF("EditorWindow: node <%p> not found!", node);
