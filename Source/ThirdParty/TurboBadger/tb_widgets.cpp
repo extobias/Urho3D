@@ -195,6 +195,10 @@ void TBWidget::Die()
 
 TBWidget *TBWidget::GetWidgetByIDInternal(const TBID &id, const TB_TYPE_ID type_id)
 {
+    TBDebugPrint("TBWidget::GetWidgetByIDInternal m_id <%s> id <%s> IsOfTypeId <%i> class <%s> layout type_id <%p> this type_id <%p>\n", 
+                  m_id.debug_string.CStr(), id.debug_string.CStr(), IsOfTypeId(type_id), 
+                  GetClassNameTB(), GetTypeId<TBLayout>(), type_id);
+                  
     if (m_id == id && (!type_id || IsOfTypeId(type_id)))
         return this;
     for (TBWidget *child = GetFirstChild(); child; child = child->GetNext())

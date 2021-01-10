@@ -43,7 +43,6 @@ class TBRootWidget : public TBWidget, public TBWidgetListener, public Object
 
 public:
 
-
     TBRootWidget(Context* context, TBCore* core);
 //    virtual ~TBRootWidget();
 
@@ -180,7 +179,7 @@ public:
 
     bool InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata = -1);
 
-    TBRootWidget* root_;
+    TBRootWidget* GetRoot() { return root_; }
 
 private:
 
@@ -203,6 +202,8 @@ private:
     HashMap<int, int> mapKey_;
 
     HashMap<int, int> mapQual_;
+
+    TBRootWidget* root_;
 
     int mouse_x = 0;
     int mouse_y = 0;

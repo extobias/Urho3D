@@ -76,6 +76,10 @@ protected:
 #define URHO3D_DEFINE_APPLICATION_MAIN(className) \
 int RunApplication() \
 { \
+    _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ); \
+    _CrtSetBreakAlloc(9554); \
+    _CrtSetBreakAlloc(9553); \
+    _CrtSetBreakAlloc(9552); \
     Urho3D::SharedPtr<Urho3D::Context> context(new Urho3D::Context()); \
     Urho3D::SharedPtr<className> application(new className(context)); \
     return application->Run(); \
