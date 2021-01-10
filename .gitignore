@@ -13,6 +13,7 @@
 generated/
 /Source/Urho3D/tolua++-prefix/
 build/
+build-debug/
 /captures/
 .cxx/
 
