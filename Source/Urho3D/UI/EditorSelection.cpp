@@ -33,14 +33,14 @@ EditorSelection::~EditorSelection() = default;
 
 void EditorSelection::Add(Node *node)
 {
-    if (selectedNodes_.Contains(node))
+    if (selectedNodes_.Contains(SharedPtr<Node>(node)))
         return;
 
     Input* input = GetSubsystem<Input>();
     if (!input->GetKeyDown(KEY_SHIFT))
         selectedNodes_.Clear();
 
-    selectedNodes_.Push(node);
+    selectedNodes_.Push(SharedPtr<Node>(node));
 
     UpdateTransform();
 }

@@ -71,6 +71,9 @@ if (DOXYGEN_FOUND)
             # It is not an error when HTML help compiler is not found, instead just switching off the Doxygen's HHC option
             find_package_handle_standard_args (HTMLHelp REQUIRED_VARS HTML_HELP_COMPILER)
         endif ()
+        if (NOT HTMLHelp_FOUND)
+            set (HTML_HELP_COMPILER "")
+        endif ()
         configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/generated/Doxyfile)
     endif ()
 
@@ -139,7 +142,7 @@ file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/html/Readme.txt "If the URHO3D_DOCS buil
 
 # Currently it is not possible to make built-in 'install' target to depend on 'doc' in CMake, therefore 'make doc' command need to be invoked manually before 'make install' in order to install the SDK with complete documentation
 # Unless, URHO3D_DOCS build option is set in which case the custom 'doc' target is part of the default 'all' target which in turn the 'install' target depends on, so a single 'make install' alone is suffice to install everything
-install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/ DESTINATION ${DEST_SHARE_DIR}/Docs)
+install (DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html/ DESTINATION ${DEST_SHARE_DIR}/docs)
 
 # Define post build steps
 if (CMAKE_EXTRA_GENERATOR MATCHES Eclipse AND NOT CMAKE_HOST_WIN32)

@@ -795,8 +795,8 @@ namespace ImCurveEdit
        {
           const ImVec2 bmin = ImMin(quadSelection, io.MousePos);
           const ImVec2 bmax = ImMax(quadSelection, io.MousePos);
-          // draw_list->AddRectFilled(bmin, bmax, 0x40FF0000, 1.f);
-          // draw_list->AddRect(bmin, bmax, 0xFFFF0000, 1.f);
+          draw_list->AddRectFilled(bmin, bmax, 0x40FF0000, 1.f);
+          draw_list->AddRect(bmin, bmax, 0xFFFF0000, 1.f);
           const ImRect selectionQuad(bmin, bmax);
           if (!io.MouseDown[0])
           {

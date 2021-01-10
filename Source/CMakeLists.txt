@@ -126,7 +126,9 @@ endif ()
 
 if (NOT ANDROID AND NOT ARM AND NOT WEB)
     if (URHO3D_OPENGL)
-        add_subdirectory (ThirdParty/GLEW)
+        if (NOT URHO3D_OPENGLES)
+            add_subdirectory (ThirdParty/GLEW)
+        endif ()
     elseif (NOT URHO3D_D3D11)
         add_subdirectory (ThirdParty/MojoShader)
     endif ()
@@ -135,21 +137,18 @@ if (NOT ANDROID AND NOT ARM AND NOT WEB)
     endif ()
 endif ()
 
-# Urho3D game engine library
 add_subdirectory (Urho3D)
 
-# Urho3D Clang tools
 if (URHO3D_CLANG_TOOLS)
     add_subdirectory (Clang-Tools)
 endif ()
 
-# Urho3D tools
-add_subdirectory (Tools)
+# In order to get clean module segregation, always exclude player/samples from AAR
+if (NOT ANDROID)
+    add_subdirectory (Tools)
+    add_subdirectory (Samples)
+endif ()
 
-# Urho3D samples
-add_subdirectory (Samples)
-
-# Urho3D extras
 if (URHO3D_EXTRAS)
     add_subdirectory (Extras)
 endif ()

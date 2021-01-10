@@ -313,10 +313,15 @@ void TBUIElement::LoadWidgets(TBWidget* stateWidget, const String& filename)
 void TBUIElement::LoadWidgets(const String& filename)
 {
     root_->SetGravity(WIDGET_GRAVITY_ALL);
+    // FIXME el core puede cambiar por eso se vuelve a setear
     core_->widgets_reader_->core_ = core_;
     if(!core_->widgets_reader_->LoadFile(root_, filename.CString()))
     {
         URHO3D_LOGERRORF("cannot load <%s>", filename.CString());
+    }
+    else
+    {
+        URHO3D_LOGERRORF("TBUIElement::LoadWidgets: loaded <%s>", filename.CString());
     }
 }
 
@@ -504,12 +509,12 @@ int TBUIElement::FindQualMap(int key)
     return TB_KEY_UNDEFINED;
 }
 
-void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
+void TBUIElement::OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     root_->InvokePointerDown(position.x_, position.y_, 0, GetModifierKeys(), ShouldEmulateTouchEvent());
 }
 
-void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
+void TBUIElement::OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor, UIElement* beginElement)
 {
     root_->InvokePointerUp(position.x_, position.y_, GetModifierKeys(), ShouldEmulateTouchEvent());
 }

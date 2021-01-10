@@ -41,18 +41,25 @@ public:
     static void RegisterObject(Context* context);
 
     /// Set anchor.
+    /// @property
     void SetAnchor(const Vector2& anchor);
     /// Set enable limit.
+    /// @property
     void SetEnableLimit(bool enableLimit);
     /// Set lower angle.
+    /// @property
     void SetLowerAngle(float lowerAngle);
     /// Set upper angle.
+    /// @property
     void SetUpperAngle(float upperAngle);
     /// Set enable motor.
+    /// @property
     void SetEnableMotor(bool enableMotor);
     /// Set motor speed.
+    /// @property
     void SetMotorSpeed(float motorSpeed);
     /// Set max motor torque.
+    /// @property
     void SetMaxMotorTorque(float maxMotorTorque);
 
     void SetLocalAnchorA(const Vector2& localAnchorA) { localAnchorA_ = localAnchorA; };
@@ -60,24 +67,31 @@ public:
     void SetLocalAnchorB(const Vector2& localAnchorB) { localAnchorB_ = localAnchorB; };
 
     /// Return anchor.
+    /// @property
     const Vector2& GetAnchor() const { return anchor_; }
 
     /// Return enable limit.
+    /// @property
     bool GetEnableLimit() const { return jointDef_.enableLimit; }
 
     /// Return lower angle.
+    /// @property
     float GetLowerAngle() const { return jointDef_.lowerAngle; }
 
     /// Return upper angle.
+    /// @property
     float GetUpperAngle() const { return jointDef_.upperAngle; }
 
     /// Return enable motor.
+    /// @property
     bool GetEnableMotor() const { return jointDef_.enableMotor; }
 
     /// Return motor speed.
+    /// @property
     float GetMotorSpeed() const { return jointDef_.motorSpeed; }
 
     /// Return max motor torque.
+    /// @property
     float GetMaxMotorTorque() const { return jointDef_.maxMotorTorque; }
 
 private:

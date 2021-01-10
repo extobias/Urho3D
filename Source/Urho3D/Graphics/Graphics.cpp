@@ -423,7 +423,7 @@ void* Graphics::ReserveScratchBuffer(unsigned size)
             i->size_ = size;
             i->reserved_ = true;
 
-            URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(size));
+            // URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(size));
 
             return i->data_.Get();
         }
@@ -467,7 +467,7 @@ void Graphics::CleanupScratchBuffers()
             i->data_ = maxScratchBufferRequest_ > 0 ? (new unsigned char[maxScratchBufferRequest_]) : nullptr;
             i->size_ = maxScratchBufferRequest_;
 
-            URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(maxScratchBufferRequest_));
+            // URHO3D_LOGDEBUG("Resized scratch buffer to size " + String(maxScratchBufferRequest_));
         }
     }
 
@@ -492,7 +492,7 @@ void Graphics::AdjustScreenMode(int& newWidth, int& newHeight, ScreenModeParams&
     // High DPI is supported only for OpenGL backend
 #ifndef URHO3D_OPENGL
     params.highDPI_ = false;
-#endif;
+#endif
 
 #if defined(IOS) || defined(TVOS)
     // iOS and tvOS app always take the fullscreen (and with status bar hidden)
@@ -521,8 +521,8 @@ void Graphics::AdjustScreenMode(int& newWidth, int& newHeight, ScreenModeParams&
         params.resizable_ = true;
 #endif
 
-    // Ensure that multisampl factor is in valid range
-    params.multiSample_ = Clamp(params.multiSample_, 1, 16);
+    // Ensure that multisample factor is in valid range
+    params.multiSample_ = NextPowerOfTwo(Clamp(params.multiSample_, 1, 16));
 
     // If zero dimensions in windowed mode, set windowed mode to maximize and set a predefined default restored window size.
     // If zero in fullscreen, use desktop mode

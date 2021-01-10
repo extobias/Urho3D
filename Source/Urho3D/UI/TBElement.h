@@ -121,7 +121,7 @@ private:
 
 // TB UI Element hook to the Urho3D UI System
 // tiene crear el root widget tb y tomar los datos para renderizar 
-class TBUIElement : public UIElement
+class URHO3D_API TBUIElement : public UIElement
 {
    URHO3D_OBJECT(TBUIElement, UIElement)
 
@@ -147,9 +147,9 @@ public:
 
     void GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, const IntRect& currentScissor) override;
 
-    void OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor) override;
+    void OnClickBegin (const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor) override;
 
-    void OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement) override;
+    void OnClickEnd (const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor, UIElement* beginElement) override;
    
     // other events
     // virtual void OnWheel(int delta, int buttons, int qualifiers);

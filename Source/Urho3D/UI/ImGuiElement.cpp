@@ -230,19 +230,19 @@ bool ImGuiElement::IsWithinScissor(const IntRect& currentScissor)
 }
 
 
-void ImGuiElement::OnDragBegin(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor)
+void ImGuiElement::OnDragBegin(const IntVector2& position, const IntVector2& screenPosition, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     dragBeginCursor_ = screenPosition;
     dragBeginPosition_ = position;
 }
 
-void ImGuiElement::OnDragEnd(const IntVector2& position, const IntVector2& screenPosition, int dragButtons, int buttons, Cursor* cursor)
+void ImGuiElement::OnDragEnd(const IntVector2& position, const IntVector2& screenPosition, MouseButtonFlags dragButtons, MouseButtonFlags buttons, Cursor* cursor)
 {
 
 }
 
-void ImGuiElement::OnDragMove(const IntVector2& position, const IntVector2& screenPosition, const IntVector2& deltaPos,
-    int buttons, int qualifiers, Cursor* cursor)
+void ImGuiElement::OnDragMove(const IntVector2& position, const IntVector2& screenPosition, const IntVector2& deltaPos, MouseButtonFlags buttons, QualifierFlags qualifiers,
+    Cursor* cursor)
 {
     ImGui::SetCurrentContext(imguiContext_);
 
@@ -264,7 +264,7 @@ void ImGuiElement::OnTextInput(const String& text)
     inputText_ = text;
 }
 
-void ImGuiElement::OnHover(const IntVector2& position, const IntVector2& screenPosition, int buttons, int qualifiers, Cursor* cursor)
+void ImGuiElement::OnHover(const IntVector2& position, const IntVector2& screenPosition, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     UIElement::OnHover(position, screenPosition, buttons, qualifiers, cursor);
 
@@ -273,7 +273,7 @@ void ImGuiElement::OnHover(const IntVector2& position, const IntVector2& screenP
     io.MousePos = ImVec2(screenPosition.x_, screenPosition.y_);
 }
 
-void ImGuiElement::OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor)
+void ImGuiElement::OnClickBegin(const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     ImGui::SetCurrentContext(imguiContext_);
     // 0=left, 1=right, 2=middle
@@ -286,7 +286,7 @@ void ImGuiElement::OnClickBegin(const IntVector2& position, const IntVector2& sc
         io.MouseDown[2] = true;
 }
 
-void ImGuiElement::OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, int button, int buttons, int qualifiers, Cursor* cursor, UIElement* beginElement)
+void ImGuiElement::OnClickEnd(const IntVector2& position, const IntVector2& screenPosition, MouseButton button, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor, UIElement* beginElement)
 {
     ImGui::SetCurrentContext(imguiContext_);
 

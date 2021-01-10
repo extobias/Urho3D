@@ -36,7 +36,12 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #else
+#if defined(URHO3D_OPENGLES)
+#include <SDL/SDL_opengles2.h>
+#include <SDL/SDL_opengles2_gl2ext.h>
+#else
 #include <GLEW/glew.h>
+#endif
 #endif
 
 #ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT

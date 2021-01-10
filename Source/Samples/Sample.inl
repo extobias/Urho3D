@@ -41,6 +41,7 @@
 #include <Urho3D/UI/UI.h>
 #include <Urho3D/Resource/XMLFile.h>
 #include <Urho3D/IO/Log.h>
+#include <Urho3D/UI/ImGuiElement.h>
 #include <Urho3D/UI/EditorWindow.h>
 #include <Urho3D/UI/EditorGuizmo.h>
 #include <Urho3D/UI/EditorSelection.h>
@@ -107,7 +108,7 @@ void Sample::Start()
     CreateConsoleAndDebugHud();
 
     // Subscribe key down event
-//    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Sample, HandleKeyDown));
+    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(Sample, HandleKeyDown));
     // Subscribe key up event
     SubscribeToEvent(E_KEYUP, URHO3D_HANDLER(Sample, HandleKeyUp));
     // Subscribe scene update event

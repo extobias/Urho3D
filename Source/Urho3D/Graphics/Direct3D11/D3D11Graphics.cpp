@@ -2625,4 +2625,12 @@ void Graphics::SetTextureUnitMappings()
     textureUnits_["ZoneVolumeMap"] = TU_ZONE;
 }
 
+void Graphics::PushDebugMark(const String& message)
+{
+}
+
+void Graphics::PopDebugMark()
+{
+}
+
 }
