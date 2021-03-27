@@ -484,6 +484,10 @@ void EditorGuizmo::Render(float timeStep)
     if (!scene_)
         return;
 
+    if (!selection_.Get())
+        return;
+
+
     Graphics* g = GetSubsystem<Graphics>();
 
     Octree* octree = scene_->GetComponent<Octree>();
@@ -519,13 +523,10 @@ void EditorGuizmo::Render(float timeStep)
 //    gridMatrix.SetTranslation(Vector3(0.0f, 0.0, -1.0f));
 
     float gridSize = 10.0f;
-    ImGuizmo::DrawGrid(&view.m00_, &projection.m00_, &gridMatrix.m00_, gridSize);
+    // ImGuizmo::DrawGrid(&view.m00_, &projection.m00_, &gridMatrix.m00_, gridSize);
 
     //  || !selection_->GetSelectedNodes().Size()
-    if (!selection_)
-        return;
-
-    selection_->Render();
+     selection_->Render();
 
     if (currentEditMode_ == SELECT_OBJECT)
     {

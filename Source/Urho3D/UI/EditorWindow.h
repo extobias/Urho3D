@@ -92,6 +92,12 @@ enum EditorMode
     SELECT_POLYGON_VERTEX
 };
 
+enum EditorNavMode
+{
+    NAV_FPS,
+    NAV_LOOK_AT,
+};
+
 class URHO3D_API EditorWindow : public ImGuiElement
 {
     URHO3D_OBJECT(EditorWindow, ImGuiElement);
@@ -202,6 +208,8 @@ private:
 
     EditorMode mode_ { SELECT_OBJECT };
 
+    EditorNavMode navMode_ { NAV_FPS };
+
     ResourceDir resources_;
 
     ResourceMap modelResources_;
@@ -225,6 +233,12 @@ private:
     float yaw_;
 
     float pitch_;
+
+    float theta_;
+
+    float phi_;
+
+    float camDistance_;
 
     bool sceneLoading_;
 

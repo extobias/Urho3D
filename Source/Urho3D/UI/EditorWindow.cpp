@@ -10,6 +10,7 @@
 #include "../Graphics/Material.h"
 #include "../Graphics/Model.h"
 #include "../Graphics/Renderer.h"
+#include "../Graphics/RenderPath.h"
 #include "../Graphics/StaticModel.h"
 #include "../Graphics/DebugRenderer.h"
 #include "../Graphics/Geometry.h"
@@ -46,6 +47,9 @@ EditorWindow::EditorWindow(Context* context) :
     currentSprite_(0),
     yaw_(0.0f),
     pitch_(0.0f),
+    theta_(0.0f),
+    phi_(-90.0f),
+    camDistance_(10.0f),
     sceneLoading_(false)
 {
     for (int i = 0; i < 4; i++)
@@ -55,8 +59,10 @@ EditorWindow::EditorWindow(Context* context) :
 
     cameraNode_->SetName("EditorCamera");
     cameraNode_->SetTemporary(true);
+    cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -1.0f));
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetOrthographic(true);
+    // camera->SetNearClip(0.0f);
 
     LoadResources();
 
@@ -116,21 +122,43 @@ void EditorWindow::MoveCamera(float timeStep)
     // Movement speed as world units per second
     float moveSpeed = 10.0f;
     // Mouse sensitivity as degrees per pixel
-    const float mouseSensitivity = 0.1f;
+    float mouseSensitivity = 0.01f;
     // wheel speed
     float wheelSpeed = 0.15f;
+
+    if (input->GetKeyDown(KEY_SHIFT))
+    {
+        moveSpeed *= 10.0f;
+        mouseSensitivity = 0.5f;
+    }
 
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
     if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
     {
-        IntVector2 mouseMove = input->GetMouseMove();
+        if (navMode_ == NAV_FPS)
+        {
+            IntVector2 mouseMove = input->GetMouseMove();
 
-        yaw_ += (float)mouseSensitivity * mouseMove.x_;
-        pitch_ += (float)mouseSensitivity * mouseMove.y_;
-        pitch_ = Clamp(pitch_, -90.0f, 90.0f);
+            yaw_ += (float)mouseSensitivity * mouseMove.x_;
+            pitch_ += (float)mouseSensitivity * mouseMove.y_;
+            pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
-        // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
-        cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+            // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
+            cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
+        }
+        else if (navMode_ == NAV_LOOK_AT)
+        {
+            IntVector2 mouseMove = input->GetMouseMove();
+            theta_ += (float)mouseSensitivity * mouseMove.x_;
+            phi_ += (float)mouseSensitivity * mouseMove.y_;
+
+            float x = camDistance_ * sin(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
+            float y = camDistance_ * cos(phi_ * M_DEGTORAD);
+            float z = camDistance_ * cos(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
+
+            cameraNode_->SetPosition(Vector3(x, y, z));
+            cameraNode_->LookAt(Vector3::ZERO);
+        }
     }
     else
     {
@@ -145,60 +173,92 @@ void EditorWindow::MoveCamera(float timeStep)
 //        cameraNode_->SetPosition(cameraTargetPos);
     }
 
-    if (input->GetKeyDown(KEY_SHIFT))
-    {
-        moveSpeed *= 10.0f;
-    }
-
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     // Use the Translate() function (default local space) to move relative to the node's orientation.
-    if (input->GetKeyDown(KEY_W))
-        cameraNode_->Translate(Vector3::FORWARD * moveSpeed * timeStep);
-    if (input->GetKeyDown(KEY_S))
-        cameraNode_->Translate(Vector3::BACK * moveSpeed * timeStep);
-    if (input->GetKeyDown(KEY_A))
-        cameraNode_->Translate(Vector3::LEFT * moveSpeed * timeStep);
-    if (input->GetKeyDown(KEY_D))
-        cameraNode_->Translate(Vector3::RIGHT * moveSpeed * timeStep);
-    if (input->GetKeyDown(KEY_E))
-        cameraNode_->Translate(Vector3::UP * moveSpeed * timeStep);
-    if (input->GetKeyDown(KEY_Q))
-        cameraNode_->Translate(Vector3::DOWN * moveSpeed * timeStep);
+    if (navMode_ == NAV_FPS)
+    {
+        if (input->GetKeyDown(KEY_W))
+            cameraNode_->Translate(Vector3::FORWARD * moveSpeed * timeStep);
+        if (input->GetKeyDown(KEY_S))
+            cameraNode_->Translate(Vector3::BACK * moveSpeed * timeStep);
+        if (input->GetKeyDown(KEY_A))
+            cameraNode_->Translate(Vector3::LEFT * moveSpeed * timeStep);
+        if (input->GetKeyDown(KEY_D))
+            cameraNode_->Translate(Vector3::RIGHT * moveSpeed * timeStep);
+        if (input->GetKeyDown(KEY_E))
+            cameraNode_->Translate(Vector3::UP * moveSpeed * timeStep);
+        if (input->GetKeyDown(KEY_Q))
+            cameraNode_->Translate(Vector3::DOWN * moveSpeed * timeStep);
+    }
+    else if (navMode_ == NAV_LOOK_AT)
+    {
+        if (input->GetKeyDown(KEY_A))
+            theta_ += 0.1f;
+        if (input->GetKeyDown(KEY_D))
+            theta_ -= 0.1f;
+        if (input->GetKeyDown(KEY_W))
+            phi_ += 0.1f;
+        if (input->GetKeyDown(KEY_S))
+            phi_ -= 0.1f;
+
+        float x = camDistance_ * sin(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
+        float y = camDistance_ * cos(phi_ * M_DEGTORAD);
+        float z = camDistance_ * cos(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
+
+        cameraNode_->SetPosition(Vector3(x, y, z));
+        cameraNode_->LookAt(Vector3::ZERO);
+    }
 
     // Mouse input
     Camera* camera = cameraNode_->GetComponent<Camera>();
     // wheel zoom
     int delta = input->GetMouseMoveWheel();
-    if (input->GetKeyDown(KEY_CTRL))
+    if (navMode_ == NAV_FPS)
     {
-        if (delta > 0)
-        {
-            camera->SetZoom(camera->GetZoom() * (1.0f + wheelSpeed));
-        }
-
-        if (delta < 0)
-        {
-            camera->SetZoom(camera->GetZoom() * (1.0f - wheelSpeed));
-        }
-    }
-    else
-    {
-        if (input->GetKeyDown(KEY_SHIFT))
+        if (input->GetKeyDown(KEY_CTRL))
         {
             if (delta > 0)
-                cameraNode_->Translate(Vector3::LEFT * moveSpeed * timeStep);
-            else if (delta < 0)
-                cameraNode_->Translate(Vector3::RIGHT * moveSpeed * timeStep);
+            {
+                camera->SetZoom(camera->GetZoom() * (1.0f + wheelSpeed));
+            }
+
+            if (delta < 0)
+            {
+                camera->SetZoom(camera->GetZoom() * (1.0f - wheelSpeed));
+            }
         }
         else
         {
-            if (delta > 0)
-                cameraNode_->Translate(Vector3::UP * moveSpeed * timeStep);
-            else if (delta < 0)
-                cameraNode_->Translate(Vector3::DOWN * moveSpeed * timeStep);
+            if (input->GetKeyDown(KEY_SHIFT))
+            {
+                if (delta > 0)
+                    cameraNode_->Translate(Vector3::LEFT * moveSpeed * timeStep);
+                else if (delta < 0)
+                    cameraNode_->Translate(Vector3::RIGHT * moveSpeed * timeStep);
+            }
+            else
+            {
+                if (delta > 0)
+                    cameraNode_->Translate(Vector3::UP * moveSpeed * timeStep);
+                else if (delta < 0)
+                    cameraNode_->Translate(Vector3::DOWN * moveSpeed * timeStep);
+            }
         }
     }
+    else if (navMode_ == NAV_LOOK_AT)
+    {
+        if (delta != 0)
+        {
+            camDistance_ = delta > 0 ? camDistance_ + wheelSpeed : camDistance_ - wheelSpeed;
 
+            float x = camDistance_ * sin(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
+            float y = camDistance_ * cos(phi_ * M_DEGTORAD);
+            float z = camDistance_ * cos(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
+
+            cameraNode_->SetPosition(Vector3(x, y, z));
+            cameraNode_->LookAt(Vector3::ZERO);
+        }
+    }
 }
 
 void EditorWindow::ConfigResources()
@@ -594,13 +654,22 @@ void EditorWindow::AttachCamera()
 
     cameraNode_->SetParent(scene_);
     Camera* camera = cameraNode_->GetComponent<Camera>();
+    if (!camera)
+        return;
+
     camera->SetOrthoSize((float)graphics->GetHeight() * PIXEL_SIZE);
     camera->SetZoom(1.0f);
 
     Renderer* renderer = GetSubsystem<Renderer>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
 
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
+    SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
+    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/Forward.xml"));
+    viewport->SetRenderPath(effectRenderPath);
+
     unsigned index = renderer->GetNumViewports();
     
     renderer->SetViewport(1, viewport);
@@ -618,26 +687,39 @@ void EditorWindow::Render(float timeStep)
     static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::TRANSLATE);
     static ImGuizmo::MODE currentGizmoMode(ImGuizmo::WORLD);
 
-    static const char* modeTypes[] = { "Object", "Mesh Vertex", "Polygon Vertex" };
-
     // selection mode
-    const char* hideLabel = "##hidelabel";
+    static const char* modeTypes[] = { "Object", "Mesh Vertex", "Polygon Vertex" };
+    // const char* hideLabel = "##hidelabel";
     ImGui::PushID("Mode");
     int total_w = (int)ImGui::GetContentRegionAvail().x;
     ImGui::Text("Mode");
     ImGui::SameLine(total_w / 2.0f);
     ImGui::SetNextItemWidth(total_w / 2.0f);
 
-    ImGui::Combo(hideLabel, (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
+    ImGui::Combo(hideLabel_, (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
+    ImGui::PopID();
+
+    // navegation mode
+    static const char* navModeTypes[] = { "FPS", "Look At" };
+    // const char* hideLabel = "##hidelabel";
+    ImGui::PushID("Navigation");
+    total_w = (int)ImGui::GetContentRegionAvail().x;
+    ImGui::Text("Navigation");
+    ImGui::SameLine(total_w / 2.0f);
+    ImGui::SetNextItemWidth(total_w / 2.0f);
+
+    ImGui::Combo(hideLabel_, (int*)&navMode_, navModeTypes, IM_ARRAYSIZE(navModeTypes));
     ImGui::PopID();
 
     // current operation
     if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
         currentGizmoOperation = ImGuizmo::TRANSLATE;
     ImGui::SameLine();
+
     if (ImGui::RadioButton("Rotate", currentGizmoOperation == ImGuizmo::ROTATE))
         currentGizmoOperation = ImGuizmo::ROTATE;
     ImGui::SameLine();
+
     if (ImGui::RadioButton("Scale", currentGizmoOperation == ImGuizmo::SCALE))
         currentGizmoOperation = ImGuizmo::SCALE;
 
@@ -1002,7 +1084,9 @@ void EditorWindow::AttributeEdit(Serializable* c)
         {
             ImGui::SetNextItemWidth(total_w / 2.0f);
             float v = c->GetAttribute(info.name_).GetFloat();
-            if (ImGui::InputFloat(hideLabel, &v))
+            bool changed = ImGui::InputFloat(hideLabel, &v);
+            // URHO3D_LOGERRORF("VAR_FLOAT changed <%d> value <%f>", changed, v);
+            if (changed)
             {
                 c->SetAttribute(info.name_, v);
             }

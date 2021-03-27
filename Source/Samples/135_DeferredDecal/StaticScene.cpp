@@ -237,21 +237,14 @@ void StaticScene::CreateInstructions()
 
     EditorWindow* imgui = new EditorWindow(context_);
     imgui->SetName("editor");
-    imgui->SetCameraNode(cameraNode_);
-    ui->GetRoot()->AddChild(imgui);
+    ui->GetRootModalElement()->AddChild(imgui);
     imgui->SetScene(scene_);
-
-    EditorGuizmo* guizmo = new EditorGuizmo(context_);
-    guizmo->SetName("guizmo");
-    guizmo->SetCameraNode(cameraNode_);
-    guizmo->SetFocusMode(FM_NOTFOCUSABLE);
-    ui->GetRoot()->AddChild(guizmo);
-    guizmo->SetPosition(0, 0);
-    guizmo->SetScene(scene_);
 
     imgui->BringToFront();
     imgui->SetPriority(100);
-    imgui->SetGuizmo(guizmo);
+    imgui->CreateGuizmo();
+    imgui->SetVisible(true);
+    // imgui->SetGuizmo(guizmo);
 
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();

@@ -72,6 +72,7 @@ bool update_skin_states = true;
 bool show_focus_state = false;
 
 TBLinkListOf<TBWidgetListenerGlobalLink> g_listeners;
+
 TBWidgetsAnimationManager widgets_animation_manager;
 
 /** Initialize turbo badger. Call this before using any turbo badger API. */
