@@ -95,6 +95,8 @@ ImGuiElement::ImGuiElement(Context* context)
 
 ImGuiElement::~ImGuiElement()
 {
+    ImGui::SetCurrentContext(imguiContext_);
+    ImGui::DestroyContext();
 }
 
 void ImGuiElement::SubscribeToEvents()
