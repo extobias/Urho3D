@@ -124,7 +124,9 @@ public:
 
     void SetVisible(bool visible);
 
-    void SetPlotVar(int index, float value);
+    // void SetPlotVar(int index, float value);
+
+    void SetPlotVar(int index, float value, float min = -100.0f, float max = 100.0f);
 
     void SetScene(Scene* scene);
 
@@ -139,6 +141,8 @@ public:
     float plotVars_[4][100];
 
     int plotVarsOffset_[4];
+
+    int plotVarsRange_[4][2];
 
 private:
 
