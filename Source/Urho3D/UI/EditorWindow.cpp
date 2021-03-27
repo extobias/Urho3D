@@ -58,7 +58,7 @@ EditorWindow::EditorWindow(Context* context) :
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetOrthographic(true);
 
-    LoadResources();
+    // LoadResources();
 
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
 
@@ -269,6 +269,9 @@ bool EditorWindow::SaveScene()
 
 bool EditorWindow::LoadScene()
 {
+    if (!resourcesContainer_.Size())
+        return false;
+        
     const char* hideLabel = "##hidelabel";
 
     ImGui::PushID("load_scene");
@@ -356,6 +359,9 @@ bool EditorWindow::SavePrefab(Node* node)
 
 bool EditorWindow::LoadPrefab(Node *node)
 {
+    if (!resourcesContainer_.Size())
+        return false;
+
     const char* hideLabel = "##hidelabel";
 
     ImGui::PushID("load_object");
@@ -551,10 +557,12 @@ void EditorWindow::SetVisible(bool visible)
         guizmo_->SetVisible(visible);
 }
 
-void EditorWindow::SetPlotVar(int index, float value)
+void EditorWindow::SetPlotVar(int index, float value, float min, float max)
 {
     plotVars_[index][plotVarsOffset_[index]] = value;
     plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
+    plotVarsRange_[index][0] = min;
+    plotVarsRange_[index][1] = max;
 }
 
 void EditorWindow::SetScene(Scene* scene)
@@ -739,7 +747,13 @@ void EditorWindow::Render(float timeStep)
 
     ImGui::Separator();
 
-//    ImGui::Text("%s", debugText_.CString());
+    if (ImGui::Button("Play"))
+        scene_->SetUpdateEnabled(true);
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Pause"))
+        scene_->SetUpdateEnabled(false);
 
     ImGui::Separator();
 
@@ -750,7 +764,7 @@ void EditorWindow::Render(float timeStep)
         int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
         sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
 //        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
-        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, -10000.0f, 10000.0f, ImVec2(0, 60));
+        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, plotVarsRange_[i][0], plotVarsRange_[i][1], ImVec2(0, 60));
     }
 
     ImVec2 windowPos = ImGui::GetWindowPos();
