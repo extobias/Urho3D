@@ -67,11 +67,6 @@ void StaticScene::Start()
     // Execute base class startup
     Sample::Start();
 
-    EditorWindow::RegisterObject(context_);
-    ImGuiElement::RegisterObject(context_);
-    EditorGuizmo::RegisterObject(context_);
-    EditorModelDebug::RegisterObject(context_);
-
     // Create the scene content
     CreateScene();
 
@@ -162,9 +157,9 @@ void StaticScene::CreateScene()
         mushroomObject->SetCastShadows(true);
         mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
 
-        editorModel_ = mushroomNode->CreateComponent<EditorModelDebug>();
-        editorModel_->SetModel(mushroomModel);
-        editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
+        // editorModel_ = mushroomNode->CreateComponent<EditorModelDebug>();
+        // editorModel_->SetModel(mushroomModel);
+        // editorModel_->SetMaterial(cache->GetResource<Material>("Materials/plane-collision.xml"));
     }
 
 //    Node* riderNode = scene_->CreateChild("Rider");
@@ -244,7 +239,6 @@ void StaticScene::CreateInstructions()
     imgui->SetPriority(100);
     imgui->CreateGuizmo();
     imgui->SetVisible(true);
-    // imgui->SetGuizmo(guizmo);
 
     //// Construct new Text object, set string to display and font to use
     //Text* instructionText = ui->GetRoot()->CreateChild<Text>();
@@ -406,7 +400,7 @@ void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
     MoveCamera(timeStep);
 
     DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
-    editorModel_->DrawDebugGeometry(debugRenderer, true);
+    // editorModel_->DrawDebugGeometry(debugRenderer, true);
 
     // UpdateRenderPath(timeStep);
 }
