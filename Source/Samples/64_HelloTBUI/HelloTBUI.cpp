@@ -254,7 +254,7 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
     if (key == KEY_F4)
     {
 #ifdef TB_RUNTIME_DEBUG_INFO
-        ShowDebugInfoSettingsWindow(tbelement->root_);
+        ShowDebugInfoSettingsWindow(tbelement->GetRoot());
 #else
         URHO3D_LOGERRORF("gamestate.handlekeydown: TB_RUNTIME_DEBUG_INFO not defined");
 #endif
@@ -267,7 +267,7 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
         ANIMATION_CURVE curve = ANIMATION_CURVE_BEZIER;
         double duration = 1500;
 
-        TBContainer* cont = animTest_->root_->GetWidgetByIDAndType<TBContainer>(TBIDC("load_container"));
+        TBContainer* cont = animTest_->GetRoot()->GetWidgetByIDAndType<TBContainer>(TBIDC("load_container"));
         TBRect rect = cont->GetRect();
 
         if (TBAnimationObject *anim = new TBWidgetAnimationRect(cont, rect.Offset(0, -rect.y - rect.h), rect))
