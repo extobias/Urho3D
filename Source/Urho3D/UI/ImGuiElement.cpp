@@ -73,7 +73,7 @@ ImGuiElement::ImGuiElement(Context* context)
     int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-    URHO3D_LOGINFOF("get data <%u, %u>", width, height);
+    // URHO3D_LOGINFOF("get data <%u, %u>", width, height);
 
     if (!texture_->SetSize(width, height, Graphics::GetRGBAFormat()))
         URHO3D_LOGINFOF("tex <%p> error setsize!", texture_.Get());
@@ -225,10 +225,7 @@ int ImGuiElement::FindKeyMap(int key)
 
 bool ImGuiElement::IsWithinScissor(const IntRect& currentScissor)
 {
-    if (!visible_)
-        return false;
-
-    return true;
+    return visible_;
 }
 
 
