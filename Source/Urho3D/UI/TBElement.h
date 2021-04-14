@@ -44,7 +44,8 @@ class TBRootWidget : public TBWidget, public TBWidgetListener, public Object
 public:
 
     TBRootWidget(Context* context, TBCore* core);
-//    virtual ~TBRootWidget();
+
+    virtual ~TBRootWidget();
 
     virtual bool OnEvent(const TBWidgetEvent &ev) override;
 
@@ -167,6 +168,8 @@ public:
     
     void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
 
+    void HandleEndFrame(StringHash eventType, VariantMap& eventData);
+
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
@@ -203,6 +206,7 @@ private:
 
     HashMap<int, int> mapQual_;
 
+    // SharedPtr<TBRootWidget> root_;
     TBRootWidget* root_;
 
     int mouse_x = 0;
