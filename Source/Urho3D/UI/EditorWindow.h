@@ -25,6 +25,8 @@ using ResourceMap = HashMap<String, ResourceFile>;
 
 struct ResourceContainer
 {
+    ResourceContainer() {}
+
     ResourceContainer(const String& name, const String& dirfilter)
         : name_(name),
           dirFilter_(dirfilter)
@@ -188,6 +190,8 @@ private:
 
     void ConfigResources();
 
+    void ClearResources();
+
     bool SaveScene();
 
     bool LoadScene();
@@ -196,7 +200,7 @@ private:
 
     bool LoadPrefab(Node* node);
 
-    ResourceContainer& FindContainer(const StringHash& type);
+    bool FindContainer(const StringHash& type, ResourceContainer& container);
 
     void AttachCamera();
 
