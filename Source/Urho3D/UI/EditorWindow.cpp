@@ -24,6 +24,7 @@
 #include "../UI/EditorGuizmo.h"
 #include "../UI/EditorSelection.h"
 #include "../UI/EditorModelDebug.h"
+#include "../UI/TBElement.h"
 #include "../UI/UI.h"
 #include "../Urho2D/Drawable2D.h"
 #include "../Urho2D/ParticleEffect2D.h"
@@ -64,7 +65,7 @@ EditorWindow::EditorWindow(Context* context) :
     camera->SetOrthographic(true);
     // camera->SetNearClip(0.0f);
 
-    // LoadResources();
+    LoadResources();
 
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
 
@@ -105,6 +106,14 @@ void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
 void EditorWindow::HandleSceneLoaded(StringHash eventType, VariantMap& eventData)
 {
     sceneLoading_ = false;
+
+    if (scene_)
+    {
+        guizmo_->SetScene(scene_);
+        selection_->SetScene(scene_);
+
+        guizmo_->SetCameraNode(cameraNode_);
+    }
 }
 
 void EditorWindow::MoveCamera(float timeStep)
@@ -271,6 +280,7 @@ void EditorWindow::ConfigResources()
     resourcesContainer_.Push(ResourceContainer("Sprite2D", "Urho2D"));
     resourcesContainer_.Push(ResourceContainer("Object", "Objects", "xml"));
     resourcesContainer_.Push(ResourceContainer("Scene", "Scenes", "xml"));
+    resourcesContainer_.Push(ResourceContainer("ParticleEffect2D", "Urho2D", "pex"));
 
     //resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
     //resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
@@ -293,6 +303,19 @@ void EditorWindow::ConfigResources()
     //resourcePickers.Push(ResourcePicker("AnimationSet2D", anmSetFilters, ACTION_PICK | ACTION_OPEN));
     //resourcePickers.Push(ResourcePicker("ParticleEffect2D", pexFilters, ACTION_PICK | ACTION_OPEN));
     //resourcePickers.Push(ResourcePicker("TmxFile2D", tmxFilters, ACTION_PICK | ACTION_OPEN));
+}
+
+void EditorWindow::ClearResources()
+{
+    resourcesContainer_.Clear();
+
+    modelResources_.Clear();
+    materialResources_.Clear();
+    spriteResources_.Clear();
+
+    modelResourcesString_.Clear();
+    materialResourcesString_.Clear();
+    spriteResourcesString_.Clear();
 }
 
 bool EditorWindow::SaveScene()
@@ -318,6 +341,9 @@ bool EditorWindow::SaveScene()
             File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileName, FILE_WRITE);
             SharedPtr<XMLFile> xml(new XMLFile(context_));
             ret = scene_->SaveXML(fileWrite);
+
+            ClearResources();
+            LoadResources();
         }
     }
 
@@ -340,7 +366,8 @@ bool EditorWindow::LoadScene()
     ImGui::SameLine(total_w / 2.0f);
     ImGui::SetNextItemWidth(total_w / 2.0f);
 
-    ResourceContainer& rc = FindContainer("Scene");
+    ResourceContainer rc;
+    FindContainer("Scene", rc);
     int ci = rc.currentIndex_;
 
     bool ret = false;
@@ -409,6 +436,9 @@ bool EditorWindow::SavePrefab(Node* node)
             File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Objects/" + fileName, FILE_WRITE);
             SharedPtr<XMLFile> xml(new XMLFile(context_));
             ret = node->SaveXML(fileWrite);
+
+            ClearResources();
+            LoadResources();
         }
     }
 
@@ -430,7 +460,8 @@ bool EditorWindow::LoadPrefab(Node *node)
     ImGui::SameLine(total_w / 2.0f);
     ImGui::SetNextItemWidth(total_w / 2.0f);
 
-    ResourceContainer& rc = FindContainer("Object");
+    ResourceContainer rc;
+    FindContainer("Object", rc);
     int ci = rc.currentIndex_;
 
     ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -499,7 +530,7 @@ void EditorWindow::LoadResources()
                 resources_[prefix].Push(resFile);
             }
 
-            // find on wich container goes
+            // find in wich container goes
             for(ResourceContainer& rc: resourcesContainer_)
             {
                 // URHO3D_LOGERRORF("Container Name: <%s> filename <%s> ext <%s> contains <%i>", rc.name_.CString(), resFile.name.CString(), resFile.ext.CString(), rc.extFilter_.Contains(resFile.ext));
@@ -539,7 +570,7 @@ void EditorWindow::LoadResources()
         for(String key: keys)
         {
             ResourceFile rf = rc.resources_[key];
-            // URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
+            URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
         }
 
         rc.resourcesString_.Join(rc.resources_.Keys(), "@");
@@ -674,8 +705,8 @@ void EditorWindow::AttachCamera()
     // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
-    // effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/Forward.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/ForwardDepth.xml"));
     viewport->SetRenderPath(effectRenderPath);
 
     unsigned index = renderer->GetNumViewports();
@@ -689,7 +720,7 @@ void EditorWindow::Render(float timeStep)
         return;
 
     static bool closable = true;
-    ImGui::Begin("Scene Inspector", &closable);
+    ImGui::Begin("Editor", &closable);
 
     // Guizmo stuff
     static ImGuizmo::OPERATION currentGizmoOperation(ImGuizmo::TRANSLATE);
@@ -697,47 +728,79 @@ void EditorWindow::Render(float timeStep)
 
     // selection mode
     static const char* modeTypes[] = { "Object", "Mesh Vertex", "Polygon Vertex" };
-    // const char* hideLabel = "##hidelabel";
-    ImGui::PushID("Mode");
-    int total_w = (int)ImGui::GetContentRegionAvail().x;
-    ImGui::Text("Mode");
-    ImGui::SameLine(total_w / 2.0f);
-    ImGui::SetNextItemWidth(total_w / 2.0f);
 
-    ImGui::Combo(hideLabel_, (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
-    ImGui::PopID();
-
-    // navegation mode
-    static const char* navModeTypes[] = { "FPS", "Look At" };
-    // const char* hideLabel = "##hidelabel";
-    ImGui::PushID("Navigation");
-    total_w = (int)ImGui::GetContentRegionAvail().x;
-    ImGui::Text("Navigation");
-    ImGui::SameLine(total_w / 2.0f);
-    ImGui::SetNextItemWidth(total_w / 2.0f);
-
-    ImGui::Combo(hideLabel_, (int*)&navMode_, navModeTypes, IM_ARRAYSIZE(navModeTypes));
-    ImGui::PopID();
-
-    // current operation
-    if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
-        currentGizmoOperation = ImGuizmo::TRANSLATE;
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Rotate", currentGizmoOperation == ImGuizmo::ROTATE))
-        currentGizmoOperation = ImGuizmo::ROTATE;
-    ImGui::SameLine();
-
-    if (ImGui::RadioButton("Scale", currentGizmoOperation == ImGuizmo::SCALE))
-        currentGizmoOperation = ImGuizmo::SCALE;
-
-    if (currentGizmoOperation != ImGuizmo::SCALE)
+    ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
+    if (ImGui::CollapsingHeader("Options", NULL, headerFlags))
     {
-        if (ImGui::RadioButton("Local", currentGizmoMode == ImGuizmo::LOCAL))
-            currentGizmoMode = ImGuizmo::LOCAL;
+        // const char* hideLabel = "##hidelabel";
+        ImGui::PushID("Mode");
+        int total_w = (int)ImGui::GetContentRegionAvail().x;
+        ImGui::Text("Mode");
+        ImGui::SameLine(total_w / 2.0f);
+        ImGui::SetNextItemWidth(total_w / 2.0f);
+
+        ImGui::Combo(hideLabel_, (int*)&mode_, modeTypes, IM_ARRAYSIZE(modeTypes));
+        ImGui::PopID();
+
+        // navegation mode
+        static const char* navModeTypes[] = { "FPS", "Look At" };
+        // const char* hideLabel = "##hidelabel";
+        ImGui::PushID("Navigation");
+        total_w = (int)ImGui::GetContentRegionAvail().x;
+        ImGui::Text("Navigation");
+        ImGui::SameLine(total_w / 2.0f);
+        ImGui::SetNextItemWidth(total_w / 2.0f);
+
+        ImGui::Combo(hideLabel_, (int*)&navMode_, navModeTypes, IM_ARRAYSIZE(navModeTypes));
+        ImGui::PopID();
+
+        // hide ui
+        ImGui::PushID("HideUI");
+        total_w = (int)ImGui::GetContentRegionAvail().x;
+        ImGui::Text("Hide UI");
+        ImGui::SameLine(total_w / 2.0f);
+        ImGui::SetNextItemWidth(total_w / 2.0f);
+     
+        static bool hideUI = false;
+        if (ImGui::Checkbox(hideLabel_, &hideUI))
+        {
+            UIElement* modalElement = GetSubsystem<UI>()->GetRootModalElement();
+            // PODVector<UIElement*> children;
+            // modalElement->GetChildren(children, true);
+
+            const Vector<SharedPtr<UIElement> >& children = modalElement->GetChildren();
+            for (unsigned int i = 0; i < children.Size(); i++)
+            {
+                // UIElement* child = children.At(i);
+                TBUIElement* child = dynamic_cast<TBUIElement*>(children.At(i).Get());
+                if (child)
+                    child->SetVisible(hideUI);
+            }
+
+            // modalElement->SetEnabledRecursive(hideUI);
+        }
+        ImGui::PopID();
+
+        // current operation
+        if (ImGui::RadioButton("Translate", currentGizmoOperation == ImGuizmo::TRANSLATE))
+            currentGizmoOperation = ImGuizmo::TRANSLATE;
         ImGui::SameLine();
-        if (ImGui::RadioButton("World", currentGizmoMode == ImGuizmo::WORLD))
-            currentGizmoMode = ImGuizmo::WORLD;
+
+        if (ImGui::RadioButton("Rotate", currentGizmoOperation == ImGuizmo::ROTATE))
+            currentGizmoOperation = ImGuizmo::ROTATE;
+        ImGui::SameLine();
+
+        if (ImGui::RadioButton("Scale", currentGizmoOperation == ImGuizmo::SCALE))
+            currentGizmoOperation = ImGuizmo::SCALE;
+
+        if (currentGizmoOperation != ImGuizmo::SCALE)
+        {
+            if (ImGui::RadioButton("Local", currentGizmoMode == ImGuizmo::LOCAL))
+                currentGizmoMode = ImGuizmo::LOCAL;
+            ImGui::SameLine();
+            if (ImGui::RadioButton("World", currentGizmoMode == ImGuizmo::WORLD))
+                currentGizmoMode = ImGuizmo::WORLD;
+        }
     }
 
     // FIXME? manejar esto con eventos
@@ -750,104 +813,119 @@ void EditorWindow::Render(float timeStep)
         guizmoBtn = guizmo_->buttons_;
     }
 
-    ImGui::Separator();
-
-    SaveScene();
-
-    if (LoadScene())
+    if (ImGui::CollapsingHeader("Viewport", NULL, headerFlags))
     {
-        guizmo_->SetCameraNode(nullptr);
-        ImGui::End();
-        return;
+        Renderer* renderer = GetSubsystem<Renderer>();
+        unsigned numViewports = renderer->GetNumViewports();
+        ImGui::Text("Viewports <%d> views <%d>", numViewports, renderer->GetNumViews());
+        for(unsigned i = 0; i < numViewports; i++)
+        {
+            Viewport* viewport = renderer->GetViewport(i);
+            RenderPath* renderPath = viewport->GetRenderPath();
+
+            ImGui::Text("\tviewports <%d> renderpath <%d>", i, renderPath->GetNumRenderTargets());
+        }
     }
 
-//    if(ImGui::Button("Save scene"))
-//    {
-//        String fileNameWrite = "SaveTest";
-//        File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileNameWrite + ".xml", FILE_WRITE);
-//        SharedPtr<XMLFile> xml(new XMLFile(context_));
-//        scene_->SaveXML(fileWrite);
-//    }
-
-    // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
-    // ImGui::PlotLines("Lines", );
-    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
-
-    ImGui::Text("Node selected <%s> guizmoBtn <%i>", selection_->ToString().CString(), guizmoBtn);
-    // ImGui::SameLine();
-    if(ImGui::Button("+Local"))
+    if (ImGui::CollapsingHeader("Scene", NULL, headerFlags))
     {
-        if (s.Size() == 1)
+        if (ImGui::Button("Play"))
+            scene_->SetUpdateEnabled(true);
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Pause"))
+            scene_->SetUpdateEnabled(false);
+
+
+        SaveScene();
+
+        if (LoadScene())
         {
-            Node* node = s.At(0);
-            if (node)
+            guizmo_->SetCameraNode(nullptr);
+            ImGui::End();
+            return;
+        }
+
+    //    if(ImGui::Button("Save scene"))
+    //    {
+    //        String fileNameWrite = "SaveTest";
+    //        File fileWrite(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/" + fileNameWrite + ".xml", FILE_WRITE);
+    //        SharedPtr<XMLFile> xml(new XMLFile(context_));
+    //        scene_->SaveXML(fileWrite);
+    //    }
+
+        // ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, "avg 0.0", -1.0f, 1.0f, ImVec2(0,80));
+        // ImGui::PlotLines("Lines", );
+        const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
+
+        ImGui::Text("Node selected <%s> guizmoBtn <%i>", selection_->ToString().CString(), guizmoBtn);
+        // ImGui::SameLine();
+        if(ImGui::Button("+Local"))
+        {
+            if (s.Size() == 1)
             {
-                node->CreateChild(String::EMPTY, LOCAL);
+                Node* node = s.At(0);
+                if (node)
+                {
+                    node->CreateChild(String::EMPTY, LOCAL);
+                }
+            }
+            else
+            {
+                scene_->CreateChild(String::EMPTY, LOCAL);
+            }
+
+        }
+        ImGui::SameLine();
+        if(ImGui::Button("+Replicated"))
+        {
+            if (s.Size() == 1)
+            {
+                Node* node = s.At(0);
+                if (node)
+                {
+                    node->CreateChild(String::EMPTY);
+                }
+            }
+            else
+            {
+                scene_->CreateChild(String::EMPTY);
             }
         }
-        else
-        {
-            scene_->CreateChild(String::EMPTY, LOCAL);
-        }
 
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("+Replicated"))
-    {
-        if (s.Size() == 1)
+        ImGui::SameLine();
+        if(ImGui::Button("-Remove"))
         {
-            Node* node = s.At(0);
-            if (node)
+            for(unsigned i = 0; i < selection_->GetSelectedNodes().Size(); i++)
             {
-                node->CreateChild(String::EMPTY);
+                Node* node = selection_->GetSelectedNodes().At(i);
+                node->Remove();
             }
+            selection_->Clear();
         }
-        else
-        {
-            scene_->CreateChild(String::EMPTY);
-        }
+
+        DrawNodeTree();
+
+        ImGui::Separator();
+
+        DrawNodeSelected();
     }
 
-    ImGui::SameLine();
-    if(ImGui::Button("-Remove"))
+    if (ImGui::CollapsingHeader("Plot", NULL, headerFlags))
     {
-        for(unsigned i = 0; i < selection_->GetSelectedNodes().Size(); i++)
+        // FIXME make these dinamyc
+        for(int i = 0; i < 4; i++)
         {
-            Node* node = selection_->GetSelectedNodes().At(i);
-            node->Remove();
+            char buf[32];
+            int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
+            sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
+    //        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
+            ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, plotVarsRange_[i][0], plotVarsRange_[i][1], ImVec2(0, 60));
         }
-        selection_->Clear();
     }
-
-    DrawNodeTree();
-
-    ImGui::Separator();
-
-    DrawNodeSelected();
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-    ImGui::Separator();
-
-    if (ImGui::Button("Play"))
-        scene_->SetUpdateEnabled(true);
-
-    ImGui::SameLine();
-
-    if (ImGui::Button("Pause"))
-        scene_->SetUpdateEnabled(false);
-
-    ImGui::Separator();
-
-    // FIXME make these dinamyc
-    for(int i = 0; i < 4; i++)
-    {
-        char buf[32];
-        int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
-        sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
-//        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
-        ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, plotVarsRange_[i][0], plotVarsRange_[i][1], ImVec2(0, 60));
-    }
 
     ImVec2 windowPos = ImGui::GetWindowPos();
     SetPosition(windowPos.x, windowPos.y);
@@ -1119,6 +1197,41 @@ void EditorWindow::AttributeEdit(Serializable* c)
             }
         }
         break;
+        case VAR_STRINGVECTOR:
+        {
+            // ImGui::Text("stringvector <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
+            float width = total_w / 2.0f;
+            StringVector tags = c->GetAttribute(info.name_).GetStringVector();
+
+            static char buf[32] = "";
+            ImGui::SetNextItemWidth(width / 3.0f);
+            ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
+
+            ImGui::SetNextItemWidth(width / 3.0f);
+            ImGui::SameLine();
+            if(ImGui::Button("Add"))
+            {
+                tags.Push(buf);
+                c->SetAttribute(info.name_, tags);
+            }
+
+            ImGui::SetNextItemWidth(width / 3.0f);
+            ImGui::SameLine();
+            if(ImGui::Button("Del"))
+            {
+                tags.Remove(String(buf));
+                c->SetAttribute(info.name_, tags);
+            }
+
+            for (unsigned i = 0; i < tags.Size(); i++)
+            {
+                ImGui::SetCursorPosX(width);
+                ImGui::SetNextItemWidth(width / 2.0f);
+
+                ImGui::Text("<%s>", tags.At(i).CString());
+            }
+        }
+        break;
         case VAR_COLOR:
         {
             ImGui::SetNextItemWidth(total_w / 2.0f);
@@ -1272,48 +1385,54 @@ void EditorWindow::AttributeEdit(Serializable* c)
                 ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
                 EditParticleEmitter(emitter);
             }
-            if (v.type_ == StringHash("ParticleEffect2D"))
+            if (v.type_ == StringHash("ParticleEffect2D") || v.type_ == StringHash("Model") || v.type_ == StringHash("Material"))
             {
-                ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
+                // ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
+                // if (ImGui::Button("Save Effect"))
+                // {
+                //     ParticleEffect2D* effect = emitter->GetEffect();
 
-                if (ImGui::Button("Save Effect"))
+                //     String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + effect->GetName();
+                //     File file(context_, fileName, FILE_WRITE);
+                //     effect->Save(file);
+                //     URHO3D_LOGERRORF("Save effect name <%s>", effect->GetName().CString());
+                // }
+
+                // show *.pex in a combo widget
+                ImGui::SetNextItemWidth(total_w / 2.0f);
+                ResourceContainer rc;
+                FindContainer(v.type_, rc);
+                int index = rc.FindResourceIndex(v.name_);
+                if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
                 {
-                    ParticleEffect2D* effect = emitter->GetEffect();
-
-                    String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + effect->GetName();
-                    File file(context_, fileName, FILE_WRITE);
-                    effect->Save(file);
-                    URHO3D_LOGERRORF("Save effect name <%s>", effect->GetName().CString());
+                     ResourceFile resource = rc.resources_.Values().At(index);
+                     v.name_ = resource.path + resource.name;
+                     c->SetAttribute(info.name_, v);
                 }
 
-                EditParticleEmitter2D(emitter);
-            }
-            else if (v.type_ == StringHash("Model"))
-            {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                currentModel_ = FindModel(v.name_);
-                if (ImGui::Combo(hideLabel, &currentModel_, modelResourcesString_.CString()))
+                if (v.type_ == StringHash("ParticleEffect2D"))
                 {
-                    ResourceFile resource = modelResources_.Values().At(currentModel_);
-                    v.name_ = resource.path + resource.name;
-                    c->SetAttribute(info.name_, v);
+                    ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
+                    EditParticleEmitter2D(emitter);
                 }
             }
             else if (v.type_ == StringHash("Sprite2D"))
             {
                 ImGui::SetNextItemWidth(total_w / 2.0f);
-                const ResourceContainer& rc = FindContainer(v.type_);
+                ResourceContainer rc;
+                FindContainer(v.type_, rc);
 
 //                static int lines = 1;
 //                ImGui::SliderInt("Lines", &lines, 1, 15);
                 ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
                 ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 50), true, ImGuiWindowFlags_HorizontalScrollbar);
 
                 float btnWidth = 32.0f;
                 float btnHeight = 32.0f;
                 unsigned i = 0;
                 Vector<ResourceFile> values = rc.resources_.Values();
+
                 for (ResourceFile& resource: values)
                 {
                     // const ResourceFile& resource = .At(i);
@@ -1321,16 +1440,29 @@ void EditorWindow::AttributeEdit(Serializable* c)
                         continue;
 
                     ImGui::PushID(i);
+                    // SharedPtr<Texture2D> texture1(cache->GetResource<Texture2D>(resource.path + resource.name));
                     Texture2D* texture1 = cache->GetResource<Texture2D>(resource.path + resource.name);
-//                    ImGui::Image((ImTextureID)texture1, ImVec2((float)texture1->GetWidth(), (float)texture1->GetHeight()));
+
                     int frame_padding = -1;     // -1 = uses default padding
-                    float texWidth = (float)texture1->GetWidth();
-                    float texHeight = (float)texture1->GetHeight();
-                    if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1))) //, frame_padding, ImVec4(0.0f,0.0f,0.0f,1.0f)))
+                    // float texWidth = (float)texture1->GetWidth();
+                    // float texHeight = (float)texture1->GetHeight();
+                    ImVec4 bg_col(0.0f, 0.0f, 0.0f, 1.0f);
+                    ImVec4 tint_col(0.0f, 1.0f, 0.0f, 1.0f);
+
+                    if (resource.name == v.name_)
+                        bg_col.x = 1.0f;
+
+                    // ImGui::Text("name <%s>", resource.name.CString());
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{1.0f, 0.0f, 0.0f, 1.0f});
+                    if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1), frame_padding, bg_col))
                     {
                         v.name_ = resource.path + resource.name;
                         c->SetAttribute(info.name_, v);
                     }
+                    ImGui::PopStyleColor(1);
+
+                    // delete texture1;
+
                     ImGui::SameLine();
                     ImGui::PopID();
 
@@ -1351,18 +1483,6 @@ void EditorWindow::AttributeEdit(Serializable* c)
                     c->SetAttribute(info.name_, v);
                 }
             }
-            else if (v.type_ == StringHash("Material"))
-            {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                 const ResourceContainer& rc = FindContainer(v.type_);
-                 int index = rc.FindResourceIndex(v.name_);
-                 if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
-                 {
-                     ResourceFile resource = rc.resources_.Values().At(index);
-                     v.name_ = resource.path + resource.name;
-                     c->SetAttribute(info.name_, v);
-                 }
-            }
         }
         break;
         case VAR_RESOURCEREFLIST:
@@ -1373,14 +1493,12 @@ void EditorWindow::AttributeEdit(Serializable* c)
             currentMaterialList_.Resize(v.names_.Size());
             int *currentMaterialList = currentMaterialList_.Buffer();
             bool changed = false;
-            for (int i = 0; i < v.names_.Size(); i++)
+            for (unsigned int i = 0; i < v.names_.Size(); i++)
             {
                 if (v.type_ == StringHash("Material"))
                 {
                     currentMaterialList[i] = FindMaterial(v.names_.At(i));
-                    char comboName[32];
-                    sprintf(comboName, "Material%i", i);
-                    if (ImGui::Combo(comboName, &currentMaterialList[i], materialResourcesString_.CString()))
+                    if (ImGui::Combo(hideLabel_, &currentMaterialList[i], materialResourcesString_.CString()))
                     {
                         int pos = currentMaterialList[i];
                         ResourceFile resource = materialResources_.Values().At(pos);
@@ -1605,7 +1723,8 @@ void EditorWindow::AddComponentMenu(Node* node)
                 if (ImGui::MenuItem(subIt->CString()))
                 {
                     URHO3D_LOGERRORF("menu selected <%s>", subIt->CString());
-                    node->CreateComponent(factoryHashes.At(i));
+                    Component* component = node->CreateComponent(factoryHashes.At(i));
+                    component->ApplyAttributes();
                 }
             }
             ImGui::EndMenu();
@@ -1762,6 +1881,9 @@ void EditorWindow::EditParticleEmitter2D(ParticleEmitter2D* emitter)
         return;
 
     ParticleEffect2D* effect = emitter->GetEffect();
+
+    if (!effect)
+        return;
 
 //    ImGui::NewLine();
     int total_w = (int)ImGui::GetContentRegionAvail().x;
@@ -2188,13 +2310,18 @@ int EditorWindow::FindSprite(const String& name)
     return -1;
 }
 
-ResourceContainer& EditorWindow::FindContainer(const StringHash& type)
+bool EditorWindow::FindContainer(const StringHash& type, ResourceContainer& container)
 {
     for(ResourceContainer& rc: resourcesContainer_)
     {
         if (rc.type_ == type)
-            return rc;
+        {
+            container = rc;
+            return true;
+        }
     }
+
+    return false;
 }
 
 }
