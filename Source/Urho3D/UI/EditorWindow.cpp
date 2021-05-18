@@ -1319,28 +1319,36 @@ void EditorWindow::AttributeEdit(Serializable* c)
 
                 ImGui::Text("Vertices: size <%i>", vertices.Size());
                 ImGui::SameLine();
-                if(ImGui::Button("Add"))
-                {
-                    if (vertices.Size() == 0)
-                    {
-                        vertices.Push(Vector2(-0.1f, 0.0f));
-                        vertices.Push(Vector2(0.1f, 0.0f));
-                        vertices.Push(Vector2(0.0f, 0.1f));
-                    }
-                    else
-                    {
-                        vertices.Push(Vector2::ZERO);
-                    }
-                    // save buffer
-                    VectorBuffer ret;
-                    for (unsigned i = 0; i < vertices.Size(); ++i)
-                    {
-//                        URHO3D_LOGERRORF("EditorWindow: add v2 <%f, %f>", vertices[i].x_, vertices[i].y_);
-                        ret.WriteVector2(vertices[i]);
-                    }
 
-                    Variant val(ret.GetBuffer());
-                    c->SetAttribute(info.name_, val);
+                if (vertices.Size() < 8)
+                {
+                    if(ImGui::Button("Add"))
+                    {
+                        if (vertices.Size() == 0)
+                        {
+                            vertices.Push(Vector2(-0.1f, 0.0f));
+                            vertices.Push(Vector2(0.1f, 0.0f));
+                            vertices.Push(Vector2(0.0f, 0.1f));
+                        }
+                        else
+                        {
+                            vertices.Push(Vector2::ZERO);
+                        }
+                        // save buffer
+                        VectorBuffer ret;
+                        for (unsigned i = 0; i < vertices.Size(); ++i)
+                        {
+    //                        URHO3D_LOGERRORF("EditorWindow: add v2 <%f, %f>", vertices[i].x_, vertices[i].y_);
+                            ret.WriteVector2(vertices[i]);
+                        }
+
+                        Variant val(ret.GetBuffer());
+                        c->SetAttribute(info.name_, val);
+                    }
+                }
+                else
+                {
+                    ImGui::NewLine();
                 }
 
                 bool modified = false;
@@ -1955,7 +1963,7 @@ void EditorWindow::EditParticleEmitter2D(ParticleEmitter2D* emitter)
     }
 
     float tangentialAccelerationVariance = effect->GetTangentialAccelVariance();
-    if (EditAttribute("tangential Accel Variance", tangentialAccelerationVariance, total_w))
+    if (EditAttribute("Tangential Accel Variance", tangentialAccelerationVariance, total_w))
     {
         effect->SetTangentialAccelVariance(tangentialAccelerationVariance);
     }
@@ -2021,6 +2029,19 @@ void EditorWindow::EditParticleEmitter2D(ParticleEmitter2D* emitter)
     }
 
     // emitter type
+    ImGui::PushID("Emitter Type");
+    ImGui::Text("%s", "Emitter Type");
+    ImGui::SameLine(total_w / 2.0f);
+    ImGui::SetNextItemWidth(total_w / 2.0f);
+
+    const char* emitterTypes[] = { "Gravity", "Radial" };
+    int emitterType = effect->GetEmitterType();
+    if (ImGui::Combo(hideLabel_, &emitterType, emitterTypes, IM_ARRAYSIZE(emitterTypes)))
+    {
+        effect->SetEmitterType((EmitterType2D)emitterType);
+    }
+    ImGui::PopID();
+    
 
     float maxRadius = effect->GetMaxRadius();
     if (EditAttribute("Max Radius", maxRadius, total_w))
