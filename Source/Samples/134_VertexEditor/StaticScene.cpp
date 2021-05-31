@@ -70,6 +70,21 @@ void StaticScene::Start()
     // Create the scene content
     CreateScene();
 
+    editor_ = new EditorWindow(context_);
+    UI* ui = GetSubsystem<UI>();
+    ui->GetRootModalElement()->AddChild(editor_);
+
+    editor_->SetName("editor");
+    editor_->SetScene(scene_);
+    editor_->BringToFront();
+    editor_->SetPriority(100);
+    editor_->CreateGuizmo();
+    editor_->SetOrthographic(false);
+    // editor_->SetVisible(false);
+
+    editor_->SetCameraRotation(Quaternion(30.0f, 47.5f, 0.0f));
+    editor_->SetCameraPosition(Vector3(-2.0f, 2.0f, -2.0f));
+
     // Create the UI content
     CreateInstructions();
 
@@ -118,7 +133,7 @@ void StaticScene::CreateScene()
     light_->SetLightType(LIGHT_DIRECTIONAL);
     light_->SetRadius(10.0f);
     light_->SetFov(50.0f);
-    light_->SetBrightness(5000.0f);
+    light_->SetBrightness(500.0f);
     light_->SetUsePhysicalValues(true);
     light_->SetTemperature(6500.0f);
     light_->SetCastShadows(true);
@@ -152,10 +167,16 @@ void StaticScene::CreateScene()
         // mushroomNode->SetScale(0.5f + Random(2.0f));
         mushroomNode->SetScale(1.0f);
         StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
-        Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
+        // Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
+        Model* mushroomModel = cache->GetResource<Model>("Models/plane-collision.mdl");
         mushroomObject->SetModel(mushroomModel);
         mushroomObject->SetCastShadows(true);
-        mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+        // mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+        mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/plane-collision2.xml"));
+
+        // editorModel_ = mushroomNode->CreateComponent<EditorModelDebug>();
+        // editorModel_->SetModel(mushroomModel);
+        // editorModel_->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
     }
 
 //    Node* riderNode = scene_->CreateChild("Rider");
@@ -172,11 +193,11 @@ void StaticScene::CreateScene()
 //    meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
 //    meshNode->SetScale(0.005f);
 //    StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-////    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
+// //    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
 //    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
 //    meshObject->SetModel(meshModel);
 //    meshObject->SetCastShadows(true);
-////     meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
+// //     meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
 
 //    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
 //    editorModel_->SetModel(meshModel);
@@ -194,10 +215,9 @@ void StaticScene::CreateScene()
     // camera->SetAspectRatio()
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
+    // cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
     // cameraNode_->LookAt(Vector3::ZERO);
     cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
-    // Set an initial position for the front camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
     Graphics* graphics = GetSubsystem<Graphics>();
