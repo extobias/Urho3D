@@ -612,19 +612,22 @@ void EditorGuizmo::OnClickBegin(const IntVector2& position, const IntVector2& sc
                 clicked_ = true;
             }
         }
-//        else if(currentEditMode_ == SELECT_VERTEX)
-//        {
-//            PODVector<IntVector2> faces = SelectVertex(position);
-//            Node* node = scene_->GetNode(selectedNode_);
-//            if (node)
-//            {
-//                EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
-//                if (debugModel)
-//                {
-//                    debugModel->DrawFaces(faces);
-//                }
-//            }
-//        }
+        else if(currentEditMode_ == SELECT_MESH_VERTEX)
+        {
+            // CalculateHitPoint(position);
+            // IntVector2 position2 = ScreenToElement(screenPosition);
+            PODVector<IntVector2> faces = SelectVertex(screenPosition);
+            Node* node = scene_->GetNode(selection_->GetSelectedNodes().At(0)->GetID());
+            if (node)
+            {
+                EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+                if (debugModel)
+                {
+                    debugModel->AddSelectedFaces(faces);
+                    debugModel->DrawFaces(faces);
+                }
+            }
+        }
     }
 }
 
@@ -667,31 +670,32 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
 //    else
 //        SetFocusMode(FM_NOTFOCUSABLE);
 
-//    Node* node = scene_->GetNode(selectedNode_);
-//    if(currentEditMode_ == SELECT_VERTEX && node)
-//    {
-//        PODVector<IntVector2> faces = SelectVertex(position);
-//        EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
-////        for(unsigned i = 0; i < faces.Size(); i++)
-////        {
-////            // URHO3D_LOGERRORF("selected vertex face <%i, %i>", faces.At(i).x_, faces.At(i).y_);
-////            if (debugModel)
-////            {
-////                debugModel->DrawFaces(faces);
-////            }
-////        }
+//     // Node* node = scene_->GetNode(selection_->GetSelectedNodes().At(0)->GetID());
+//     Node* node = selection_->GetSelectedNodes().Size() ? selection_->GetSelectedNodes().At(0) : nullptr;
+//     if(currentEditMode_ == SELECT_MESH_VERTEX && node)
+//     {
+//         PODVector<IntVector2> faces = SelectVertex(position);
+//         EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+// //        for(unsigned i = 0; i < faces.Size(); i++)
+// //        {
+// //            // URHO3D_LOGERRORF("selected vertex face <%i, %i>", faces.At(i).x_, faces.At(i).y_);
+// //            if (debugModel)
+// //            {
+// //                debugModel->DrawFaces(faces);
+// //            }
+// //        }
 
-//        buttons_ = buttons;
-//        if (buttons & MOUSEB_LEFT)
-//        {
-//            // URHO3D_LOGERRORF("selected vertex face");
-//            if (debugModel)
-//            {
-//                // debugModel->AddSelectedFaces(faces);
-//                debugModel->DrawFaces(faces);
-//            }
-//        }
-//    }
+//         buttons_ = buttons;
+//         if (buttons & MOUSEB_LEFT)
+//         {
+//             // URHO3D_LOGERRORF("selected vertex face");
+//             if (debugModel)
+//             {
+//                 // debugModel->AddSelectedFaces(faces);
+//                 // debugModel->DrawFaces(faces);
+//             }
+//         }
+//     }
 }
 
 void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
@@ -705,8 +709,8 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
     QualifierFlags qualifiers = QualifierFlags(eventData[P_QUALIFIERS].GetUInt());
     IntVector2 DeltaP = IntVector2(eventData[P_DX].GetInt(), eventData[P_DY].GetInt());
     IntVector2 screenPosition = IntVector2(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
-//    IntVector2 position = ScreenToElement(screenPosition);
-    IntVector2 position = screenPosition;
+    IntVector2 position = ScreenToElement(screenPosition);
+    // IntVector2 position = screenPosition;
 
     if(ImGuizmo::IsOver())
         SetFocusMode(FM_FOCUSABLE);
@@ -721,20 +725,20 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
         {
             if(currentEditMode_ == SELECT_MESH_VERTEX)
             {
-                CalculateHitPoint(position);
+                // CalculateHitPoint(position);
 
-                // this is only one action
-                if (mouseButtons & MOUSEB_LEFT)
-                {
-                    PODVector<IntVector2> faces = SelectVertex(position);
-                    EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+                // // this is only one action
+                // if (mouseButtons & MOUSEB_LEFT)
+                // {
+                //     PODVector<IntVector2> faces = SelectVertex(position);
+                //     EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
 
-                    if (debugModel)
-                    {
-                        debugModel->AddSelectedFaces(faces);
-                    }
-                    buttons_ = mouseButtons;
-                }
+                //     if (debugModel)
+                //     {
+                //         // debugModel->AddSelectedFaces(faces);
+                //     }
+                //     buttons_ = mouseButtons;
+                // }
             }
             else if (currentEditMode_ == SELECT_POLYGON_VERTEX)
             {
@@ -907,15 +911,16 @@ void EditorGuizmo::SelectVertex(const IntRect& screenRect)
 
     fr.UpdatePlanes();
 
+    Node* node = scene_->GetNode(selection_->GetSelectedNodes().At(0)->GetID());
 //    Node* node = scene_->GetNode(selectedNode_);
-//    if (node)
-//    {
-//        EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
-//        if (debugModel)
-//        {
-//            debugModel->SelectVertex(fr);
-//        }
-//    }
+   if (node)
+   {
+       EditorModelDebug* debugModel = node->GetComponent<EditorModelDebug>();
+       if (debugModel)
+       {
+           debugModel->SelectVertex(fr);
+       }
+   }
 }
 
 PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
@@ -926,16 +931,18 @@ PODVector<IntVector2> EditorGuizmo::SelectVertex(const IntVector2& position)
 
     Octree* octree = scene_->GetComponent<Octree>();
     Renderer* renderer = GetSubsystem<Renderer>();
-    Viewport* v0 = renderer->GetViewport(0);
+    Viewport* v0 = renderer->GetViewport(1);
     IntVector2 mousePos = position;
+    URHO3D_LOGERRORF("EditorGuizmo: selectvertex pos <%i, %i>", position.x_, position.y_);
     ray_ = v0->GetScreenRay(mousePos.x_, mousePos.y_);
 
     PODVector<RayQueryResult> result;
     RayOctreeQuery query(result, ray_, RAY_TRIANGLE);
     octree->Raycast(query);
 
-//    Node* node = scene_->GetNode(selectedNode_);
-    Node* node = nullptr;
+    Node* node = scene_->GetNode(selection_->GetSelectedNodes().At(0)->GetID());
+    // Node* node = scene_->GetNode(selectedNode_);
+    // Node* node = nullptr;
 //    URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> selNode <%s>", result.Size(), node->GetName().CString());
     if (result.Size())
     {

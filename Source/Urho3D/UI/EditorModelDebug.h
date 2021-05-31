@@ -118,6 +118,8 @@ protected:
 
     PODVector<IntVector2> selectedFaces_;
 
+    PODVector<IntVector3> selectedFacesIndex_;
+
     unsigned numWorldTransforms_{};
 
     unsigned numWorldTransformsFaces_{};

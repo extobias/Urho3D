@@ -9,6 +9,8 @@
 #include "../Graphics/IndexBuffer.h"
 #include "../Graphics/Model.h"
 #include "../Graphics/OctreeQuery.h"
+#include "../Graphics/StaticModel.h"
+#include "../Graphics/Texture2D.h"
 #include "../Scene/Scene.h"
 #include "../IO/File.h"
 #include "../IO/FileSystem.h"
@@ -256,6 +258,7 @@ void EditorModelDebug::OnSetAttribute(const AttributeInfo& attr, const Variant& 
 
     selectedFaces_.Clear();
     selectedIndex_.Clear();
+    selectedFacesIndex_.Clear();
 }
 
 void EditorModelDebug::SetModelAttr(const ResourceRef& value)
@@ -451,6 +454,9 @@ void EditorModelDebug::DrawFaces(const PODVector<IntVector2>& faces)
 
 void EditorModelDebug::UpdateFacesIndexes()
 {
+    if (!model_)
+        return;
+        
     const Vector<SharedPtr<VertexBuffer> >& vb = model_->GetVertexBuffers();
     const Vector<SharedPtr<IndexBuffer> >& ib = model_->GetIndexBuffers();
 
@@ -473,8 +479,8 @@ void EditorModelDebug::UpdateFacesIndexes()
         if(face.y_ != M_MAX_UNSIGNED)
         {
             SharedPtr<Geometry> g = geoms[face.x_][0];
-
             unsigned short* index = ((unsigned short*)&indexData[0]) + g->GetIndexStart() + face.y_;
+            
             for(unsigned j = 0; j < 3; j++)
             {
                 if(!selectedIndex_.Contains(index[j]))
@@ -482,6 +488,9 @@ void EditorModelDebug::UpdateFacesIndexes()
                     selectedIndex_.Push(index[j]);
                 }
             }
+
+            IntVector3 faceIndex(index[0], index[1], index[2]);
+            selectedFacesIndex_.Push(faceIndex);
         }
     }
     // vertexBuffer->Unlock();
@@ -489,13 +498,17 @@ void EditorModelDebug::UpdateFacesIndexes()
 
 void EditorModelDebug::ApplyVertexCollisionMask()
 {
+    if (!model_)
+        return;
+        
     const Vector<SharedPtr<VertexBuffer> >& vb = model_->GetVertexBuffers();
 
     VertexBuffer* vertexBuffer = vb.At(0);
     const PODVector<VertexElement>& ve = vertexBuffer->GetElements();
 
-    const VertexElement* vertexElement = VertexBuffer::GetElement(ve, TYPE_INT, SEM_OBJECTINDEX);
-    if(!vertexElement)
+    const VertexElement* vertexObjectIndex = VertexBuffer::GetElement(ve, TYPE_INT, SEM_OBJECTINDEX);
+    const VertexElement* vertexUV = VertexBuffer::GetElement(ve, TYPE_VECTOR2, SEM_TEXCOORD);
+    if(!vertexObjectIndex || !vertexUV)
     {
         URHO3D_LOGERRORF("vertex element not found!");
         return;
@@ -504,7 +517,7 @@ void EditorModelDebug::ApplyVertexCollisionMask()
     if(dstData)
     {
         unsigned vertexSize = vertexBuffer->GetVertexSize();
-        unsigned size = ELEMENT_TYPESIZES[vertexElement->type_];
+        unsigned size = ELEMENT_TYPESIZES[vertexObjectIndex->type_];
         // for(unsigned i = 0; i < vertexBuffer->GetVertexCount(); i++)
         for(unsigned i = 0; i < selectedIndex_.Size(); i++)
         {
@@ -512,8 +525,56 @@ void EditorModelDebug::ApplyVertexCollisionMask()
 //            unsigned int val = *((unsigned int*)&dstData[s * vertexSize + vertexElement->offset_]);
 //            val = val | GetCollisionMask(vertexMaskType_);
             unsigned val = GetCollisionMask(vertexMaskType_);
-            memcpy(&dstData[(unsigned)s * vertexSize + vertexElement->offset_], &val, size);
+
+            memcpy(&dstData[(unsigned)s * vertexSize + vertexObjectIndex->offset_], &val, size);            
         }
+
+        StaticModel* staticModel = node_->GetComponent<StaticModel>();
+        Texture2D* texture = nullptr;
+        if (staticModel)
+        {
+            Material* mat = staticModel->GetMaterial();
+            if (mat)
+            {
+                texture = (Texture2D*)mat->GetTexture(TU_DIFFUSE);
+            }
+        }
+        // void *textData = nullptr;
+        // if (texture)
+        // {
+        //     texture->GetData(0, textData);
+        // }
+        unsigned texWidth = texture->GetLevelWidth(0);
+        unsigned texHeight = texture->GetLevelHeight(0);
+        unsigned *data = (unsigned*)malloc(10 * 10 * 4);
+        for (unsigned ii = 0; ii < 10; ii++)
+            for (unsigned jj = 0; jj < 10; jj++)
+            {
+                data[ii * jj + 0] = (unsigned) 0;
+                data[ii * jj + 1] = (unsigned) 255;
+                data[ii * jj + 2] = (unsigned) 0;
+                data[ii * jj + 3] = (unsigned) 255;
+            }
+        for(unsigned i = 0; i < selectedFacesIndex_.Size(); i++)
+        {
+            IntVector3 face = selectedFacesIndex_[i];
+            unsigned size = 30;
+            for (unsigned j = 0; j < 3; j++)
+            {
+                unsigned index = face.Data()[j];
+                const Vector2 textCoord = *((const Vector2*)(&dstData[(unsigned)index * vertexSize + vertexUV->offset_]));
+            
+                URHO3D_LOGERRORF("EditorModelDebug: <%i> uv coord <%f, %f>", j, textCoord.x_, textCoord.y_);
+                unsigned x = textCoord.x_ * texWidth;
+                unsigned y = textCoord.y_ * texHeight;
+                
+                texture->SetData(0, (texWidth/2) - 20, (texHeight/2) - 20, 40, 40, data);
+            }
+            URHO3D_LOGERRORF("EditorModelDebug: -----------");
+            staticModel->GetMaterial()->SetTexture(TU_DIFFUSE, texture);
+        }
+        free(data);
+        
         vertexBuffer->Unlock();
     }
 }
@@ -617,6 +678,7 @@ void EditorModelDebug::SelectAll()
     // const Vector<Vector<SharedPtr<Geometry> > >& geoms = model_->GetGeometries();
 
     selectedIndex_.Clear();
+    selectedFacesIndex_.Clear();
     for(unsigned i = 0; i < indexCount; i++)
     {
         unsigned short* index = ((unsigned short*)&indexData[0]) + i;
@@ -780,9 +842,9 @@ void EditorModelDebug::CreateVertexInstances()
                 vertexOffset_.Push(position);
             }
 
-            geometry_->SetVertexBuffer(0, vertexBuffer_);
-            geometry_->SetIndexBuffer(indexBuffer_);
-            geometry_->SetDrawRange(primitiveType_, 0, indexOffset, 0, totalVertices * size);
+            // geometry_->SetVertexBuffer(0, vertexBuffer_);
+            // geometry_->SetIndexBuffer(indexBuffer_);
+            // geometry_->SetDrawRange(primitiveType_, 0, indexOffset, 0, totalVertices * size);
 
             vertexBuffer_->Unlock();
             indexBuffer_->Unlock();
