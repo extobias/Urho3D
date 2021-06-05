@@ -821,7 +821,7 @@ public:
     virtual size_t Read(void* buf, size_t elemSize, size_t count) { return file->Read(buf, elemSize * count); }
 
 private:
-    Urho3D::File* file;
+    SharedPtr<Urho3D::File> file;
 };
 
 TBFile* TBFile::Open(const char* filename, TBFileMode mode)
