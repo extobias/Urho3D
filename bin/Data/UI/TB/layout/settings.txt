@@ -1,0 +1,10 @@
+TBLayout
+	distribution gravity
+	axis y
+	TBTextField
+		gravity all
+		text AMBIENT2
+	TBColorPicker
+		gravity all
+		id color_picker
+		value 0.5

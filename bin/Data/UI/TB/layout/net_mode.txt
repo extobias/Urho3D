@@ -1,0 +1,42 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity all
+			text SPEEDKART
+			font
+				name Neon
+	TBLayout
+		axis y
+		spacing 40
+		distribution-position bottom
+		TBLayout
+			axis x
+			spacing 20
+			TBButton
+				axis y
+				id cancel
+				text BACK
+				TBSkinImage
+					skin IconHome
+				lp
+					min-width 20mm
+			TBButton
+				axis y
+				id server
+				text CREATE
+				TBSkinImage
+					skin IconServer
+				lp
+					min-width 20mm
+			TBButton
+				axis y
+				id client
+				gravity all
+				text CONNECT
+				TBSkinImage
+					skin IconClient
+				lp
+					min-width 20mm
+		TBLayout

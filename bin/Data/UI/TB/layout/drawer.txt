@@ -1,0 +1,15 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity all
+			text SETTINGS
+	TBLayout
+		axis x
+		distribution-position center
+		TBLayout
+			axis y
+			TBColorPicker
+				gravity all
+				id color_picker

@@ -1,0 +1,19 @@
+TBLayout
+	axis y
+	spacing 0
+	id stat_counter
+	TBLayout
+		axis y
+		skin ContainerBack
+		lp
+			height 25dp
+			width 25dp
+		TBImageWidget:
+			id stat_image
+			lp
+				height 15dp
+				width 15dp
+	TBTextField:
+		id stat_count
+		text-align center
+		text 0/0

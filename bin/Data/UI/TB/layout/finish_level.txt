@@ -1,0 +1,26 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		axis x
+		spacing 40
+		distribution-position center
+		TBLayout
+			id buttons
+			axis y
+			spacing 20
+			TBButton
+				axis y
+				id next
+				text SIGUIENTE
+				gravity all
+			TBButton
+				axis y
+				id quit
+				text SALIR
+				gravity all
+			TBButton
+				axis y
+				id config
+				text CONFIGURAR
+				gravity all

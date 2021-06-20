@@ -1,0 +1,44 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity all
+			text ENTER YOUR NAME
+	TBLayout
+		axis y
+		TBEditField
+			id edit_name
+			lp: width: 40mm
+	TBLayout
+		axis y
+		TBLayout
+			axis x
+			spacing 20
+			TBButton
+				id cancel_connect
+				gravity all
+				text BACK
+				axis y
+				TBSkinImage
+					skin IconHome
+				lp
+					width 20mm
+			TBButton
+				id login_connect
+				gravity all
+				text LOGIN
+				axis y
+				state disabled
+				TBSkinImage
+					skin IconGoogle
+				lp
+					width 20mm
+			TBButton
+				id ok_connect
+				text NEXT!
+				axis y
+				TBSkinImage
+					skin IconNext
+				lp
+					width 20mm

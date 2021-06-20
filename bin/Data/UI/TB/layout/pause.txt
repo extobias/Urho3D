@@ -1,0 +1,42 @@
+TBLayout
+	axis y
+	distribution gravity
+	TBLayout
+		TBTextField
+			gravity top
+			text SPEEDKART
+			font
+				name Neon
+	TBLayout
+		axis y
+		spacing 40
+		distribution-position bottom
+		TBLayout
+			axis x
+			spacing 20
+			TBButton
+				gravity all
+				id pause_cancel
+				text CANCEL
+				axis y
+				TBSkinImage
+					skin IconHome
+				lp
+					width 20mm
+			TBButton
+				id pause_resume
+				text RESUME
+				axis y
+				TBSkinImage
+					skin IconResume
+				lp
+					width 20mm
+			TBButton
+				id pause_restart
+				text RESTART
+				axis y
+				TBSkinImage
+					skin IconRestart
+				lp
+					width 20mm
+		TBLayout
