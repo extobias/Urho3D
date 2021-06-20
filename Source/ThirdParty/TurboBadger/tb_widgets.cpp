@@ -1370,7 +1370,7 @@ bool TBWidget::InvokePointerDown(int x, int y, int click_count, MODIFIER_KEYS mo
     if (core_->captured_widget)
     {
         core_->captured_widget->ConvertFromRoot(x, y);
-        core_->pointer_move_widget_x = core_->update_widget_states = x;
+        core_->pointer_move_widget_x = core_->pointer_down_widget_x = x;
         core_->pointer_move_widget_y = core_->pointer_down_widget_y = y;
         TBWidgetEvent ev(EVENT_TYPE_POINTER_DOWN, x, y, touch, modifierkeys);
         ev.count = click_count;
@@ -1454,7 +1454,7 @@ void TBWidget::HandlePanningOnMove(int x, int y)
         return;
 
     // Check pointer movement
-    const int dx = core_->update_widget_states - x;
+    const int dx = core_->pointer_down_widget_x - x;
     const int dy = core_->pointer_down_widget_y - y;
     const int threshold = TBSystem::GetPanThreshold();
     const bool maybe_start_panning_x = ABS(dx) >= threshold;
@@ -1496,7 +1496,7 @@ void TBWidget::HandlePanningOnMove(int x, int y)
             // pointer down coordinates so we won't accumulate the difference the following pan.
             int new_translation_x = 0, new_translation_y = 0;
             core_->captured_widget->GetScrollRoot()->GetChildTranslation(new_translation_x, new_translation_y);
-            core_->update_widget_states += new_translation_x - old_translation_x + start_compensation_x;
+            core_->pointer_down_widget_x += new_translation_x - old_translation_x + start_compensation_x;
             core_->pointer_down_widget_y += new_translation_y - old_translation_y + start_compensation_y;
         }
     }

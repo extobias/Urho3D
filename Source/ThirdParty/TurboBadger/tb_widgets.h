@@ -998,9 +998,8 @@ public:
 		by GetCalculatedFontDescription) */
 	TBFontFace *GetFont() const;
 
-        TBCore* core_;
+	TBCore* core_;
 protected:
-
 
 private:
 	friend class TBWidgetListener;	///< It does iteration of m_listeners for us.
