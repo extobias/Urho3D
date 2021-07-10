@@ -69,7 +69,7 @@ int TBSystem::GetPixelsPerLine()
 
 int TBSystem::GetDPI()
 {
-    LOGE("GetDPI: manager <%p>", g_pManager);
+    // LOGE("GetDPI: manager <%p>", g_pManager);
 	AConfiguration *config = AConfiguration_new();
 	AConfiguration_fromAssetManager(config, g_pManager);
 	int32_t density = AConfiguration_getDensity(config);

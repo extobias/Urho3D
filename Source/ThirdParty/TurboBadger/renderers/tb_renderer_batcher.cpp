@@ -164,7 +164,6 @@ TBRect TBRendererBatcher::GetClipRect()
 
 void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmapFragment *bitmap_fragment)
 {
-//    TBDebugPrint("TBRendererBatcher::DrawBitmap fragment bitmap <%p,%p>\n", bitmap_fragment, bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME));
     if (TBBitmap *bitmap = bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME))
         AddQuadInternal(dst_rect.Offset(m_translation_x, m_translation_y),
                         src_rect.Offset(bitmap_fragment->m_rect.x, bitmap_fragment->m_rect.y),
@@ -173,13 +172,11 @@ void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rec
 
 void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmap *bitmap)
 {
-// 	TBDebugOut("TBRendererBatcher::DrawBitmap bitmap\n");
     AddQuadInternal(dst_rect.Offset(m_translation_x, m_translation_y), src_rect, VER_COL_OPACITY(m_opacity), bitmap, nullptr);
 }
 
 void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, TBBitmapFragment *bitmap_fragment)
 {
-// 	TBDebugPrint("TBRendererBatcher::DrawBitmapColored fragment bitmap <%p,%p>\n", bitmap_fragment, bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME));
     if (!bitmap_fragment)
         return;
 
@@ -194,7 +191,6 @@ void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &
 
 void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, TBBitmap *bitmap)
 {
-// 	TBDebugOut("TBRendererBatcher::DrawBitmapColored bitmap\n");
     uint32 a = (color.a * m_opacity) / 255;
     AddQuadInternal(dst_rect.Offset(m_translation_x, m_translation_y),
                     src_rect, VER_COL(color.r, color.g, color.b, a), bitmap, nullptr);

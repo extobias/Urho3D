@@ -285,6 +285,11 @@ bool TBSkin::ReloadBitmapsInternal()
 
 			if (!element->bitmap)
 				success = false;
+#ifdef TB_RUNTIME_DEBUG_INFO
+	TBStr info;
+	info.SetFormatted("Skin name %s new %s dpi %i\n", element->bitmap_file.CStr(), filename_dst_DPI.GetData(), element->bitmap_dpi);
+	TBDebugOut(info);
+#endif
 		}
 	}
 	// Create fragment used for color fills. Use 2x2px and inset source rect to center 0x0
@@ -413,10 +418,11 @@ void TBSkin::PaintSkinOverlay(const TBRect &dst_rect, TBSkinElement *element, SK
 void TBSkin::PaintElement(const TBRect &dst_rect, TBSkinElement *element)
 {
 	PaintElementBGColor(dst_rect, element);
-	if (!element->bitmap) {
-// 		TBDebugPrint("paint element <%s> no bitmap !\n", element->name.CStr());
-		return; }
-// 	TBDebugPrint("paint element <%s> bitmap <%p>!\n", element->name.CStr(), element->bitmap->GetBitmap());
+	if (!element->bitmap) 
+	{
+		return; 
+	}
+
 	if (element->type == SKIN_ELEMENT_TYPE_IMAGE)
 		PaintElementImage(dst_rect, element);
 	else if (element->type == SKIN_ELEMENT_TYPE_TILE)

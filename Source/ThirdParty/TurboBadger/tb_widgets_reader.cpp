@@ -13,6 +13,7 @@
 #include "tb_node_tree.h"
 #include "tb_font_renderer.h"
 #include "tb_toggle_container.h"
+#include "tb_color_picker.h"
 #include "image/tb_image_widget.h"
 
 namespace tb {
@@ -329,6 +330,15 @@ void TBSlider::OnInflate(const INFLATE_INFO &info)
 	double min = (double)info.node->GetValueFloat("min", (float)GetMinValue());
 	double max = (double)info.node->GetValueFloat("max", (float)GetMaxValue());
 	SetLimits(min, max);
+	TBWidget::OnInflate(info);
+}
+
+TB_WIDGET_FACTORY(TBColorPicker, TBValue::TYPE_FLOAT, WIDGET_Z_TOP) {}
+void TBColorPicker::OnInflate(const INFLATE_INFO &info)
+{
+	const char *axis = info.node->GetValueString("axis", "x");
+	SetAxis(*axis == 'x' ? AXIS_X : AXIS_Y);
+	SetGravity(*axis == 'x' ? WIDGET_GRAVITY_LEFT_RIGHT : WIDGET_GRAVITY_TOP_BOTTOM);
 	TBWidget::OnInflate(info);
 }
 

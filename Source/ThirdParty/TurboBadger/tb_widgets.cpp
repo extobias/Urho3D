@@ -1210,8 +1210,6 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
     // Paint background skin
     TBRect local_rect(0, 0, m_rect.w, m_rect.h);
 
-    // TBDebugPrint("TBWidget.InvokePaint: widget <%p> rect <%u,%u,%u,%u>\n", this, m_rect.x, m_rect.y, m_rect.w, m_rect.h);
-
     TBWidgetSkinConditionContext context(this);
     TBSkinElement *used_element = core_->tb_skin_->PaintSkin(local_rect, skin_element, static_cast<SKIN_STATE>(state), context);
     assert(!!used_element == !!skin_element);
