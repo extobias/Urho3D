@@ -178,6 +178,8 @@ public:
 
     void HandleRawEvent(StringHash eventType, VariantMap& args);
 
+    void HandleScreenMode(StringHash eventType, VariantMap& args);
+
     void SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap);
 
     bool InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata = -1);

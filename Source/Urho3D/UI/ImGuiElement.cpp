@@ -87,10 +87,6 @@ ImGuiElement::ImGuiElement(Context* context)
     CreateKeyMap();
 
     SubscribeToEvents();
-
-    //Graphics* g = GetSubsystem<Graphics>();
-    //SetPosition(0, 0);
-    //SetSize(g->GetWidth(), g->GetHeight());
 }
 
 ImGuiElement::~ImGuiElement()

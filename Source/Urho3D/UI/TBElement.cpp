@@ -65,6 +65,8 @@ TBRootWidget::~TBRootWidget() = default;
 
 bool TBRootWidget::OnEvent(const TBWidgetEvent& ev)
 {
+    // URHO3D_LOGERRORF("TBRootWidget::OnEvent: type <%i> target <%p>", ev.type, ev.target);
+
     if (ev.type == EVENT_TYPE_CLICK)
     {
         VariantMap eventData;
@@ -248,6 +250,8 @@ TBUIElement::TBUIElement(Context* context)
 
     SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
 
+    SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(TBUIElement, HandleScreenMode));
+
     //    SubscribeToEvent(this, E_FOCUSED, URHO3D_HANDLER(TBUIElement, HandleFocused));
     //    SubscribeToEvent(this, E_DEFOCUSED, URHO3D_HANDLER(LineEdit, HandleDefocused));
 }
@@ -329,14 +333,14 @@ void TBUIElement::LoadResources()
 
     TBWidgetListener::AddGlobalListener(core_, root_);
 
-    if (!core_->tb_lng_->Load("Data/TB/language/lng_en.tb.txt"))
+    if (!core_->tb_lng_->Load("Data/UI/TB/language/lng_en.tb.txt"))
     {
         URHO3D_LOGINFO("cannot load language");
     }
 
     // Load the default skin, and override skin that contains the graphics specific to the demo.
-    // , "Data/TB/demo_skin/skin.tb.txt")
-    if (!core_->tb_skin_->Load("Data/TB/skin/skin.tb.txt", "Data/TB/skin/skin.sk.txt"))
+    // , "Data/UI/TB/demo_skin/skin.tb.txt")
+    if (!core_->tb_skin_->Load("Data/UI/TB/skin/skin.tb.txt", "Data/UI/TB/skin/skin.sk.txt"))
         URHO3D_LOGINFO("cannot load skin");
 
 #ifdef TB_FONT_RENDERER_TBBF
@@ -344,8 +348,8 @@ void TBUIElement::LoadResources()
 #endif
 
     // Add a font to the font manager.
-    core_->font_manager_->AddFontInfo("Data/TB/font/segoe_white_with_shadow.tb.txt", "Segoe");
-    core_->font_manager_->AddFontInfo("Data/TB/font/neon.tb.txt", "Neon");
+    core_->font_manager_->AddFontInfo("Data/UI/TB/font/segoe_white_with_shadow.tb.txt", "Segoe");
+    core_->font_manager_->AddFontInfo("Data/UI/TB/font/neon.tb.txt", "Neon");
 
     // Set the default font description for widgets to one of the fonts we just added
     TBFontDescription fd;
@@ -648,13 +652,20 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
     //        URHO3D_LOGERRORF("tbuielement.handleeventraw: event <%i>", event->type);
 
     // intercept mouse event to move window and not forwarding to scene
-    if (event->type == SDL_MOUSEMOTION)
+    if (event->type == SDL_MOUSEMOTION || event->type == SDL_FINGERMOTION)
     {
         int x = event->motion.x;
         int y = event->motion.y;
+        if (event->type == SDL_FINGERMOTION)
+        {
+            x = event->tfinger.x * GetSize().x_;
+            y = event->tfinger.y * GetSize().y_;
+        }
 
         if (!IsInside(IntVector2(x, y), true))
         {
+            // URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: event <%i> is outside! event <%i, %i> size <%i, %i, %i, %i>", 
+                            // event->type, x, y, position_.x_, position_.y_, GetSize().x_, GetSize().y_);
             return;
         }
         mouse_x = x;
@@ -662,14 +673,18 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
 
         TBWidget* widget;
         // TB needs coords in element space
-        //        IntVector2 elemPos = ScreenToElement(IntVector2(x, y));
-        IntVector2 elemPos = IntVector2(x, y);
-        if (widget = root_->GetWidgetAt(elemPos.x_, elemPos.y_, true))
+        IntVector2 elemPos = ScreenToElement(IntVector2(x, y));
+        widget = root_->GetWidgetAt(elemPos.x_, elemPos.y_, true);
+        if (widget)
         {
             if (root_->InvokePointerMove(elemPos.x_, elemPos.y_, GetModifierKeys(), ShouldEmulateTouchEvent()))
             {
                 args[SDLRawInput::P_CONSUMED] = true;
-                return;
+            }
+            else
+            {
+                // URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: event <%i> pointer move event <%i, %i> size <%i, %i, %i, %i>", 
+                                // event->type, x, y, position_.x_, position_.y_, GetSize().x_, GetSize().y_);
             }
             // pass event directly to target widet only to get if event is consumed
             //            x = elemPos.x_;
@@ -682,88 +697,24 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
             //                return;
             //            }
         }
+        else 
+        {
+            // URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: event <%i> get widget event <%i, %i> size <%i, %i, %i, %i>", 
+                            // event->type, x, y, position_.x_, position_.y_, GetSize().x_, GetSize().y_);
+        }
     }
-    //    else if (event->type == SDL_CONTROLLERDEVICEADDED || event->type == SDL_JOYDEVICEADDED)
-    //    {
-    //        if (event->type == SDL_CONTROLLERDEVICEADDED)
-    //        {
-    //            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller added <%i>", event->cdevice.which);
-    //        }
-    //        else if (event->type == SDL_JOYDEVICEADDED)
-    //        {
-    //            URHO3D_LOGERRORF("tbuielement.handleeventraw: joystick added <%i>", event->jdevice.which);
-    //        }
-    //    }
-    //    else if (event->type == SDL_CONTROLLERDEVICEREMOVED || event->type == SDL_JOYDEVICEREMOVED)
-    //    {
-    //        if (event->type == SDL_CONTROLLERDEVICEREMOVED)
-    //        {
-    //            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->cdevice.which);
-    //        }
-    //        else if (event->type == SDL_JOYDEVICEREMOVED)
-    //        {
-    //            URHO3D_LOGERRORF("tbuielement.handleeventraw: controller removed <%i>", event->jdevice.which);
-    //        }
-    //    }
-    //    else if (event->type == SDL_CONTROLLERDEVICEREMAPPED)
-    //    {
-    //        URHO3D_LOGERRORF("tbuielement.handleeventraw: controller remapped");
-    //    }
+}
 
-    //    // FIXME this is navigation control, but should not have effect while focus is on
-    //    // edit alike field
-    //    if (event->type == SDL_JOYHATMOTION)
-    //    {
-    //        int key = 9;
-    //        SPECIAL_KEY special = TB_KEY_TAB;
+void TBUIElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
+{
+    using namespace ScreenMode;
 
-    //        if (event->jhat.value & SDL_HAT_RIGHT)
-    //        {
-    //            root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
+    int width = eventData[P_WIDTH].GetInt();
+    int height = eventData[P_HEIGHT].GetInt();
 
-    //            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-    //            //    event->type, event->jhat, event->jaxis.value);
-    //        }
-    //        else if (event->jhat.value & SDL_HAT_LEFT)
-    //        {
-    //            root_->InvokeKey(key, special, TB_SHIFT, true);
+    root_->SetSize(width, height);
 
-    //            //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-    //            //    event->type, event->jhat, event->jaxis.value);
-    //        }
-    //    }
-
-    // if (event->type == SDL_JOYAXISMOTION)
-    //{
-    //    int key = 9;
-    //    SPECIAL_KEY special = TB_KEY_TAB;
-
-    //    if (event->jaxis.value == 32767)
-    //    {
-    //        root_->InvokeKey(key, special, TB_MODIFIER_NONE, true);
-
-    //        //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-    //        //    event->type, event->jhat, event->jaxis.value);
-    //    }
-    //    else if (event->jaxis.value == -32768)
-    //    {
-    //        root_->InvokeKey(key, special, TB_SHIFT, true);
-
-    //        //URHO3D_LOGERRORF("TBUIElement::HandleRawEvent: type <%u> hat <%u> axis value <%i>",
-    //        //    event->type, event->jhat, event->jaxis.value);
-    //    }
-    //}
-
-    // if (event->type == SDL_JOYBUTTONDOWN)
-    //{
-    //    int key = 13;
-    //    root_->InvokeKey(key, TB_KEY_ENTER, TB_MODIFIER_NONE, true);
-    //}
-    // else if (event->type == SDL_JOYBUTTONUP)
-    //{
-    //    int key = 13;
-    //    root_->InvokeKey(key, TB_KEY_ENTER, TB_MODIFIER_NONE, false);
-    //}
+    MarkDirty();
 }
 
 void TBUIElement::SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap)
@@ -815,13 +766,18 @@ public:
         : file(f)
     {
     }
-    virtual ~TBUrho3DFile() { file->Close(); }
+    virtual ~TBUrho3DFile() 
+    { 
+        file->Close(); 
+        delete file;    
+    }
 
     virtual long Size() { return file->GetSize(); }
     virtual size_t Read(void* buf, size_t elemSize, size_t count) { return file->Read(buf, elemSize * count); }
 
 private:
-    SharedPtr<Urho3D::File> file;
+    // SharedPtr<Urho3D::File> file;
+    Urho3D::File* file;
 };
 
 TBFile* TBFile::Open(const char* filename, TBFileMode mode)
