@@ -60,8 +60,6 @@ TBRootWidget::TBRootWidget(Context* context, TBCore* core)
 }
 
 TBRootWidget::~TBRootWidget() = default;
-//{
-//}
 
 bool TBRootWidget::OnEvent(const TBWidgetEvent& ev)
 {
