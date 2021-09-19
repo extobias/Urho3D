@@ -248,6 +248,18 @@ Color Color::Lerp(const Color& rhs, float t) const
     );
 }
 
+Color Color::Blend(const Color& rhs) const
+{
+    // over operator
+    float inva = (1 - a_);
+    float a = a_ + rhs.a_ * inva;
+    float r = (r_ * a_ + rhs.r_ * rhs.a_ * inva) / a;
+    float g = (g_ * a_ + rhs.g_ * rhs.a_ * inva) / a;
+    float b = (b_ * a_ + rhs.b_ * rhs.a_ * inva) / a;
+
+    return Color(r, g, b, a);
+}
+
 String Color::ToString() const
 {
     char tempBuffer[CONVERSION_BUFFER_LENGTH];
