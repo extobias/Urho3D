@@ -202,13 +202,13 @@ void EditorWindow::MoveCamera(float timeStep)
     else if (navMode_ == NAV_LOOK_AT)
     {
         if (input->GetKeyDown(KEY_A))
-            theta_ += 0.1f;
+            theta_ += 0.1f * moveSpeed;
         if (input->GetKeyDown(KEY_D))
-            theta_ -= 0.1f;
+            theta_ -= 0.1f * moveSpeed;
         if (input->GetKeyDown(KEY_W))
-            phi_ += 0.1f;
+            phi_ += 0.1f * moveSpeed;
         if (input->GetKeyDown(KEY_S))
-            phi_ -= 0.1f;
+            phi_ -= 0.1f * moveSpeed;
 
         float x = camDistance_ * sin(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
         float y = camDistance_ * cos(phi_ * M_DEGTORAD);
@@ -281,7 +281,8 @@ void EditorWindow::ConfigResources()
     resourcesContainer_.Push(ResourceContainer("Object", "Objects", "xml"));
     resourcesContainer_.Push(ResourceContainer("Scene", "Scenes", "xml"));
     resourcesContainer_.Push(ResourceContainer("ParticleEffect2D", "Urho2D", "pex"));
-
+    resourcesContainer_.Push(ResourceContainer("AnimationSet2D", "Urho2D", "scml"));
+    
     //resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
     //resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
     //resourcePickers.Push(ResourcePicker("ParticleEffect", "*.xml", ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
@@ -509,7 +510,7 @@ void EditorWindow::LoadResources()
             String prefix, name, ext;
             SplitPath(result.At(j), prefix, name, ext);
 
-//            URHO3D_LOGERRORF("  prefix <%s> name <%s> ext <%s>", prefix.CString(), name.CString(), ext.CString());
+           URHO3D_LOGERRORF("  prefix <%s> name <%s> ext <%s>", prefix.CString(), name.CString(), ext.CString());
 
             ext.Erase(0, 1);
 
@@ -625,7 +626,7 @@ void EditorWindow::CreateGuizmo()
     guizmo_->SetName("guizmo");
     guizmo_->SetFocusMode(FM_NOTFOCUSABLE);
     guizmo_->SetPosition(0, 0);
-    guizmo_->SetEditorSelection(selection_);
+    guizmo_->SetSelection(selection_);
 
     if (parent_)
         parent_->AddChild(guizmo_);
@@ -652,8 +653,8 @@ void EditorWindow::SetPlotVar(int index, float value, float min, float max)
 {
     plotVars_[index][plotVarsOffset_[index]] = value;
     plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
-    plotVarsRange_[index][0] = min;
-    plotVarsRange_[index][1] = max;
+    plotVarsRange_[index][0] = (float)min;
+    plotVarsRange_[index][1] = float(max);
 }
 
 void EditorWindow::SetScene(Scene* scene)
@@ -1088,6 +1089,25 @@ void EditorWindow::DrawNodeSelected()
 
             EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
             EditModelDebug(modelDebug);
+
+            StaticModel* staticModel = dynamic_cast<StaticModel*>(c);
+            if (staticModel)
+            {
+                Model* model = staticModel->GetModel();
+                if (model)
+                {
+                    // ImGui::Text("model geom <%i>", model->GetNumGeometries());
+                    for (unsigned ii = 0; ii < model->GetNumGeometries(); ii++)
+                    {
+                        unsigned lod = model->GetNumGeometryLodLevels(ii);
+                        ImGui::Text("model geom <%i> lod <%i>", ii, lod);
+                        for (unsigned jj = 0; jj < lod; jj++)
+                        {
+                            Geometry* geo = model->GetGeometry(ii, jj);
+                        }
+                    }
+                }
+            }
         }
         else
         {
@@ -1177,7 +1197,6 @@ void EditorWindow::AttributeEdit(Serializable* c)
             ImGui::SetNextItemWidth(total_w / 2.0f);
             float v = c->GetAttribute(info.name_).GetFloat();
             bool changed = ImGui::InputFloat(hideLabel, &v);
-            // URHO3D_LOGERRORF("VAR_FLOAT changed <%d> value <%f>", changed, v);
             if (changed)
             {
                 c->SetAttribute(info.name_, v);
@@ -1199,7 +1218,6 @@ void EditorWindow::AttributeEdit(Serializable* c)
         break;
         case VAR_STRINGVECTOR:
         {
-            // ImGui::Text("stringvector <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
             float width = total_w / 2.0f;
             StringVector tags = c->GetAttribute(info.name_).GetStringVector();
 
@@ -1385,7 +1403,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
             ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
             ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-            // ImGui::Text("type <%s> name <%s> currentid <%i>", info.defaultValue_.GetTypeName().CString(), v.name_.CString(), currentModel_);
+            // ImGui::Text("name <%s> vname <%s> vtype <%s> type <%s>", info.name_.CString(), v.name_.CString(), v.type_.ToString().CString(), StringHash("AnimationSet2D").ToString().CString());
 
             if (v.type_ == StringHash("ParticleEffect"))
             {
@@ -1489,6 +1507,19 @@ void EditorWindow::AttributeEdit(Serializable* c)
                     ResourceFile resource = modelResources_.Values().At(currentModel_);
                     v.name_ = resource.path + resource.name;
                     c->SetAttribute(info.name_, v);
+                }
+            }
+            else if (v.type_ == StringHash("AnimationSet2D"))
+            {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
+                ResourceContainer rc;
+                FindContainer(v.type_, rc);
+                int index = rc.FindResourceIndex(v.name_);
+                if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
+                {
+                     ResourceFile resource = rc.resources_.Values().At(index);
+                     v.name_ = resource.path + resource.name;
+                     c->SetAttribute(info.name_, v);
                 }
             }
         }

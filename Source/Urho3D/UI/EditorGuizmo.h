@@ -47,7 +47,9 @@ public:
 
     void SetScene(Scene* scene);
 
-    void SetEditorSelection(class EditorSelection* selection) { selection_ = selection; }
+    void SetSelection(class EditorSelection* selection) { selection_ = selection; }
+
+    EditorSelection* GetSelection() const { return selection_; }
 
     int buttons_;
 
@@ -66,7 +68,7 @@ private:
 
     void SelectVertex(const IntRect& screenRect);
 
-    PODVector<IntVector2> SelectVertex(const IntVector2& position);
+    bool SelectVertex(const IntVector2& position, PODVector<IntVector2>& faces, PODVector<Vector2>& texUV);
 
     void CreateBrush();
 
