@@ -1489,6 +1489,10 @@ void View::ExecuteRenderPathCommands()
             if (!actualView->IsNecessary(command))
                 continue;
 
+            String debugMsg = command.pass_ + command.tag_;
+            debugMsg.AppendWithFormat(" %i", command.passIndex_);
+            graphics_->PushDebugMark(debugMsg);
+
             bool viewportRead = actualView->CheckViewportRead(command);
             bool viewportWrite = actualView->CheckViewportWrite(command);
             bool beginPingpong = actualView->CheckPingpong(i);
@@ -1595,14 +1599,14 @@ void View::ExecuteRenderPathCommands()
                             graphics_->ClearParameterSources();
                             passCommand_ = &command;
                         }
-                        // glPushDebugGroup(GLenum source, GLuint id, GLsizei length, const GLchar * message)
-                        String debugMsg = command.pass_;
-                        debugMsg.AppendWithFormat(" %i", command.passIndex_);
-                        graphics_->PushDebugMark(debugMsg);
+                        
+                        // String debugMsg = command.pass_;
+                        // debugMsg.AppendWithFormat(" %i", command.passIndex_);
+                        // graphics_->PushDebugMark(debugMsg);
 
                         queue.Draw(this, camera_, command.markToStencil_, false, allowDepthWrite);
 
-                        graphics_->PopDebugMark();
+                        // graphics_->PopDebugMark();
 
                         passCommand_ = nullptr;
                     }
@@ -1691,9 +1695,9 @@ void View::ExecuteRenderPathCommands()
                             passCommand_ = &command;
                         }
 
-                        String debugMsg = "lightvol";
-                        debugMsg.AppendWithFormat(" %i - light %i", command.passIndex_, count);
-                        graphics_->PushDebugMark(debugMsg);
+                        // String debugMsg = "lightvol";
+                        // debugMsg.AppendWithFormat(" %i - light %i", command.passIndex_, count);
+                        // graphics_->PushDebugMark(debugMsg);
 
                         for (unsigned j = 0; j < i->volumeBatches_.Size(); ++j)
                         {
@@ -1701,7 +1705,7 @@ void View::ExecuteRenderPathCommands()
                             i->volumeBatches_[j].Draw(this, camera_, false);
                         }
 
-                        graphics_->PopDebugMark();
+                        // graphics_->PopDebugMark();
 
                         passCommand_ = nullptr;
                     }
@@ -1713,14 +1717,14 @@ void View::ExecuteRenderPathCommands()
 
             case CMD_RENDERUI:
                 {
-                    String debugMsg = "renderui";
-                    debugMsg.AppendWithFormat(" %i", command.passIndex_);
-                    graphics_->PushDebugMark(debugMsg);
+                    // String debugMsg = "renderui";
+                    // debugMsg.AppendWithFormat(" %i", command.passIndex_);
+                    // graphics_->PushDebugMark(debugMsg);
 
                     SetRenderTargets(command);
                     GetSubsystem<UI>()->Render(true);
 
-                    graphics_->PopDebugMark();
+                    // graphics_->PopDebugMark();
                 }
                 break;
 
@@ -1738,6 +1742,7 @@ void View::ExecuteRenderPathCommands()
                 break;
             }
 
+            graphics_->PopDebugMark();
             // If current command output to the viewport, mark it modified
             if (viewportWrite)
                 viewportModified = true;
