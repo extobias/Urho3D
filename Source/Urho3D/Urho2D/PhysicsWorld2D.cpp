@@ -54,7 +54,7 @@ PhysicsWorld2D::PhysicsWorld2D(Context* context) :
     positionIterations_(DEFAULT_POSITION_ITERATIONS)
 {
     // Set default debug draw flags
-    m_drawFlags = e_shapeBit;
+    m_drawFlags = e_shapeBit | e_jointBit;
 
     // Create Box2D world
     world_ = new b2World(ToB2Vec2(gravity_));
