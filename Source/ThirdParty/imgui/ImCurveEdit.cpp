@@ -75,6 +75,24 @@ namespace ImCurveEdit
       return sqrtf(dx * dx + dy * dy);
    }
 
+//   static void ComputeCameraRay(vec_t& rayOrigin, vec_t& rayDir, ImVec2 position = ImVec2(gContext.mX, gContext.mY), ImVec2 size = ImVec2(gContext.mWidth, gContext.mHeight))
+//   {
+//      ImGuiIO& io = ImGui::GetIO();
+
+//      matrix_t mViewProjInverse;
+//      mViewProjInverse.Inverse(gContext.mViewMat * gContext.mProjectionMat);
+
+//      float mox = ((io.MousePos.x - position.x) / size.x) * 2.f - 1.f;
+//      float moy = (1.f - ((io.MousePos.y - position.y) / size.y)) * 2.f - 1.f;
+
+//      rayOrigin.Transform(makeVect(mox, moy, 0.f, 1.f), mViewProjInverse);
+//      rayOrigin *= 1.f / rayOrigin.w;
+//      vec_t rayEnd;
+//      rayEnd.Transform(makeVect(mox, moy, 1.f - FLT_EPSILON, 1.f), mViewProjInverse);
+//      rayEnd *= 1.f / rayEnd.w;
+//      rayDir = Normalized(rayEnd - rayOrigin);
+//   }
+
    static ImVec4 ScreenToWorld(const ImVec2& screenPos, const glm::mat4& projection, const glm::mat4& view, const ImVec2& viewSize)
    {
        ImVec2 sp2 = screenPos / viewSize;
@@ -96,24 +114,6 @@ namespace ImCurveEdit
 
        return ImVec4(origin.x, origin.y, origin.z, 1.0f);
    }
-
-//   static void ComputeCameraRay(vec_t& rayOrigin, vec_t& rayDir, ImVec2 position = ImVec2(gContext.mX, gContext.mY), ImVec2 size = ImVec2(gContext.mWidth, gContext.mHeight))
-//   {
-//      ImGuiIO& io = ImGui::GetIO();
-
-//      matrix_t mViewProjInverse;
-//      mViewProjInverse.Inverse(gContext.mViewMat * gContext.mProjectionMat);
-
-//      float mox = ((io.MousePos.x - position.x) / size.x) * 2.f - 1.f;
-//      float moy = (1.f - ((io.MousePos.y - position.y) / size.y)) * 2.f - 1.f;
-
-//      rayOrigin.Transform(makeVect(mox, moy, 0.f, 1.f), mViewProjInverse);
-//      rayOrigin *= 1.f / rayOrigin.w;
-//      vec_t rayEnd;
-//      rayEnd.Transform(makeVect(mox, moy, 1.f - FLT_EPSILON, 1.f), mViewProjInverse);
-//      rayEnd *= 1.f / rayEnd.w;
-//      rayDir = Normalized(rayEnd - rayOrigin);
-//   }
 
    static ImVec2 WorldToScreen(const ImVec2& worldPos, const float *transform, const glm::mat4& viewProjection, const ImVec2& size)
    {
@@ -303,7 +303,7 @@ namespace ImCurveEdit
                         overCurveOrPoint = true;
                     }
 
-                    draw_list->AddLine(pos1, pos2, curveColor, 1.3f);
+                    // draw_list->AddLine(pos1, pos2, curveColor, 1.3f);
                 } // substep
             }
             else if (curveType == CurveDiscrete)
@@ -406,7 +406,6 @@ namespace ImCurveEdit
       }
 
       // move curve
-
       if (movingCurve != -1)
       {
          const size_t ptCount = delegate.GetPointCount(movingCurve);
@@ -495,6 +494,7 @@ namespace ImCurveEdit
           for (auto& point : selection)
               (*selectedPoints)[index++] = point;
       }
+
       return ret;
    }
 
@@ -591,57 +591,75 @@ namespace ImCurveEdit
            highLightedCurveIndex = overCurve;
        }
 
-       for (size_t cur = 0; cur < curveCount; cur++)
-       {
-           int c = curvesIndex[cur];
-          if (!delegate.IsVisible(c))
-             continue;
-          const size_t ptCount = delegate.GetPointCount(c);
-          if (ptCount < 1)
-             continue;
-          CurveType curveType = delegate.GetCurveType(c);
-          if (curveType == CurveNone)
-              continue;
-          const ImVec2* pts = delegate.GetPoints(c);
-          uint32_t curveColor = delegate.GetCurveColor(c);
-          if ((c == highLightedCurveIndex && selection.empty() && !selectingQuad) || movingCurve == c)
-             curveColor = 0xFFFFFFFF;
+      // draw curve
+      for (size_t cur = 0; cur < curveCount; cur++)
+      {
+         int c = curvesIndex[cur];
+         if (!delegate.IsVisible(c))
+            continue;
+         const size_t ptCount = delegate.GetPointCount(c);
+         if (ptCount < 1)
+            continue;
+         CurveType curveType = delegate.GetCurveType(c);
+         if (curveType == CurveNone)
+            continue;
+         const ImVec2* pts = delegate.GetPoints(c);
+         uint32_t curveColor = delegate.GetCurveColor(c);
+         if ((c == highLightedCurveIndex && selection.empty() && !selectingQuad) || movingCurve == c)
+            curveColor = 0xFFFFFFFF;
 
           for (size_t p = 0; p < ptCount; p++)
           {
  //            const ImVec2 p1 = pointToRange(pts[p]);
  //            const ImVec2 p2 = pointToRange(pts[p+1]);
-             const ImVec2 p1 = WorldToScreen(pts[p], transform, viewProjection, size);
-             const ImVec2 p2 = WorldToScreen(pts[ p == (ptCount -1) ? 0 : p + 1], transform, viewProjection, size);
+            const ImVec2 p1 = WorldToScreen(pts[p], transform, viewProjection, size);
+            const ImVec2 p2 = WorldToScreen(pts[ p == (ptCount -1) ? 0 : p + 1], transform, viewProjection, size);
 
-              draw_list->AddLine(p1, p2, curveColor, 1.3f);
-//             if (curveType == CurveSmooth || curveType == CurveLinear)
-//             {
-//                 size_t subStepCount = (curveType == CurveSmooth) ? 20 : 2;
-//                 float step = 1.f / float(subStepCount - 1);
-//                 for (size_t substep = 0; substep < subStepCount - 1; substep++)
-//                 {
-//                     float t = float(substep) * step;
+            draw_list->AddLine(p1, p2, curveColor, 1.5f);
+            if (curveType == CurveSmooth || curveType == CurveLinear)
+            {
+                  size_t subStepCount = (curveType == CurveSmooth) ? 20 : 2;
+                  float step = 1.f / float(subStepCount - 1);
+                  for (size_t substep = 0; substep < subStepCount - 1; substep++)
+                  {
+                     float t = float(substep) * step;
 
-//                     const ImVec2 sp1 = ImLerp(p1, p2, t);
-//                     const ImVec2 sp2 = ImLerp(p1, p2, t + step);
+                     const ImVec2 sp1 = ImLerp(p1, p2, t);
+                     const ImVec2 sp2 = ImLerp(p1, p2, t + step);
 
-//                     const float rt1 = smoothstep(p1.x, p2.x, sp1.x);
-//                     const float rt2 = smoothstep(p1.x, p2.x, sp2.x);
+                     const float rt1 = smoothstep(p1.x, p2.x, sp1.x);
+                     const float rt2 = smoothstep(p1.x, p2.x, sp2.x);
 
-//                     const ImVec2 pos1 = ImVec2(sp1.x, ImLerp(p1.y, p2.y, rt1)) * viewSize + offset;
-//                     const ImVec2 pos2 = ImVec2(sp2.x, ImLerp(p1.y, p2.y, rt2)) * viewSize + offset;
+                     const ImVec2 pos11 = ImVec2(sp1.x, ImLerp(p1.y, p2.y, rt1)) * viewSize + offset;
+                     const ImVec2 pos22 = ImVec2(sp2.x, ImLerp(p1.y, p2.y, rt2)) * viewSize + offset;
 
-//                     if (distance(io.MousePos.x, io.MousePos.y, pos1.x, pos1.y, pos2.x, pos2.y) < 18.f && !scrollingV)
-//                     {
-//                         localOverCurve = int(c);
-//                         overCurve = int(c);
-//                         overCurveOrPoint = true;
-//                     }
+                     const ImVec2 pos1 = ImVec2(sp1.x, ImLerp(p1.y, p2.y, rt1));
+                     const ImVec2 pos2 = ImVec2(sp2.x, ImLerp(p1.y, p2.y, rt2));
 
-//                     draw_list->AddLine(pos1, pos2, curveColor, 1.3f);
-//                 } // substep
-//             }
+                     if (distance(io.MousePos.x, io.MousePos.y, pos1.x, pos1.y, pos2.x, pos2.y) < 18.f && !scrollingV)
+                     {
+                        localOverCurve = int(c);
+                        overCurve = int(c);
+                        overCurveOrPoint = true;
+                     }
+                     // else
+                     // {
+                     //    localOverCurve = -1;
+                     //    overCurve = -1;
+                     //    overCurveOrPoint = false;
+                     // }
+                     if (overCurveOrPoint)
+                     {
+                        draw_list->AddLine(pos1, pos2, 0xFFFF00FF, 0.5f);
+
+                        // ImGui::BeginTooltip();
+                        // ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+                        // ImGui::Text("Curve <%i> local <%i>", overCurve, localOverCurve);
+                        // ImGui::PopTextWrapPos();
+                        // ImGui::EndTooltip();
+                     }
+                  } // substep
+            }
 //             else if (curveType == CurveDiscrete)
 //             {
 //                 ImVec2 dp1 = p1 * viewSize + offset;
@@ -667,8 +685,8 @@ namespace ImCurveEdit
 
              // const int drawState = DrawPoint(draw_list, pointToRange(pts[p]), viewSize, offset, (selection.find({int(c), int(p)}) != selection.end() && movingCurve == -1 && !scrollingV));
              const int drawState = DrawPoint(draw_list, worldPos, viewSize, offset, (selection.find({int(c), int(p)}) != selection.end() && movingCurve == -1 && !scrollingV));
-             // if (drawState && movingCurve == -1 && !selectingQuad)
-             if (drawState && movingCurve == -1)
+             if (drawState && movingCurve == -1 && !selectingQuad)
+             // if (drawState && movingCurve == -1)
              {
                 overCurveOrPoint = true;
                 overSelectedPoint = true;
@@ -754,7 +772,6 @@ namespace ImCurveEdit
        }
 
        // move curve
-
        if (movingCurve != -1)
        {
           const size_t ptCount = delegate.GetPointCount(movingCurve);
@@ -773,7 +790,11 @@ namespace ImCurveEdit
           {
              for (size_t p = 0; p < ptCount; p++)
              {
-                delegate.EditPoint(movingCurve, int(p), rangeToPoint(pointToRange(originalPoints[p]) + (io.MousePos - mousePosOrigin) * sizeOfPixel));
+                 ImVec4 mouseWP = ScreenToWorld(io.MousePos, *(glm::mat4*)projection, *(glm::mat4*) view, size);
+                 ImVec4 mouseOriginWP = ScreenToWorld(mousePosOrigin, *(glm::mat4*)projection, *(glm::mat4*) view, size);
+                 ImVec2 mouseDiff = ImVec2(mouseWP.x, mouseWP.y) - ImVec2(mouseOriginWP.x, mouseOriginWP.y);
+                 delegate.EditPoint(movingCurve, int(p), originalPoints[p] + mouseDiff);
+                // delegate.EditPoint(movingCurve, int(p), rangeToPoint(pointToRange(originalPoints[p]) + (io.MousePos - mousePosOrigin) * sizeOfPixel));
              }
              ret = 1;
           }
@@ -815,7 +836,8 @@ namespace ImCurveEdit
                 const ImVec2* pts = delegate.GetPoints(c);
                 for (size_t p = 0; p < ptCount; p++)
                 {
-                   const ImVec2 center = pointToRange(pts[p]) * viewSize + offset;
+                   // const ImVec2 center = pointToRange(pts[p]) * viewSize + offset;
+                   const ImVec2 center = WorldToScreen(pts[p], transform, viewProjection, size);
                    if (selectionQuad.Contains(center))
                       selection.insert({int(c), int(p)});
                 }
@@ -823,6 +845,12 @@ namespace ImCurveEdit
              // done
              selectingQuad = false;
           }
+
+         ImGui::BeginTooltip();
+         ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+         ImGui::Text("selection <%i>", selection.size());
+         ImGui::PopTextWrapPos();
+         ImGui::EndTooltip();
        }
        if (!overCurveOrPoint && ImGui::IsMouseClicked(0) && !selectingQuad && movingCurve == -1 && !overSelectedPoint && container.Contains(io.MousePos))
        {
@@ -843,6 +871,9 @@ namespace ImCurveEdit
            for (auto& point : selection)
                (*selectedPoints)[index++] = point;
        }
+#if defined(_MSC_VER)
+       _freea(curvesIndex);
+#endif
        return ret;
    }
 
