@@ -40,7 +40,7 @@ android {
     ndkVersion = ndkSideBySideVersion
     compileSdkVersion(30)
     defaultConfig {
-        minSdkVersion(18)
+        minSdkVersion(21)
         targetSdkVersion(30)
         versionCode = 1
         versionName = project.version.toString()
@@ -49,31 +49,67 @@ android {
             cmake {
                 arguments.apply {
                     System.getenv("ANDROID_CCACHE")?.let { add("-D ANDROID_CCACHE=$it") }
+                    add("-D ANDROID_ABI=arm64-v8a")
+                    add("-D URHO3D_LUA=0")
+                    add("-D URHO3D_LUAJIT=0")
+                    add("-D URHO3D_ANGELSCRIPT=0")
+                    add("-D URHO3D_PCH=0")
+                    add("-D URHO3D_LIB_TYPE=SHARED")
+                    add("-D URHO3D_DATABASE_SQLITE=1")
                     // Pass along matching env-vars as CMake build options
-                    addAll(project.file("../../script/.build-options")
+//                     addAll(project.file("../../script/.build-options")
+//                         .readLines()
+//                         .mapNotNull { variable -> System.getenv(variable)?.let { "-D $variable=$it" } }
+//                     )
+                    val vars = project.file("../../script/.build-options")
                         .readLines()
+                    addAll(vars
+                        .filter { project.hasProperty(it) }	
+                        .map { "-D $it=${project.property(it)}" }	
+                    )
+                    addAll(vars
                         .mapNotNull { variable -> System.getenv(variable)?.let { "-D $variable=$it" } }
                     )
                 }
                 targets.add("Urho3D")
             }
         }
-        splits {
-            abi {
-                isEnable = project.hasProperty("ANDROID_ABI")
-                reset()
-                include(
-                    *(project.findProperty("ANDROID_ABI") as String? ?: "")
-                        .split(',')
-                        .toTypedArray()
-                )
-            }
+//        splits {
+//            abi {
+//                isEnable = project.hasProperty("ANDROID_ABI")
+//                reset()
+//                include(
+//                    *(project.findProperty("ANDROID_ABI") as String? ?: "")
+//                        .split(',')
+//                        .toTypedArray()
+//                )
+//            }
+//        }
+//        splits {
+//            abi {
+//                isEnable = true
+//                reset()
+//                include(
+//                    "arm64-v8a"
+//                )
+//            }
+//        }
+        ndk {
+            abiFilters (
+                "arm64-v8a"
+            )
         }
     }
     buildTypes {
         named("release") {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        named("debug") {
+            isMinifyEnabled = false
+            isDebuggable = true
+            isJniDebuggable = true
+            proguardFiles("proguard-rules.pro")
         }
     }
     externalNativeBuild {
@@ -87,6 +123,11 @@ android {
         named("main") {
             java.srcDir("../../Source/ThirdParty/SDL/android-project/app/src/main/java")
         }
+    }
+    packagingOptions {
+        doNotStrip (
+            "*/arm64-v8a/libUrho3D.so"
+        )
     }
 }
 
