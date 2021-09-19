@@ -39,15 +39,21 @@ public:
 
 	float m_valueColor;
 
+	uint32* m_data;
+
 protected:
 	TBLayout m_layout;
 	TBLayout m_layout0;
+	TBLayout m_layout1;
 	TBWidget m_handle;
 	// TBSkinImage m_wheelColor;
-	TBImageWidget m_imgColor;
-	TBTextField m_textWheel;
+	// TBImageWidget m_imgColor;
+	TBWidget m_imgColor;
+	TBTextField m_colorWheel;
 	TBSlider m_sliderY;
+	TBSlider m_sliderX;
 	TBSkinElement *m_skinElement;
+	
 	TBColor m_color;
 
 	bool m_setColor;
