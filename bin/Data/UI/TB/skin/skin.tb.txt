@@ -446,6 +446,10 @@ elements
 	TBColorFg
 		bitmap color_handle.png
 		expand 5
+		
+	TBColorWheel
+		bitmap color_wheel.png
+		expand 0
 
 	TBResizer
 		bitmap resizer.png
