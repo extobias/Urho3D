@@ -56,7 +56,9 @@ StaticScene::StaticScene(Context* context) :
     commandIndexSaoCopy_(-1),
     commandIndexSaoMain_(-1),
     aoOnly_(false),
-    cameraDistance_(8.0f)
+    cameraDistance_(3.0f),
+    yaw_(0.0f),
+    pitch_(0.0f)
 {
 }
 
@@ -70,20 +72,20 @@ void StaticScene::Start()
     // Create the scene content
     CreateScene();
 
-    editor_ = new EditorWindow(context_);
-    UI* ui = GetSubsystem<UI>();
-    ui->GetRootModalElement()->AddChild(editor_);
+    // editor_ = new EditorWindow(context_);
+    // UI* ui = GetSubsystem<UI>();
+    // ui->GetRootModalElement()->AddChild(editor_);
 
-    editor_->SetName("editor");
-    editor_->SetScene(scene_);
-    editor_->BringToFront();
-    editor_->SetPriority(100);
-    editor_->CreateGuizmo();
-    editor_->SetOrthographic(false);
-    // editor_->SetVisible(false);
+    // editor_->SetName("editor");
+    // editor_->SetScene(scene_);
+    // editor_->BringToFront();
+    // editor_->SetPriority(100);
+    // editor_->CreateGuizmo();
+    // editor_->SetOrthographic(false);
+    // editor_->SetVisible(true);
 
-    editor_->SetCameraRotation(Quaternion(30.0f, 47.5f, 0.0f));
-    editor_->SetCameraPosition(Vector3(-2.0f, 2.0f, -2.0f));
+    // editor_->SetCameraRotation(Quaternion(30.0f, 47.5f, 0.0f));
+    // editor_->SetCameraPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
     // Create the UI content
     CreateInstructions();
@@ -96,6 +98,8 @@ void StaticScene::Start()
 
     // Set the mouse mode to use in the sample
     Sample::InitMouseMode(MM_FREE);
+
+    // input->SetTouchEmulation(true);
 }
 
 void StaticScene::CreateScene()
@@ -133,18 +137,18 @@ void StaticScene::CreateScene()
     light_->SetLightType(LIGHT_DIRECTIONAL);
     light_->SetRadius(10.0f);
     light_->SetFov(50.0f);
-    light_->SetBrightness(500.0f);
+    light_->SetBrightness(50.0f);
     light_->SetUsePhysicalValues(true);
     light_->SetTemperature(6500.0f);
     light_->SetCastShadows(true);
     light_->SetColor(Color(1.0f, 1.0f, 1.0f, 1.0f));
 
     // sky
-//    Node* skyNode = scene_->CreateChild("Sky");
-//    skyNode->SetScale(500.0f); // The scale actually does not matter
-//    Skybox* skybox = skyNode->CreateComponent<Skybox>();
-//    skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-//    skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
+    Node* skyNode = scene_->CreateChild("Sky");
+    skyNode->SetScale(500.0f); // The scale actually does not matter
+    Skybox* skybox = skyNode->CreateComponent<Skybox>();
+    skybox->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
+    skybox->SetMaterial(cache->GetResource<Material>("Materials/Skybox.xml"));
 
     // particles
     Node* emitterNode = scene_->CreateChild("Emitter");
@@ -160,22 +164,24 @@ void StaticScene::CreateScene()
     const unsigned NUM_OBJECTS = 1;
     for (unsigned i = 0; i < NUM_OBJECTS; ++i)
     {
-        Node* mushroomNode = scene_->CreateChild("Mushroom");
+        mushroomNode_ = scene_->CreateChild("Mushroom");
         // mushroomNode->SetPosition(Vector3(Random(90.0f) - 45.0f, 0.0f, Random(90.0f) - 45.0f));
-        mushroomNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-        // mushroomNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
+        mushroomNode_->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+        // mushroomNode_->SetRotation(Quaternion(90.0f, Vector3(0.0f, 0.0f, 1.0f)));
         // mushroomNode->SetScale(0.5f + Random(2.0f));
-        mushroomNode->SetScale(1.0f);
-        StaticModel* mushroomObject = mushroomNode->CreateComponent<StaticModel>();
+        mushroomNode_->SetScale(1.0f);
+        StaticModel* mushroomObject = mushroomNode_->CreateComponent<StaticModel>();
         // Model* mushroomModel = cache->GetResource<Model>("Models/Mushroom.mdl");
-        Model* mushroomModel = cache->GetResource<Model>("Models/plane-collision.mdl");
+        // Model* mushroomModel = cache->GetResource<Model>("Models/plane-collision.mdl");
+        Model* mushroomModel = cache->GetResource<Model>("Models/Kachujin/Kachujin.mdl");
         mushroomObject->SetModel(mushroomModel);
         mushroomObject->SetCastShadows(true);
         // mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
-        mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/plane-collision2.xml"));
+        // mushroomObject->SetMaterial(cache->GetResource<Material>("Materials/plane-collision2.xml"));
+        mushroomObject->SetMaterial(cache->GetResource<Material>("Models/Kachujin/Materials/Kachujin.xml"));
 
-        // editorModel_ = mushroomNode->CreateComponent<EditorModelDebug>();
-        // editorModel_->SetModel(mushroomModel);
+        editorModel_ = mushroomNode_->CreateComponent<EditorModelDebug>();
+        editorModel_->SetModel(mushroomModel);
         // editorModel_->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
     }
 
@@ -217,8 +223,9 @@ void StaticScene::CreateScene()
     // Set an initial position for the camera scene node above the plane
     // cameraNode_->SetPosition(Vector3(-5.0f, 5.0f, -5.0f));
     // cameraNode_->LookAt(Vector3::ZERO);
-    cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
-    cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
+    // cameraNode_->SetRotation(Quaternion(30.0f, 47.5f, 0.0f));
+    // cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
+    cameraNode_->SetPosition(Vector3(0.0f, 1.0f, -2.0f));
 
     Graphics* graphics = GetSubsystem<Graphics>();
 //    graphics->Maximize();
@@ -274,10 +281,11 @@ void StaticScene::SetupViewport()
 
     //RenderPath* effectRenderPath = viewport->GetRenderPath();
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
-//     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferred.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardDepth.xml"));
 
-    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
+
+    //effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
     //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
 
     //effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
@@ -329,6 +337,98 @@ void StaticScene::MoveCamera(float timeStep)
     if (focusElement)
         return;
 
+
+    if (GetPlatform() == "Android" || GetPlatform() == "iOS")
+    {
+        MoveCameraMobile(timeStep);
+    }
+    else if (GetPlatform() != "Web")
+    {
+        MoveCameraDesktop(timeStep);
+    }
+}
+
+void StaticScene::MoveCameraMobile(float timeStep)
+{
+    bool zoom = false; // reset bool
+
+    const float CAMERA_MIN_DIST = 1.0f;
+    const float CAMERA_MAX_DIST = 20.0f;
+    const float DEFAULT_PITCH_ANGLE = 40.0f;
+    Input* input = GetSubsystem<Input>();
+
+    // URHO3D_LOGERRORF("StaticScene::MoveCameraMobile: numtouches <%i>", input->GetNumTouches());
+    // for (unsigned i = 0; i < input->GetNumTouches(); ++i)
+    if (input->GetNumTouches())
+    for (unsigned i = 0; i < 1; ++i)
+    {
+        TouchState* state = input->GetTouch(i);
+        if (!state->touchedElement_)    // Touch on empty space
+        {
+            Camera* camera = cameraNode_->GetComponent<Camera>();
+            if (!camera)
+            {
+                URHO3D_LOGERROR("gamecontrol.getyawpitch: camera not found");
+                return;
+            }
+
+            Graphics* graphics = GetSubsystem<Graphics>();
+            yaw_ += TOUCH_SENSITIVITY * camera->GetFov() / graphics->GetHeight() * state->delta_.x_;
+            pitch_ += TOUCH_SENSITIVITY * camera->GetFov() / graphics->GetHeight() * state->delta_.y_;
+        }
+    }
+
+    // Zoom in/out
+    if (input->GetNumTouches() == 2)
+    {
+        TouchState* touch1 = input->GetTouch(0);
+        TouchState* touch2 = input->GetTouch(1);
+
+        // Check for zoom pattern (touches moving in opposite directions and on empty space)
+        if (!touch1->touchedElement_ && !touch2->touchedElement_ &&
+                ((touch1->delta_.y_ > 0 && touch2->delta_.y_ < 0) || (touch1->delta_.y_ < 0 && touch2->delta_.y_ > 0)))
+            zoom = true;
+        else
+            zoom = false;
+
+        if (zoom)
+        {
+            int sens = 0;
+            // Check for zoom direction (in/out)
+            if (Urho3D::Abs(touch1->position_.y_ - touch2->position_.y_) > Urho3D::Abs(touch1->lastPosition_.y_ - touch2->lastPosition_.y_))
+                sens = -1;
+            else
+                sens = 1;
+
+            cameraDistance_ += Urho3D::Abs(touch1->delta_.y_ - touch2->delta_.y_) * sens * TOUCH_SENSITIVITY / 150.0f;
+            cameraDistance_ = Urho3D::Clamp(cameraDistance_, CAMERA_MIN_DIST, CAMERA_MAX_DIST); // Restrict zoom range to [1;20]
+        }
+
+        Quaternion rot = mushroomNode_->GetRotation();
+        Vector3 pos = mushroomNode_->GetPosition();
+
+        // Quaternion rot = cameraNode_->GetRotation();
+        // Vector3 pos = cameraNode_->GetPosition();
+
+        // yaw += rot.YawAngle();
+        // pitch += DEFAULT_PITCH_ANGLE + rot.PitchAngle();
+
+        // Physics update has completed. Position camera behind vehicle
+        Quaternion dir(rot.YawAngle() + yaw_, Vector3::UP);
+        dir = dir * Quaternion(DEFAULT_PITCH_ANGLE + rot.PitchAngle() + pitch_, Vector3::RIGHT);
+        // dir = dir * Quaternion(rot.RollAngle(), Vector3::FORWARD);
+
+        // Vector3 lookAt = pos - rot * Vector3(0.0f, 0.0f, -3.0f);
+        Vector3 lookAt = cameraNode_->GetDirection();
+        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
+
+        cameraNode_->SetPosition(cameraTargetPos);
+        cameraNode_->SetRotation(dir);
+    }
+}
+
+void StaticScene::MoveCameraDesktop(float timeStep)
+{
     Input* input = GetSubsystem<Input>();
 
     // Movement speed as world units per second
@@ -337,7 +437,7 @@ void StaticScene::MoveCamera(float timeStep)
     const float MOUSE_SENSITIVITY = 0.1f;
 
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
-    if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
+    if (input->GetMouseButtonDown(MOUSEB_LEFT))
     {
         IntVector2 mouseMove = input->GetMouseMove();
 
@@ -349,21 +449,25 @@ void StaticScene::MoveCamera(float timeStep)
         // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
         cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
     }
-    else
+    else if (input->GetMouseButtonDown(MOUSEB_RIGHT))
     {
-//        Quaternion camRot = cameraNode_->GetRotation();
-//        pitch_ = camRot.PitchAngle();
-//        yaw_ = camRot.YawAngle();
+       Quaternion camRot = cameraNode_->GetRotation();
+       Vector3 camPos = cameraNode_->GetPosition();
 
-//        cameraDistance_ += input->GetMouseMoveWheel();
+       pitch_ = camRot.PitchAngle();
+       yaw_ = camRot.YawAngle();
 
-//        Vector3 lookAt = cameraNode_->GetDirection(); // pos - rot * Vector3(0.0f, 0.0f, -3.0f);
-//        Quaternion dir(yaw_, Vector3::UP);
-//        dir = dir * Quaternion(pitch_, Vector3::RIGHT);
+       cameraDistance_ += input->GetMouseMoveWheel();
 
-//        Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
+       Vector3 lookAt = cameraNode_->GetDirection(); 
 
-//        cameraNode_->SetPosition(cameraTargetPos);
+       URHO3D_LOGERRORF("MoveCameraDeskto: lookAt <%f, %f, %f>", lookAt.x_, lookAt.y_, lookAt.z_);
+       Quaternion dir(yaw_, Vector3::UP);
+       dir = dir * Quaternion(pitch_, Vector3::RIGHT);
+
+       Vector3 cameraTargetPos = lookAt - dir * Vector3(0.0f, 0.0f, cameraDistance_);
+
+       cameraNode_->SetPosition(cameraTargetPos);
     }
 
     if (input->GetKeyDown(KEY_SHIFT))
@@ -382,21 +486,49 @@ void StaticScene::MoveCamera(float timeStep)
         cameraNode_->Translate(Vector3::UP * MOVE_SPEED * timeStep);
     if (input->GetKeyDown(KEY_Q))
         cameraNode_->Translate(Vector3::DOWN * MOVE_SPEED * timeStep);
+
+    Quaternion camRot = cameraNode_->GetRotation();
+
+    pitch_ = camRot.PitchAngle();
+    yaw_ = camRot.YawAngle();
 }
 
 void StaticScene::SubscribeToEvents()
 {
     // Subscribe HandleUpdate() function for processing update events
-//    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
+   SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(StaticScene, HandleUpdate));
+
+   SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(StaticScene, HandlePostUpdate));
 
     // SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(StaticScene, HandleRenderUpdate));
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(StaticScene, HandleKeyDown));
 
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(StaticScene, HandlePostRenderUpdate));
+
+    SubscribeToEvent(E_TOUCHMOVE, URHO3D_HANDLER(StaticScene, HandleTouchMove3));
+
+    SubscribeToEvent(E_MOUSEMOVE, URHO3D_HANDLER(StaticScene, HandleMouseMove));
+
+    SubscribeToEvent(E_GESTUREINPUT, URHO3D_HANDLER(StaticScene, HandleGestureInput));
+
+    SubscribeToEvent(E_MULTIGESTURE, URHO3D_HANDLER(StaticScene, HandleMultiGesture));
 }
 
 void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)
+{
+    using namespace Update;
+
+    // Take the frame time step, which is stored as a float
+    float timeStep = eventData[P_TIMESTEP].GetFloat();
+
+//    DebugRenderer* debugRenderer = scene_->GetComponent<DebugRenderer>();
+//    editorModel_->DrawDebugGeometry(debugRenderer, true);
+
+    // UpdateRenderPath(timeStep);
+}
+
+void StaticScene::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
 {
     using namespace Update;
 
@@ -500,6 +632,148 @@ void StaticScene::HandleKeyDown(StringHash eventType, VariantMap& eventData)
     }
 
     Sample::HandleKeyDown(eventType, eventData);
+}
+
+void StaticScene::HandleTouchMove3(StringHash eventType, VariantMap& eventData)
+{
+    using namespace TouchMove;
+    IntVector2 screenPosition(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
+
+    Input* input = GetSubsystem<Input>();
+    
+    if (input->GetNumTouches() == 1)
+    {
+        PaintTexture(screenPosition);
+    }
+}
+
+void StaticScene::HandleMouseMove(StringHash eventType, VariantMap& eventData)
+{
+    using namespace MouseMove;
+    IntVector2 screenPosition(eventData[P_X].GetInt(), eventData[P_Y].GetInt());
+
+    MouseButtonFlags mouseButtons = MouseButtonFlags(eventData[P_BUTTONS].GetUInt());
+
+    if (mouseButtons & MOUSEB_LEFT)
+    {
+        PaintTexture(screenPosition);
+    }
+}
+
+void StaticScene::HandleGestureInput(StringHash eventType, VariantMap& eventData)
+{
+    using namespace GestureInput;
+    int gestureID = eventData[P_GESTUREID].GetInt();
+
+    URHO3D_LOGERRORF("HandleGestureInput: gesture ID <%i>", gestureID);
+}
+
+void StaticScene::HandleMultiGesture(StringHash eventType, VariantMap& eventData)
+{
+    using namespace MultiGesture;
+    int fingers = eventData[P_NUMFINGERS].GetInt();
+    float theta = eventData[P_DTHETA].GetFloat();
+    float dist = eventData[P_DDIST].GetFloat();
+
+    Camera* camera = cameraNode_->GetComponent<Camera>();
+    if (!camera)
+    {
+        URHO3D_LOGERROR("gamecontrol.getyawpitch: camera not found");
+        return;
+    }
+
+    // Graphics* graphics = GetSubsystem<Graphics>();
+    // yaw_ += TOUCH_SENSITIVITY * camera->GetFov() / graphics->GetHeight() * state->delta_.x_;
+    // pitch_ += TOUCH_SENSITIVITY * camera->GetFov() / graphics->GetHeight() * state->delta_.y_;
+
+    // URHO3D_LOGERRORF("HandleGestureInput: multigesture fingers <%i> theta <%f> dist <%f>", fingers, theta, dist);
+}
+
+void StaticScene::PaintTexture(const IntVector2& screenPosition)
+{
+    PODVector<IntVector2> faces;
+    PODVector<Vector2> texUV;
+    SelectVertex(screenPosition, faces, texUV);
+    
+    if (mushroomNode_)
+    {
+        EditorModelDebug* debugModel = mushroomNode_->GetComponent<EditorModelDebug>();
+        if (debugModel)
+        {
+            debugModel->AddSelectedFaces(faces, texUV);
+            // debugModel->DrawFaces(faces);
+        }
+    }
+}
+
+bool StaticScene::SelectVertex(const IntVector2& position, PODVector<IntVector2>& faces, PODVector<Vector2>& texUV)
+{
+    // PODVector<IntVector2> faces;
+    if (!cameraNode_ || !scene_)
+        return false;
+
+    Octree* octree = scene_->GetComponent<Octree>();
+    Renderer* renderer = GetSubsystem<Renderer>();
+    Viewport* v0 = renderer->GetViewport(0);
+    IntVector2 mousePos = position;
+    // URHO3D_LOGERRORF("StaticScene: selectvertex pos <%i, %i>", position.x_, position.y_);
+    Ray ray = v0->GetScreenRay(mousePos.x_, mousePos.y_);
+
+    PODVector<RayQueryResult> result;
+    RayOctreeQuery query(result, ray, RAY_TRIANGLE_UV);
+    octree->Raycast(query);
+
+    Node* node = mushroomNode_;
+    Vector<Vector3> hitPositions;
+    // Node* node = scene_->GetNode(selectedNode_);
+    // Node* node = nullptr;
+//    URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> selNode <%s>", result.Size(), node->GetName().CString());
+    if (result.Size())
+    {
+        hitPositions.Clear();
+        for (int i = 0; i < result.Size(); i++)
+        {
+            RayQueryResult r = result[i];
+            Node* hitNode = r.drawable_->GetNode();
+            if (hitNode)
+            {
+                String name = hitNode->GetName();
+                if (name == "Zone")
+                    continue;
+            }
+
+            if (r.subObjectElementIndex_ != M_MAX_UNSIGNED)
+            {
+                if (node && node->GetID() == r.node_->GetID())
+                {
+                    hitPositions.Push(r.position_);
+
+                    faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
+                    texUV.Push(r.textureUV_);
+                    // URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> textureUV <%f, %f>", i, r.textureUV_.x_, r.textureUV_.y_);
+                }
+            }
+//            URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> hitNode <%s>", result.Size(), hitNode->GetName().CString());
+//            if (node && node->GetID() == r.node_->GetID())
+//            {
+////                URHO3D_LOGERRORF("rayquery result: node <%s> subObject <%i> subObjectElementIndex <%i>",
+////                                 r.node_->GetName().CString(), r.subObject_, r.subObjectElementIndex_);
+//                if(r.subObjectElementIndex_ == M_MAX_UNSIGNED)
+//                {
+//                    hitPositions_.Push(r.position_);
+//                }
+//                else
+//                {
+//                    if (node && node->GetID() == r.node_->GetID())
+//                    {
+//                        faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
+//                    }
+//                }
+//            }
+        }
+    }
+
+    return true;
 }
 
 void StaticScene::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)

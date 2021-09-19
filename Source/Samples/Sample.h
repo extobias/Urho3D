@@ -38,7 +38,7 @@ class EditorWindow;
 // All Urho3D classes reside in namespace Urho3D
 using namespace Urho3D;
 
-const float TOUCH_SENSITIVITY = 2.0f;
+const float TOUCH_SENSITIVITY = 0.5f;
 
 /// Sample class, as framework for all samples.
 ///    - Initialization of the Urho3D engine (in Application class)

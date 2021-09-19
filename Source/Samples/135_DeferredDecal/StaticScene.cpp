@@ -45,6 +45,7 @@
 #include <Urho3D/UI/EditorWindow.h>
 #include <Urho3D/UI/EditorGuizmo.h>
 #include <Urho3D/UI/EditorModelDebug.h>
+#include <Urho3D/Urho2D/CollisionPolygon2D.h>
 #include <Urho3D/Physics/RigidBody.h>
 
 #include "StaticScene.h"
@@ -223,6 +224,14 @@ void StaticScene::CreateScene()
     //SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
     //surface->SetViewport(0, rttViewport);
     //surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+
+    Node* polygonNode = scene_->CreateChild("Polygon");
+    polygonNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+
+    CollisionPolygon2D* polygonCol = polygonNode->CreateComponent<CollisionPolygon2D>();
+    // riderObject->SetModel(cache->GetResource<Model>("Models/retro_car_B3D.mdl"));
+    // riderObject->SetCastShadows(true);
+    // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 }
 
 void StaticScene::CreateInstructions()
@@ -269,8 +278,8 @@ void StaticScene::SetupViewport()
     //RenderPath* effectRenderPath = viewport->GetRenderPath();
 
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
-    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth.xml"));
-//     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardDepth.xml"));
 
 //    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
     //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));

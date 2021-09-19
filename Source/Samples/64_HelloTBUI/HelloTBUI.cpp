@@ -48,6 +48,7 @@
 
 #include <Urho3D/DebugNew.h>
 #include <animation/tb_widget_animation.h>
+#include <tb_color_picker.h>
 
 URHO3D_DEFINE_APPLICATION_MAIN(HelloTBUI)
 
@@ -98,24 +99,36 @@ void HelloTBUI::Start()
         // animation test
 //        animTest_ = new TBUIElement(context_);
 //        animTest_->LoadResources();
-//        animTest_->LoadWidgets("Data/TB/layout/loading_screen.txt");
+//        animTest_->LoadWidgets("Data/UI/TB/layout/loading_screen.txt");
 //        // animTest_->SetPosition(-windowWidth / 8, 0);
 //        animTest_->SetSize(windowWidth / 2, windowHeight);
 //        GetSubsystem<UI>()->GetRootModalElement()->AddChild(animTest_);
 
         tbelement = new TBUIElement(context_);
         tbelement->LoadResources();
-        tbelement->LoadWidgets("Data/TB/layout/game_stats.txt");
+        tbelement->LoadWidgets("Data/UI/TB/layout/settings.txt");
         tbelement->SetPosition(0, 0);
-        tbelement->SetSize(windowWidth / 2, windowHeight);
+        // tbelement->SetSize(windowWidth / 2, windowHeight);
         GetSubsystem<UI>()->GetRoot()->AddChild(tbelement);
 
-        tbelement2= new TBUIElement(context_);
-        tbelement2->LoadResources();
-        tbelement2->LoadWidgets("Data/TB/layout/game_stats.txt");
-        tbelement2->SetPosition(windowWidth / 2, 0);
-        tbelement2->SetSize(windowWidth / 2, windowHeight);
-        GetSubsystem<UI>()->GetRoot()->AddChild(tbelement2);
+        SubscribeToEvent(tbelement->GetRoot(), E_TBUI_WIDGET_CHANGED, URHO3D_HANDLER(HelloTBUI, HandleTBUIChanged));
+
+        TBColorPicker* cp = dynamic_cast<TBColorPicker*>(tbelement->GetRoot()->GetWidgetByID(TBID("color_picker")));
+        if (cp)
+        {
+            // Image img(context_);
+            // img.SetSize(4096, 4096, 4);
+            // img.SetData((unsigned char*)cp->m_data);
+            // if (!img.SaveFile(GetSubsystem<FileSystem>()->GetProgramDir() + "Data/palette.png"))
+            //     URHO3D_LOGERRORF("gamestate.handlekeydown: errrorrororor");
+        }
+
+        // tbelement2= new TBUIElement(context_);
+        // tbelement2->LoadResources();
+        // tbelement2->LoadWidgets("Data/UI/TB/layout/game_stats.txt");
+        // tbelement2->SetPosition(windowWidth / 2, 0);
+        // tbelement2->SetSize(windowWidth / 2, windowHeight);
+        // GetSubsystem<UI>()->GetRoot()->AddChild(tbelement2);
     }
     else
     {
@@ -426,6 +439,17 @@ void HelloTBUI::HandleTBUIReleased(StringHash eventType, VariantMap& eventData)
 {
     URHO3D_LOGINFOF("HelloTBUI::HandleTBUIReleased");
     tbelement->Clear();
+}
+
+void HelloTBUI::HandleTBUIChanged(StringHash eventType, VariantMap& eventData)
+{
+    uint32 widgetId = eventData[P_WIDGET_ID].GetUInt();
+    TBColorPicker* cp = dynamic_cast<TBColorPicker*>(tbelement->GetRoot()->GetWidgetByID(widgetId));
+    if (cp)
+    {
+        TBColor c = cp->GetColor();
+        URHO3D_LOGERRORF("HelloTBUI::HandleTBUIChanged: <%p> found cp <%i, %i, %i, %i> uint <%i> val <%f>", cp, c.r, c.g, c.b, c.a, (c), cp->m_valueColor);
+    }
 }
 
 void HelloTBUI::HandleControlClicked(StringHash eventType, VariantMap& eventData)

@@ -212,15 +212,16 @@ void StaticScene::CreateScene()
     // camera->SetAspectRatio()
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(-0.036f, 1.0f, -0.374f));
+    cameraNode_->SetPosition(Vector3(-0.036f, 1.0f, -2.0f));
     // cameraNode_->LookAt(Vector3::ZERO);
     cameraNode_->SetRotation(Quaternion(0.984f, 0.082f, 0.155f, -0.013f));
     // Set an initial position for the front camera scene node above the plane
 
-    editor_->SetCameraNode(cameraNode_);
-    editor_->SetScene(scene_);
+    // editor_->SetCameraNode(cameraNode_);
+    // editor_->SetScene(scene_);
 
-//    CreateDepthTexture();
+    CreateDepthTexture();
+
     Graphics* graphics = GetSubsystem<Graphics>();
     graphics->Maximize();
 
@@ -234,12 +235,12 @@ void StaticScene::CreateScene()
     // Because the rear viewport is rather small, disable occlusion culling from it. Use the camera's
     // "view override flags" for this. We could also disable eg. shadows or force low material quality
     // if we wanted
-//    rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
+    // rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
 
-//    SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
-//    SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
-//    surface->SetViewport(0, rttViewport);
-//    surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
+    // SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
+    // SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
+    // surface->SetViewport(0, rttViewport);
+    // surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
 }
 
 void StaticScene::CreateDepthTexture()
@@ -250,7 +251,7 @@ void StaticScene::CreateDepthTexture()
     URHO3D_LOGERRORF("> > > > > > depth support <%u>", graphics->GetReadableDepthSupport());
     // depth buffer texture
     SharedPtr<Texture2D> renderTexture(new Texture2D(context_));
-    float div = 2.0f;
+    int div = 2;
     renderTexture->SetSize(graphics->GetWidth() / div, graphics->GetHeight() / div, Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
     // renderTexture->SetFilterMode(FILTER_BILINEAR);
     renderTexture->SetName("DepthBuffer");
@@ -306,7 +307,7 @@ void StaticScene::SetupViewport()
     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/PBRDeferredHWDepth.xml"));
 
     // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Forward.xml"));
-//     effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepthWithCopy.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepthWithCopy.xml"));
 
 //    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/BloomHDR.xml"));
 //    effectRenderPath->SetShaderParameter("BloomHDRMix", Vector2(1.2f, 1.2f));
@@ -327,10 +328,10 @@ void StaticScene::SetupViewport()
     //        commandIndexSaoMain_ = i;
     //}
 
-//    Graphics* graphics = GetSubsystem<Graphics>();
-//    SharedPtr<Viewport> rearViewport(new Viewport(context_, scene_, rearCameraNode_->GetComponent<Camera>(),
-//        IntRect(graphics->GetWidth() * 2 / 3, 32, graphics->GetWidth() - 32, graphics->GetHeight() / 3)));
-//    renderer->SetViewport(1, rearViewport);
+    // Graphics* graphics = GetSubsystem<Graphics>();
+    // SharedPtr<Viewport> rearViewport(new Viewport(context_, scene_, rearCameraNode_->GetComponent<Camera>(),
+    //     IntRect(graphics->GetWidth() * 2 / 3, 32, graphics->GetWidth() - 32, graphics->GetHeight() / 3)));
+    // renderer->SetViewport(1, rearViewport);
 }
 
 void StaticScene::UpdateRenderPath(float timeStep)

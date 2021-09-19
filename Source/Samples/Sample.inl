@@ -68,11 +68,11 @@ void Sample::Setup()
     engineParameters_[EP_HEADLESS]     = false;
     engineParameters_[EP_SOUND]        = false;
 
-    engineParameters_[EP_WINDOW_WIDTH] = 1360;
-    engineParameters_[EP_WINDOW_HEIGHT] = 640;
+    engineParameters_[EP_WINDOW_WIDTH] = 800;
+    engineParameters_[EP_WINDOW_HEIGHT] = 600;
     engineParameters_[EP_WINDOW_RESIZABLE] = true;
-//    engineParameters_[EP_WINDOW_POSITION_X] = 300;
-//    engineParameters_[EP_WINDOW_POSITION_Y] = 50;
+    engineParameters_[EP_WINDOW_POSITION_X] = 0;
+    engineParameters_[EP_WINDOW_POSITION_Y] = 40;
 
     engineParameters_[EP_ORIENTATIONS] = "Portrait";
 
@@ -87,9 +87,9 @@ void Sample::Setup()
 
 void Sample::Start()
 {
-    EditorWindow::RegisterObject(context_);
-    ImGuiElement::RegisterObject(context_);
-    EditorGuizmo::RegisterObject(context_);
+    // EditorWindow::RegisterObject(context_);
+    // ImGuiElement::RegisterObject(context_);
+    // EditorGuizmo::RegisterObject(context_);
 
     if (GetPlatform() == "Android" || GetPlatform() == "iOS")
         // On mobile platform, enable touch by adding a screen joystick
@@ -122,21 +122,21 @@ void Sample::Stop()
 
 void Sample::InitTouchInput()
 {
-    touchEnabled_ = true;
-
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    Input* input = GetSubsystem<Input>();
-    XMLFile* layout = cache->GetResource<XMLFile>("UI/ScreenJoystick_Samples.xml");
-    const String& patchString = GetScreenJoystickPatchString();
-    if (!patchString.Empty())
-    {
-        // Patch the screen joystick layout further on demand
-        SharedPtr<XMLFile> patchFile(new XMLFile(context_));
-        if (patchFile->FromString(patchString))
-            layout->Patch(patchFile);
-    }
-    screenJoystickIndex_ = (unsigned)input->AddScreenJoystick(layout, cache->GetResource<XMLFile>("UI/DefaultStyle.xml"));
-    input->SetScreenJoystickVisible(screenJoystickSettingsIndex_, true);
+    // touchEnabled_ = true;
+    // ResourceCache* cache = GetSubsystem<ResourceCache>();
+    // Input* input = GetSubsystem<Input>();
+    
+    // XMLFile* layout = cache->GetResource<XMLFile>("UI/ScreenJoystick_Samples.xml");
+    // const String& patchString = GetScreenJoystickPatchString();
+    // if (!patchString.Empty())
+    // {
+    //     // Patch the screen joystick layout further on demand
+    //     SharedPtr<XMLFile> patchFile(new XMLFile(context_));
+    //     if (patchFile->FromString(patchString))
+    //         layout->Patch(patchFile);
+    // }
+    // screenJoystickIndex_ = (unsigned)input->AddScreenJoystick(layout, cache->GetResource<XMLFile>("UI/DefaultStyle.xml"));
+    // input->SetScreenJoystickVisible(screenJoystickSettingsIndex_, true);
 }
 
 void Sample::InitMouseMode(MouseMode mode)

@@ -85,6 +85,8 @@ private:
     
     void HandleTBUIReleased(StringHash eventType, VariantMap& eventData);
 
+    void HandleTBUIChanged(StringHash eventType, VariantMap& eventData);
+
 	void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
     /// The Window.

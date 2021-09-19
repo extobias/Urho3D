@@ -58,17 +58,35 @@ private:
     void SetupViewport();
     /// Read input and moves the camera.
     void MoveCamera(float timeStep);
+
+    void MoveCameraMobile(float timeStep);
+
+    void MoveCameraDesktop(float timeStep);
     /// Subscribe to application-wide logic update events.
     void SubscribeToEvents();
 
     /// Handle the logic update event.
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
+    void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
+
     void HandleRenderUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
 
+    void HandleTouchMove3(StringHash eventType, VariantMap& eventData);
+
+    void HandleMouseMove(StringHash eventType, VariantMap& eventData);
+
     void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
+
+    void HandleGestureInput(StringHash eventType, VariantMap& eventData);
+
+    void HandleMultiGesture(StringHash eventType, VariantMap& eventData);
+
+    void PaintTexture(const IntVector2& screenPosition);
+
+    bool SelectVertex(const IntVector2& position, PODVector<IntVector2>& faces, PODVector<Vector2>& texUV);
 
     void UpdateRenderPath(float timeStep);
 
@@ -88,5 +106,9 @@ private:
 
     SharedPtr<Node> rearCameraNode_;
 
+    float yaw_, pitch_;
+
     float cameraDistance_;
+
+    Node* mushroomNode_;
 };
