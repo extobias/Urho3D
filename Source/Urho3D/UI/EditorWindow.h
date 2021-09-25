@@ -214,7 +214,7 @@ private:
 
     Vector3 hitPosition_{ Vector3::ZERO };
 
-    EditorMode mode_ { SELECT_POLYGON_VERTEX };
+    EditorMode mode_ { SELECT_MESH_VERTEX };
 
     EditorNavMode navMode_ { NAV_FPS };
 
