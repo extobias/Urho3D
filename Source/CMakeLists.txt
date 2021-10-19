@@ -137,6 +137,10 @@ if (NOT ANDROID AND NOT ARM AND NOT WEB)
     endif ()
 endif ()
 
+if (NOT ANDROID)
+    add_subdirectory (ThirdParty/Assimp)
+endif ()
+
 add_subdirectory (Urho3D)
 
 if (URHO3D_CLANG_TOOLS)

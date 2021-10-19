@@ -1,4 +1,4 @@
- #include "../UI/EditorGuizmo.h"
+ #include "../Editor/EditorGuizmo.h"
 
 #include "../Graphics/Graphics.h"
 #include "../Graphics/Camera.h"
@@ -11,9 +11,9 @@
 #include "../IO/Log.h"
 #include "../IO/MemoryBuffer.h"
 #include "../Resource/ResourceCache.h"
-#include "../UI/EditorWindow.h"
-#include "../UI/EditorSelection.h"
-#include "../UI/EditorModelDebug.h"
+#include "../Editor/EditorWindow.h"
+#include "../Editor/EditorSelection.h"
+#include "../Editor/EditorModelDebug.h"
 #include "../UI/UI.h"
 #include "../Urho2D/StaticSprite2D.h"
 #include "../Urho2D/CollisionPolygon2D.h"
@@ -976,7 +976,7 @@ bool EditorGuizmo::SelectVertex(const IntVector2& position, PODVector<IntVector2
                     hitPositions_.Push(r.position_);
                     faces.Push(IntVector2(r.subObject_, r.subObjectElementIndex_));
                     texUV.Push(r.textureUV_);
-                    URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> textureUV <%f, %f>", i, r.textureUV_.x_, r.textureUV_.y_);
+                    // URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> textureUV <%f, %f>", i, r.textureUV_.x_, r.textureUV_.y_);
                 }
             }
 //            URHO3D_LOGERRORF("EditorGuizmo: selectvertex result <%i> hitNode <%s>", result.Size(), hitNode->GetName().CString());

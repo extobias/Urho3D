@@ -1,4 +1,4 @@
-#include "../UI/EditorWindow.h"
+#include "../Editor/EditorWindow.h"
 
 #include "../Core/CoreEvents.h"
 #include "../Graphics/Graphics.h"
@@ -21,9 +21,10 @@
 #include "../Math/Polyhedron.h"
 #include "../Resource/ResourceCache.h"
 #include "../Scene/SceneEvents.h"
-#include "../UI/EditorGuizmo.h"
-#include "../UI/EditorSelection.h"
-#include "../UI/EditorModelDebug.h"
+#include "../Editor/EditorGuizmo.h"
+#include "../Editor/EditorSelection.h"
+#include "../Editor/EditorModelDebug.h"
+#include "../Editor/EditorImport.h"
 #include "../UI/TBElement.h"
 #include "../UI/UI.h"
 #include "../Urho2D/Drawable2D.h"
@@ -31,7 +32,9 @@
 #include "../Urho2D/ParticleEmitter2D.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "ImGuizmo.h"
+#include "ImGuiFileBrowser.h"
 
 namespace Urho3D
 {
@@ -51,7 +54,8 @@ EditorWindow::EditorWindow(Context* context) :
     theta_(0.0f),
     phi_(-90.0f),
     camDistance_(10.0f),
-    sceneLoading_(false)
+    sceneLoading_(false),
+    fullscreen_(false)
 {
     for (int i = 0; i < 4; i++)
     {
@@ -63,6 +67,7 @@ EditorWindow::EditorWindow(Context* context) :
     cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -1.0f));
     Camera* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetOrthographic(true);
+    camera->SetFarClip(10000.0f);
     // camera->SetNearClip(0.0f);
 
     LoadResources();
@@ -78,14 +83,6 @@ void EditorWindow::RegisterObject(Context* context)
 {
     context->RegisterFactory<EditorWindow>(UI_CATEGORY);
 }
-
-//void EditorWindow::SetCameraNode(Node* node)
-//{
-//    cameraNode_ = node;
-
-//    if (guizmo_)
-//        guizmo_->SetCameraNode(node);
-//}
 
 void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
@@ -119,9 +116,9 @@ void EditorWindow::HandleSceneLoaded(StringHash eventType, VariantMap& eventData
 void EditorWindow::MoveCamera(float timeStep)
 {
     // Do not move if the UI has a focused element (the console)
-    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
-    if (focusElement && focusElement->IsVisible())
-        return;
+    // UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
+    // if (focusElement && focusElement->IsVisible())
+    //     return;
 
     if (!cameraNode_)
         return;
@@ -351,7 +348,6 @@ bool EditorWindow::SaveScene()
     ImGui::PopID();
 
     return ret;
-
 }
 
 bool EditorWindow::LoadScene()
@@ -510,7 +506,7 @@ void EditorWindow::LoadResources()
             String prefix, name, ext;
             SplitPath(result.At(j), prefix, name, ext);
 
-           URHO3D_LOGERRORF("  prefix <%s> name <%s> ext <%s>", prefix.CString(), name.CString(), ext.CString());
+        //    URHO3D_LOGERRORF("  prefix <%s> name <%s> ext <%s>", prefix.CString(), name.CString(), ext.CString());
 
             ext.Erase(0, 1);
 
@@ -571,7 +567,7 @@ void EditorWindow::LoadResources()
         for(String key: keys)
         {
             ResourceFile rf = rc.resources_[key];
-            URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
+            // URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
         }
 
         rc.resourcesString_.Join(rc.resources_.Keys(), "@");
@@ -630,6 +626,7 @@ void EditorWindow::CreateGuizmo()
 
     if (parent_)
         parent_->AddChild(guizmo_);
+    // AddChild(guizmo_);
 
     if (scene_)
     {
@@ -687,6 +684,11 @@ void EditorWindow::SetCameraRotation(const Quaternion& rotation)
     cameraNode_->SetRotation(rotation);
 }
 
+void EditorWindow::SetCameraEnabled(bool enable)
+{
+    cameraNode_->SetEnabledRecursive(enable);
+}
+
 void EditorWindow::AttachCamera()
 {
     // editor_->SetCameraNode(gCameraNode);
@@ -707,7 +709,8 @@ void EditorWindow::AttachCamera()
     SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
     // effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
-    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/ForwardDepth.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/ForwardDepth.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/Forward.xml"));
     viewport->SetRenderPath(effectRenderPath);
 
     unsigned index = renderer->GetNumViewports();
@@ -931,8 +934,17 @@ void EditorWindow::Render(float timeStep)
     ImVec2 windowPos = ImGui::GetWindowPos();
     SetPosition(windowPos.x, windowPos.y);
 
-    ImVec2 windowSize = ImGui::GetWindowSize();
-    SetSize(windowSize.x, windowSize.y);
+    if (fullscreen_)
+    {
+        Graphics* graphics = GetSubsystem<Graphics>();
+        // SetPosition(IntVector2::ZERO);
+        SetSize(graphics->GetSize());
+    }
+    else
+    {
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        SetSize(windowSize.x, windowSize.y);
+    }
 
     ImGui::End();
 }
@@ -1033,24 +1045,7 @@ void EditorWindow::DrawNodeSelected()
         return;
     }
 
-//    Node* cameraNode = cameraNode_;
-//    if(!cameraNode)
-//        return;
-
-//    Camera* camera = cameraNode->GetComponent<Camera>();
-//    if(!camera)
-//        return;
-
     AttributeEdit(node);
-
-//    Variant vars = node->GetAttribute("Variables");
-//    VariantMap* map = vars.GetVariantMapPtr();
-//    Vector<StringHash> keys = map->Keys();
-//    ImGui::Text("keys size <%i> map size <%i>", keys.Size(), map->Size());
-//    for(unsigned i = 0; i < map->Size(); i++)
-//    {
-//        ImGui::Text(" <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
-//    }
 
     // prefabs
     SavePrefab(node);
@@ -1065,6 +1060,30 @@ void EditorWindow::DrawNodeSelected()
     {
         AddComponentMenu(node);
         ImGui::EndPopup();
+    }
+
+    ImGui::SameLine();
+
+    static imgui_addons::ImGuiFileBrowser file_dialog;
+
+    if (ImGui::Button("Import"))
+    {
+        ImGui::OpenPopup("Import FBX");
+        fullscreen_ = true;
+    }
+
+    ImGuiWindow* window = imguiContext_->CurrentWindow;
+    const ImGuiID id = window->GetID("Import FBX");
+    fullscreen_= ImGui::IsPopupOpen(id, ImGuiPopupFlags_None);
+
+    if (file_dialog.showFileDialog("Import FBX", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(800, 450), ".fbx"))
+    {
+        ImportFBX(file_dialog.selected_fn.c_str(), file_dialog.selected_path.c_str());
+
+        ClearResources();
+        LoadResources();
+
+        fullscreen_ = false;
     }
 
     // components
@@ -1434,6 +1453,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
                      ResourceFile resource = rc.resources_.Values().At(index);
                      v.name_ = resource.path + resource.name;
                      c->SetAttribute(info.name_, v);
+                     c->ApplyAttributes();
                 }
 
                 if (v.type_ == StringHash("ParticleEffect2D"))
@@ -2317,6 +2337,12 @@ void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
 //                    ImGui::Text("geom vsize <%i> isize <%i> is <%i> ic <%i>", vertexSize, indexSize, geom->GetIndexStart(), geom->GetIndexCount());
                 }
                 */
+}
+
+bool EditorWindow::ImportFBX(const String& name, const String& path)
+{
+    EditorImport import(context_);
+    return import.ImportModel(path);
 }
 
 void EditorWindow::DebugModelSubPart()

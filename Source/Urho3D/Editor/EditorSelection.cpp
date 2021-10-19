@@ -1,4 +1,4 @@
-#include "../UI/EditorSelection.h"
+#include "../Editor/EditorSelection.h"
 
 #include "../Core/CoreEvents.h"
 #include "../Graphics/Graphics.h"

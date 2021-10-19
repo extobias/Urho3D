@@ -138,6 +138,8 @@ public:
 
     void SetCameraRotation(const Quaternion& rotation);
 
+    void SetCameraEnabled(bool enable);
+
     EditorSelection* GetSelection() const { return selection_; }
 //    String debugText_;
 
@@ -170,6 +172,8 @@ private:
     bool EditAttribute(const String& name, Color& value, int totalWidth);
 
     void EditModelDebug(EditorModelDebug* model);
+
+    bool ImportFBX(const String& name, const String& path);
 
     void DebugModelSubPart();
 
@@ -250,6 +254,8 @@ private:
     float camDistance_;
 
     bool sceneLoading_;
+
+    bool fullscreen_;
 
     const char* hideLabel_ {"##hidelabel"};
 };
