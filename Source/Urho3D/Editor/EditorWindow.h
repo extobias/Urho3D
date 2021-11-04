@@ -118,6 +118,8 @@ public:
 
     void SetGuizmo(EditorGuizmo* guizmo) { guizmo_ = guizmo; }
 
+    void HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData);
+    
     void HandleUpdate(StringHash eventType, VariantMap& eventData);
 
     void HandleSceneLoaded(StringHash eventType, VariantMap& eventData);

@@ -72,8 +72,10 @@ EditorWindow::EditorWindow(Context* context) :
 
     LoadResources();
 
-    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
+    SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(EditorWindow, HandlePostRenderUpdate));
 
+    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
+    
     SubscribeToEvent(E_ASYNCLOADFINISHED, URHO3D_HANDLER(EditorWindow, HandleSceneLoaded));
 }
 
@@ -84,10 +86,13 @@ void EditorWindow::RegisterObject(Context* context)
     context->RegisterFactory<EditorWindow>(UI_CATEGORY);
 }
 
-void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
+void EditorWindow::HandlePostRenderUpdate(StringHash eventType, VariantMap& eventData)
 {
     ImGuiElement::HandlePostUpdate(eventType, eventData);
+}
 
+void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
+{
     if (!visible_)
         return;
 
@@ -825,9 +830,12 @@ void EditorWindow::Render(float timeStep)
         for(unsigned i = 0; i < numViewports; i++)
         {
             Viewport* viewport = renderer->GetViewport(i);
-            RenderPath* renderPath = viewport->GetRenderPath();
+            if (viewport)
+            {
+                RenderPath* renderPath = viewport->GetRenderPath();
 
-            ImGui::Text("\tviewports <%d> renderpath <%d>", i, renderPath->GetNumRenderTargets());
+                ImGui::Text("\tviewports <%d> renderpath <%d>", i, renderPath->GetNumRenderTargets());
+            }
         }
     }
 
