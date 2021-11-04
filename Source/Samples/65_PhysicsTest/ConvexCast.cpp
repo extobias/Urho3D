@@ -14,7 +14,7 @@
 #include <Urho3D/Physics/PhysicsUtils.h>
 #include <Urho3D/Physics/PhysicsEvents.h>
 #include <Urho3D/Math/Ray.h>
-#include <Urho3D/UI/EditorModelDebug.h>
+#include <Urho3D/Editor/EditorModelDebug.h>
 
 #include <Bullet/BulletDynamics/Dynamics/btRigidBody.h>
 #include <Bullet/BulletCollision/CollisionShapes/btCompoundShape.h>

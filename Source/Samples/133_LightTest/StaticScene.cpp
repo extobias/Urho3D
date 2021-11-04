@@ -42,8 +42,8 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
-#include <Urho3D/UI/EditorWindow.h>
-#include <Urho3D/UI/EditorGuizmo.h>
+#include <Urho3D/Editor/EditorWindow.h>
+#include <Urho3D/Editor/EditorGuizmo.h>
 #include <Urho3D/Physics/RigidBody.h>
 #include <Urho3D/Physics/PhysicsWorld.h>
 

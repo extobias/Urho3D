@@ -43,8 +43,8 @@
 #include "PBRMaterials.h"
 
 #include <Urho3D/DebugNew.h>
-#include <Urho3D/UI/EditorWindow.h>
-#include <Urho3D/UI/EditorGuizmo.h>
+#include <Urho3D/Editor/EditorWindow.h>
+#include <Urho3D/Editor/EditorGuizmo.h>
 
 URHO3D_DEFINE_APPLICATION_MAIN(PBRMaterials)
 
