@@ -155,7 +155,7 @@ private:
 
     void AttributeEdit(Serializable *c);
 
-    bool VariantEdit(const StringHash& key, Variant& v);
+    bool VariantEdit(const String& name, Variant& v, unsigned index = 0);
 
     void AddComponentMenu(Node *node);
 
@@ -193,6 +193,8 @@ private:
 
     void MoveCamera(float timeStep);
 
+    void UpdateAnimations(float timeStep);
+
     void LoadResources();
 
     void ConfigResources();
@@ -221,7 +223,7 @@ private:
 
     Vector3 hitPosition_{ Vector3::ZERO };
 
-    EditorMode mode_ { SELECT_MESH_VERTEX };
+    EditorMode mode_ { SELECT_OBJECT };
 
     EditorNavMode navMode_ { NAV_FPS };
 
@@ -260,6 +262,8 @@ private:
     bool fullscreen_;
 
     const char* hideLabel_ {"##hidelabel"};
+
+    float timeStep_;
 };
 
 }

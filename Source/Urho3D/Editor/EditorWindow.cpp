@@ -1,6 +1,8 @@
 #include "../Editor/EditorWindow.h"
 
 #include "../Core/CoreEvents.h"
+#include "../Graphics/Animation.h"
+#include "../Graphics/AnimatedModel.h"
 #include "../Graphics/Graphics.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
@@ -100,6 +102,10 @@ void EditorWindow::HandleUpdate(StringHash eventType, VariantMap& eventData)
 
     // Take the frame time step, which is stored as a float
     float timeStep = eventData[P_TIMESTEP].GetFloat();
+
+    timeStep_ = timeStep;
+
+    UpdateAnimations(timeStep);
 
     // Move the camera, scale movement with time step
     MoveCamera(timeStep);
@@ -272,12 +278,18 @@ void EditorWindow::MoveCamera(float timeStep)
     }
 }
 
+void EditorWindow::UpdateAnimations(float timeStep)
+{
+    
+}
+
 void EditorWindow::ConfigResources()
 {
     Vector<String> materialFilters = {"xml", "material", "json"};
     Vector<String> textureFilters = {"dds", "png", "jpg", "bmp", "tga", "ktx", "pvr", "hdr"};
 
     resourcesContainer_.Push(ResourceContainer("Model", "Models", "mdl"));
+    resourcesContainer_.Push(ResourceContainer("Animation", "Models", "ani"));
     resourcesContainer_.Push(ResourceContainer("Material", "Materials", materialFilters));
     resourcesContainer_.Push(ResourceContainer("Sprite2D", "Urho2D"));
     resourcesContainer_.Push(ResourceContainer("Object", "Objects", "xml"));
@@ -1088,6 +1100,9 @@ void EditorWindow::DrawNodeSelected()
     {
         ImportFBX(file_dialog.selected_fn.c_str(), file_dialog.selected_path.c_str());
 
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+        cache->ReleaseAllResources(true);
+
         ClearResources();
         LoadResources();
 
@@ -1662,17 +1677,97 @@ void EditorWindow::AttributeEdit(Serializable* c)
                 Vector<StringHash> keys = map->Keys();
                 for (unsigned i = 0; i < keys.Size(); i++)
                 {
-//                    ImGui::Text("variant <%s> type <%s>", keys.At(i).Reverse().CString(), (*map)[keys.At(i)].GetTypeName().CString());
                     ImGui::SetCursorPosX(width);
                     ImGui::SetNextItemWidth(width / 2.0f);
 
                     Variant v = (*map)[keys.At(i)];
-                    if (VariantEdit(keys.At(i), v))
+                    String vname = scene_->GetVarName(keys.At(i));
+                    if (VariantEdit(vname, v))
                     {
                         (*map)[keys.At(i)] = v;
                         c->SetAttribute(info.name_, vars);
                     }
                 }
+            }
+        }
+        break;
+        case VAR_VARIANTVECTOR:
+        {
+            Variant vars = c->GetAttribute(info.name_);
+            const VariantVector& v = vars.GetVariantVector();
+            VariantVector* vv = vars.GetVariantVectorPtr();
+            ResourceCache* cache = GetSubsystem<ResourceCache>();
+            
+            if (!vv)
+            {
+                ImGui::PopID();
+                return;
+            }
+
+            StringVector names = info.metadata_["VectorStructElements"]->GetStringVector();
+            unsigned size = 0;
+            float width = total_w / 2.0f;
+            if (info.name_ == "Animation States" && vv->Size())
+            {
+                static char buf[32] = "";
+
+                ImGui::SetNextItemWidth(width / 2.0f);
+                Variant sizev = (*vv).At(0);
+                if (VariantEdit(info.name_, sizev))
+                {
+                    (*vv)[0] = sizev;
+                    c->SetAttribute(info.name_, vars);
+                }
+
+                size = sizev.GetInt();
+            }
+
+            (*vv).Reserve(size * 6 + 1);
+            bool changed = false;
+            for (unsigned i = 1; i < (*vv).Size(); i += 6)
+            {
+                for (unsigned j = 0; j < 6; j++)
+                {
+                    ImGui::SetCursorPosX(width);
+                    ImGui::SetNextItemWidth(width / 2.0f);
+
+                    Variant value = (*vv).At(i + j);
+                    if (VariantEdit(names[j + 1], value, i + j))
+                    {
+                        (*vv)[i + j] = value;
+                        changed = true;
+                    }
+                }
+
+                ImGui::SetCursorPosX(width);
+                ImGui::SetNextItemWidth(width / 2.0f);
+                if(ImGui::Button("Play"))
+                {
+                    Variant value = (*vv).At(i);
+                    ResourceRef res = value.GetResourceRef();
+                    URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
+
+                    Animation* anim = cache->GetResource<Animation>(res.name_);
+                    AnimatedModel* model = static_cast<AnimatedModel*>(c);
+                    if (model)
+                    {
+                        // AnimationState* state = model->AddAnimationState(anim);
+                        // state_ = model->AddAnimationState(anim);
+                        // if (state)
+                        // {
+                            // state->SetWeight(1.0f);
+                            // state->SetLooped(true);
+                            // state->AddTime(timeStep_);
+                        // }
+                    }
+                }
+            }
+
+
+            if (changed)
+            {
+                c->SetAttribute(info.name_, vars);
+                c->ApplyAttributes();
             }
         }
         break;
@@ -1685,13 +1780,16 @@ void EditorWindow::AttributeEdit(Serializable* c)
         ImGui::PopID();
     }
 }
-
-bool EditorWindow::VariantEdit(const StringHash& key, Variant& v)
+// fixme pasar attributeedit con esta
+bool EditorWindow::VariantEdit(const String& name, Variant& v, unsigned index)
 {
-    const String& name = scene_->GetVarName(key);
     const char* hideLabel = "##hidelabel";
 
-    ImGui::PushID(name.CString());
+    char id[512];
+    memset(id, 0, 512);
+    sprintf(id, "%s_%i", name.CString(), index);
+
+    ImGui::PushID(id);
     int total_w = (int)ImGui::GetContentRegionAvail().x;
     ImGui::Text("%s", name.CString());
     ImGui::SetNextItemWidth(total_w / 2.0f);
@@ -1756,6 +1854,28 @@ bool EditorWindow::VariantEdit(const StringHash& key, Variant& v)
             }
         }
         break;
+        case VAR_RESOURCEREF:
+        {
+            ResourceRef res = v.GetResourceRef();
+            ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+            if (res.type_ == StringHash("Animation"))
+            {
+                ImGui::SetNextItemWidth(total_w / 2.0f);
+                ResourceContainer rc;
+                FindContainer(res.type_, rc);
+                int index = rc.FindResourceIndex(res.name_);
+                if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
+                {
+                     ResourceFile resource = rc.resources_.Values().At(index);
+                     res.name_ = resource.path + resource.name;
+                     v = res;
+                     ret = true;
+                }
+            }
+        }
+        break;
+
     }
     ImGui::PopID();
 
