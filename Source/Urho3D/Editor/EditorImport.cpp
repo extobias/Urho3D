@@ -127,6 +127,10 @@ EditorImport::EditorImport(Context* context)
 {
     String programDir = GetSubsystem<FileSystem>()->GetProgramDir();
     resourcePath_ = programDir;
+    modelSubdir_ = "Data/Models/";
+    animSubdir_ = modelSubdir_ + "Anim/";
+    textureSubDir_ = "Data/Textures/";
+    materialSubdir_ = "Data/Materials/";
 }
 
 EditorImport::~EditorImport()
@@ -363,7 +367,7 @@ String EditorImport::GetMeshMaterialName(aiMesh* mesh)
     if (matName.Trimmed().Empty())
         matName = GenerateMaterialName(material);
 
-    return (useSubdirs_ ? "Materials/" : "") + matName + ".xml";
+    return (useSubdirs_ ? materialSubdir_ : "") + matName + ".xml";
 }
 
 String EditorImport::GenerateMaterialName(aiMaterial* material)
@@ -384,7 +388,7 @@ String EditorImport::GetMaterialTextureName(const String& nameIn)
     if (nameIn.Length() && nameIn[0] == '*')
         return GenerateTextureName(ToInt(nameIn.Substring(1)));
     else
-        return (useSubdirs_ ? "Data/Textures/" : "") + nameIn;
+        return (useSubdirs_ ? textureSubDir_ : "") + nameIn;
 }
 
 String EditorImport::GenerateTextureName(unsigned texIndex)
@@ -394,9 +398,9 @@ String EditorImport::GenerateTextureName(unsigned texIndex)
         // If embedded texture contains encoded data, use the format hint for file extension. Else save RGBA8 data as PNG
         aiTexture* tex = scene_->mTextures[texIndex];
         if (!tex->mHeight)
-            return (useSubdirs_ ? "Data/Textures/" : "") + inputName_ + "_Texture" + String(texIndex) + "." + tex->achFormatHint;
+            return (useSubdirs_ ? textureSubDir_ : "") + inputName_ + "_Texture" + String(texIndex) + "." + tex->achFormatHint;
         else
-            return (useSubdirs_ ? "Data/Textures/" : "") + inputName_ + "_Texture" + String(texIndex) + ".png";
+            return (useSubdirs_ ? textureSubDir_ : "") + inputName_ + "_Texture" + String(texIndex) + ".png";
     }
 
     // Should not go here
@@ -501,7 +505,7 @@ bool EditorImport::ExportModel(const String& outName, bool animationOnly)
 
     OutModel model;
     model.rootNode_ = rootNode_;
-    model.outName_ = outName;
+    model.outName_ = resourcePath_ + (useSubdirs_ ? modelSubdir_ : "" ) + outName;
 
     CollectMeshes(model, model.rootNode_);
     CollectBones(model, animationOnly);
@@ -1206,10 +1210,9 @@ void EditorImport::BuildAndSaveModel(OutModel& model)
     }
 
     File outFile(context_);
-    String outFilename = resourcePath_ + (useSubdirs_ ? "Data/Models/" : "" ) + model.outName_;
-    if (!outFile.Open(outFilename, FILE_WRITE))
+    if (!outFile.Open(model.outName_, FILE_WRITE))
     {
-        URHO3D_LOGERROR("Could not open output file " + outFilename);
+        URHO3D_LOGERROR("Could not open output file " + model.outName_);
         return;
     }
         
@@ -1218,7 +1221,7 @@ void EditorImport::BuildAndSaveModel(OutModel& model)
     // If exporting materials, also save material list for use by the editor
     if (!noMaterials_ && saveMaterialList_)
     {
-        String materialListName = ReplaceExtension(outFilename, ".txt");
+        String materialListName = ReplaceExtension(model.outName_, ".txt");
         File listFile(context_);
         if (listFile.Open(materialListName, FILE_WRITE))
         {
@@ -1233,7 +1236,7 @@ void EditorImport::BuildAndSaveModel(OutModel& model)
 void EditorImport::ExportMaterials(HashSet<String>& usedTextures)
 {
     if (useSubdirs_)
-        context_->GetSubsystem<FileSystem>()->CreateDir(resourcePath_ + "Materials");
+        context_->GetSubsystem<FileSystem>()->CreateDir(resourcePath_ + materialSubdir_);
 
     for (unsigned i = 0; i < scene_->mNumMaterials; ++i)
         BuildAndSaveMaterial(scene_->mMaterials[i], usedTextures);
@@ -1382,7 +1385,7 @@ void EditorImport::BuildAndSaveMaterial(aiMaterial* material, HashSet<String>& u
 
     auto* fileSystem = context_->GetSubsystem<FileSystem>();
 
-    String outFileName = resourcePath_ + (useSubdirs_ ? "Data/Materials/" : "" ) + matName + ".xml";
+    String outFileName = resourcePath_ + (useSubdirs_ ? materialSubdir_ : "" ) + matName + ".xml";
     if (noOverwriteMaterial_ && fileSystem->FileExists(outFileName))
     {
         URHO3D_LOGERROR("Skipping save of existing material " + matName);
@@ -1407,7 +1410,7 @@ void EditorImport::CopyTextures(const HashSet<String>& usedTextures, const Strin
     auto* fileSystem = context_->GetSubsystem<FileSystem>();
 
     if (useSubdirs_)
-        fileSystem->CreateDir(resourcePath_ + "Textures");
+        fileSystem->CreateDir(resourcePath_ + textureSubDir_);
 
     for (HashSet<String>::ConstIterator i = usedTextures.Begin(); i != usedTextures.End(); ++i)
     {
@@ -1448,7 +1451,7 @@ void EditorImport::CopyTextures(const HashSet<String>& usedTextures, const Strin
         else
         {
             String fullSourceName = sourcePath + *i;
-            String fullDestName = resourcePath_ + (useSubdirs_ ? "Data/Textures/" : "") + *i;
+            String fullDestName = resourcePath_ + (useSubdirs_ ? textureSubDir_ : "") + *i;
 
             if (!fileSystem->FileExists(fullSourceName))
             {

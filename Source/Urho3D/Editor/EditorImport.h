@@ -119,6 +119,10 @@ private:
     aiNode* rootNode_ { nullptr };
     String inputName_;
     String resourcePath_;
+    String modelSubdir_;
+    String animSubdir_;
+    String materialSubdir_;
+    String textureSubDir_;
     String outPath_;
     String outName_;
     bool useSubdirs_ { true };
