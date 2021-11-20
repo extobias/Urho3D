@@ -49,8 +49,6 @@ EditorWindow::EditorWindow(Context* context) :
     selection_(new EditorSelection(context)),
 //    debugText_(""),
     guizmo_(nullptr),
-    currentModel_(0),
-    currentSprite_(0),
     yaw_(0.0f),
     pitch_(0.0f),
     theta_(0.0f),
@@ -323,14 +321,6 @@ void EditorWindow::ConfigResources()
 void EditorWindow::ClearResources()
 {
     resourcesContainer_.Clear();
-
-    modelResources_.Clear();
-    materialResources_.Clear();
-    spriteResources_.Clear();
-
-    modelResourcesString_.Clear();
-    materialResourcesString_.Clear();
-    spriteResourcesString_.Clear();
 }
 
 bool EditorWindow::SaveScene()
@@ -591,46 +581,6 @@ void EditorWindow::LoadResources()
         rc.resourcesString_.Replace('@', '\0');
         rc.resourcesString_.Append('\0');
     }
-
-    // Categorize them
-    StringVector keys = resources_.Keys();
-    for (unsigned i = 0; i < keys.Size(); i++)
-    {
-        Vector<ResourceFile> list = resources_[keys.At(i)];
-//        URHO3D_LOGERRORF("mapkey <%s> size <%i>", keys.At(i).CString(), list.Size());
-
-        for (unsigned l = 0; l < list.Size(); l++)
-        {
-            ResourceFile file = list.At(l);
-            String modelsFilter("mdl");
-//            URHO3D_LOGERRORF("    file <%s> dirPath <%s> path <%s> ext <%s>", file.name.CString(), file.prefix.CString(), file.path.CString(), file.ext.CString());
-
-            if (file.ext == modelsFilter)
-            {
-                modelResources_[file.name] = file;
-            }
-            else if (file.prefix.Contains("materials", false) && (file.ext == "xml" || file.ext == "material" || file.ext == "json"))
-            {
-                materialResources_[file.name] = file;
-            }
-            else if (file.prefix.Contains("urho2d", false) && (file.ext == "png"))
-            {
-                spriteResources_[file.name] = file;
-            }
-        }
-    }
-
-    modelResourcesString_.Join(modelResources_.Keys(), "@");
-    modelResourcesString_.Replace('@', '\0');
-    modelResourcesString_.Append('\0');
-
-    materialResourcesString_.Join(materialResources_.Keys(), "@");
-    materialResourcesString_.Replace('@', '\0');
-    materialResourcesString_.Append('\0');
-
-    spriteResourcesString_.Join(spriteResources_.Keys(), "@");
-    spriteResourcesString_.Replace('@', '\0');
-    spriteResourcesString_.Append('\0');
 }
 
 void EditorWindow::CreateGuizmo()
@@ -1185,603 +1135,18 @@ void EditorWindow::AttributeEdit(Serializable* c)
         if (info.mode_ & AM_NOEDIT)
             continue;
 
-        ImGui::PushID(info.name_.CString());
-        int total_w = (int)ImGui::GetContentRegionAvail().x;
+        int width = (int)ImGui::GetContentRegionAvail().x;
         ImGui::Text("%s", info.name_.CString());
-        ImGui::SameLine(total_w / 2.0f);
+        // ImGui::SameLine(width / 2.0f);
 
-        switch (info.type_)
-        {
-        case VAR_BOOL:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            bool v = c->GetAttribute(info.name_).GetBool();
-            if (ImGui::Checkbox(hideLabel, &v))
-            {
-                c->SetAttribute(info.name_, v);
-            }
-        }
-        break;
-        case VAR_INT:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            unsigned int v = c->GetAttribute(info.name_).GetUInt();
-            if (info.enumNames_)
-            {
-                const char** name = info.enumNames_;
-                Vector<String> enumNames;
-                while (*name)
-                {
-                    enumNames.Push(*name);
-                    name++;
-                }
-                String enumName;
-                enumName.Join(enumNames, "@");
-                enumName.Replace('@', '\0');
-                enumName.Append('\0');
+        Variant attVariant = c->GetAttribute(info.name_);
 
-                if (ImGui::Combo(hideLabel, (int*)&v, enumName.CString()))
-                {
-                    c->SetAttribute(info.name_, v);
-                }
-            }
-            else
-            {
-                if (ImGui::InputInt(hideLabel, (int*)&v))
-                {
-                    c->SetAttribute(info.name_, v);
-                }
-            }
-        }
-        break;
-        case VAR_FLOAT:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float v = c->GetAttribute(info.name_).GetFloat();
-            bool changed = ImGui::InputFloat(hideLabel, &v);
-            if (changed)
-            {
-                c->SetAttribute(info.name_, v);
-            }
-        }
-        break;
-        case VAR_STRING:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            String v = c->GetAttribute(info.name_).GetString();
-            char buffer[512];
-            strncpy(buffer, v.CString(), v.Length());
-            buffer[v.Length()] = '\0';
-            if (ImGui::InputText(hideLabel, buffer, 512))
-            {
-                c->SetAttribute(info.name_, buffer);
-            }
-        }
-        break;
-        case VAR_STRINGVECTOR:
-        {
-            float width = total_w / 2.0f;
-            StringVector tags = c->GetAttribute(info.name_).GetStringVector();
-
-            static char buf[32] = "";
-            ImGui::SetNextItemWidth(width / 3.0f);
-            ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
-
-            ImGui::SetNextItemWidth(width / 3.0f);
-            ImGui::SameLine();
-            if(ImGui::Button("Add"))
-            {
-                tags.Push(buf);
-                c->SetAttribute(info.name_, tags);
-            }
-
-            ImGui::SetNextItemWidth(width / 3.0f);
-            ImGui::SameLine();
-            if(ImGui::Button("Del"))
-            {
-                tags.Remove(String(buf));
-                c->SetAttribute(info.name_, tags);
-            }
-
-            for (unsigned i = 0; i < tags.Size(); i++)
-            {
-                ImGui::SetCursorPosX(width);
-                ImGui::SetNextItemWidth(width / 2.0f);
-
-                ImGui::Text("<%s>", tags.At(i).CString());
-            }
-        }
-        break;
-        case VAR_COLOR:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float col[4];
-            Color color = c->GetAttribute(info.name_).GetColor();
-            memcpy(col, color.Data(), sizeof(col));
-            if (ImGui::ColorEdit4(hideLabel, (float*)&col))
-            {
-                c->SetAttribute(info.name_, Color(col));
-            }
-        }
-        break;
-        case VAR_VECTOR2:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float v[2];
-            Vector2 value = c->GetAttribute(info.name_).GetVector2();
-            memcpy(v, value.Data(), sizeof(v));
-            if (ImGui::InputFloat2(hideLabel, (float*)&v))
-            {
-                c->SetAttribute(info.name_, Vector2(v));
-            }
-        }
-        break;
-        case VAR_VECTOR3:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float v[3];
-            Vector3 value = c->GetAttribute(info.name_).GetVector3();
-            memcpy(v, value.Data(), sizeof(v));
-            if (ImGui::InputFloat3(hideLabel, (float*)&v))
-            {
-                c->SetAttribute(info.name_, Vector3(v));
-            }
-        }
-        break;
-        case VAR_VECTOR4:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float v[4];
-            Vector4 value = c->GetAttribute(info.name_).GetVector4();
-            memcpy(v, value.Data(), sizeof(v));
-            if (ImGui::InputFloat4(hideLabel, (float*)&v))
-            {
-                c->SetAttribute(info.name_, Vector4(v));
-            }
-        }
-        break;
-        case VAR_RECT:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float v[4];
-            Rect value = c->GetAttribute(info.name_).GetRect();
-            memcpy(v, value.Data(), sizeof(v));
-            if (ImGui::InputFloat4(hideLabel, (float*)&v))
-            {
-                c->SetAttribute(info.name_, Rect(v));
-            }
-        }
-        break;
-        case VAR_QUATERNION:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            float q[4];
-            Quaternion value = c->GetAttribute(info.name_).GetQuaternion();
-            memcpy(q, value.Data(), sizeof(q));
-            if (ImGui::InputFloat4(hideLabel, (float*)&q))
-            {
-                c->SetAttribute(info.name_, Quaternion(q));
-            }
-        }
-        break;
-        case VAR_BUFFER:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            if (info.name_ == "Vertices")
-            {
-                const PODVector<unsigned char> value = c->GetAttribute(info.name_).GetBuffer();
-                PODVector<Vector2> vertices;
-
-                // load
-                MemoryBuffer buffer(value);
-                while (!buffer.IsEof())
-                    vertices.Push(buffer.ReadVector2());
-
-                ImGui::Text("Vertices: size <%i>", vertices.Size());
-                ImGui::SameLine();
-
-                if (vertices.Size() < 8)
-                {
-                    if(ImGui::Button("Add"))
-                    {
-                        if (vertices.Size() == 0)
-                        {
-                            vertices.Push(Vector2(-0.1f, 0.0f));
-                            vertices.Push(Vector2(0.1f, 0.0f));
-                            vertices.Push(Vector2(0.0f, 0.1f));
-                        }
-                        else
-                        {
-                            vertices.Push(Vector2::ZERO);
-                        }
-                        // save buffer
-                        VectorBuffer ret;
-                        for (unsigned i = 0; i < vertices.Size(); ++i)
-                        {
-    //                        URHO3D_LOGERRORF("EditorWindow: add v2 <%f, %f>", vertices[i].x_, vertices[i].y_);
-                            ret.WriteVector2(vertices[i]);
-                        }
-
-                        Variant val(ret.GetBuffer());
-                        c->SetAttribute(info.name_, val);
-                    }
-                }
-                else
-                {
-                    ImGui::NewLine();
-                }
-
-                bool modified = false;
-                // for(Vector2 v2: vertices)
-                for (unsigned i = 0; i < vertices.Size(); ++i)
-                {
-                    ///URHO3D_LOGERRORF("EditorWindow: 1 v2 <%f, %f>", v2.x_, v2.y_);
-                    float v[2];// = { 0.0f, 0.0f };
-                    memcpy(v, vertices[i].Data(), sizeof(v));
-
-                    char buf[4];
-                    sprintf(buf, "v%i", i);
-                    if (ImGui::InputFloat2(buf, (float*)&v))
-                    {
-                        modified = true;
-                        vertices[i] = Vector2(v);
-                    }
-                }
-
-                // save
-                if (modified)
-                {
-                    VectorBuffer ret;
-                    for (unsigned i = 0; i < vertices.Size(); ++i)
-                        ret.WriteVector2(vertices[i]);
-
-                    c->SetAttribute(info.name_, ret.GetBuffer());
-                }
-            }
-        }
-        break;
-        case VAR_RESOURCEREF:
-        {
-            ResourceRef v = c->GetAttribute(info.name_).GetResourceRef();
-            ResourceCache* cache = GetSubsystem<ResourceCache>();
-
-            // ImGui::Text("name <%s> vname <%s> vtype <%s> type <%s>", info.name_.CString(), v.name_.CString(), v.type_.ToString().CString(), StringHash("AnimationSet2D").ToString().CString());
-
-            if (v.type_ == StringHash("ParticleEffect"))
-            {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
-                EditParticleEmitter(emitter);
-            }
-            if (v.type_ == StringHash("ParticleEffect2D") || v.type_ == StringHash("Model") || v.type_ == StringHash("Material"))
-            {
-                // ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
-                // if (ImGui::Button("Save Effect"))
-                // {
-                //     ParticleEffect2D* effect = emitter->GetEffect();
-
-                //     String fileName = GetSubsystem<FileSystem>()->GetProgramDir() + "Data/" + effect->GetName();
-                //     File file(context_, fileName, FILE_WRITE);
-                //     effect->Save(file);
-                //     URHO3D_LOGERRORF("Save effect name <%s>", effect->GetName().CString());
-                // }
-
-                // show *.pex in a combo widget
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                ResourceContainer rc;
-                FindContainer(v.type_, rc);
-                int index = rc.FindResourceIndex(v.name_);
-                if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
-                {
-                     ResourceFile resource = rc.resources_.Values().At(index);
-                     v.name_ = resource.path + resource.name;
-                     c->SetAttribute(info.name_, v);
-                     c->ApplyAttributes();
-                }
-
-                if (v.type_ == StringHash("ParticleEffect2D"))
-                {
-                    ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
-                    EditParticleEmitter2D(emitter);
-                }
-            }
-            else if (v.type_ == StringHash("Sprite2D"))
-            {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                ResourceContainer rc;
-                FindContainer(v.type_, rc);
-
-//                static int lines = 1;
-//                ImGui::SliderInt("Lines", &lines, 1, 15);
-                ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-                ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
-                ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 50), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-                float btnWidth = 32.0f;
-                float btnHeight = 32.0f;
-                unsigned i = 0;
-                Vector<ResourceFile> values = rc.resources_.Values();
-
-                for (ResourceFile& resource: values)
-                {
-                    // const ResourceFile& resource = .At(i);
-                    if (resource.ext == "scml" || resource.ext == "pex" || resource.ext == "txt" || resource.ext == "tmx" || resource.ext == "xml")
-                        continue;
-
-                    ImGui::PushID(i);
-                    // SharedPtr<Texture2D> texture1(cache->GetResource<Texture2D>(resource.path + resource.name));
-                    Texture2D* texture1 = cache->GetResource<Texture2D>(resource.path + resource.name);
-
-                    int frame_padding = -1;     // -1 = uses default padding
-                    // float texWidth = (float)texture1->GetWidth();
-                    // float texHeight = (float)texture1->GetHeight();
-                    ImVec4 bg_col(0.0f, 0.0f, 0.0f, 1.0f);
-                    ImVec4 tint_col(0.0f, 1.0f, 0.0f, 1.0f);
-
-                    if (resource.name == v.name_)
-                        bg_col.x = 1.0f;
-
-                    // ImGui::Text("name <%s>", resource.name.CString());
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{1.0f, 0.0f, 0.0f, 1.0f});
-                    if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1), frame_padding, bg_col))
-                    {
-                        v.name_ = resource.path + resource.name;
-                        c->SetAttribute(info.name_, v);
-                    }
-                    ImGui::PopStyleColor(1);
-
-                    // delete texture1;
-
-                    ImGui::SameLine();
-                    ImGui::PopID();
-
-                    i++;
-                }
-
-                ImGui::EndChild();
-                ImGui::PopStyleVar(2);
-            }
-            else if (v.type_ == StringHash("XMLFile"))
-            {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                currentModel_ = FindModel(v.name_);
-                if (ImGui::Combo(hideLabel, &currentModel_, modelResourcesString_.CString()))
-                {
-                    ResourceFile resource = modelResources_.Values().At(currentModel_);
-                    v.name_ = resource.path + resource.name;
-                    c->SetAttribute(info.name_, v);
-                }
-            }
-            else if (v.type_ == StringHash("AnimationSet2D"))
-            {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                ResourceContainer rc;
-                FindContainer(v.type_, rc);
-                int index = rc.FindResourceIndex(v.name_);
-                if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
-                {
-                     ResourceFile resource = rc.resources_.Values().At(index);
-                     v.name_ = resource.path + resource.name;
-                     c->SetAttribute(info.name_, v);
-                }
-            }
-        }
-        break;
-        case VAR_RESOURCEREFLIST:
-        {
-            ImGui::SetNextItemWidth(total_w / 2.0f);
-            ResourceRefList v = c->GetAttribute(info.name_).GetResourceRefList();
-            // ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
-            currentMaterialList_.Resize(v.names_.Size());
-            int *currentMaterialList = currentMaterialList_.Buffer();
-            bool changed = false;
-            for (unsigned int i = 0; i < v.names_.Size(); i++)
-            {
-                if (v.type_ == StringHash("Material"))
-                {
-                    currentMaterialList[i] = FindMaterial(v.names_.At(i));
-                    if (ImGui::Combo(hideLabel_, &currentMaterialList[i], materialResourcesString_.CString()))
-                    {
-                        int pos = currentMaterialList[i];
-                        ResourceFile resource = materialResources_.Values().At(pos);
-                        v.names_[i] = resource.path + resource.name;
-
-                        changed = true;
-                    }
-                }
-            }
-            if (changed)
-            {
-                c->SetAttribute(info.name_, v);
-            }
-        }
-        break;
-        case VAR_VARIANTMAP:
-        {
-            float width = total_w / 2.0f;
-            Variant vars = c->GetAttribute(info.name_);
-            VariantMap* map = vars.GetVariantMapPtr();
-            if (map)
-            {
-                static char buf[32] = "";
-                ImGui::SetNextItemWidth(width / 3.0f);
-                ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
-
-                Vector<String> variantTypes;
-                variantTypes.Push("int");
-                variantTypes.Push("bool");
-                variantTypes.Push("float");
-                variantTypes.Push("String");
-                variantTypes.Push("Vector3");
-                variantTypes.Push("Color");
-
-                String variantName;
-                variantName.Join(variantTypes, "@");
-                variantName.Replace('@', '\0');
-                variantName.Append('\0');
-
-                ImGui::SetNextItemWidth(width / 3.0f);
-                ImGui::SameLine();
-                static int variantSelected = 0;
-                if (ImGui::Combo(hideLabel, &variantSelected, variantName.CString()))
-                {
-                }
-
-                ImGui::SetNextItemWidth(width / 3.0f);
-                ImGui::SameLine();
-                if(ImGui::Button("Add"))
-                {
-                    // int, bool, float, String, Vector3, Color
-                    Variant v;
-                    if (variantSelected == 0)
-                    {
-                        v = 0;
-                    }
-                    else if (variantSelected == 1)
-                    {
-                        v = false;
-                    }
-                    else if (variantSelected == 2)
-                    {
-                        v = 0.0f;
-                    }
-                    else if (variantSelected == 3)
-                    {
-                        v = String("");
-                    }
-                    else if (variantSelected == 4)
-                    {
-                        v = Vector3::ZERO;
-                    }
-                    else if (variantSelected == 5)
-                    {
-                        v = Color::WHITE;
-                    }
-
-//                    map->Insert(Pair<StringHash, Variant>(StringHash(buf), v));
-                    // FIXME
-                    scene_->RegisterVar(buf);
-                    (*map)[StringHash(buf)] = v;
-
-                    c->SetAttribute(info.name_, vars);
-                }
-
-                ImGui::SetNextItemWidth(width / 3.0f);
-                ImGui::SameLine();
-                if(ImGui::Button("Del"))
-                {
-                    map->Erase(StringHash(buf));
-                    c->SetAttribute(info.name_, vars);
-                }
-
-                Vector<StringHash> keys = map->Keys();
-                for (unsigned i = 0; i < keys.Size(); i++)
-                {
-                    ImGui::SetCursorPosX(width);
-                    ImGui::SetNextItemWidth(width / 2.0f);
-
-                    Variant v = (*map)[keys.At(i)];
-                    String vname = scene_->GetVarName(keys.At(i));
-                    if (VariantEdit(vname, v))
-                    {
-                        (*map)[keys.At(i)] = v;
-                        c->SetAttribute(info.name_, vars);
-                    }
-                }
-            }
-        }
-        break;
-        case VAR_VARIANTVECTOR:
-        {
-            Variant vars = c->GetAttribute(info.name_);
-            const VariantVector& v = vars.GetVariantVector();
-            VariantVector* vv = vars.GetVariantVectorPtr();
-            ResourceCache* cache = GetSubsystem<ResourceCache>();
-            
-            if (!vv)
-            {
-                ImGui::PopID();
-                return;
-            }
-
-            StringVector names = info.metadata_["VectorStructElements"]->GetStringVector();
-            unsigned size = 0;
-            float width = total_w / 2.0f;
-            if (info.name_ == "Animation States" && vv->Size())
-            {
-                static char buf[32] = "";
-
-                ImGui::SetNextItemWidth(width / 2.0f);
-                Variant sizev = (*vv).At(0);
-                if (VariantEdit(info.name_, sizev))
-                {
-                    (*vv)[0] = sizev;
-                    c->SetAttribute(info.name_, vars);
-                }
-
-                size = sizev.GetInt();
-            }
-
-            (*vv).Reserve(size * 6 + 1);
-            bool changed = false;
-            for (unsigned i = 1; i < (*vv).Size(); i += 6)
-            {
-                for (unsigned j = 0; j < 6; j++)
-                {
-                    ImGui::SetCursorPosX(width);
-                    ImGui::SetNextItemWidth(width / 2.0f);
-
-                    Variant value = (*vv).At(i + j);
-                    if (VariantEdit(names[j + 1], value, i + j))
-                    {
-                        (*vv)[i + j] = value;
-                        changed = true;
-                    }
-                }
-
-                ImGui::SetCursorPosX(width);
-                ImGui::SetNextItemWidth(width / 2.0f);
-                if(ImGui::Button("Play"))
-                {
-                    Variant value = (*vv).At(i);
-                    ResourceRef res = value.GetResourceRef();
-                    URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
-
-                    Animation* anim = cache->GetResource<Animation>(res.name_);
-                    AnimatedModel* model = static_cast<AnimatedModel*>(c);
-                    if (model)
-                    {
-                        // AnimationState* state = model->AddAnimationState(anim);
-                        // state_ = model->AddAnimationState(anim);
-                        // if (state)
-                        // {
-                            // state->SetWeight(1.0f);
-                            // state->SetLooped(true);
-                            // state->AddTime(timeStep_);
-                        // }
-                    }
-                }
-            }
-
-
-            if (changed)
-            {
-                c->SetAttribute(info.name_, vars);
-                c->ApplyAttributes();
-            }
-        }
-        break;
-        default:
-        {
-            ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
-        }
-        break;
-        }
-        ImGui::PopID();
+        if(VariantEdit(info, info.name_, attVariant))
+            c->SetAttribute(info.name_, attVariant);
     }
 }
-// fixme pasar attributeedit con esta
-bool EditorWindow::VariantEdit(const String& name, Variant& v, unsigned index)
+// FIXME sometimes info.name isnt name
+bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Variant& value, unsigned index)
 {
     const char* hideLabel = "##hidelabel";
 
@@ -1789,95 +1154,572 @@ bool EditorWindow::VariantEdit(const String& name, Variant& v, unsigned index)
     memset(id, 0, 512);
     sprintf(id, "%s_%i", name.CString(), index);
 
-    ImGui::PushID(id);
-    int total_w = (int)ImGui::GetContentRegionAvail().x;
-    ImGui::Text("%s", name.CString());
-    ImGui::SetNextItemWidth(total_w / 2.0f);
+    float total_w = ImGui::GetContentRegionAvail().x;
+    float halfWidth = total_w / 2.0f;
+    
+    ImGui::SetNextItemWidth(halfWidth);
     ImGui::SameLine();
+    ImGui::SetCursorPosX(halfWidth);
 
-    // nombre
     bool ret = false;
-    switch (v.GetType())
+    switch (value.GetType())
     {
-        case VAR_BOOL:
+    case VAR_BOOL:
+    {
+        ImGui::PushID(name.CString());
+        bool v = value.GetBool();
+        if (ImGui::Checkbox(hideLabel, &v))
         {
-            bool val = v.GetBool();
-            if (ImGui::Checkbox(hideLabel, &val))
+            value = v;
+            ret = true;
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_INT:
+    {
+        ImGui::PushID(name.CString());
+        unsigned int v = value.GetUInt();
+        if (info.enumNames_)
+        {
+            String enumName = ComboNames(info.enumNames_);
+            if (ImGui::Combo(hideLabel, (int*)&v, enumName.CString()))
             {
-                v = val;
+                value = v;
                 ret = true;
             }
         }
-        break;
-        case VAR_INT:
+        else
         {
-            unsigned int val = v.GetUInt();
-            if (ImGui::InputInt(hideLabel, (int*)&val))
+            if (ImGui::InputInt(hideLabel, (int*)&v))
             {
-                v = val;
+                value = v;
                 ret = true;
             }
         }
-        break;
-        case VAR_FLOAT:
+        ImGui::PopID();
+    }
+    break;
+    case VAR_FLOAT:
+    {
+        ImGui::PushID(name.CString());
+        float v = value.GetFloat();
+        if (ImGui::InputFloat(hideLabel, &v))
         {
-            float val = v.GetFloat();
-            if (ImGui::InputFloat(hideLabel, &val))
-            {
-                v = val;
-                ret = true;
-            }
+            value = v;
+            ret = true;
         }
-        break;
-        case VAR_VECTOR3:
+        ImGui::PopID();
+    }
+    break;
+    case VAR_STRING:
+    {
+        ImGui::PushID(name.CString());
+        String v = value.GetString();
+        char buffer[512];
+        strncpy(buffer, v.CString(), v.Length());
+        buffer[v.Length()] = '\0';
+        if (ImGui::InputText(hideLabel, buffer, 512))
         {
-            float val[3];
-            Vector3 value = v.GetVector3();
-            memcpy(val, value.Data(), sizeof(v));
-            if (ImGui::InputFloat3(hideLabel, (float*)&val))
-            {
-                v = Vector3(val);
-                ret = true;
-            }
+            value = buffer;
+            ret = true;
         }
-        break;
-        case VAR_STRING:
+        ImGui::PopID();
+    }
+    break;
+    case VAR_COLOR:
+    {
+        ImGui::PushID(name.CString());
+        float col[4];
+        Color color = value.GetColor();
+        memcpy(col, color.Data(), sizeof(col));
+        if (ImGui::ColorEdit4(hideLabel, (float*)&col))
         {
-            String val = v.GetString();
-            char buffer[512];
-            strncpy(buffer, val.CString(), val.Length());
-            buffer[val.Length()] = '\0';
-            if (ImGui::InputText(hideLabel, buffer, 512))
-            {
-                v = buffer;
-                ret = true;
-            }
+            value = Color(col);
+            ret = true;
         }
-        break;
-        case VAR_RESOURCEREF:
+        ImGui::PopID();
+    }
+    break;
+    case VAR_VECTOR2:
+    {
+        ImGui::PushID(name.CString());
+        float v[2];
+        Vector2 v2= value.GetVector2();
+        memcpy(v, v2.Data(), sizeof(v));
+        if (ImGui::InputFloat2(hideLabel, (float*)&v))
         {
-            ResourceRef res = v.GetResourceRef();
-            ResourceCache* cache = GetSubsystem<ResourceCache>();
+            value = Vector2(v);
+            ret = true;
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_VECTOR3:
+    {
+        ImGui::PushID(name.CString());
+        float v[3];
+        Vector3 v3 = value.GetVector3();
+        memcpy(v, v3.Data(), sizeof(v));
+        if (ImGui::InputFloat3(hideLabel, (float*)&v))
+        {
+            value = Vector3(v);
+            ret = true;
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_VECTOR4:
+    {
+        ImGui::PushID(name.CString());
+        float v[4];
+        Vector4 v4 = value.GetVector4();
+        memcpy(v, v4.Data(), sizeof(v));
+        if (ImGui::InputFloat4(hideLabel, (float*)&v))
+        {
+            value = Vector4(v);
+            ret = true;
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_RECT:
+    {
+        ImGui::PushID(name.CString());
+        float v[4];
+        Rect rect = value.GetRect();
+        memcpy(v, rect.Data(), sizeof(v));
+        if (ImGui::InputFloat4(hideLabel, (float*)&v))
+        {
+            value = Rect(v);
+            ret = true;
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_QUATERNION:
+    {
+        ImGui::PushID(name.CString());
+        float q[4];
+        Quaternion quat = value.GetQuaternion();
+        memcpy(q, quat.Data(), sizeof(q));
+        if (ImGui::InputFloat4(hideLabel, (float*)&q))
+        {
+            value = Quaternion(q);
+            ret = true;
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_STRINGVECTOR:
+    {
+        ImGui::PushID(name.CString());
+        StringVector tags = value.GetStringVector();
 
-            if (res.type_ == StringHash("Animation"))
+        static char buf[32] = "";
+        ImGui::SetNextItemWidth(halfWidth / 2.0f);
+        ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
+
+        ImGui::SetNextItemWidth(halfWidth / 4.0f);
+        ImGui::SameLine();
+        if(ImGui::Button("Add"))
+        {
+            tags.Push(buf);
+            value = tags;
+            ret = true;
+        }
+
+        ImGui::SetNextItemWidth(halfWidth / 4.0f);
+        ImGui::SameLine();
+        if(ImGui::Button("Del"))
+        {
+            tags.Remove(String(buf));
+            value = tags;
+            ret = true;
+        }
+
+        for (unsigned i = 0; i < tags.Size(); i++)
+        {
+            ImGui::SetCursorPosX(halfWidth);
+            ImGui::SetNextItemWidth(halfWidth);
+
+            ImGui::Text("<%s>", tags.At(i).CString());
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_BUFFER:
+    {
+        ImGui::PushID(name.CString());
+        if (info.name_ == "Vertices")
+        {
+            const PODVector<unsigned char> bufferVec = value.GetBuffer();
+            PODVector<Vector2> vertices;
+
+            // load
+            MemoryBuffer buffer(bufferVec);
+            while (!buffer.IsEof())
+                vertices.Push(buffer.ReadVector2());
+
+            ImGui::Text("Vertices: size <%i>", vertices.Size());
+            ImGui::SameLine();
+
+            if (vertices.Size() < 8)
             {
-                ImGui::SetNextItemWidth(total_w / 2.0f);
-                ResourceContainer rc;
-                FindContainer(res.type_, rc);
-                int index = rc.FindResourceIndex(res.name_);
-                if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
+                if(ImGui::Button("Add"))
                 {
-                     ResourceFile resource = rc.resources_.Values().At(index);
-                     res.name_ = resource.path + resource.name;
-                     v = res;
-                     ret = true;
+                    if (vertices.Size() == 0)
+                    {
+                        vertices.Push(Vector2(-0.1f, 0.0f));
+                        vertices.Push(Vector2(0.1f, 0.0f));
+                        vertices.Push(Vector2(0.0f, 0.1f));
+                    }
+                    else
+                    {
+                        vertices.Push(Vector2::ZERO);
+                    }
+                    // FIXME save buffer
+                    VectorBuffer newVertices;
+                    for (unsigned i = 0; i < vertices.Size(); ++i)
+                        newVertices.WriteVector2(vertices[i]);
+
+                    value = newVertices.GetBuffer();
+                    ret = true;
+                }
+            }
+            else
+            {
+                ImGui::NewLine();
+            }
+
+            bool modified = false;
+            for (unsigned i = 0; i < vertices.Size(); ++i)
+            {
+                ///URHO3D_LOGERRORF("EditorWindow: 1 v2 <%f, %f>", v2.x_, v2.y_);
+                float v[2];// = { 0.0f, 0.0f };
+                memcpy(v, vertices[i].Data(), sizeof(v));
+
+                char buf[4];
+                sprintf(buf, "v%i", i);
+                if (ImGui::InputFloat2(buf, (float*)&v))
+                {
+                    modified = true;
+                    vertices[i] = Vector2(v);
+                }
+            }
+
+            // save
+            if (modified)
+            {
+                VectorBuffer newVertices;
+                for (unsigned i = 0; i < vertices.Size(); ++i)
+                    newVertices.WriteVector2(vertices[i]);
+
+                value = newVertices;
+                ret = true;
+            }
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_RESOURCEREF:
+    {
+        ImGui::PushID(name.CString());
+        ResourceRef resRef = value.GetResourceRef();
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+        if (resRef.type_ == StringHash("ParticleEffect"))
+        {
+            ImGui::SetNextItemWidth(halfWidth);
+            // ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
+            // EditParticleEmitter(emitter);
+        }
+        if (resRef.type_ == StringHash("ParticleEffect2D") || resRef.type_ == StringHash("Model") || resRef.type_ == StringHash("Material") || resRef.type_ == StringHash("XMLFile") || resRef.type_ == StringHash("AnimationSet2D"))
+        {
+            ImGui::SetNextItemWidth(halfWidth);
+            ResourceContainer rc;
+            FindContainer(resRef.type_, rc);
+            int index = rc.FindResourceIndex(resRef.name_);
+            if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
+            {
+                    ResourceFile resource = rc.resources_.Values().At(index);
+                    resRef.name_ = resource.path + resource.name;
+
+                    value = resRef;
+                    ret = true;
+            }
+
+            if (resRef.type_ == StringHash("ParticleEffect2D"))
+            {
+                // ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
+                // EditParticleEmitter2D(emitter);
+            }
+        }
+        else if (resRef.type_ == StringHash("Sprite2D"))
+        {
+            ImGui::SetNextItemWidth(halfWidth);
+            ResourceContainer rc;
+            FindContainer(resRef.type_, rc);
+
+//                static int lines = 1;
+//                ImGui::SliderInt("Lines", &lines, 1, 15);
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
+            ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 50), true, ImGuiWindowFlags_HorizontalScrollbar);
+
+            float btnWidth = 32.0f;
+            float btnHeight = 32.0f;
+            unsigned i = 0;
+            Vector<ResourceFile> values = rc.resources_.Values();
+
+            for (ResourceFile& resource: values)
+            {
+                // const ResourceFile& resource = .At(i);
+                if (resource.ext == "scml" || resource.ext == "pex" || resource.ext == "txt" || resource.ext == "tmx" || resource.ext == "xml")
+                    continue;
+
+                ImGui::PushID(i);
+                // SharedPtr<Texture2D> texture1(cache->GetResource<Texture2D>(resource.path + resource.name));
+                Texture2D* texture1 = cache->GetResource<Texture2D>(resource.path + resource.name);
+
+                int frame_padding = -1;     // -1 = uses default padding
+                // float texWidth = (float)texture1->GetWidth();
+                // float texHeight = (float)texture1->GetHeight();
+                ImVec4 bg_col(0.0f, 0.0f, 0.0f, 1.0f);
+                ImVec4 tint_col(0.0f, 1.0f, 0.0f, 1.0f);
+
+                if (resource.name == resRef.name_)
+                    bg_col.x = 1.0f;
+
+                // ImGui::Text("name <%s>", resource.name.CString());
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{1.0f, 0.0f, 0.0f, 1.0f});
+                if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1), frame_padding, bg_col))
+                {
+                    resRef.name_ = resource.path + resource.name;
+                    ret = true;
+                    // c->SetAttribute(info.name_, v);
+                }
+                ImGui::PopStyleColor(1);
+
+                // delete texture1;
+
+                ImGui::SameLine();
+                ImGui::PopID();
+
+                i++;
+            }
+
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+        }
+        ImGui::PopID();
+    }
+    break;
+    case VAR_RESOURCEREFLIST:
+    {
+        ResourceRefList v = value.GetResourceRefList();
+        for (unsigned int i = 0; i < v.names_.Size(); i++)
+        {
+            if (v.type_ == StringHash("Material"))
+            {
+                ImGui::PushID((name + v.names_.At(i)).CString());
+                ImGui::SetCursorPosX(halfWidth);
+                ImGui::SetNextItemWidth(halfWidth);
+
+                ResourceContainer rc;
+                FindContainer(v.type_, rc);
+
+                int index = rc.FindResourceIndex(v.names_.At(i));
+                if (ImGui::Combo(hideLabel_, &index, rc.resourcesString_.CString()))
+                {
+                    ResourceFile resource = rc.resources_.Values().At(index);
+                    v.names_[i] = resource.path + resource.name;
+
+                    value = v;
+                    ret = true;
+                }
+                ImGui::PopID();
+            }
+        }
+        if (v.names_.Empty())
+        {
+            ImGui::NewLine();
+        }
+    }
+    break;
+    case VAR_VARIANTMAP:
+    {
+        ImGui::PushID(name.CString());
+        VariantMap* map = value.GetVariantMapPtr();
+        if (map)
+        {
+            static char buf[32] = "";
+            ImGui::SetNextItemWidth(halfWidth / 3.0f);
+            ImGui::InputText("##edit", buf, IM_ARRAYSIZE(buf));
+
+            Vector<String> variantTypes;
+            variantTypes.Push("int");
+            variantTypes.Push("bool");
+            variantTypes.Push("float");
+            variantTypes.Push("String");
+            variantTypes.Push("Vector3");
+            variantTypes.Push("Color");
+
+            String variantName;
+            variantName.Join(variantTypes, "@");
+            variantName.Replace('@', '\0');
+            variantName.Append('\0');
+
+            ImGui::SetNextItemWidth(halfWidth / 3.0f);
+            ImGui::SameLine();
+            static int variantSelected = 0;
+            if (ImGui::Combo(hideLabel, &variantSelected, variantName.CString()))
+            {
+            }
+
+            ImGui::SetNextItemWidth(halfWidth / 3.0f);
+            ImGui::SameLine();
+            if(ImGui::Button("Add"))
+            {
+                // int, bool, float, String, Vector3, Color
+                Variant v;
+                if (variantSelected == 0)
+                {
+                    v = 0;
+                }
+                else if (variantSelected == 1)
+                {
+                    v = false;
+                }
+                else if (variantSelected == 2)
+                {
+                    v = 0.0f;
+                }
+                else if (variantSelected == 3)
+                {
+                    v = String("");
+                }
+                else if (variantSelected == 4)
+                {
+                    v = Vector3::ZERO;
+                }
+                else if (variantSelected == 5)
+                {
+                    v = Color::WHITE;
+                }
+
+                // FIXME
+                scene_->RegisterVar(buf);
+                (*map)[StringHash(buf)] = v;
+
+                ret = true;
+            }
+
+            ImGui::SetNextItemWidth(halfWidth / 3.0f);
+            ImGui::SameLine();
+            if(ImGui::Button("Del"))
+            {
+                map->Erase(StringHash(buf));
+                ret = true;
+            }
+
+            Vector<StringHash> keys = map->Keys();
+            for (unsigned i = 0; i < keys.Size(); i++)
+            {
+                ImGui::NewLine();
+
+                Variant v = (*map)[keys.At(i)];
+                String vname = scene_->GetVarName(keys.At(i));
+                if (VariantEdit(info, vname, v))
+                {
+                    (*map)[keys.At(i)] = v;
+                    ret = true;
                 }
             }
         }
-        break;
-
+        ImGui::PopID();
     }
-    ImGui::PopID();
+    break;
+    case VAR_VARIANTVECTOR:
+    {
+        ImGui::PushID(name.CString());
+
+        const VariantVector& v = value.GetVariantVector();
+        VariantVector* vv = value.GetVariantVectorPtr();
+        ResourceCache* cache = GetSubsystem<ResourceCache>();
+        
+        if (!vv)
+        {
+            ImGui::PopID();
+            return false;
+        }
+
+        StringVector names = info.metadata_["VectorStructElements"]->GetStringVector();
+        unsigned size = 0;
+        float width = total_w / 2.0f;
+        if (name == "Animation States" && vv->Size())
+        {
+            static char buf[32] = "";
+
+            ImGui::SetNextItemWidth(halfWidth);
+            Variant sizev = (*vv).At(0);
+            if (VariantEdit(info, names[0], sizev))
+            {
+                (*vv)[0] = sizev;
+                ret = true;
+            }
+
+            size = sizev.GetInt();
+        }
+
+        (*vv).Reserve(size * 6 + 1);
+        for (unsigned i = 1; i < (*vv).Size(); i += 6)
+        {
+            for (unsigned j = 0; j < 6; j++)
+            {
+                ImGui::SetCursorPosX(width);
+                ImGui::SetNextItemWidth(width / 2.0f);
+
+                Variant value = (*vv).At(i + j);
+                if (VariantEdit(info, names[j + 1], value, i + j))
+                {
+                    (*vv)[i + j] = value;
+                    ret = true;
+                }
+            }
+
+            ImGui::SetCursorPosX(width);
+            ImGui::SetNextItemWidth(width / 2.0f);
+            if(ImGui::Button("Play"))
+            {
+                Variant value = (*vv).At(i);
+                ResourceRef res = value.GetResourceRef();
+                URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
+
+                // Animation* anim = cache->GetResource<Animation>(res.name_);
+                // AnimatedModel* model = static_cast<AnimatedModel*>(c);
+                // if (model)
+                // {
+                    // AnimationState* state = model->AddAnimationState(anim);
+                    // state_ = model->AddAnimationState(anim);
+                    // if (state)
+                    // {
+                        // state->SetWeight(1.0f);
+                        // state->SetLooped(true);
+                        // state->AddTime(timeStep_);
+                    // }
+                // }
+            }
+        }
+        ImGui::PopID();
+    }
+    break;
+    default:
+    {
+        // ImGui::Text("type <%s> name <%s>", info.defaultValue_.GetTypeName().CString(), info.name_.CString());
+    }
+    break;
+    }
 
     return ret;
 }
@@ -2477,45 +2319,6 @@ void EditorWindow::DebugModelSubPart()
 {
 }
 
-int EditorWindow::FindModel(const String& name)
-{
-    int index = 0;
-    for (auto it = modelResources_.Begin(); it != modelResources_.End(); it++, index++)
-    {
-        ResourceFile resource = (*it).second_;
-        String s = resource.name;
-        if (name == s)
-            return index;
-    }
-    return -1;
-}
-
-int EditorWindow::FindMaterial(const String& name)
-{
-    int index = 0;
-    for (auto it = materialResources_.Begin(); it != materialResources_.End(); it++, index++)
-    {
-        ResourceFile resource = (*it).second_;
-        String s = resource.name;
-        if (name == s)
-            return index;
-    }
-    return -1;
-}
-
-int EditorWindow::FindSprite(const String& name)
-{
-    int index = 0;
-    for (auto it = spriteResources_.Begin(); it != spriteResources_.End(); it++, index++)
-    {
-        ResourceFile resource = (*it).second_;
-        String s = resource.name;
-        if (name == s)
-            return index;
-    }
-    return -1;
-}
-
 bool EditorWindow::FindContainer(const StringHash& type, ResourceContainer& container)
 {
     for(ResourceContainer& rc: resourcesContainer_)
@@ -2528,6 +2331,23 @@ bool EditorWindow::FindContainer(const StringHash& type, ResourceContainer& cont
     }
 
     return false;
+}
+
+String EditorWindow::ComboNames(const char** names)
+{
+    Vector<String> enumNames;
+    while (*names)
+    {
+        enumNames.Push(*names);
+        names++;
+    }
+
+    String enumName;
+    enumName.Join(enumNames, "@");
+    enumName.Replace('@', '\0');
+    enumName.Append('\0');
+
+    return enumName;
 }
 
 }

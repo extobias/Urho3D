@@ -128,8 +128,6 @@ public:
 
     void SetVisible(bool visible);
 
-    // void SetPlotVar(int index, float value);
-
     void SetPlotVar(int index, float value, float min = -100.0f, float max = 100.0f);
 
     void SetScene(Scene* scene);
@@ -155,7 +153,7 @@ private:
 
     void AttributeEdit(Serializable *c);
 
-    bool VariantEdit(const String& name, Variant& v, unsigned index = 0);
+    bool VariantEdit(const AttributeInfo& info, const String& name, Variant& v, unsigned index = 0);
 
     void AddComponentMenu(Node *node);
 
@@ -178,12 +176,6 @@ private:
     bool ImportFBX(const String& name, const String& path);
 
     void DebugModelSubPart();
-
-    int FindModel(const String& name);
-
-    int FindMaterial(const String& name);
-
-    int FindSprite(const String& name);
 
     void DrawChild(Node* node, int &i);
 
@@ -211,6 +203,8 @@ private:
 
     bool FindContainer(const StringHash& type, ResourceContainer& container);
 
+    String ComboNames(const char** names);
+
     void AttachCamera();
 
     SharedPtr<Node> cameraNode_;
@@ -229,23 +223,7 @@ private:
 
     ResourceDir resources_;
 
-    ResourceMap modelResources_;
-
-    String modelResourcesString_;
-
-    ResourceMap materialResources_;
-
-    String materialResourcesString_;
-
-    ResourceMap spriteResources_;
-
-    String spriteResourcesString_;
-
     Vector<ResourceContainer> resourcesContainer_;
-
-    int currentModel_;
-
-    int currentSprite_;
 
     float yaw_;
 
