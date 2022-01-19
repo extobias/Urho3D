@@ -43,7 +43,7 @@ void TBWidget::OnInflate(const INFLATE_INFO &info)
 
 	SetOpacity(info.node->GetValueFloat("opacity", GetOpacity()));
 
-	if (const char *text = info.node->GetValueString("text", nullptr))
+	if (const char *text = info.node->GetValueString("text", nullptr, info.core))
 		SetText(text);
 
 	if (const char *connection = info.node->GetValueStringRaw("connection", nullptr))

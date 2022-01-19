@@ -128,7 +128,7 @@ float TBNode::GetValueFloat(const char *request, float def)
 	return n ? n->m_value.GetFloat() : def;
 }
 
-const char *TBNode::GetValueString(const char *request, const char *def)
+const char *TBNode::GetValueString(const char *request, const char *def,  TBCore* core)
 {
 	if (TBNode *node = GetNodeFollowRef(request))
 	{
@@ -137,9 +137,8 @@ const char *TBNode::GetValueString(const char *request, const char *def)
 		if (node->GetValue().IsString())
 		{
 			const char *string = node->GetValue().GetString();
-            // FIXME here also :/
-//			if (*string == '@' && *TBNode::GetNextNodeSeparator(string) == 0)
-//				string = g_tb_lng->GetString(string + 1);
+			if (core && *string == '@' && *TBNode::GetNextNodeSeparator(string) == 0)
+				string = core->tb_lng_->GetString(string + 1);
 			return string;
 		}
 		return node->GetValue().GetString();

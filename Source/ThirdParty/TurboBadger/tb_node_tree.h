@@ -112,7 +112,7 @@ public:
 		Will follow eventual references to TBNodeRefTree.
 		Will also return any referenced language string.
 		If the value is not specified, it returns the default value (def). */
-	const char *GetValueString(const char *request, const char *def);
+	const char *GetValueString(const char *request, const char *def, TBCore* core = nullptr);
 
 	/** Same as GetValueString, but won't look up language string references. */
 	const char *GetValueStringRaw(const char *request, const char *def);
