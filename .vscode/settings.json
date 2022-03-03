@@ -5,11 +5,7 @@
     "cmake.loggingLevel": "debug",
     "cmake.buildDirectory": "${workspaceFolder}/build-ninja",
     "cmake.configureArgs": [
-<<<<<<< Updated upstream
         "-DCMAKE_MAKE_PROGRAM=C:\\Users\\extobias\\Documents\\devel\\apps\\ninja-win\\ninja.exe"
-=======
-        "-DURHO3D_SSE=0"
->>>>>>> Stashed changes
     ],
     "files.associations": {
         "xiosbase": "cpp",
