@@ -318,6 +318,8 @@ public:
 
 	bool AddSkinElement(const TBID &skin_id, TBSkinElement *element);
 
+	bool RemoveSkinElement(const TBID &skin_id);
+
 	/** Get the skin element with the given id and state.
 		This is like calling GetSkinElement and also following any strong overrides that
 		match the current state (if any). See details about strong overrides in PaintSkin.

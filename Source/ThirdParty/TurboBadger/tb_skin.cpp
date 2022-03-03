@@ -322,6 +322,18 @@ bool TBSkin::AddSkinElement(const TBID &skin_id, TBSkinElement *element)
 	return m_elements.Add(skin_id, element);
 }
 
+bool TBSkin::RemoveSkinElement(const TBID &skin_id)
+{
+	if (!skin_id)
+		return false;
+	if(!m_elements.Get(skin_id))
+		return false;
+
+	m_elements.Delete(skin_id);
+
+	return true;
+}
+
 TBSkinElement *TBSkin::GetSkinElementStrongOverride(const TBID &skin_id, SKIN_STATE state, TBSkinConditionContext &context) const
 {
 	if (TBSkinElement *skin_element = GetSkinElement(skin_id))
