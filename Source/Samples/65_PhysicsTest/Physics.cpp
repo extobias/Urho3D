@@ -119,6 +119,11 @@ void Physics::Start()
     Sample::InitMouseMode(MM_FREE);
 }
 
+void Physics::Setup()
+{
+    Sample::Setup();
+}
+
 void Physics::CreateScene()
 {
     ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -317,6 +322,9 @@ void Physics::CreateDebugText()
 
 void Physics::SetupViewport()
 {
+    Graphics* graphics = GetSubsystem<Graphics>();
+    graphics->Maximize();
+    
     Renderer* renderer = GetSubsystem<Renderer>();
     ResourceCache* cache = GetSubsystem<ResourceCache>();
 
