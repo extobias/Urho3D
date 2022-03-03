@@ -42,12 +42,6 @@
 #include <windows.h>
 #endif
 
-// #include "assimp/config.h"
-// #include "assimp/cimport.h"
-// #include "assimp/scene.h"
-// #include "assimp/postprocess.h"
-// #include "assimp/DefaultLogger.hpp"
-
 // FBX transform chain
 enum TransformationComp
 {
@@ -175,6 +169,15 @@ aiMatrix4x4 EditorImport::ToAIMatrix4x4(const Matrix3x4& mat)
 String EditorImport::SanitateAssetName(const String& name)
 {
     String fixedName = name;
+    if (name.Contains("|"))
+    {
+        StringVector list = name.Split('|');
+        if (list.Size() > 1)
+        {
+            fixedName = list[1];
+        }
+    }
+    
     fixedName.Replace("<", "");
     fixedName.Replace(">", "");
     fixedName.Replace("?", "");
@@ -1512,7 +1515,7 @@ void EditorImport::BuildAndSaveAnimations(OutModel* model)
         if (animName.Empty())
             animName = "Anim" + String(i + 1);
         if (model)
-            animOutName = GetPath(model->outName_) + GetFileName(model->outName_) + "_" + SanitateAssetName(animName) + ".ani";
+            animOutName = (useSubdirs_ ? resourcePath_ + animSubdir_ : GetPath(model->outName_)) + GetFileName(model->outName_) + "_" + SanitateAssetName(animName) + ".ani";
         else
             animOutName = outPath_ + GetFileName(outName_) + "_" + SanitateAssetName(animName) + ".ani";
 

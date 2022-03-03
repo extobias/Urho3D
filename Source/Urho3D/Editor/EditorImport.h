@@ -10,11 +10,6 @@
 #include "assimp/postprocess.h"
 
 struct OutModel;
-// class aiNode;
-// class aiMesh;
-// class aiString;
-// class aiVector2D;
-// class aiVector3D;
 
 namespace Urho3D
 {
