@@ -78,7 +78,9 @@ void EditorSelection::SetDelta(const Matrix4 &matrix, unsigned operation)
         else if (operation == ImGuizmo::ROTATE)
             node->RotateAround(transform_.Translation(), -matrix.Rotation(), TS_WORLD);
         else
-            node->Scale(matrix.Scale());
+        {
+            node->SetScale(matrix.Scale());
+        }
     }
 }
 
@@ -177,7 +179,6 @@ void EditorSelection::PoligonPoints(Vector<Vector3>& points)
     Vector<Vector3> a, b;
     for(unsigned i = 0; i < selectedNodes_.Size(); i++)
     {
-//            URHO3D_LOGERRORF("EditorGuizmo: selected <%i>", selectedNodes_.At(i));
         Node* nodeSelected = selectedNodes_.At(i);
         Vector3 pos = nodeSelected->GetWorldPosition();
         if (pos.x_ < p.x_)
