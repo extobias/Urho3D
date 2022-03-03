@@ -15,7 +15,7 @@ elements
 		bitmap bg_tile.png
 		type Tile
 	background_solid
-		background-color #3b3b3b00
+		background-color #3b3b3bff
 		padding 10
 	SpecialButton
 		bitmap special_button.png
@@ -68,10 +68,6 @@ elements
 		img-position-y 0
 		img-ofs-x -10
 		img-ofs-y -14
-	generic_focus_r8
-		bitmap focus_r8.png
-		cut 14
-		expand 4
 	IconGroup
 		bitmap group-profile-users.png
 		min-width 16

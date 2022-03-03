@@ -325,11 +325,16 @@ elements
 	# == Misc skins ====================================================================================
 	TBContainer
 		bitmap container.png
-		background-color #00000088
 		type StretchBorder
 		cut 12
 		expand 6
 		padding 10
+	TBContainer2
+		bitmap window.png
+		type "Stretch Image"
+		# cut 12
+		# expand 6
+		# padding 10
 	TBCheckBox
 		bitmap checkbox.png
 		cut 19
@@ -378,7 +383,7 @@ elements
 		clone TBPopupWindow
 	TBPopupWindow
 		clone TBWindow
-		padding 2
+		# padding 2
 	TBMenuWindow
 		clone TBPopupWindow
 	TBSelectItem
@@ -433,7 +438,6 @@ elements
 	TBSliderFgX
 		bitmap slider_handle.png
 		expand 5
-
 	TBSliderBgY
 		bitmap slider_bg_y.png
 		cut 9
@@ -442,14 +446,23 @@ elements
 		min-height 50
 	TBSliderFgY
 		clone TBSliderFgX
-
 	TBColorFg
 		bitmap color_handle.png
 		expand 5
-		
 	TBColorWheel
 		bitmap color_wheel.png
 		expand 0
+	TBProgressBar_bg
+		bitmap yellow_button13.png
+		# background-color #0000ceff
+	TBProgressBar
+		# bitmap bg_tile.png
+		background-color #00ce00ff
+		padding 0
+	TBProgressBar2
+		# bitmap bg_tile.png
+		background-color #ce0000ff
+		padding 0
 
 	TBResizer
 		bitmap resizer.png
