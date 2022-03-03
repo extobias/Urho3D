@@ -137,9 +137,7 @@ if (NOT ANDROID AND NOT ARM AND NOT WEB)
     endif ()
 endif ()
 
-if (NOT ANDROID)
-    add_subdirectory (ThirdParty/Assimp)
-endif ()
+add_subdirectory (ThirdParty/Assimp)
 
 add_subdirectory (Urho3D)
 
