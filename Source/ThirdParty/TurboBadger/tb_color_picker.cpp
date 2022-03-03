@@ -31,8 +31,6 @@ TBColorPicker::TBColorPicker(TBCore *core)
     , m_data(nullptr)
 {
     SetIsFocusable(true);
-    // SetAxis(AXIS_X);
-    // SetSkinBg(TBIDC("TBButton"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
 
     AddChild(&m_layout);
     
@@ -41,13 +39,13 @@ TBColorPicker::TBColorPicker(TBCore *core)
     m_layout.SetAxis(AXIS_Y);
     m_layout.SetLayoutDistribution(LAYOUT_DISTRIBUTION_GRAVITY);
 
+    // FIXME replace this fixed values
     m_imgColor.SetGravity(WIDGET_GRAVITY_ALL);
     m_imgColor.SetRect(TBRect(0, 0, 100, 100));
     LayoutParams lp;
     lp.min_h = 20;
     lp.max_h = 20;
     m_imgColor.SetLayoutParams(lp);
-    // m_imgColor.SetImage("Data/UI/TB/images/tb_logo.png");
     m_layout.AddChild(&m_imgColor);
  
     m_layout0.SetAxis(AXIS_X);
@@ -241,9 +239,6 @@ void TBColorPicker::CreatePalette()
             {
                 m_data[index] = c;
             }
-
-            // TBColor color((index) & 0xFF, (index >> 8) & 0xFF, (index >> 16) & 0xFF);
-            // data[index] = (color);
         }
     }
 
@@ -265,11 +260,6 @@ void TBColorPicker::SetValueDouble(double value)
 
 bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
 {
-    // int gx = core_->pointer_move_widget_x;
-    // int gy = core_->pointer_move_widget_y;
-    // ev.target->ConvertToRoot(gx, gy);
-    // TBDebugPrint("TBColorPicker::OnEvent: ev <%i, %i>\n", gx, gy);
-
     if (ev.type == EVENT_TYPE_POINTER_MOVE && core_->captured_widget == &m_handle)
     {
         int dx = ev.target_x - core_->pointer_down_widget_x;
@@ -290,8 +280,6 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         int miny = p.y + rectLay.y;
         int maxy = p.y + rectLay.y + p.h - hh;
 
-        // int centerx = (rectLay.w / 2) - (handlePS.pref_w / 2);
-        // int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
         int centerx = (p.w / 2) - (handlePS.pref_w / 2);
         int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
 
@@ -301,7 +289,6 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         ToPolar(a, b, t, r);
         float angle = t * 360.0f / (2 * M_PI);
 
-        // TBDebugPrint("TBColorPicker::OnEvent: target pos <%i, %i> angle-radious <%f, %f>\n", a, b, angle, r);
         float rmax = (p.w / 2) - (handlePS.pref_w / 2); 
         if (r < rmax)
         {
@@ -322,8 +309,6 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         {
             TBWidgetValue *value = g_value_group.CreateValueIfNeeded("value", TBValue::TYPE::TYPE_INT);
             m_valueColor = value->GetInt() / 100.0;
-
-            // TBDebugPrint("TBColorPicker::OnEvent: changed value <%i> <%f>\n", value->GetInt(), m_valueColor);
             
             UpdateColor();
 
@@ -333,9 +318,7 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         {
             TBWidgetValue *alpha = g_value_group.CreateValueIfNeeded("alpha", TBValue::TYPE::TYPE_INT);
             m_color.a = (unsigned)((alpha->GetInt() / 100.0f) * 255);
-
-            // TBDebugPrint("TBColorPicker::OnEvent: changed alpha <%i> <%f>\n", m_color.a, (alpha->GetInt() / 100.0f));
-            
+           
             UpdateColor();
 
             return true;
@@ -352,11 +335,9 @@ void TBColorPicker::UpdateColor()
     TBRect p = m_colorWheel.GetRect();
     TBRect handleRect = m_handle.GetRect();
     
-    int x = handleRect.x;// + (handlePS.pref_w / 2);
-    int y = handleRect.y;// + (handlePS.pref_h / 2);
+    int x = handleRect.x;
+    int y = handleRect.y;
 
-    // int centerx = (rectLay.w / 2) - (handlePS.pref_w / 2);
-    // int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
     int centerx = (p.w / 2) - (handlePS.pref_w / 2);
     int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
 
@@ -376,9 +357,6 @@ void TBColorPicker::UpdateColor()
     m_color.r = color.r;
     m_color.g = color.g;
     m_color.b = color.b;
-
-    // TBDebugPrint("TBColorPicker::UpdateColor: target pos <%i, %i> pos2 <%i, %i> angle-radious <%f, %f> color <%i, %i, %i, %i> center <%i, %i>\n", 
-    //             a, b, x, y, hue, r, m_color.r, m_color.g, m_color.b, m_color.a, centerx, centery);
 }
 
 /// update color with m_valueColor
@@ -390,9 +368,6 @@ void TBColorPicker::UpdateValueColor()
     float h = Hue(min, max);
     float s = SaturationHSV(min, max);
     float v = m_valueColor;
-
-    TBDebugPrint("TBColorPicker::UpdateValueColor: color 0 <%i, %i, %i, %i> value <%f> max <%f>\n", m_color.r, m_color.g, m_color.b, m_color.a, m_valueColor, max);
-
     double rr, gg, bb;
 
     hsv2rgb(h, s, v, rr, gg, bb);
@@ -401,8 +376,6 @@ void TBColorPicker::UpdateValueColor()
     m_color.r = color.r;
     m_color.g = color.g;
     m_color.b = color.b;
-
-    TBDebugPrint("TBColorPicker::UpdateValueColor: color 1 <%i, %i, %i, %i> value <%f> max <%f>\n", m_color.r, m_color.g, m_color.b, m_color.a, m_valueColor, max);
 
     TBWidgetEvent ev(EVENT_TYPE_CHANGED);
 	InvokeEvent(ev);
@@ -420,6 +393,7 @@ void TBColorPicker::UpdateFromColor()
     m_valueColor = v;
     TBRect p = m_colorWheel.GetRect();
 
+    // FIXME pq suma 30?
     // float t = h * (2 * M_PI) / 360.0f;
     float t = (h * 360.0f + 30.0f);
     float r = s * (p.w / 2);
@@ -432,16 +406,11 @@ void TBColorPicker::UpdateFromColor()
 
     TBRect rectLay = m_layout0.GetRect();
     PreferredSize handlePS = m_handle.GetPreferredSize();
-    // int centerx = (rectLay.w / 2) - (handlePS.pref_w / 2);
-    // int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
     int centerx = (p.w / 2) - (handlePS.pref_w / 2);
     int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
 
     int x = a + centerx;
     int y = centery - b;
-
-    TBDebugPrint("TBColorPicker::UpdateFromColor: target pos <%i, %i> pos2 <%i, %i> angle-radious <%f, %f> center <%i,%i> value_color <%f> alpha <%f>\n", 
-                   a, b, x, y, t, r, centerx, centery, m_valueColor * 100.0f, m_color.a);
 
     UpdateHandle(x, y);
 
@@ -463,7 +432,6 @@ void TBColorPicker::UpdateHandle(int x, int y)
 void TBColorPicker::OnResized(int old_w, int old_h)
 {
     TBWidget::OnResized(old_w, old_h);
-    // TBDebugPrint("TBColorPicker::OnResized: onresize old <%i, %i> new <%i, %i>\n", old_w, old_h, GetRect().w, GetRect().h);
 
     TBRect rectLay = m_layout0.GetRect();
     TBRect rectWheel = m_colorWheel.GetRect();
@@ -472,13 +440,8 @@ void TBColorPicker::OnResized(int old_w, int old_h)
     PreferredSize handlePS = m_handle.GetPreferredSize();
     PreferredSize imgPS = m_imgColor.GetPreferredSize();
 
-    // TBDebugPrint("TBColorPicker::OnResized: onresize layout <%i, %i, %i, %i>\n", rectLay.x, rectLay.y, rectLay.w, rectLay.h);
-    // TBDebugPrint("TBColorPicker::OnResized: onresize wheel <%i, %i, %i, %i>\n", rectWheel.x, rectWheel.y, rectWheel.w, rectWheel.h);
-    // TBDebugPrint("TBColorPicker::OnResized: onresize slider <%i, %i, %i, %i>\n", sliderRect.x, sliderRect.y, sliderRect.w, sliderRect.h);
-
     int size = rectWheel.w > rectWheel.h ? rectWheel.h : rectWheel.w;
     rectWheel.w = rectWheel.h = size;
-    // rectWheel.x = (rectLay.w / 2) - (size / 2);
     m_colorWheel.SetRect(rectWheel);
 
     sliderRect.h = size;
@@ -508,17 +471,13 @@ void TBColorPicker::OnPaint(const PaintProps &paint_props)
     core_->tb_skin_->PaintSkin(rect, m_skinElement, static_cast<SKIN_STATE>(state), context);
     core_->renderer_->Translate(-trns_x, -trns_y);
 
-    // core_->renderer_->DrawBitmapColored(rectCol, rectCol, color, m_skinElement->bitmap);
-    // core_->renderer_->DrawBitmap(rectCol, rectCol, m_skinElement->bitmap);
     TBRect colorRect(0, 0, rectLay.w, rectLay.y);
     core_->tb_skin_->PaintRectFill(colorRect, m_color);
 
     int size = 10;
     PreferredSize handlePS = m_handle.GetPreferredSize();
-    // int centerx = (rectLay.w / 2);
-    // int centery = (p.h / 2) + rectLay.y;
-    int centerx = (p.w / 2); // - (handlePS.pref_w / 2);
-    int centery = (p.h / 2) + rectLay.y; // - (handlePS.pref_h / 2);
+    int centerx = (p.w / 2);
+    int centery = (p.h / 2) + rectLay.y;
 
     TBRect colorRect2(centerx - size / 2, centery - size / 2, size, size);
     core_->tb_skin_->PaintRectFill(colorRect2, m_color);
