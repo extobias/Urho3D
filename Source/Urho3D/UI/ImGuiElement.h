@@ -68,6 +68,8 @@ protected:
 
     WeakPtr<Scene> scene_;
 
+    ImGuiContext* imguiContext_;
+
 private:
 
     // void ElementCallback(const ImDrawList* parent_list, const ImDrawCmd* cmd);
@@ -87,8 +89,6 @@ private:
     IntVector2 dragBeginCursor_;
 
     IntVector2 dragBeginPosition_;
-
-    ImGuiContext* imguiContext_;
 
     String inputText_;
 };
