@@ -179,4 +179,4 @@ ADD_SUBDIRECTORY( code/ )
 
 set (STATIC_LIBRARY_TARGETS ${STATIC_LIBRARY_TARGETS} ${TARGET_NAME} PARENT_SCOPE)
 
-install_header_files (DIRECTORY ./ DESTINATION ${DEST_INCLUDE_DIR}/ThirdParty/Assimp/include FILES_MATCHING PATTERN *.h)  # Note: the trailing slash is significant
+install_header_files (DIRECTORY include/assimp/ DESTINATION ${DEST_INCLUDE_DIR}/ThirdParty/Assimp FILES_MATCHING PATTERN *.h)  # Note: the trailing slash is significant
