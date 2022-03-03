@@ -96,10 +96,10 @@ void HelloTBUI::Start()
         TBProgressBar* pb = dynamic_cast<TBProgressBar*>(tbelement->GetRoot()->GetWidgetByID(TBID("progress_bar")));
         if (pb) 
         {
-            pb->SetColorValue(0.5f, TBColor(0, 255, 0));
-            pb->SetColorValue(0.25f, TBColor(255, 255, 0));
-            pb->SetColorValue(0.15f, TBColor(255, 0, 0));
-            pb->SetColorValue(0.05f, TBColor(0, 0, 255));
+            pb->AddColorValue(0.5f, TBColor(0, 255, 0));
+            pb->AddColorValue(0.25f, TBColor(255, 255, 0));
+            pb->AddColorValue(0.15f, TBColor(255, 0, 0));
+            pb->AddColorValue(0.05f, TBColor(0, 0, 255));
         }
     }
     else
@@ -254,7 +254,7 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
         TBProgressBar* pb = dynamic_cast<TBProgressBar*>(tbelement->GetRoot()->GetWidgetByID(TBID("progress_bar")));
         if (pb) 
         {
-            pb->SetColorValue(0.01f, TBColor(0, 255, 255));
+            pb->AddColorValue(0.01f, TBColor(0, 255, 255));
         }
     }
 
