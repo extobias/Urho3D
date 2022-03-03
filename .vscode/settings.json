@@ -5,7 +5,11 @@
     "cmake.loggingLevel": "debug",
     "cmake.buildDirectory": "${workspaceFolder}/build-ninja",
     "cmake.configureArgs": [
+<<<<<<< Updated upstream
         "-DCMAKE_MAKE_PROGRAM=C:\\Users\\extobias\\Documents\\devel\\apps\\ninja-win\\ninja.exe"
+=======
+        "-DURHO3D_SSE=0"
+>>>>>>> Stashed changes
     ],
     "files.associations": {
         "xiosbase": "cpp",
@@ -16,7 +20,11 @@
         "windows.h": "c",
         "sdl_internal.h": "c",
         "sdkddkver.h": "c",
-        "sdl_syshaptic.h": "c"
+        "sdl_syshaptic.h": "c",
+        "charconv": "cpp",
+        "*.rh": "cpp",
+        "stack": "cpp",
+        "chrono": "cpp"
     },
     "[Log]": {
         "editor.wordWrap": "on"

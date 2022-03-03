@@ -536,12 +536,17 @@ void EditorGuizmo::Render(float timeStep)
         {
             ImGuizmo::Manipulate(&view.m00_, &projection.m00_, (ImGuizmo::OPERATION)currentOperation_, (ImGuizmo::MODE)currentMode_, &transform.m00_, &delta.m00_);
 
-            selection_->SetTransform(Matrix3x4(transform.Transpose()));
+            if (ImGuizmo::IsUsing())
+            {
+                URHO3D_LOGERRORF("delta translation <%s>", delta.Transpose().Rotation().ToString().CString());
+                
+                selection_->SetTransform(Matrix3x4(transform.Transpose()));
 
-            URHO3D_LOGERRORF("EditorGuizmo::SetDelta: scale <%s> hover <%i>", delta.Transpose().ToString().CString(), onHover_);
-
-            if (currentOperation_ != ImGuizmo::SCALE || onHover_) 
-                selection_->SetDelta(delta.Transpose(), currentOperation_);
+                if (currentOperation_ != ImGuizmo::SCALE || onHover_) 
+                {
+                    selection_->SetDelta(delta.Transpose(), currentOperation_);
+                }
+            }
         }
     }
     else if (currentEditMode_ == SELECT_MESH_VERTEX)
