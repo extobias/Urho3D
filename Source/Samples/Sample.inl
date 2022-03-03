@@ -42,9 +42,9 @@
 #include <Urho3D/Resource/XMLFile.h>
 #include <Urho3D/IO/Log.h>
 #include <Urho3D/UI/ImGuiElement.h>
-#include <Urho3D/UI/EditorWindow.h>
-#include <Urho3D/UI/EditorGuizmo.h>
-#include <Urho3D/UI/EditorSelection.h>
+#include <Urho3D/Editor/EditorWindow.h>
+#include <Urho3D/Editor/EditorGuizmo.h>
+#include <Urho3D/Editor/EditorSelection.h>
 
 Sample::Sample(Context* context) :
     Application(context),
@@ -68,10 +68,10 @@ void Sample::Setup()
     engineParameters_[EP_HEADLESS]     = false;
     engineParameters_[EP_SOUND]        = false;
 
-    engineParameters_[EP_WINDOW_WIDTH] = 800;
-    engineParameters_[EP_WINDOW_HEIGHT] = 600;
+    engineParameters_[EP_WINDOW_WIDTH] = 1280;
+    engineParameters_[EP_WINDOW_HEIGHT] = 720;
     engineParameters_[EP_WINDOW_RESIZABLE] = true;
-    engineParameters_[EP_WINDOW_POSITION_X] = 0;
+    engineParameters_[EP_WINDOW_POSITION_X] = 200;
     engineParameters_[EP_WINDOW_POSITION_Y] = 40;
 
     engineParameters_[EP_ORIENTATIONS] = "Portrait";
