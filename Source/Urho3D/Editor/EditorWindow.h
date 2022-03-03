@@ -5,6 +5,7 @@
 namespace Urho3D
 {
     class Model;
+    class AnimationState;
     class ParticleEmitter;
     class ParticleEmitter2D;
     class EditorGuizmo;
@@ -153,7 +154,7 @@ private:
 
     void AttributeEdit(Serializable *c);
 
-    bool VariantEdit(const AttributeInfo& info, const String& name, Variant& v, unsigned index = 0);
+    bool VariantEdit(Serializable* c, const AttributeInfo& info, const String& name, Variant& v, unsigned index = 0);
 
     void AddComponentMenu(Node *node);
 
@@ -224,6 +225,8 @@ private:
     ResourceDir resources_;
 
     Vector<ResourceContainer> resourcesContainer_;
+
+    Vector<StringHash> animationNames_;
 
     float yaw_;
 

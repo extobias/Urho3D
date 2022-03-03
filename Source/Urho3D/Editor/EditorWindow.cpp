@@ -3,6 +3,7 @@
 #include "../Core/CoreEvents.h"
 #include "../Graphics/Animation.h"
 #include "../Graphics/AnimatedModel.h"
+#include "../Graphics/AnimationState.h"
 #include "../Graphics/Graphics.h"
 #include "../Graphics/VertexBuffer.h"
 #include "../Graphics/IndexBuffer.h"
@@ -284,7 +285,26 @@ void EditorWindow::MoveCamera(float timeStep)
 
 void EditorWindow::UpdateAnimations(float timeStep)
 {
-    
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
+    if (s.Size() != 1)
+        return;
+
+    Node* node = s.At(0);
+    if (!node)
+        return;
+
+    AnimatedModel* model = node->GetComponent<AnimatedModel>();
+    if (!model)
+        return;
+
+    for (StringHash name : animationNames_)
+    {
+        AnimationState* state = model->GetAnimationState(name);
+        if (state)
+        {
+            state->AddTime(timeStep);
+        }
+    }
 }
 
 void EditorWindow::ConfigResources()
@@ -1147,12 +1167,13 @@ void EditorWindow::AttributeEdit(Serializable* c)
 
         Variant attVariant = c->GetAttribute(info.name_);
 
-        if(VariantEdit(info, info.name_, attVariant))
+        if(VariantEdit(c, info, info.name_, attVariant))
             c->SetAttribute(info.name_, attVariant);
     }
 }
 // FIXME sometimes info.name isnt name
-bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Variant& value, unsigned index)
+// FIXME ver como sacar los botones de aca tmb
+bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const String& name, Variant& value, unsigned index)
 {
     const char* hideLabel = "##hidelabel";
 
@@ -1172,7 +1193,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     {
     case VAR_BOOL:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         bool v = value.GetBool();
         if (ImGui::Checkbox(hideLabel, &v))
         {
@@ -1184,7 +1205,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_INT:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         unsigned int v = value.GetUInt();
         if (info.enumNames_)
         {
@@ -1208,7 +1229,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_FLOAT:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float v = value.GetFloat();
         if (ImGui::InputFloat(hideLabel, &v))
         {
@@ -1220,7 +1241,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_STRING:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         String v = value.GetString();
         char buffer[512];
         strncpy(buffer, v.CString(), v.Length());
@@ -1235,7 +1256,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_COLOR:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float col[4];
         Color color = value.GetColor();
         memcpy(col, color.Data(), sizeof(col));
@@ -1249,7 +1270,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_VECTOR2:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float v[2];
         Vector2 v2= value.GetVector2();
         memcpy(v, v2.Data(), sizeof(v));
@@ -1263,7 +1284,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_VECTOR3:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float v[3];
         Vector3 v3 = value.GetVector3();
         memcpy(v, v3.Data(), sizeof(v));
@@ -1277,7 +1298,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_VECTOR4:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float v[4];
         Vector4 v4 = value.GetVector4();
         memcpy(v, v4.Data(), sizeof(v));
@@ -1291,7 +1312,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_RECT:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float v[4];
         Rect rect = value.GetRect();
         memcpy(v, rect.Data(), sizeof(v));
@@ -1305,7 +1326,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_QUATERNION:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         float q[4];
         Quaternion quat = value.GetQuaternion();
         memcpy(q, quat.Data(), sizeof(q));
@@ -1319,7 +1340,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_STRINGVECTOR:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         StringVector tags = value.GetStringVector();
 
         static char buf[32] = "";
@@ -1356,7 +1377,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_BUFFER:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         if (info.name_ == "Vertices")
         {
             const PODVector<unsigned char> bufferVec = value.GetBuffer();
@@ -1401,7 +1422,6 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
             bool modified = false;
             for (unsigned i = 0; i < vertices.Size(); ++i)
             {
-                ///URHO3D_LOGERRORF("EditorWindow: 1 v2 <%f, %f>", v2.x_, v2.y_);
                 float v[2];// = { 0.0f, 0.0f };
                 memcpy(v, vertices[i].Data(), sizeof(v));
 
@@ -1430,7 +1450,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_RESOURCEREF:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         ResourceRef resRef = value.GetResourceRef();
         ResourceCache* cache = GetSubsystem<ResourceCache>();
 
@@ -1440,7 +1460,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
             // ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
             // EditParticleEmitter(emitter);
         }
-        if (resRef.type_ == StringHash("ParticleEffect2D") || resRef.type_ == StringHash("Model") || resRef.type_ == StringHash("Material") || resRef.type_ == StringHash("XMLFile") || resRef.type_ == StringHash("AnimationSet2D"))
+        if (resRef.type_ == StringHash("ParticleEffect2D") || resRef.type_ == StringHash("Model") || resRef.type_ == StringHash("Material") || resRef.type_ == StringHash("XMLFile") || resRef.type_ == StringHash("AnimationSet2D") || resRef.type_ == StringHash("Animation"))
         {
             ImGui::SetNextItemWidth(halfWidth);
             ResourceContainer rc;
@@ -1555,7 +1575,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_VARIANTMAP:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
         VariantMap* map = value.GetVariantMapPtr();
         if (map)
         {
@@ -1636,7 +1656,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
 
                 Variant v = (*map)[keys.At(i)];
                 String vname = scene_->GetVarName(keys.At(i));
-                if (VariantEdit(info, vname, v))
+                if (VariantEdit(c, info, vname, v))
                 {
                     (*map)[keys.At(i)] = v;
                     ret = true;
@@ -1648,7 +1668,7 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
     break;
     case VAR_VARIANTVECTOR:
     {
-        ImGui::PushID(name.CString());
+        ImGui::PushID(id);
 
         const VariantVector& v = value.GetVariantVector();
         VariantVector* vv = value.GetVariantVectorPtr();
@@ -1662,14 +1682,18 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
 
         StringVector names = info.metadata_["VectorStructElements"]->GetStringVector();
         unsigned size = 0;
-        float width = total_w / 2.0f;
         if (name == "Animation States" && vv->Size())
         {
             static char buf[32] = "";
+            
+            ImGui::NewLine();
+            ImGui::Text("%s", name.CString());
 
-            ImGui::SetNextItemWidth(halfWidth);
+            // ImGui::SetCursorPosX(halfWidth);
+            // ImGui::SetNextItemWidth(halfWidth);
+            
             Variant sizev = (*vv).At(0);
-            if (VariantEdit(info, names[0], sizev))
+            if (VariantEdit(c, info, names[0], sizev))
             {
                 (*vv)[0] = sizev;
                 ret = true;
@@ -1683,38 +1707,34 @@ bool EditorWindow::VariantEdit(const AttributeInfo& info, const String& name, Va
         {
             for (unsigned j = 0; j < 6; j++)
             {
-                ImGui::SetCursorPosX(width);
-                ImGui::SetNextItemWidth(width / 2.0f);
+                ImGui::Text("%s", names[j + 1].CString());
 
                 Variant value = (*vv).At(i + j);
-                if (VariantEdit(info, names[j + 1], value, i + j))
+                if (VariantEdit(c, info, names[j + 1], value, i + j))
                 {
                     (*vv)[i + j] = value;
                     ret = true;
                 }
             }
 
-            ImGui::SetCursorPosX(width);
-            ImGui::SetNextItemWidth(width / 2.0f);
+            ImGui::SetCursorPosX(halfWidth);
+            ImGui::SetNextItemWidth(halfWidth);
             if(ImGui::Button("Play"))
             {
                 Variant value = (*vv).At(i);
                 ResourceRef res = value.GetResourceRef();
-                URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
+                // URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
 
-                // Animation* anim = cache->GetResource<Animation>(res.name_);
-                // AnimatedModel* model = static_cast<AnimatedModel*>(c);
-                // if (model)
-                // {
-                    // AnimationState* state = model->AddAnimationState(anim);
-                    // state_ = model->AddAnimationState(anim);
-                    // if (state)
-                    // {
-                        // state->SetWeight(1.0f);
-                        // state->SetLooped(true);
-                        // state->AddTime(timeStep_);
-                    // }
-                // }
+                Animation* anim = cache->GetResource<Animation>(res.name_);
+                AnimatedModel* model = static_cast<AnimatedModel*>(c);
+                if (model)
+                {
+                    AnimationState* state = model->AddAnimationState(anim);
+                    if (animationNames_.Contains(StringHash(res.name_)))
+                        animationNames_.Remove(StringHash(res.name_));
+                    else
+                        animationNames_.Push(StringHash(res.name_));
+                }
             }
         }
         ImGui::PopID();
@@ -1759,7 +1779,8 @@ void EditorWindow::AddComponentMenu(Node* node)
                 {
                     URHO3D_LOGERRORF("menu selected <%s>", subIt->CString());
                     Component* component = node->CreateComponent(factoryHashes.At(i));
-                    component->ApplyAttributes();
+                    if (component)
+                        component->ApplyAttributes();
                 }
             }
             ImGui::EndMenu();
