@@ -49,6 +49,7 @@
 #include <Urho3D/DebugNew.h>
 #include <animation/tb_widget_animation.h>
 #include <tb_color_picker.h>
+#include <tb_progress_bar.h>
 
 URHO3D_DEFINE_APPLICATION_MAIN(HelloTBUI)
 
@@ -71,7 +72,6 @@ void HelloTBUI::Start()
     ResourceCache* cache = GetSubsystem<ResourceCache>();
     XMLFile* style = cache->GetResource<XMLFile>("UI/DefaultStyle.xml");
     Urho3D::Graphics* g = GetSubsystem<Urho3D::Graphics>();
-    // g->Maximize();
 
     int windowWidth = g->GetWidth();
     int windowHeight = g->GetHeight();
@@ -79,56 +79,28 @@ void HelloTBUI::Start()
     uiRoot_->SetDefaultStyle(style);
     uiRoot_->SetLayout(LM_VERTICAL);
 
-    //ImGuiElement* imgui = new ImGuiElement(context_);
-    //ImGuiElement::RegisterObject(context_);
-    //imgui->SetPosition(0, 0);
-    //imgui->SetSize(800, 600);
-
-    // ImGuiElement* imgui2 = new ImGuiElement(context_);
-    // imgui->AddChild(imgui2);
-
-    //uiRoot_->AddChild(imgui);
-
-    //ToolTip* toolTip = new ToolTip(context_);
-    //imgui->AddChild(toolTip);
-
     TBUIElement::RegisterObject(context_);
 
     if (1)
     {
-        // animation test
-//        animTest_ = new TBUIElement(context_);
-//        animTest_->LoadResources();
-//        animTest_->LoadWidgets("Data/UI/TB/layout/loading_screen.txt");
-//        // animTest_->SetPosition(-windowWidth / 8, 0);
-//        animTest_->SetSize(windowWidth / 2, windowHeight);
-//        GetSubsystem<UI>()->GetRootModalElement()->AddChild(animTest_);
-
         tbelement = new TBUIElement(context_);
         tbelement->LoadResources();
         tbelement->LoadWidgets("Data/UI/TB/layout/settings.txt");
+        tbelement->LoadLanguage("Data/UI/TB/language/lng_en.tb.txt");
         tbelement->SetPosition(0, 0);
         // tbelement->SetSize(windowWidth / 2, windowHeight);
         GetSubsystem<UI>()->GetRoot()->AddChild(tbelement);
 
         SubscribeToEvent(tbelement->GetRoot(), E_TBUI_WIDGET_CHANGED, URHO3D_HANDLER(HelloTBUI, HandleTBUIChanged));
 
-        TBColorPicker* cp = dynamic_cast<TBColorPicker*>(tbelement->GetRoot()->GetWidgetByID(TBID("color_picker")));
-        if (cp)
+        TBProgressBar* pb = dynamic_cast<TBProgressBar*>(tbelement->GetRoot()->GetWidgetByID(TBID("progress_bar")));
+        if (pb) 
         {
-            // Image img(context_);
-            // img.SetSize(4096, 4096, 4);
-            // img.SetData((unsigned char*)cp->m_data);
-            // if (!img.SaveFile(GetSubsystem<FileSystem>()->GetProgramDir() + "Data/palette.png"))
-            //     URHO3D_LOGERRORF("gamestate.handlekeydown: errrorrororor");
+            pb->SetColorValue(0.5f, TBColor(0, 255, 0));
+            pb->SetColorValue(0.25f, TBColor(255, 255, 0));
+            pb->SetColorValue(0.15f, TBColor(255, 0, 0));
+            pb->SetColorValue(0.05f, TBColor(0, 0, 255));
         }
-
-        // tbelement2= new TBUIElement(context_);
-        // tbelement2->LoadResources();
-        // tbelement2->LoadWidgets("Data/UI/TB/layout/game_stats.txt");
-        // tbelement2->SetPosition(windowWidth / 2, 0);
-        // tbelement2->SetSize(windowWidth / 2, windowHeight);
-        // GetSubsystem<UI>()->GetRoot()->AddChild(tbelement2);
     }
     else
     {
@@ -143,28 +115,10 @@ void HelloTBUI::Start()
         button->SetMinWidth(124);
         button->SetAlignment(HA_LEFT, VA_BOTTOM);
 
-//        Button* button2 = new Button(context_);
-//        // button2->SetEnableAnchor(true);
-//        button2->SetStyleAuto();
-//        button2->SetName("BUTTON 2");
-//        button2->SetMinHeight(24);
-//        button2->SetMinWidth(124);
-//        button2->SetAlignment(HA_LEFT, VA_TOP);
-
         uiRoot_->AddChild(button);
-//        uiRoot_->AddChild(button2);
     }
 
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(HelloTBUI, HandleKeyDown));
-
-    // Initialize Window
-    // InitWindow();
-
-    // Create and add some controls to the Window
-    //InitControls();
-
-    // Create a draggable Fish
-    // CreateDraggableFish();
 
     CreateScene();
 
@@ -290,114 +244,29 @@ void HelloTBUI::HandleKeyDown(StringHash eventType, VariantMap& eventData)
 
     }
 
+    if (key == KEY_LEFT)
+    {
+        // TBProgressBar* pb = dynamic_cast<TBProgressBar*>(tbelement->GetRoot()->GetWidgetByID(TBID("progress_bar")));
+        // float val = (float)pb->GetValueDouble();
+        // val -= 0.01f;
+        // pb->SetValueDouble(val);        
+
+        TBProgressBar* pb = dynamic_cast<TBProgressBar*>(tbelement->GetRoot()->GetWidgetByID(TBID("progress_bar")));
+        if (pb) 
+        {
+            pb->SetColorValue(0.01f, TBColor(0, 255, 255));
+        }
+    }
+
+    if (key == KEY_RIGHT)
+    {
+        // TBProgressBar* pb = dynamic_cast<TBProgressBar*>(tbelement->GetRoot()->GetWidgetByID(TBID("progress_bar")));
+        // float val = (float)pb->GetValueDouble();
+        // val += 0.01f;
+        // pb->SetValueDouble(val);        
+    }
+
     Sample::HandleKeyDown(eventType, eventData);
-}
-
-void HelloTBUI::InitControls()
-{
-    // Create a CheckBox
-    CheckBox* checkBox = new CheckBox(context_);
-    checkBox->SetName("CheckBox");
-
-    // Create a Button
-    Button* button = new Button(context_);
-    button->SetName("Button");
-    button->SetMinHeight(24);
-
-    // Create a LineEdit
-    LineEdit* lineEdit = new LineEdit(context_);
-    lineEdit->SetName("LineEdit");
-    lineEdit->SetMinHeight(24);
-
-    // Add controls to Window
-    window_->AddChild(checkBox);
-    window_->AddChild(button);
-    window_->AddChild(lineEdit);
-
-    // Apply previously set default style
-    checkBox->SetStyleAuto();
-    button->SetStyleAuto();
-    lineEdit->SetStyleAuto();
-}
-
-void HelloTBUI::InitWindow()
-{
-    // Create the Window and add it to the UI's root node
-    window_ = new Window(context_);
-    uiRoot_->AddChild(window_);
-
-    // Set Window size and layout settings
-    window_->SetMinWidth(684);
-    window_->SetPosition(0,0);
-    window_->SetLayout(LM_VERTICAL, 6, IntRect(6, 6, 6, 6));
-    window_->SetAlignment(HA_CENTER, VA_CENTER);
-    window_->SetName("Window");
-
-    // Create Window 'titlebar' container
-    UIElement* titleBar = new UIElement(context_);
-    titleBar->SetMinSize(0, 24);
-    titleBar->SetVerticalAlignment(VA_TOP);
-    titleBar->SetLayoutMode(LM_HORIZONTAL);
-
-    // Create the Window title Text
-    Text* windowTitle = new Text(context_);
-    windowTitle->SetName("WindowTitle");
-    windowTitle->SetText("Hello GUI!");
-
-    // Create the Window's close button
-    Button* buttonClose = new Button(context_);
-    buttonClose->SetName("CloseButton");
-
-    // Add the controls to the title bar
-    titleBar->AddChild(windowTitle);
-    titleBar->AddChild(buttonClose);
-
-    // Add the title bar to the Window
-    window_->AddChild(titleBar);
-
-    // Apply styles
-    window_->SetStyleAuto();
-    windowTitle->SetStyleAuto();
-    buttonClose->SetStyle("CloseButton");
-    
-    // Subscribe to buttonClose release (following a 'press') events
-    SubscribeToEvent(buttonClose, E_RELEASED, URHO3D_HANDLER(HelloTBUI, HandleClosePressed));
-
-    // Subscribe also to all UI mouse clicks just to see where we have clicked
-    SubscribeToEvent(E_UIMOUSECLICK, URHO3D_HANDLER(HelloTBUI, HandleControlClicked));
-}
-
-void HelloTBUI::CreateDraggableFish()
-{
-    ResourceCache* cache = GetSubsystem<ResourceCache>();
-    Graphics* graphics = GetSubsystem<Graphics>();
-
-    // Create a draggable Fish button
-    Button* draggableFish = new Button(context_);
-    draggableFish->SetTexture(cache->GetResource<Texture2D>("Textures/UrhoDecal.dds")); // Set texture
-    draggableFish->SetBlendMode(BLEND_ADD);
-    draggableFish->SetSize(128, 128);
-    draggableFish->SetPosition((graphics->GetWidth() - draggableFish->GetWidth()) / 2, 200);
-    draggableFish->SetName("Fish");
-    uiRoot_->AddChild(draggableFish);
-
-    // Add a tooltip to Fish button
-    //ToolTip* toolTip = new ToolTip(context_);
-    //draggableFish->AddChild(toolTip);
-    //toolTip->SetPosition(IntVector2(draggableFish->GetWidth() + 5, draggableFish->GetWidth() / 2)); // slightly offset from close button
-    //BorderImage* textHolder = new BorderImage(context_);
-    //toolTip->AddChild(textHolder);
-    //textHolder->SetStyle("ToolTipBorderImage");
-    //Text* toolTipText = new Text(context_);
-    //textHolder->AddChild(toolTipText);
-    //toolTipText->SetStyle("ToolTipText");
-    //toolTipText->SetText("Please drag me!");
-
-    // Subscribe draggableFish to Drag Events (in order to make it draggable)
-    // See "Event list" in documentation's Main Page for reference on available Events and their eventData
-    SubscribeToEvent(draggableFish, E_DRAGBEGIN, URHO3D_HANDLER(HelloTBUI, HandleDragBegin));
-    SubscribeToEvent(draggableFish, E_DRAGMOVE, URHO3D_HANDLER(HelloTBUI, HandleDragMove));
-    SubscribeToEvent(draggableFish, E_DRAGEND, URHO3D_HANDLER(HelloTBUI, HandleDragEnd));
 }
 
 void HelloTBUI::SetupViewport()

@@ -62,13 +62,6 @@ protected:
     }
 
 private:
-    /// Create and initialize a Window control.
-    void InitWindow();
-    /// Create and add various common controls for demonstration purposes.
-    void InitControls();
-    /// Create a draggable fish button.
-    void CreateDraggableFish();
-
     void CreateScene();
 
     void SetupViewport();
