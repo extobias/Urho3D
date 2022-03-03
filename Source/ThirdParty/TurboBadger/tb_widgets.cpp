@@ -148,9 +148,7 @@ void TBWidget::SetRect(const TBRect &rect)
     TBRect old_rect = m_rect;
     m_rect = rect;
 
-    // TBDebugPrint("TBWidget.SetRect: widget <%p> rect <%u,%u,%u,%u>\n", this, m_rect.x, m_rect.y, m_rect.w, m_rect.h);
-
-    if (old_rect.w != m_rect.w || old_rect.h != m_rect.h)
+   if (old_rect.w != m_rect.w || old_rect.h != m_rect.h)
         OnResized(old_rect.w, old_rect.h);
 
     Invalidate();
@@ -195,10 +193,7 @@ void TBWidget::Die()
 
 TBWidget *TBWidget::GetWidgetByIDInternal(const TBID &id, const TB_TYPE_ID type_id)
 {
-    // TBDebugPrint("TBWidget::GetWidgetByIDInternal m_id <%s> id <%s> IsOfTypeId <%i> class <%s> layout type_id <%p> this type_id <%p>\n", 
-    //               m_id.debug_string.CStr(), id.debug_string.CStr(), IsOfTypeId(type_id), 
-    //               GetClassNameTB(), GetTypeId<TBLayout>(), type_id);
-                  
+                 
     if (m_id == id && (!type_id || IsOfTypeId(type_id)))
         return this;
     for (TBWidget *child = GetFirstChild(); child; child = child->GetNext())
@@ -1187,7 +1182,6 @@ float TBWidget::CalculateOpacityInternal(WIDGET_STATE state, TBSkinElement *skin
 
 void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
 {
-//     TBDebugPrint("TBWidget.InvokePaint: rect <%u,%u,%u,%u>\n", m_rect.x, m_rect.y, m_rect.w, m_rect.h);
     // Don't paint invisible widgets
     if (m_opacity == 0 || m_rect.IsEmpty() || GetVisibility() != WIDGET_VISIBILITY_VISIBLE)
         return;
