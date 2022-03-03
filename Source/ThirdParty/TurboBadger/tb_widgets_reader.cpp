@@ -14,6 +14,7 @@
 #include "tb_font_renderer.h"
 #include "tb_toggle_container.h"
 #include "tb_color_picker.h"
+#include "tb_progress_bar.h"
 #include "image/tb_image_widget.h"
 
 namespace tb {
@@ -339,6 +340,15 @@ void TBColorPicker::OnInflate(const INFLATE_INFO &info)
 	const char *axis = info.node->GetValueString("axis", "x");
 	SetAxis(*axis == 'x' ? AXIS_X : AXIS_Y);
 	SetGravity(*axis == 'x' ? WIDGET_GRAVITY_LEFT_RIGHT : WIDGET_GRAVITY_TOP_BOTTOM);
+	TBWidget::OnInflate(info);
+}
+
+TB_WIDGET_FACTORY(TBProgressBar, TBValue::TYPE_FLOAT, WIDGET_Z_TOP) {}
+void TBProgressBar::OnInflate(const INFLATE_INFO &info)
+{
+	const char *axis = info.node->GetValueString("axis", "x");
+	SetAxis(*axis == 'x' ? AXIS_X : AXIS_Y);
+	SetStep(info.node->GetValueFloat("step", 0.02));
 	TBWidget::OnInflate(info);
 }
 
