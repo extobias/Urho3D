@@ -25,4 +25,24 @@ void TBColor::SetFromString(const char *str, int len)
 		Set(TBColor());
 }
 
+TBColor TBColor::Blend(const TBColor& rhs) const
+{
+    // over operator
+	const float max = 255.0f;
+	float rr = r / max;
+	float gg = g / max;
+	float bb = b / max;
+	float aa = a / max;
+
+	// over operator
+    float inva = (1 - aa);
+    float a1 = aa + (rhs.a / max) * inva;
+    float r1 = (rr * aa + (rhs.r / max) * (rhs.a / max) * inva) / aa;
+    float g1 = (gg * aa + (rhs.g / max) * (rhs.a / max) * inva) / aa;
+    float b1 = (bb * aa + (rhs.b / max) * (rhs.a / max) * inva) / aa;
+
+	return TBColor(r1 * 255.0, g1 * 255.0, b1 * 255.0, a1 * 255.0);
+    // return TBColor(r, g, b, a);
+}
+
 } // namespace tb

@@ -47,6 +47,8 @@ public:
 			b = b * 255 / a32;
 		}
 	}
+
+	TBColor Blend(const TBColor& rhs) const;
 };
 
 } // namespace tb
