@@ -51,6 +51,8 @@ public:
 
     virtual void OnWidgetFocusChanged(TBWidget *widget, bool focused) override;
 
+    bool clickDown_;
+
 //    virtual void OnResized(int old_w, int old_h);
 };
 
@@ -141,6 +143,8 @@ public:
 
     void LoadResources();
 
+    void LoadLanguage(const String& langFile);
+
     void SetBoxSize(int width, int height);
 
     void Clear();
@@ -183,6 +187,8 @@ public:
     void SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap);
 
     bool InvokeKey(int key, unsigned special, unsigned modifier, bool down, int userdata = -1);
+
+    bool IsClicked() const { return root_->clickDown_; }
 
     TBRootWidget* GetRoot() { return root_; }
 
