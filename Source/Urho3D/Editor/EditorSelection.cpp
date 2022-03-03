@@ -76,7 +76,7 @@ void EditorSelection::SetDelta(const Matrix4 &matrix, unsigned operation)
         if (operation == ImGuizmo::TRANSLATE)
             node->Translate(matrix.Translation(), TS_WORLD);
         else if (operation == ImGuizmo::ROTATE)
-            node->RotateAround(transform_.Translation(), -matrix.Rotation(), TS_WORLD);
+            node->Rotate(-matrix.Rotation());
         else
         {
             node->SetScale(matrix.Scale());
