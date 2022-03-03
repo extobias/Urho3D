@@ -312,6 +312,16 @@ TBSkinElement *TBSkin::GetSkinElement(const TBID &skin_id) const
 	return m_elements.Get(skin_id);
 }
 
+bool TBSkin::AddSkinElement(const TBID &skin_id, TBSkinElement *element)
+{
+	if (!skin_id)
+		return false;
+	if(m_elements.Get(skin_id))
+		return false;
+
+	return m_elements.Add(skin_id, element);
+}
+
 TBSkinElement *TBSkin::GetSkinElementStrongOverride(const TBID &skin_id, SKIN_STATE state, TBSkinConditionContext &context) const
 {
 	if (TBSkinElement *skin_element = GetSkinElement(skin_id))
@@ -475,13 +485,23 @@ void TBSkin::PaintRectFill(const TBRect &dst_rect, const TBColor &color)
         core_->renderer_->DrawBitmapColored(dst_rect, TBRect(), color, m_color_frag);
 }
 
+void TBSkin::PaintRectFillBlend(const TBRect &dst_rect, const TBColor &color, const TBColor &color_blend)
+{
+	if (!dst_rect.IsEmpty())
+	{
+        core_->renderer_->DrawBitmapColoredBlend(dst_rect, TBRect(), color, color_blend, m_color_frag);
+	}
+}
+
 void TBSkin::PaintElementBGColor(const TBRect &dst_rect, TBSkinElement *element)
 {
 	if (element->bg_color == 0)
 		return;
 	
-// 	TBDebugPrint("paint element bg_color <%u,%u,%u,%u>\n", element->bg_color.r, element->bg_color.g, element->bg_color.b, element->bg_color.a);
-	PaintRectFill(dst_rect, element->bg_color);
+	if (element->bg_color_blend == 0)
+		PaintRectFill(dst_rect, element->bg_color);
+	else
+		PaintRectFillBlend(dst_rect, element->bg_color, element->bg_color_blend);
 }
 
 void TBSkin::PaintElementImage(const TBRect &dst_rect, TBSkinElement *element)
@@ -602,6 +622,7 @@ TBSkinElement::TBSkinElement()
 	, flip_x(0), flip_y(0), opacity(1.f)
 	, text_color(0, 0, 0, 0)
 	, bg_color(0, 0, 0, 0)
+	, bg_color_blend(0, 0, 0, 0)
 	, bitmap_dpi(0)
 {
 }

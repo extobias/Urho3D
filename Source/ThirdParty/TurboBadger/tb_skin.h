@@ -205,6 +205,7 @@ public:
 	float opacity;			///< Opacity that should be used for the whole widget (0.f - 1.f).
 	TBColor text_color;		///< Color of the text in the widget.
 	TBColor bg_color;		///< Color of the background in the widget.
+	TBColor bg_color_blend; ///< Color of the background in the widget.
 	int16 bitmap_dpi;		///< The DPI of the bitmap that was loaded.
 	TBValue tag;			///< This value is free to use for anything. It's not used internally.
 
@@ -315,6 +316,8 @@ public:
 		Returns nullptr if there's no match. */
 	TBSkinElement *GetSkinElement(const TBID &skin_id) const;
 
+	bool AddSkinElement(const TBID &skin_id, TBSkinElement *element);
+
 	/** Get the skin element with the given id and state.
 		This is like calling GetSkinElement and also following any strong overrides that
 		match the current state (if any). See details about strong overrides in PaintSkin.
@@ -374,6 +377,9 @@ public:
 
 	/** Paint a filled rectangle with the given color. */
 	void PaintRectFill(const TBRect &dst_rect, const TBColor &color);
+
+	/** Paint a filled rectangle with the given color and a blend color. */
+	void PaintRectFillBlend(const TBRect &dst_rect, const TBColor &color, const TBColor &color_blend);
 
 #ifdef TB_RUNTIME_DEBUG_INFO
 	/** Render the skin bitmaps on screen, to analyze fragment positioning. */

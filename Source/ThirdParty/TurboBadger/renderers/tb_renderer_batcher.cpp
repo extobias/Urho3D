@@ -189,6 +189,21 @@ void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &
     }
 }
 
+void TBRendererBatcher::DrawBitmapColoredBlend(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, const TBColor &color_blend, TBBitmapFragment *bitmap_fragment)
+{
+    if (!bitmap_fragment)
+        return;
+
+    if (TBBitmap *bitmap = bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME))
+    {
+        uint32 a = (color.a * m_opacity) / 255;
+        uint32 a_blend = (color_blend.a * m_opacity) / 255;
+        AddBlendQuadInternal(dst_rect.Offset(m_translation_x, m_translation_y),
+                        src_rect.Offset(bitmap_fragment->m_rect.x, bitmap_fragment->m_rect.y),
+                        VER_COL(color.r, color.g, color.b, a), VER_COL(color_blend.r, color_blend.g, color_blend.b, a_blend), bitmap, bitmap_fragment);
+    }
+}
+
 void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, TBBitmap *bitmap)
 {
     uint32 a = (color.a * m_opacity) / 255;
@@ -286,6 +301,94 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
     ver[4].u = m_uu;
     ver[4].v = m_v;
     ver[4].col = color;
+
+    // Update fragments batch id (See FlushBitmapFragment)
+    if (fragment)
+        fragment->m_batch_id = batch.batch_id;
+}
+
+void TBRendererBatcher::AddBlendQuadInternal(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, uint32 color_blend, TBBitmap *bitmap, TBBitmapFragment *fragment)
+{
+//    TBDebugPrint("TBRendererBatcher: batch.bitmap <%p> bitmap <%p>\n", batch.bitmap, bitmap);
+
+    if (batch.bitmap != bitmap)
+    {
+        batch.Flush(this);
+        batch.bitmap = bitmap;
+    }
+    batch.fragment = fragment;
+
+//#if defined(URHO3D_OPENGL) || defined(URHO3D_D3D11) || defined(__linux__)
+#if defined(TB_RENDERER_GL)
+    float uvOffset = 0.0f;
+#else
+    float uvOffset = 0.5f;
+#endif
+
+    const int bitmap_w = bitmap->Width();
+    const int bitmap_h = bitmap->Height();
+    m_u = (float) (src_rect.x + uvOffset) / bitmap_w;
+    m_v = (float) (src_rect.y + uvOffset) / bitmap_h;
+    m_uu = (float) (src_rect.x + uvOffset + src_rect.w) / bitmap_w;
+    m_vv = (float) (src_rect.y + uvOffset + src_rect.h) / bitmap_h;
+
+// 	TBDebugPrint("TBRendererBatcher: bitmap w,h <%u,%u>\n", bitmap_w, bitmap_h);
+// 	TBDebugPrint("TBRendererBatcher: src_rect x,y,w,h <%u,%u,%u,%u>\n", src_rect.x, src_rect.y, src_rect.w, src_rect.h);
+// 	TBDebugPrint("TBRendererBatcher: u,v,uu,vv <%f,%f,%f,%f>\n", m_u, m_v, m_uu, m_vv);
+
+    Vertex *ver = batch.Reserve(this, 6);
+    ver[0].x = (float) dst_rect.x;
+    ver[0].y = (float) (dst_rect.y + dst_rect.h);
+    ver[0].u = m_u;
+    ver[0].v = m_vv;
+    ver[0].col = color;
+// 	ver[1].x = (float) (dst_rect.x + dst_rect.w);
+// 	ver[1].y = (float) (dst_rect.y + dst_rect.h);
+// 	ver[1].u = m_uu;
+// 	ver[1].v = m_vv;
+// 	ver[1].col = color;
+// 	ver[2].x = (float) dst_rect.x;
+// 	ver[2].y = (float) dst_rect.y;
+// 	ver[2].u = m_u;
+// 	ver[2].v = m_v;
+// 	ver[2].col = color;
+    ver[2].x = (float) (dst_rect.x + dst_rect.w);
+    ver[2].y = (float) (dst_rect.y + dst_rect.h);
+    ver[2].u = m_uu;
+    ver[2].v = m_vv;
+    ver[2].col = color_blend;
+
+    ver[1].x = (float) dst_rect.x;
+    ver[1].y = (float) dst_rect.y;
+    ver[1].u = m_u;
+    ver[1].v = m_v;
+    ver[1].col = color;
+
+    ver[3].x = (float) dst_rect.x;
+    ver[3].y = (float) dst_rect.y;
+    ver[3].u = m_u;
+    ver[3].v = m_v;
+    ver[3].col = color;
+// 	ver[4].x = (float) (dst_rect.x + dst_rect.w);
+// 	ver[4].y = (float) (dst_rect.y + dst_rect.h);
+// 	ver[4].u = m_uu;
+// 	ver[4].v = m_vv;
+// 	ver[4].col = color;
+// 	ver[5].x = (float) (dst_rect.x + dst_rect.w);
+// 	ver[5].y = (float) dst_rect.y;
+// 	ver[5].u = m_uu;
+// 	ver[5].v = m_v;
+// 	ver[5].col = color;
+    ver[5].x = (float) (dst_rect.x + dst_rect.w);
+    ver[5].y = (float) (dst_rect.y + dst_rect.h);
+    ver[5].u = m_uu;
+    ver[5].v = m_vv;
+    ver[5].col = color_blend;
+    ver[4].x = (float) (dst_rect.x + dst_rect.w);
+    ver[4].y = (float) dst_rect.y;
+    ver[4].u = m_uu;
+    ver[4].v = m_v;
+    ver[4].col = color_blend;
 
     // Update fragments batch id (See FlushBitmapFragment)
     if (fragment)

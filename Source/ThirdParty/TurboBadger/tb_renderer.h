@@ -92,6 +92,8 @@ public:
 		dst_rect or src_rect can have negative width and height to achieve horizontal and vertical flip. */
 	virtual void DrawBitmapColored(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, TBBitmapFragment *bitmap_fragment) = 0;
 
+	virtual void DrawBitmapColoredBlend(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, const TBColor &color_blend, TBBitmapFragment *bitmap_fragment) = 0;
+
 	/** Draw the src_rect part of the bitmap stretched to dst_rect.
 		The bitmap will be used as a mask for the color.
 		dst_rect or src_rect can have negative width and height to achieve horizontal and vertical flip. */
