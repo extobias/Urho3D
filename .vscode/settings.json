@@ -1,0 +1,24 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.sourceDirectory": "${workspaceFolder}/.",
+    "cmake.generator": "Ninja",
+    "cmake.loggingLevel": "debug",
+    "cmake.buildDirectory": "${workspaceFolder}/build-ninja",
+    "cmake.configureArgs": [
+        "-DCMAKE_MAKE_PROGRAM=C:\\Users\\extobias\\Documents\\devel\\apps\\ninja-win\\ninja.exe"
+    ],
+    "files.associations": {
+        "xiosbase": "cpp",
+        "sdl_windowshaptic_c.h": "c",
+        "sdl_xinput.h": "c",
+        "sdl_windows.h": "c",
+        "sdl_directx.h": "c",
+        "windows.h": "c",
+        "sdl_internal.h": "c",
+        "sdkddkver.h": "c",
+        "sdl_syshaptic.h": "c"
+    },
+    "[Log]": {
+        "editor.wordWrap": "on"
+    }
+}

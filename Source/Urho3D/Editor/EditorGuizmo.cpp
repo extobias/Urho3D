@@ -17,6 +17,7 @@
 #include "../UI/UI.h"
 #include "../Urho2D/StaticSprite2D.h"
 #include "../Urho2D/CollisionPolygon2D.h"
+#include "../Core/CoreEvents.h"
 
 #include "imgui.h"
 #include "ImGuizmo.h"
@@ -462,11 +463,13 @@ EditorGuizmo::EditorGuizmo(Context* context) :
     selection_(nullptr),
     brush_(nullptr),
     clicked_(false),
-    editPointHover_(false)
+    editPointHover_(false),
+    onHover_(false)
 {
     SetDragDropMode(DD_DISABLED);
 
 //    SubscribeToEvent(E_EDITOR_NODE_SELECTED, URHO3D_HANDLER(EditorGuizmo, HandleNodeSelected));
+    SubscribeToEvent(E_BEGINFRAME, URHO3D_HANDLER(EditorGuizmo, HandleBeginFrame));
 
     SubscribeToEvent(E_MOUSEMOVE, URHO3D_HANDLER(EditorGuizmo, HandleMouseMove));
 }
@@ -522,11 +525,10 @@ void EditorGuizmo::Render(float timeStep)
     // gridMatrix.SetRotation(gridRotation.RotationMatrix());
 //    gridMatrix.SetTranslation(Vector3(0.0f, 0.0, -1.0f));
 
-    float gridSize = 10.0f;
+    // float gridSize = 10.0f;
     // ImGuizmo::DrawGrid(&view.m00_, &projection.m00_, &gridMatrix.m00_, gridSize);
 
-    //  || !selection_->GetSelectedNodes().Size()
-     selection_->Render();
+    selection_->Render();
 
     if (currentEditMode_ == SELECT_OBJECT)
     {
@@ -534,9 +536,12 @@ void EditorGuizmo::Render(float timeStep)
         {
             ImGuizmo::Manipulate(&view.m00_, &projection.m00_, (ImGuizmo::OPERATION)currentOperation_, (ImGuizmo::MODE)currentMode_, &transform.m00_, &delta.m00_);
 
-            // URHO3D_LOGERRORF("delta translation <%s>", delta.Transpose().Translation().ToString().CString());
             selection_->SetTransform(Matrix3x4(transform.Transpose()));
-            selection_->SetDelta(delta.Transpose(), currentOperation_);
+
+            URHO3D_LOGERRORF("EditorGuizmo::SetDelta: scale <%s> hover <%i>", delta.Transpose().ToString().CString(), onHover_);
+
+            if (currentOperation_ != ImGuizmo::SCALE || onHover_) 
+                selection_->SetDelta(delta.Transpose(), currentOperation_);
         }
     }
     else if (currentEditMode_ == SELECT_MESH_VERTEX)
@@ -644,7 +649,7 @@ void EditorGuizmo::OnClickEnd(const IntVector2& position, const IntVector2& scre
 void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenPosition, MouseButtonFlags buttons, QualifierFlags qualifiers, Cursor* cursor)
 {
     ImGuiElement::OnHover(position, screenPosition, buttons, qualifiers, cursor);
-
+    
 //    if (clicked_)
 //    {
 //        Renderer* renderer = GetSubsystem<Renderer>();
@@ -699,6 +704,11 @@ void EditorGuizmo::OnHover(const IntVector2& position, const IntVector2& screenP
 //             }
 //         }
 //     }
+}
+
+void EditorGuizmo::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
+{
+    onHover_ = false;
 }
 
 void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
@@ -758,6 +768,8 @@ void EditorGuizmo::HandleMouseMove(StringHash eventType, VariantMap& eventData)
             }
         }
     }
+
+    onHover_ = true;
 }
 
 void EditorGuizmo::SetScene(Scene* scene)

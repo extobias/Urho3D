@@ -42,6 +42,8 @@ public:
 
     void SetCameraNode(Node* node) { cameraNode_ = node; }
 
+    void HandleBeginFrame(StringHash eventType, VariantMap& eventData);
+
     void HandleMouseMove(StringHash eventType, VariantMap& eventData);
 
     void SetScene(Scene* scene);
@@ -96,6 +98,8 @@ private:
     IntVector2 clickStart_;
 
     bool clicked_;
+
+    bool onHover_;
 
     bool editPointHover_;
 };

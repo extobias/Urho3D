@@ -158,6 +158,12 @@ void EditorWindow::MoveCamera(float timeStep)
             pitch_ += (float)mouseSensitivity * mouseMove.y_;
             pitch_ = Clamp(pitch_, -90.0f, 90.0f);
 
+            if (input->GetKeyDown(KEY_LEFT))
+                yaw_ += (float)mouseSensitivity;
+            if (input->GetKeyDown(KEY_RIGHT))
+                yaw_ -= (float)mouseSensitivity;
+
+
             // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
             cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
         }
