@@ -320,6 +320,7 @@ void EditorWindow::ConfigResources()
     resourcesContainer_.Push(ResourceContainer("Scene", "Scenes", "xml"));
     resourcesContainer_.Push(ResourceContainer("ParticleEffect2D", "Urho2D", "pex"));
     resourcesContainer_.Push(ResourceContainer("AnimationSet2D", "Urho2D", "scml"));
+    resourcesContainer_.Push(ResourceContainer("ParticleEffect", "Particle", "xml"));
     
     //resourcePickers.Push(ResourcePicker("Model", "*.mdl", ACTION_PICK));
     //resourcePickers.Push(ResourcePicker("Material", materialFilters, ACTION_PICK | ACTION_OPEN | ACTION_EDIT));
@@ -1454,13 +1455,10 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
         ResourceRef resRef = value.GetResourceRef();
         ResourceCache* cache = GetSubsystem<ResourceCache>();
 
-        if (resRef.type_ == StringHash("ParticleEffect"))
-        {
-            ImGui::SetNextItemWidth(halfWidth);
-            // ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
-            // EditParticleEmitter(emitter);
-        }
-        if (resRef.type_ == StringHash("ParticleEffect2D") || resRef.type_ == StringHash("Model") || resRef.type_ == StringHash("Material") || resRef.type_ == StringHash("XMLFile") || resRef.type_ == StringHash("AnimationSet2D") || resRef.type_ == StringHash("Animation"))
+        if (resRef.type_ == StringHash("ParticleEffect2D") || resRef.type_ == StringHash("Model") || 
+            resRef.type_ == StringHash("Material") || resRef.type_ == StringHash("XMLFile") || 
+            resRef.type_ == StringHash("AnimationSet2D") || resRef.type_ == StringHash("Animation") ||
+            resRef.type_ == StringHash("ParticleEffect"))
         {
             ImGui::SetNextItemWidth(halfWidth);
             ResourceContainer rc;
@@ -1479,6 +1477,13 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
             {
                 // ParticleEmitter2D* emitter = dynamic_cast<ParticleEmitter2D*>(c);
                 // EditParticleEmitter2D(emitter);
+            }
+
+            if (resRef.type_ == StringHash("ParticleEffect"))
+            {
+                // ImGui::SetNextItemWidth(halfWidth);
+                ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
+                EditParticleEmitter(emitter);
             }
         }
         else if (resRef.type_ == StringHash("Sprite2D"))
@@ -1795,6 +1800,9 @@ void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
 
     ParticleEffect* effect = emitter->GetEffect();
 
+    if (!effect)
+        return;
+
     float constantForce[3];
     Vector3 econstantForce = effect->GetConstantForce();
     memcpy(constantForce, econstantForce.Data(), sizeof(constantForce));
@@ -1902,7 +1910,7 @@ void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
     ImGui::Separator(); ImGui::Text("Renderer");
 
     Material* material = effect->GetMaterial();
-    ImGui::Text("Material", material->GetName().CString());
+    ImGui::Text("Material", material ? material->GetName().CString() : "");
 
     bool relative = effect->IsRelative();
     ImGui::Checkbox("Relative Transform", &relative);
