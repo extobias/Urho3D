@@ -220,7 +220,7 @@ private:
 
     EditorMode mode_ { SELECT_OBJECT };
 
-    EditorNavMode navMode_ { NAV_FPS };
+    EditorNavMode navMode_ { NAV_LOOK_AT };
 
     ResourceDir resources_;
 

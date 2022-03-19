@@ -67,7 +67,7 @@ EditorWindow::EditorWindow(Context* context) :
     cameraNode_->SetTemporary(true);
     cameraNode_->SetPosition(Vector3(0.0f, 0.0f, -1.0f));
     Camera* camera = cameraNode_->CreateComponent<Camera>();
-    camera->SetOrthographic(true);
+    // camera->SetOrthographic(true);
     camera->SetFarClip(10000.0f);
     // camera->SetNearClip(0.0f);
 
@@ -1687,61 +1687,62 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
 
         StringVector names = info.metadata_["VectorStructElements"]->GetStringVector();
         unsigned size = 0;
-        if (name == "Animation States" && vv->Size())
-        {
-            static char buf[32] = "";
+        // FIXME this works with animation states
+        // if (name == "Animation States" && vv->Size())
+        // {
+        //     static char buf[32] = "";
             
-            ImGui::NewLine();
-            ImGui::Text("%s", name.CString());
+        //     ImGui::NewLine();
+        //     ImGui::Text("%s", name.CString());
 
-            // ImGui::SetCursorPosX(halfWidth);
-            // ImGui::SetNextItemWidth(halfWidth);
+        //     // ImGui::SetCursorPosX(halfWidth);
+        //     // ImGui::SetNextItemWidth(halfWidth);
             
-            Variant sizev = (*vv).At(0);
-            if (VariantEdit(c, info, names[0], sizev))
-            {
-                (*vv)[0] = sizev;
-                ret = true;
-            }
+        //     Variant sizev = (*vv).At(0);
+        //     if (VariantEdit(c, info, names[0], sizev))
+        //     {
+        //         (*vv)[0] = sizev;
+        //         ret = true;
+        //     }
 
-            size = sizev.GetInt();
-        }
+        //     size = sizev.GetInt();
+        // }
 
-        (*vv).Reserve(size * 6 + 1);
-        for (unsigned i = 1; i < (*vv).Size(); i += 6)
-        {
-            for (unsigned j = 0; j < 6; j++)
-            {
-                ImGui::Text("%s", names[j + 1].CString());
+        // (*vv).Reserve(size * 6 + 1);
+        // for (unsigned i = 1; i < (*vv).Size(); i += 6)
+        // {
+        //     for (unsigned j = 0; j < 6; j++)
+        //     {
+        //         ImGui::Text("%s", names[j + 1].CString());
 
-                Variant value = (*vv).At(i + j);
-                if (VariantEdit(c, info, names[j + 1], value, i + j))
-                {
-                    (*vv)[i + j] = value;
-                    ret = true;
-                }
-            }
+        //         Variant value = (*vv).At(i + j);
+        //         if (VariantEdit(c, info, names[j + 1], value, i + j))
+        //         {
+        //             (*vv)[i + j] = value;
+        //             ret = true;
+        //         }
+        //     }
 
-            ImGui::SetCursorPosX(halfWidth);
-            ImGui::SetNextItemWidth(halfWidth);
-            if(ImGui::Button("Play"))
-            {
-                Variant value = (*vv).At(i);
-                ResourceRef res = value.GetResourceRef();
-                // URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
+        //     ImGui::SetCursorPosX(halfWidth);
+        //     ImGui::SetNextItemWidth(halfWidth);
+        //     if(ImGui::Button("Play"))
+        //     {
+        //         Variant value = (*vv).At(i);
+        //         ResourceRef res = value.GetResourceRef();
+        //         // URHO3D_LOGERRORF("varianvector anim name <%s> type <%s>", res.name_.CString(), value.GetTypeName().CString());
 
-                Animation* anim = cache->GetResource<Animation>(res.name_);
-                AnimatedModel* model = static_cast<AnimatedModel*>(c);
-                if (model)
-                {
-                    AnimationState* state = model->AddAnimationState(anim);
-                    if (animationNames_.Contains(StringHash(res.name_)))
-                        animationNames_.Remove(StringHash(res.name_));
-                    else
-                        animationNames_.Push(StringHash(res.name_));
-                }
-            }
-        }
+        //         Animation* anim = cache->GetResource<Animation>(res.name_);
+        //         AnimatedModel* model = static_cast<AnimatedModel*>(c);
+        //         if (model)
+        //         {
+        //             AnimationState* state = model->AddAnimationState(anim);
+        //             if (animationNames_.Contains(StringHash(res.name_)))
+        //                 animationNames_.Remove(StringHash(res.name_));
+        //             else
+        //                 animationNames_.Push(StringHash(res.name_));
+        //         }
+        //     }
+        // }
         ImGui::PopID();
     }
     break;
