@@ -61,6 +61,7 @@ extern const char* UI_CATEGORY;
 TBRootWidget::TBRootWidget(Context* context, TBCore* core)
     : TBWidget(core)
     , Object(context)
+    , clickDown_(false)
 {
 }
 
@@ -331,6 +332,7 @@ void TBUIElement::LoadWidgets(const String& filename)
     {
         URHO3D_LOGERRORF("TBUIElement::LoadWidgets: cannot load <%s>", filename.CString());
     }
+    root_->clickDown_ = false;
 }
 
 void TBUIElement::LoadResources()
