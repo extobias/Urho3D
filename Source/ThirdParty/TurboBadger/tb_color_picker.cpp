@@ -28,6 +28,7 @@ TBColorPicker::TBColorPicker(TBCore *core)
     , m_to_pixel_factor(0)
     , m_valueColor(1.0)
     , m_setColor(false)
+    , m_hideAlpha(false)
     , m_data(nullptr)
 {
     SetIsFocusable(true);
@@ -352,7 +353,8 @@ void TBColorPicker::UpdateColor()
 
     double rr, gg, bb;
     // FIXME ver pq hay que restar 30
-    hsv2rgb(hue - 30.0, sat, m_valueColor, rr, gg, bb);
+    // hsv2rgb(hue - 30.0, sat, m_valueColor, rr, gg, bb);
+    hsv2rgb(hue, sat, m_valueColor, rr, gg, bb);
     TBColor color(rr * 255, gg * 255, bb * 255);
     m_color.r = color.r;
     m_color.g = color.g;
@@ -451,6 +453,7 @@ void TBColorPicker::OnResized(int old_w, int old_h)
     sliderXRect.y = rectWheel.y + rectWheel.h;
     sliderXRect.w = size;
     m_sliderX.SetRect(sliderXRect);
+    m_sliderX.SetVisibility(m_hideAlpha ? WIDGET_VISIBILITY_INVISIBLE : WIDGET_VISIBILITY_VISIBLE);
     
     UpdateFromColor();
 }

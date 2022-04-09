@@ -34,8 +34,10 @@ public:
 	virtual void OnSkinChanged() override;
 
 	const TBColor& GetColor() const { return m_color; }
-
 	void SetColor(const TBColor& color) { m_color = color; m_setColor = true; }
+
+	void SetHideAlpha(bool hide) { m_hideAlpha = hide; }
+	bool GetHideAlpha() const { return m_hideAlpha; }
 
 	float m_valueColor;
 
@@ -57,6 +59,8 @@ protected:
 	TBColor m_color;
 
 	bool m_setColor;
+
+	bool m_hideAlpha;
 
 	double m_value;
 	

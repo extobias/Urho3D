@@ -148,7 +148,7 @@ void TBWidget::SetRect(const TBRect &rect)
     TBRect old_rect = m_rect;
     m_rect = rect;
 
-   if (old_rect.w != m_rect.w || old_rect.h != m_rect.h)
+    if (old_rect.w != m_rect.w || old_rect.h != m_rect.h)
         OnResized(old_rect.w, old_rect.h);
 
     Invalidate();
@@ -863,11 +863,6 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
             WIDGET_STATE state = core_->focused_widget->GetAutoState();
             if (state & SKIN_STATE_FOCUSED)
                 core_->tb_skin_->PaintSkin(core_->focused_widget->m_rect, TBIDC("generic_focus"), static_cast<SKIN_STATE>(state), context);
-            else
-            {
-//                fprintf(stderr, "widget <%s> state <%u> focused <%u>\n",
-//                        core_->focused_widget->GetID().debug_string.CStr(), state, SKIN_STATE_FOCUSED);
-            }
         }
     }
 

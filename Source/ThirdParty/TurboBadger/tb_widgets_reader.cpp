@@ -340,6 +340,9 @@ void TBColorPicker::OnInflate(const INFLATE_INFO &info)
 	const char *axis = info.node->GetValueString("axis", "x");
 	SetAxis(*axis == 'x' ? AXIS_X : AXIS_Y);
 	SetGravity(*axis == 'x' ? WIDGET_GRAVITY_LEFT_RIGHT : WIDGET_GRAVITY_TOP_BOTTOM);
+
+	// const char *axis = info.node->GetValueString("hide-alpha", "x");
+	SetHideAlpha(info.node->GetValueInt("hide-alpha", GetHideAlpha()) ? true : false);
 	TBWidget::OnInflate(info);
 }
 
