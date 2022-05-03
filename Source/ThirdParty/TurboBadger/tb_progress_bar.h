@@ -47,9 +47,7 @@ public:
 	virtual void OnInflate(const INFLATE_INFO &info) override;
 	virtual bool OnEvent(const TBWidgetEvent &ev) override;
     virtual void OnResized(int old_w, int old_h) override;
-	virtual void OnPaint(const PaintProps &paint_props) override;
 
-	// virtual PreferredSize OnCalculatePreferredContentSize(const SizeConstraints &constraints) override { return m_layout.GetPreferredSize(); }
 	virtual void OnMessageReceived(TBMessage *msg) override;
 
 	void AddColorValue(float percent, const TBColor& color);
@@ -57,6 +55,7 @@ public:
 	void RemoveColorValue(unsigned index);
 
 	void Clear();
+	void ClearProgressBar(unsigned index);
 	
 protected:
 
@@ -68,13 +67,17 @@ protected:
 
 	void UpdateColorBar(unsigned offset, TBColorBar* imgColor);
 
+	bool ClearColorBar(unsigned index);
+
 	TBLayout m_layout;
-	TBContainer m_layoutColor;
+	TBWidget m_layoutColor;
 	TBListAutoDeleteOf<TBSkinElement> m_skinChildren;
 
 	double m_value;
 	double m_lastValue;
 	double m_step;
+
+	unsigned m_clearIndex;
 };
 
 } // namespace tb
