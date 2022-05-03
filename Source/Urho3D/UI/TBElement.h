@@ -25,6 +25,7 @@ static const StringHash E_TBUI_JOYSTICK_REMOVE("TB_UI_JOYSTICK_REMOVE");
 
 static const StringHash P_BUTTON_ID("button_id");
 static const StringHash P_BUTTON_TEXT("button_text");
+static const StringHash P_BUTTON_TARGET("button_target");
 static const StringHash P_CONTROLLER_ID("controller_id");
 static const StringHash P_WIDGET_ID("widget_id");
 static const StringHash P_WIDGET_VALUE("widget_value");

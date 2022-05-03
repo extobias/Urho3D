@@ -94,6 +94,7 @@ bool TBRootWidget::OnEvent(const TBWidgetEvent& ev)
         VariantMap eventData;
         eventData[P_BUTTON_ID] = ev.target->GetID();
         eventData[P_BUTTON_TEXT] = ev.target->GetText().CStr();
+        eventData[P_BUTTON_TARGET] = ev.target->data.GetInt();
         eventData[P_CONTROLLER_ID] = ev.user_data;
 
         TBEditField* edit = TBSafeCast<TBEditField>(ev.target);
@@ -188,7 +189,7 @@ TBBitmap* TBRendererUrho3D::CreateBitmap(int width, int height, uint32* data)
     TBBitmapUrho3D* bitmap = new TBBitmapUrho3D(this);
     bitmap->Init(width, height, data);
 
-    //     FlushBitmap((TBBitmap*)bitmap);
+    // FlushBitmap((TBBitmap*)bitmap);
 
     return (TBBitmap*)bitmap;
 }
@@ -667,8 +668,8 @@ void TBUIElement::HandleRawEvent(StringHash eventType, VariantMap& args)
         int y = event->motion.y;
         if (event->type == SDL_FINGERMOTION)
         {
-            x = event->tfinger.x * GetSize().x_;
-            y = event->tfinger.y * GetSize().y_;
+            x = static_cast<int>(event->tfinger.x * GetSize().x_);
+            y = static_cast<int>(event->tfinger.y * GetSize().y_);
         }
 
         if (!IsInside(IntVector2(x, y), true))
