@@ -12,7 +12,12 @@
 #pragma warning(disable:4702) // unreachable code
 #endif
 
+// FIXME there a difference (about 30 degree) with the
+// generated palette and update color
+
 namespace tb {
+
+static const float M_EPSILON = 0.000001f;
 
 TBColorPicker::TBColorPicker(TBCore *core)
     : TBWidget (core)
@@ -119,10 +124,9 @@ TBColorPicker::~TBColorPicker()
 void TBColorPicker::ToPolar(int x, int y, float& theta, float& r)
 {
     theta = atan2(y, x);
-
     if (theta < 0)
     {
-        theta += (2.0f * M_PI);
+        theta += static_cast<float>(2.0f * M_PI);
     }
     r = sqrt((x*x) + (y*y));
 }
@@ -251,18 +255,13 @@ void TBColorPicker::SetValueDouble(double value)
     if (value == m_value)
         return;
     m_value = value;
-
-    // UpdateHandle(0, 0);
-    // UpdateColor();
-    // FIXME this event fire an update no wanted
-    // TBWidgetEvent ev(EVENT_TYPE_CHANGED);
-    // InvokeEvent(ev);
 }
 
 bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
 {
     if (ev.type == EVENT_TYPE_POINTER_MOVE && core_->captured_widget == &m_handle)
     {
+        // FIXME move to UpdateHandle
         int dx = ev.target_x - core_->pointer_down_widget_x;
         int dy = ev.target_y - core_->pointer_down_widget_y;
 
@@ -274,13 +273,6 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         int x = handleRect.x + dx;
         int y = handleRect.y + dy;
 
-        int hw = handlePS.pref_w;
-        int hh = handlePS.pref_h;
-        int minx = p.x;
-        int maxx = p.x + p.w - hw;
-        int miny = p.y + rectLay.y;
-        int maxy = p.y + rectLay.y + p.h - hh;
-
         int centerx = (p.w / 2) - (handlePS.pref_w / 2);
         int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
 
@@ -289,8 +281,8 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         float t, r;
         ToPolar(a, b, t, r);
         float angle = t * 360.0f / (2 * M_PI);
-
         float rmax = (p.w / 2) - (handlePS.pref_w / 2); 
+
         if (r < rmax)
         {
             UpdateHandle(x, y);
@@ -336,25 +328,28 @@ void TBColorPicker::UpdateColor()
     TBRect p = m_colorWheel.GetRect();
     TBRect handleRect = m_handle.GetRect();
     
-    int x = handleRect.x;
-    int y = handleRect.y;
+    int x = handleRect.x + (handlePS.pref_w / 2);
+    int y = handleRect.y + (handlePS.pref_h / 2);
 
-    int centerx = (p.w / 2) - (handlePS.pref_w / 2);
-    int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
+    // int centerx = (p.w / 2) - (handlePS.pref_w / 2);
+    // int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
+    int centerx = (p.w / 2);
+    int centery = (p.h / 2) + rectLay.y;
 
     int a = x - centerx;
     int b = centery - y;
     float t, r;
 
+    // t radians
     ToPolar(a, b, t, r);
 
     float hue = t * 360.0f / (2 * M_PI);
-    float sat = r / ((p.w) / 2);
+    // float sat = r / ((p.w / 2) - (handlePS.pref_w / 2));
+    float sat = r / (p.w / 2);
 
     double rr, gg, bb;
-    // FIXME ver pq hay que restar 30
-    // hsv2rgb(hue - 30.0, sat, m_valueColor, rr, gg, bb);
     hsv2rgb(hue, sat, m_valueColor, rr, gg, bb);
+
     TBColor color(rr * 255, gg * 255, bb * 255);
     m_color.r = color.r;
     m_color.g = color.g;
@@ -374,7 +369,6 @@ void TBColorPicker::UpdateValueColor()
 
     hsv2rgb(h, s, v, rr, gg, bb);
     TBColor color(rr * 255, gg * 255, bb * 255);
-    // m_color = color;
     m_color.r = color.r;
     m_color.g = color.g;
     m_color.b = color.b;
@@ -395,17 +389,16 @@ void TBColorPicker::UpdateFromColor()
     m_valueColor = v;
     TBRect p = m_colorWheel.GetRect();
 
-    // FIXME pq suma 30?
-    // float t = h * (2 * M_PI) / 360.0f;
-    float t = (h * 360.0f + 30.0f);
+    // h is [0.0, 1.0]
+    float t = (h * 360.0f);
     float r = s * (p.w / 2);
 
     if (t > 360.0f)
         t = t - 360.0f;
 
     int a, b;
-    FromPolar(t * M_PI / 180.0f, r, a, b);
-
+    FromPolar(t * (2 * M_PI) / 360.0f, r, a, b);
+    
     TBRect rectLay = m_layout0.GetRect();
     PreferredSize handlePS = m_handle.GetPreferredSize();
     int centerx = (p.w / 2) - (handlePS.pref_w / 2);
@@ -477,13 +470,12 @@ void TBColorPicker::OnPaint(const PaintProps &paint_props)
     TBRect colorRect(0, 0, rectLay.w, rectLay.y);
     core_->tb_skin_->PaintRectFill(colorRect, m_color);
 
-    int size = 10;
-    PreferredSize handlePS = m_handle.GetPreferredSize();
-    int centerx = (p.w / 2);
-    int centery = (p.h / 2) + rectLay.y;
-
-    TBRect colorRect2(centerx - size / 2, centery - size / 2, size, size);
-    core_->tb_skin_->PaintRectFill(colorRect2, m_color);
+    // int size = 10;
+    // PreferredSize handlePS = m_handle.GetPreferredSize();
+    // int centerx = (p.w / 2);
+    // int centery = (p.h / 2) + rectLay.y;
+    // TBRect colorRect2(centerx - size / 2, centery - size / 2, size, size);
+    // core_->tb_skin_->PaintRectFill(colorRect2, m_color);
 }
 
 void TBColorPicker::OnSkinChanged()
@@ -532,8 +524,6 @@ void TBColorPicker::Bounds(float* min, float* max, bool clipped) const
         *min = *min > 1.0f ? 1.0f : (*min < 0.0f ? 0.0f : *min);
     }
 }
-
-static const float M_EPSILON = 0.000001f;
 
 template <class T>
 bool Equals(T lhs, T rhs) { return lhs + std::numeric_limits<T>::epsilon() >= rhs && lhs - std::numeric_limits<T>::epsilon() <= rhs; }
