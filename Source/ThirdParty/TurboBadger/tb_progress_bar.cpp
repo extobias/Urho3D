@@ -260,21 +260,21 @@ void TBProgressBar::UpdateColorBar(unsigned offset, TBColorBar* imgColor)
     float available_pixels = horizontal ? (float) GetRect().w : (float) GetRect().h;
         
     float percent = static_cast<float>(imgColor->GetValueDouble());
-    float pad = available_pixels * (5.0f / 195.0f);
+    float pad = 5.0f;
     imgRect.x = offset != 0 ? offset : static_cast<int>(pad);
     imgRect.w = static_cast<int>(available_pixels * percent);
-    // padding al primero
-    // int borderPad = static_cast<int>(2.0f * imgRect.x);
-    // if (offset == 0 && borderPad < imgRect.w)
-    //     imgRect.w -= borderPad;
+    if (imgRect.x + imgRect.w > available_pixels)
+    {
+        imgRect.w = static_cast<int>(available_pixels - pad) - imgRect.x;
+    }
 
     TBRect padRect = m_layout.GetPaddingRect();
     TBRect parentRect = GetRect();
     imgRect.h = layoutRect.h;
 
     // TBStr info;
-    // info.SetFormatted("TBProgressBar::UpdateColorBar: imgRect <%i, %i, %i, %i> offset <%i> \n", 
-    //                     imgRect.x, imgRect.y, imgRect.w, imgRect.h, offset);
+    // info.SetFormatted("TBProgressBar::UpdateColorBar: imgRect <%i, %i, %i, %i> offset <%i> ap <%f> \n", 
+    //                     imgRect.x, imgRect.y, imgRect.w, imgRect.h, offset, available_pixels);
     // TBDebugOut(info);
 
     imgColor->SetRect(imgRect);
