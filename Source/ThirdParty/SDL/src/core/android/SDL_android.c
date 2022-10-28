@@ -69,6 +69,20 @@
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(setupAssetManager)(
         JNIEnv *env, jclass cls, jobject assetManager);
 
+// Admob integration
+typedef void (*pfnUserActivityCallback)(int id1, int istat, const char *str, void *param);
+static pfnUserActivityCallback gpUserActivityCallback = NULL;
+static void *gActivityCallbackParam = NULL;
+
+void RegisterUserActivityCallback(pfnUserActivityCallback callback, void *param)
+{
+    gpUserActivityCallback = callback;
+    gActivityCallbackParam = param;
+}
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeUserActivityCallback)(
+        JNIEnv* env, jclass cls, jint id1, jint istat, jstring jstrParam);
+
 /* Java class SDLActivity */
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeSetupJNI)(
         JNIEnv *env, jclass cls);
@@ -465,6 +479,22 @@ extern AAssetManager *g_pManager;
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(setupAssetManager)(JNIEnv* env, jclass cls, jobject assetManager)
 {
     g_pManager = AAssetManager_fromJava(env, assetManager);
+}
+
+JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(nativeUserActivityCallback)(
+    JNIEnv* env, jclass cls, jint id1, jint istat, jstring jstrParam)
+{
+    const char *str = (*env)->GetStringUTFChars(env, jstrParam, 0);
+
+    if ( gpUserActivityCallback )
+    {
+        (*gpUserActivityCallback)( id1, istat, str, gActivityCallbackParam );
+    }
+
+    if ( str )
+    {
+        (*env)->ReleaseStringUTFChars(env, jstrParam, str);
+    }
 }
 
 /* Activity initialization -- called before SDL_main() to initialize JNI bindings */

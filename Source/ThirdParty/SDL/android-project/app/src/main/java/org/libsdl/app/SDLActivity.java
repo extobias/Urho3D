@@ -168,6 +168,21 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         mCurrentNativeState = NativeState.INIT;
     }
 
+    // GooglePlay AdMob integration
+    protected void InitializeApp() {
+    }
+    protected void PauseApp() {
+    }
+    protected void ResumeApp() {
+    }
+    protected void DestroyApp() {
+    }
+    protected boolean onProcessUserCommand(int command, Object param) {
+        return false;
+    }
+
+    public static native void nativeUserActivityCallback(int val, int istat, String file);
+
     // Setup
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -247,6 +262,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         setWindowStyle(false);
 
         getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(this);
+
+        InitializeApp();
 
         // Get filename from "Open with" of another application
         Intent intent = getIntent();
@@ -662,7 +679,10 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
                 break;
             }
             default:
-                if ((context instanceof SDLActivity) && !((SDLActivity) context).onUnhandledMessage(msg.arg1, msg.obj)) {
+                if ((context instanceof SDLActivity) && ((SDLActivity) context).onProcessUserCommand(msg.arg1, msg.obj)) {
+                    Log.e(TAG, "message to user command is " + msg.arg1);
+                }
+                else if ((context instanceof SDLActivity) && !((SDLActivity) context).onUnhandledMessage(msg.arg1, msg.obj)) {
                     Log.e(TAG, "error handling message, command is " + msg.arg1);
                 }
             }
