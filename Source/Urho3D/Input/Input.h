@@ -391,6 +391,8 @@ private:
     void HandleScreenJoystickTouch(StringHash eventType, VariantMap& eventData);
     /// Handle SDL event.
     void HandleSDLEvent(void* sdlEvent);
+    /// Initialize mobile sensors
+    void InitializeSensors();
 
 #ifndef __EMSCRIPTEN__
     /// Set SDL mouse mode relative.

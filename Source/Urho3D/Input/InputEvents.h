@@ -220,6 +220,13 @@ URHO3D_EVENT(E_MOUSEMODECHANGED, MouseModeChanged)
     URHO3D_PARAM(P_MOUSELOCKED, MouseLocked);      // bool
 }
 
+URHO3D_EVENT(E_SENSORUPDATED, SensorUpdated)
+{
+    URHO3D_PARAM(P_SENSORID, SensorID);            // int
+    URHO3D_PARAM(P_SENSORTYPE, SensorType);        // int
+    URHO3D_PARAM(P_SENSORVALUES, SensorValues);    // Vector3
+}
+
 /// Application exit requested.
 URHO3D_EVENT(E_EXITREQUESTED, ExitRequested)
 {

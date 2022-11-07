@@ -379,7 +379,8 @@ Input::Input(Context* context) :
     mouseMoveScaled_(false),
     initialized_(false)
 {
-    context_->RequireSDL(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+    // FIXME
+    context_->RequireSDL(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_SENSOR);
 
     for (int i = 0; i < TOUCHID_MAX; i++)
         availableTouchIDs_.Push(i);
@@ -396,6 +397,8 @@ Input::Input(Context* context) :
 
     // Try to initialize right now, but skip if screen mode is not yet set
     Initialize();
+
+    InitializeSensors();
 }
 
 Input::~Input()
@@ -1555,6 +1558,59 @@ void Input::Initialize()
     URHO3D_LOGINFO("Initialized input");
 }
 
+static const char *GetSensorTypeString(SDL_SensorType type)
+{
+    static char unknown_type[64];
+
+    switch (type)
+    {
+    case SDL_SENSOR_INVALID:
+        return "SDL_SENSOR_INVALID";
+    case SDL_SENSOR_UNKNOWN:
+        return "SDL_SENSOR_UNKNOWN";
+    case SDL_SENSOR_ACCEL:
+        return "SDL_SENSOR_ACCEL";
+    case SDL_SENSOR_GYRO:
+        return "SDL_SENSOR_GYRO";
+    default:
+        SDL_snprintf(unknown_type, sizeof(unknown_type), "UNKNOWN (%d)", type);
+        return unknown_type;
+    }
+}
+
+void Input::InitializeSensors()
+{
+#if defined(__ANDROID__)
+    int i;
+    int num_sensors, num_opened;
+
+    num_sensors = SDL_NumSensors();
+    num_opened = 0;
+
+    SDL_Log("There are %d sensors available\n", num_sensors);
+    for (i = 0; i < num_sensors; ++i) 
+    {
+        if (SDL_SensorGetDeviceType(i) == SDL_SENSOR_GYRO) 
+        {
+            SDL_Log("Sensor %d: %s, type %s, platform type %d device type %d\n",
+                SDL_SensorGetDeviceInstanceID(i),
+                SDL_SensorGetDeviceName(i),
+                GetSensorTypeString(SDL_SensorGetDeviceType(i)),
+                SDL_SensorGetDeviceNonPortableType(i),
+                SDL_SensorGetDeviceType(i));
+
+            SDL_Sensor *sensor = SDL_SensorOpen(i);
+            if (sensor == NULL) {
+                SDL_Log("Couldn't open sensor %d: %s\n", SDL_SensorGetDeviceInstanceID(i), SDL_GetError());
+            } else {
+                ++num_opened;
+            }
+        }
+    }
+    SDL_Log("Opened %d sensors\n", num_opened);
+#endif
+}
+
 void Input::ResetJoysticks()
 {
     joysticks_.Clear();
@@ -1862,9 +1918,6 @@ void Input::UnsuppressMouseMove()
 void Input::HandleSDLEvent(void* sdlEvent)
 {
     SDL_Event& evt = *static_cast<SDL_Event*>(sdlEvent);
-
-//    if (evt.type != SDL_MOUSEMOTION && evt.type != SDL_CONTROLLERAXISMOTION && evt.type != SDL_JOYAXISMOTION)
-//        URHO3D_LOGERRORF("tbuielement.handleeventraw: event <%i>", evt.type);
 
     // While not having input focus, skip key/mouse/touch/joystick events, except for the "click to focus" mechanism
     if (!inputFocus_ && evt.type >= SDL_KEYDOWN && evt.type <= SDL_MULTIGESTURE)
@@ -2393,6 +2446,35 @@ void Input::HandleSDLEvent(void* sdlEvent)
         SendEvent(E_EXITREQUESTED);
         break;
 
+    case SDL_SENSORUPDATE:
+        {
+            using namespace SensorUpdated;
+
+            // FIXME find device type
+            // int num_sensors = SDL_NumSensors();
+            // SDL_SensorType type;
+            // int i;
+            // for (i = 0; i < num_sensors; ++i) 
+            // {
+            //     if (SDL_SensorGetDeviceInstanceID(i) == evt.sensor.which)
+            //     {
+            //         type = SDL_SensorGetDeviceType(i);
+            //         break;
+            //     }
+            // }
+            
+            SDL_Sensor *sensor = SDL_SensorFromInstanceID(evt.sensor.which);
+            if (sensor)
+            {
+                VariantMap& eventData = GetEventDataMap();
+                eventData[P_SENSORID] = evt.sensor.which;
+                eventData[P_SENSORTYPE] = SDL_SensorGetType(sensor);
+                eventData[P_SENSORVALUES] = Vector3(evt.sensor.data[0], evt.sensor.data[1], evt.sensor.data[2]);
+                
+                SendEvent(E_SENSORUPDATED, eventData);
+            }
+        }
+        break;
     default: break;
     }
 }
