@@ -10754,8 +10754,11 @@ ImGuiSettingsHandler* ImGui::FindSettingsHandler(const char* type_name)
     ImGuiContext& g = *GImGui;
     const ImGuiID type_hash = ImHashStr(type_name);
     for (int handler_n = 0; handler_n < g.SettingsHandlers.Size; handler_n++)
-        if (g.SettingsHandlers[handler_n].TypeHash == type_hash)
+    {
+        ImGuiSettingsHandler& s = g.SettingsHandlers[handler_n];
+        if (s.TypeHash == type_hash)
             return &g.SettingsHandlers[handler_n];
+    }
     return NULL;
 }
 
