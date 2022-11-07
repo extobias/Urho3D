@@ -267,7 +267,6 @@ public:
 			// @extobias modification
 			if (rayResult.m_localShapeInfo)
 			{
-
 				m_shapePart = rayResult.m_localShapeInfo->m_shapePart;
 				m_triangleIndex = rayResult.m_localShapeInfo->m_triangleIndex;
 			}
@@ -294,6 +293,9 @@ public:
 		btAlignedObjectArray<btVector3> m_hitPointWorld;
 		btAlignedObjectArray<btScalar> m_hitFractions;
 
+		btAlignedObjectArray<int> m_shapePart;
+		btAlignedObjectArray<int> m_triangleIndex;		
+
 		virtual btScalar addSingleResult(LocalRayResult& rayResult, bool normalInWorldSpace)
 		{
 			m_collisionObject = rayResult.m_collisionObject;
@@ -313,6 +315,18 @@ public:
 			hitPointWorld.setInterpolate3(m_rayFromWorld, m_rayToWorld, rayResult.m_hitFraction);
 			m_hitPointWorld.push_back(hitPointWorld);
 			m_hitFractions.push_back(rayResult.m_hitFraction);
+
+			if (rayResult.m_localShapeInfo)
+			{
+				m_shapePart.push_back(rayResult.m_localShapeInfo->m_shapePart);
+				m_triangleIndex.push_back(rayResult.m_localShapeInfo->m_triangleIndex);
+			}
+			else
+			{
+				m_shapePart.push_back(-1);
+				m_triangleIndex.push_back(-1);
+			}
+
 			return m_closestHitFraction;
 		}
 	};
