@@ -538,8 +538,7 @@ void EditorGuizmo::Render(float timeStep)
 
             if (ImGuizmo::IsUsing())
             {
-                URHO3D_LOGERRORF("delta translation <%s>", delta.Transpose().Rotation().ToString().CString());
-                
+               
                 selection_->SetTransform(Matrix3x4(transform.Transpose()));
 
                 if (currentOperation_ != ImGuizmo::SCALE || onHover_) 
