@@ -28,7 +28,8 @@ bool TBCore::tb_core_init(TBRenderer *renderer)
 
 #ifdef TB_RUNTIME_DEBUG_INFO
     g_tb_debug.settings[TBDebugInfo::LAYOUT_BOUNDS] = true;
-//    g_tb_debug.settings[TBDebugInfo::LAYOUT_PS_DEBUGGING] = true;
+    g_tb_debug.settings[TBDebugInfo::LAYOUT_CLIPPING] = true;
+    g_tb_debug.settings[TBDebugInfo::LAYOUT_PS_DEBUGGING] = true;
 #endif
 
 	return true;
@@ -41,9 +42,9 @@ void TBCore::tb_core_shutdown()
     delete image_manager_;
 #endif
     //FIXME SharedPtr needed here
-    if (TBWidgetsReader::IsValid())
+    if (TBWidgetsReader::IsValid(this))
     {
-        TBWidgetsReader::Clean();
+        TBWidgetsReader::Clean(this);
     }
     delete tb_skin_;
     delete font_manager_;

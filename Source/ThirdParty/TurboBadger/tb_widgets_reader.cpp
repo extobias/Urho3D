@@ -16,6 +16,7 @@
 #include "tb_color_picker.h"
 #include "tb_progress_bar.h"
 #include "image/tb_image_widget.h"
+#include "tb_system.h" // REMOVE
 
 namespace tb {
 
@@ -351,7 +352,9 @@ void TBProgressBar::OnInflate(const INFLATE_INFO &info)
 {
 	const char *axis = info.node->GetValueString("axis", "x");
 	SetAxis(*axis == 'x' ? AXIS_X : AXIS_Y);
-	SetStep(info.node->GetValueFloat("step", 0.02));
+	SetStep(info.node->GetValueFloat("step", 0.02f));
+	SetClearOffset(info.node->GetValueInt("clear-offset", 2));
+	SetClearTime(info.node->GetValueInt("clear-time", 5));
 	TBWidget::OnInflate(info);
 }
 
@@ -466,6 +469,7 @@ void TBWidgetFactory::Register()
 
 // == TBWidgetsReader ===================================
 TBWidgetsReader* TBWidgetsReader::wr_ = nullptr;
+unsigned TBWidgetsReader::wrCounter_ = 0;
 
 TBWidgetsReader *TBWidgetsReader::Create(TBCore* core)
 {
@@ -481,26 +485,38 @@ TBWidgetsReader *TBWidgetsReader::Create(TBCore* core)
     }
     // FIXME this doesn't ensure that core its valid, find another way
     wr_->core_ = core;
+	wrCounter_++;
 
     return wr_;
 }
 
-bool TBWidgetsReader::IsValid()
+bool TBWidgetsReader::IsValid(TBCore* core)
 {
-    return wr_ != nullptr;
+	return core->widgets_reader_ != nullptr;
 }
 
-void TBWidgetsReader::Clean()
+void TBWidgetsReader::Clean(TBCore* core)
 {
-    delete wr_;
-    wr_ = nullptr;
+	wrCounter_--;
+	if (wrCounter_ == 0)
+	{
+		delete core->widgets_reader_;
+		core->widgets_reader_ = nullptr;
+		wr_ = nullptr;
+	}
 }
 
 bool TBWidgetsReader::Init()
 {
 	for (TBWidgetFactory *wf = g_registered_factories; wf; wf = wf->next_registered_wf)
+	{
+		TBStr info2;
+		info2.SetFormatted("TBWidgetsReader::Init: factory  %p\n", wf);
+		TBDebugOut(info2);
+
         if (!AddFactory(wf))
 			return false;
+	}
 	return true;
 }
 
@@ -552,11 +568,27 @@ void TBWidgetsReader::SetIDFromNode(TBID &id, TBNode *node)
 
 bool TBWidgetsReader::CreateWidget(TBWidget *target, TBNode *node)
 {
+	TBWidgetFactory *wc2 = nullptr;
+	unsigned size = 0;
+	for (wc2 = factories.GetFirst(); wc2; wc2 = wc2->GetNext())
+		size++;
+
+	// TBStr info2;
+	// info2.SetFormatted("TBWidgetsReader::CreateWidget: factories size %i\n", size);
+	// TBDebugOut(info2);
+
 	// Find a widget creator from the node name
 	TBWidgetFactory *wc = nullptr;
 	for (wc = factories.GetFirst(); wc; wc = wc->GetNext())
+	{
+		// TBStr info;
+		// info.SetFormatted("TBWidgetsReader::CreateWidget: factory %s widget %s.\n", wc->name, node->GetName());
+		// TBDebugOut(info);
+
 		if (strcmp(node->GetName(), wc->name) == 0)
 			break;
+	}
+
 	if (!wc)
 		return false;
 

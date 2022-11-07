@@ -145,8 +145,8 @@ public:
 	~TBWidgetsReader();
 
     static TBWidgetsReader *Create(TBCore* core);
-    static bool IsValid();
-    static void Clean();
+    static bool IsValid(TBCore* core);
+    static void Clean(TBCore* core);
 
 	/** Add a widget factory. Does not take ownership of the factory.
 		The easiest way to add factories for custom widget types, is using the
@@ -166,6 +166,7 @@ public:
 
 private:
     static TBWidgetsReader* wr_;
+	static unsigned wrCounter_;
 	bool Init();
 	bool CreateWidget(TBWidget *target, TBNode *node);
 	TBLinkListOf<TBWidgetFactory> factories;
