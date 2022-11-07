@@ -480,7 +480,7 @@ bool EditorImport::ImportModel(const String& inName)
 
     rootNode_ = scene_->mRootNode;
 
-    String name = Urho3D::GetFileName(inName);    
+    String name = Urho3D::GetFileName(inName);
     String outFile(name + ".mdl");
     ExportModel(outFile, scene_->mFlags & AI_SCENE_FLAGS_INCOMPLETE);
 

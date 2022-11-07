@@ -56,7 +56,8 @@ EditorWindow::EditorWindow(Context* context) :
     phi_(-90.0f),
     camDistance_(10.0f),
     sceneLoading_(false),
-    fullscreen_(false)
+    fullscreen_(false),
+    importPath_("")
 {
     for (int i = 0; i < 4; i++)
     {
@@ -78,9 +79,19 @@ EditorWindow::EditorWindow(Context* context) :
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(EditorWindow, HandleUpdate));
     
     SubscribeToEvent(E_ASYNCLOADFINISHED, URHO3D_HANDLER(EditorWindow, HandleSceneLoaded));
+
+    InitSettingHandler();
 }
 
-EditorWindow::~EditorWindow() = default;
+EditorWindow::~EditorWindow()
+{
+    guizmo_.Reset();
+
+    ImGui::SetCurrentContext(imguiContext_);
+    ImGui::DestroyContext();
+
+    imguiContext_ = nullptr;
+}
 
 void EditorWindow::RegisterObject(Context* context)
 {
@@ -126,9 +137,9 @@ void EditorWindow::HandleSceneLoaded(StringHash eventType, VariantMap& eventData
 void EditorWindow::MoveCamera(float timeStep)
 {
     // Do not move if the UI has a focused element (the console)
-    // UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
-    // if (focusElement && focusElement->IsVisible())
-    //     return;
+    UIElement* focusElement = GetSubsystem<UI>()->GetFocusElement();
+    if (focusElement && focusElement->IsVisible())
+        return;
 
     if (!cameraNode_)
         return;
@@ -1073,8 +1084,15 @@ void EditorWindow::DrawNodeSelected()
     const ImGuiID id = window->GetID("Import FBX");
     fullscreen_= ImGui::IsPopupOpen(id, ImGuiPopupFlags_None);
 
+    if (!importPath_.Empty() && file_dialog.current_path == "./")
+        file_dialog.current_path = importPath_.CString();
+
     if (file_dialog.showFileDialog("Import FBX", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(800, 450), ".fbx"))
     {
+        String prefix, name, ext;
+        SplitPath(file_dialog.selected_path.c_str(), prefix, name, ext);
+        importPath_ = prefix;
+
         ImportFBX(file_dialog.selected_fn.c_str(), file_dialog.selected_path.c_str());
 
         ResourceCache* cache = GetSubsystem<ResourceCache>();
@@ -1127,6 +1145,11 @@ void EditorWindow::DrawNodeSelected()
                     }
                 }
             }
+
+            // draw component
+            DebugRenderer* debug = scene_->GetComponent<DebugRenderer>();
+            if (debug)
+                c->DrawDebugGeometry(debug, false);
         }
         else
         {
@@ -1894,6 +1917,7 @@ void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
     float emitterSize[3];
     Vector3 eemitterSize = effect->GetEmitterSize();
     memcpy(emitterSize, eemitterSize.Data(), sizeof(emitterSize));
+    ImGui::InputFloat3("Emission Size", emitterSize);
     effect->SetEmitterSize(Vector3(emitterSize));
 
     float emissionRate[2];
@@ -1907,6 +1931,7 @@ void EditorWindow::EditParticleEmitter(ParticleEmitter* emitter)
     int emitterType = effect->GetEmitterType();
     ImGui::Combo("Emitter Type", &emitterType, emitterTypes, IM_ARRAYSIZE(emitterTypes));
     effect->SetEmitterType((EmitterType)emitterType);
+    
 
     ImGui::Separator(); ImGui::Text("Renderer");
 
@@ -2384,6 +2409,69 @@ String EditorWindow::ComboNames(const char** names)
     enumName.Append('\0');
 
     return enumName;
+}
+
+static void* EditorSettingsHandler_ReadOpen(ImGuiContext*, ImGuiSettingsHandler*, const char* name)
+{
+    ImGuiWindowSettings* settings = ImGui::FindOrCreateWindowSettings(name);
+    ImGuiID id = settings->ID;
+    *settings = ImGuiWindowSettings(); // Clear existing if recycling previous entry
+    settings->ID = id;
+    settings->WantApply = true;
+    return (void*)settings;
+}
+
+static void EditorSettingsHandler_ReadLine(ImGuiContext*, ImGuiSettingsHandler* handler, void* entry, const char* line)
+{
+    // ImGuiWindowSettings* settings = (ImGuiWindowSettings*)entry;
+    // int x, y;
+    // int i;
+    // if (sscanf(line, "Pos=%i,%i", &x, &y) == 2)         { settings->Pos = ImVec2ih((short)x, (short)y); }
+    // else if (sscanf(line, "Size=%i,%i", &x, &y) == 2)   { settings->Size = ImVec2ih((short)x, (short)y); }
+    // else if (sscanf(line, "Collapsed=%d", &i) == 1)     { settings->Collapsed = (i != 0); }
+    EditorWindow* ew = reinterpret_cast<EditorWindow*>(handler->UserData);
+    if (ew)
+    {
+        char buf[1024];
+        int s = sscanf(line, "Path=%s", buf);
+        if (s > 0)
+            ew->SetImportPath(buf);
+    }
+}
+
+static void EditorSettingsHandler_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandler* handler, ImGuiTextBuffer* buf)
+{
+    ImGuiContext& g = *ctx;
+
+    char strbuf[256];
+    sprintf(strbuf, "[%s][%s]\n", handler->TypeName, "Import");
+
+    // Write to text buffer
+    buf->reserve(buf->size() + strlen(strbuf)); // ballpark reserve
+    buf->appendf("%s", strbuf);
+
+    EditorWindow* ew = reinterpret_cast<EditorWindow*>(handler->UserData);
+    if (ew)
+    {
+        buf->reserve(buf->size() + ew->GetImportPath().Length() + 1);
+        buf->appendf("Path=%s\n", ew->GetImportPath().CString());
+    }
+    buf->append("\n");
+}
+
+void EditorWindow::InitSettingHandler()
+{
+    ImGuiSettingsHandler ini_handler;
+    ini_handler.TypeName = "UserData";
+    ini_handler.TypeHash = ImHashStr("UserData");
+    // ini_handler.ClearAllFn = WindowSettingsHandler_ClearAll;
+    ini_handler.ReadOpenFn = EditorSettingsHandler_ReadOpen;
+    ini_handler.ReadLineFn = EditorSettingsHandler_ReadLine;
+    // ini_handler.ApplyAllFn = WindowSettingsHandler_ApplyAll;
+    ini_handler.WriteAllFn = EditorSettingsHandler_WriteAll;
+    ini_handler.UserData = this;
+
+    imguiContext_->SettingsHandlers.push_back(ini_handler);
 }
 
 }

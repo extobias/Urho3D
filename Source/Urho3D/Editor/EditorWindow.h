@@ -142,7 +142,10 @@ public:
     void SetCameraEnabled(bool enable);
 
     EditorSelection* GetSelection() const { return selection_; }
-//    String debugText_;
+
+    const String& GetImportPath() const { return importPath_; }
+
+    void SetImportPath(const String& path) { importPath_ = path; }
 
     float plotVars_[4][100];
 
@@ -208,6 +211,8 @@ private:
 
     void AttachCamera();
 
+    void InitSettingHandler();
+
     SharedPtr<Node> cameraNode_;
 
     SharedPtr<EditorSelection> selection_;
@@ -227,6 +232,8 @@ private:
     Vector<ResourceContainer> resourcesContainer_;
 
     Vector<StringHash> animationNames_;
+
+    String importPath_;
 
     float yaw_;
 
