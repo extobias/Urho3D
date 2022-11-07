@@ -38,6 +38,10 @@ public:
 
 	void SetLastValue(double value);
 
+	void SetClearOffset(unsigned clearOffset) { m_clearBarOffset = clearOffset; }
+
+	void SetClearTime(unsigned clearTime) { m_clearTotalTime = clearTime; }
+
 	virtual void SetValueDouble(double value) override;
     virtual double GetValueDouble() override { return m_value; }
 
@@ -78,6 +82,8 @@ protected:
 	double m_step;
 
 	unsigned m_clearIndex;
+	unsigned m_clearBarOffset;
+	unsigned m_clearTotalTime;
 };
 
 } // namespace tb

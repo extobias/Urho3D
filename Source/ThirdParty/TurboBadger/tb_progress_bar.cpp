@@ -3,8 +3,11 @@
 #include "tb_msg.h"
 #include "tb_widget_skin_condition_context.h"
 #include "tb_system.h"
+#include "tb_types.h"
 
 namespace tb {
+
+const uint32 msg_delay = 1000 / 30;
 
 TBColorBar::TBColorBar(TBCore* core)
     : TBWidget (core)
@@ -33,6 +36,8 @@ TBProgressBar::TBProgressBar(TBCore *core)
     , m_lastValue(0.0)
     , m_step(0.02)
     , m_clearIndex(0)
+    , m_clearBarOffset(2)
+    , m_clearTotalTime(5)
 {
     LayoutParams lp1;
     lp1.min_h = 25;
@@ -99,7 +104,7 @@ void TBProgressBar::SetValueDouble(double value)
 		// Start animation
 		if (!GetMessageByID(TBID("pg_update")))
 		{
-			PostMessageDelayed(TBID("pg_update"), nullptr, 1000/30);
+			PostMessageDelayed(TBID("pg_update"), nullptr, msg_delay);
 		}
 	}
 	else
@@ -123,13 +128,6 @@ void TBProgressBar::OnMessageReceived(TBMessage *msg)
 {
     if (msg->message == TBID("pg_clear"))
     {
-        // bool found = false;
-        // TBMessage *msg2 = GetMessageByID(TBID("pg_clear2"));
-        // if (msg2)
-        // {
-        //     found = true;
-        // }
-
         if (!msg->data)
             return;
 
@@ -142,37 +140,17 @@ void TBProgressBar::OnMessageReceived(TBMessage *msg)
             TBMessageData *data = new TBMessageData();
             data->v1.SetInt(index);
 
-            PostMessageDelayed(TBID("pg_clear"), data, 1000/30);
+            PostMessageDelayed(TBID("pg_clear"), data, msg_delay);
         }
         else
         {
+            // if (TBMessage *msg = GetMessageByID(TBID("pg_clear")))
+			    // DeleteMessage(msg);
+
             TBWidgetEvent ev(EVENT_TYPE_CHANGED);
             InvokeEvent(ev);
         }
-
-        // for (TBWidget *child = m_layoutColor.GetFirstChild(); child; child = child->GetNext())
-        // {
-        //     TBRect rect = child->GetRect();
-        //     // offset += childNumber == 0 ? rect.x + rect.w : rect.w;
-        //     // childNumber++;
-        // }
     }
-    // double diff = m_value - m_lastValue;
-    // if (Abs(diff) < 0.001)
-    // {
-    //     m_lastValue = m_value;
-    //     return;
-    // }
-
-    // if (Abs(diff) < m_step)
-    //     m_lastValue += diff;
-    // else
-    //     m_lastValue += (diff < 0.0) ? -m_step : m_step;
-
-    // UpdateBar();
-    // Invalidate();
-	// Keep animation running
-	// PostMessageDelayed(TBID("pg_update"), nullptr, 1000/30);
 }
 
 void TBProgressBar::UpdateBar()
@@ -272,11 +250,6 @@ void TBProgressBar::UpdateColorBar(unsigned offset, TBColorBar* imgColor)
     TBRect parentRect = GetRect();
     imgRect.h = layoutRect.h;
 
-    // TBStr info;
-    // info.SetFormatted("TBProgressBar::UpdateColorBar: imgRect <%i, %i, %i, %i> offset <%i> ap <%f> \n", 
-    //                     imgRect.x, imgRect.y, imgRect.w, imgRect.h, offset, available_pixels);
-    // TBDebugOut(info);
-
     imgColor->SetRect(imgRect);
 
     LayoutParams lp1;
@@ -311,7 +284,15 @@ bool TBProgressBar::ClearColorBar(unsigned index)
         return true;
 
     TBRect rect = child->GetRect();
-    rect.w -= 2;
+    TBRect layRect = m_layoutColor.GetRect();
+    
+    // 30 (de 1/30s) * 10s (tiempo total)
+    int fact = 30 * m_clearTotalTime;
+    unsigned pad = 5;
+    int step = ((layRect.w - pad * 2) + fact - 1) / fact;
+    m_clearBarOffset = MAX(step, 1);
+
+    rect.w -= m_clearBarOffset;
     child->SetRect(rect);
 
     return (rect.w <= 0);
@@ -340,8 +321,7 @@ void TBProgressBar::ClearProgressBar(unsigned index)
         
         TBMessageData *data = new TBMessageData();
         data->v1.SetInt(index);
-        PostMessageDelayed(TBID("pg_clear"), data, 1000/30);
-        // PostMessageDelayed(TBID("pg_clear2"), nullptr, 10000);
+        PostMessageDelayed(TBID("pg_clear"), data, msg_delay);
     }
 }
 
