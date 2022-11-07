@@ -101,8 +101,6 @@ void TBRendererBatcher::BeginPaint(int render_target_w, int render_target_h)
 
     m_screen_rect.Set(0, 0, render_target_w, render_target_h);
     m_clip_rect = m_screen_rect;
-
-// 	TBDebugPrint("BeginPaint x,y,w,h <%u,%u,%u,%u> \n", m_clip_rect.x, m_screen_rect.h - (m_clip_rect.y + m_clip_rect.h), m_clip_rect.w, m_clip_rect.h );
 }
 
 void TBRendererBatcher::EndPaint()
@@ -213,7 +211,6 @@ void TBRendererBatcher::DrawBitmapColored(const TBRect &dst_rect, const TBRect &
 
 void TBRendererBatcher::DrawBitmapTile(const TBRect &dst_rect, TBBitmap *bitmap)
 {
-// 	TBDebugOut("TBRendererBatcher::DrawBitmapTile\n");
     AddQuadInternal(dst_rect.Offset(m_translation_x, m_translation_y),
                     TBRect(0, 0, dst_rect.w, dst_rect.h),
                     VER_COL_OPACITY(m_opacity), bitmap, nullptr);
@@ -221,8 +218,6 @@ void TBRendererBatcher::DrawBitmapTile(const TBRect &dst_rect, TBBitmap *bitmap)
 
 void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, TBBitmap *bitmap, TBBitmapFragment *fragment)
 {
-//    TBDebugPrint("TBRendererBatcher: batch.bitmap <%p> bitmap <%p>\n", batch.bitmap, bitmap);
-
     if (batch.bitmap != bitmap)
     {
         batch.Flush(this);
@@ -244,26 +239,13 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
     m_uu = (float) (src_rect.x + uvOffset + src_rect.w) / bitmap_w;
     m_vv = (float) (src_rect.y + uvOffset + src_rect.h) / bitmap_h;
 
-// 	TBDebugPrint("TBRendererBatcher: bitmap w,h <%u,%u>\n", bitmap_w, bitmap_h);
-// 	TBDebugPrint("TBRendererBatcher: src_rect x,y,w,h <%u,%u,%u,%u>\n", src_rect.x, src_rect.y, src_rect.w, src_rect.h);
-// 	TBDebugPrint("TBRendererBatcher: u,v,uu,vv <%f,%f,%f,%f>\n", m_u, m_v, m_uu, m_vv);
-
     Vertex *ver = batch.Reserve(this, 6);
     ver[0].x = (float) dst_rect.x;
     ver[0].y = (float) (dst_rect.y + dst_rect.h);
     ver[0].u = m_u;
     ver[0].v = m_vv;
     ver[0].col = color;
-// 	ver[1].x = (float) (dst_rect.x + dst_rect.w);
-// 	ver[1].y = (float) (dst_rect.y + dst_rect.h);
-// 	ver[1].u = m_uu;
-// 	ver[1].v = m_vv;
-// 	ver[1].col = color;
-// 	ver[2].x = (float) dst_rect.x;
-// 	ver[2].y = (float) dst_rect.y;
-// 	ver[2].u = m_u;
-// 	ver[2].v = m_v;
-// 	ver[2].col = color;
+
     ver[2].x = (float) (dst_rect.x + dst_rect.w);
     ver[2].y = (float) (dst_rect.y + dst_rect.h);
     ver[2].u = m_uu;
@@ -281,21 +263,13 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
     ver[3].u = m_u;
     ver[3].v = m_v;
     ver[3].col = color;
-// 	ver[4].x = (float) (dst_rect.x + dst_rect.w);
-// 	ver[4].y = (float) (dst_rect.y + dst_rect.h);
-// 	ver[4].u = m_uu;
-// 	ver[4].v = m_vv;
-// 	ver[4].col = color;
-// 	ver[5].x = (float) (dst_rect.x + dst_rect.w);
-// 	ver[5].y = (float) dst_rect.y;
-// 	ver[5].u = m_uu;
-// 	ver[5].v = m_v;
-// 	ver[5].col = color;
+
     ver[5].x = (float) (dst_rect.x + dst_rect.w);
     ver[5].y = (float) (dst_rect.y + dst_rect.h);
     ver[5].u = m_uu;
     ver[5].v = m_vv;
     ver[5].col = color;
+
     ver[4].x = (float) (dst_rect.x + dst_rect.w);
     ver[4].y = (float) dst_rect.y;
     ver[4].u = m_uu;
@@ -309,8 +283,6 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
 
 void TBRendererBatcher::AddBlendQuadInternal(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, uint32 color_blend, TBBitmap *bitmap, TBBitmapFragment *fragment)
 {
-//    TBDebugPrint("TBRendererBatcher: batch.bitmap <%p> bitmap <%p>\n", batch.bitmap, bitmap);
-
     if (batch.bitmap != bitmap)
     {
         batch.Flush(this);
@@ -332,26 +304,12 @@ void TBRendererBatcher::AddBlendQuadInternal(const TBRect &dst_rect, const TBRec
     m_uu = (float) (src_rect.x + uvOffset + src_rect.w) / bitmap_w;
     m_vv = (float) (src_rect.y + uvOffset + src_rect.h) / bitmap_h;
 
-// 	TBDebugPrint("TBRendererBatcher: bitmap w,h <%u,%u>\n", bitmap_w, bitmap_h);
-// 	TBDebugPrint("TBRendererBatcher: src_rect x,y,w,h <%u,%u,%u,%u>\n", src_rect.x, src_rect.y, src_rect.w, src_rect.h);
-// 	TBDebugPrint("TBRendererBatcher: u,v,uu,vv <%f,%f,%f,%f>\n", m_u, m_v, m_uu, m_vv);
-
     Vertex *ver = batch.Reserve(this, 6);
     ver[0].x = (float) dst_rect.x;
     ver[0].y = (float) (dst_rect.y + dst_rect.h);
     ver[0].u = m_u;
     ver[0].v = m_vv;
     ver[0].col = color;
-// 	ver[1].x = (float) (dst_rect.x + dst_rect.w);
-// 	ver[1].y = (float) (dst_rect.y + dst_rect.h);
-// 	ver[1].u = m_uu;
-// 	ver[1].v = m_vv;
-// 	ver[1].col = color;
-// 	ver[2].x = (float) dst_rect.x;
-// 	ver[2].y = (float) dst_rect.y;
-// 	ver[2].u = m_u;
-// 	ver[2].v = m_v;
-// 	ver[2].col = color;
     ver[2].x = (float) (dst_rect.x + dst_rect.w);
     ver[2].y = (float) (dst_rect.y + dst_rect.h);
     ver[2].u = m_uu;
@@ -369,21 +327,13 @@ void TBRendererBatcher::AddBlendQuadInternal(const TBRect &dst_rect, const TBRec
     ver[3].u = m_u;
     ver[3].v = m_v;
     ver[3].col = color;
-// 	ver[4].x = (float) (dst_rect.x + dst_rect.w);
-// 	ver[4].y = (float) (dst_rect.y + dst_rect.h);
-// 	ver[4].u = m_uu;
-// 	ver[4].v = m_vv;
-// 	ver[4].col = color;
-// 	ver[5].x = (float) (dst_rect.x + dst_rect.w);
-// 	ver[5].y = (float) dst_rect.y;
-// 	ver[5].u = m_uu;
-// 	ver[5].v = m_v;
-// 	ver[5].col = color;
+
     ver[5].x = (float) (dst_rect.x + dst_rect.w);
     ver[5].y = (float) (dst_rect.y + dst_rect.h);
     ver[5].u = m_uu;
     ver[5].v = m_vv;
     ver[5].col = color_blend;
+
     ver[4].x = (float) (dst_rect.x + dst_rect.w);
     ver[4].y = (float) dst_rect.y;
     ver[4].u = m_uu;
