@@ -90,9 +90,13 @@ ImGuiElement::ImGuiElement(Context* context)
 }
 
 ImGuiElement::~ImGuiElement()
-{
-    ImGui::SetCurrentContext(imguiContext_);
-    ImGui::DestroyContext();
+{   
+    // FIXME stop using context as flag for memory release
+    if (imguiContext_)
+    {
+        ImGui::SetCurrentContext(imguiContext_);
+        ImGui::DestroyContext();
+    }
 }
 
 void ImGuiElement::SubscribeToEvents()
