@@ -1213,6 +1213,9 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
     // Paint content
     OnPaint(paint_props);
 
+    // restore opacity before children
+    core_->renderer_->SetOpacity(old_opacity);
+
     if (used_element)
         core_->renderer_->Translate(used_element->content_ofs_x, used_element->content_ofs_y);
 
@@ -1244,7 +1247,6 @@ void TBWidget::InvokePaint(const PaintProps &parent_paint_props)
         core_->renderer_->Translate(-used_element->content_ofs_x, -used_element->content_ofs_y);
 
     core_->renderer_->Translate(-trns_x, -trns_y);
-    core_->renderer_->SetOpacity(old_opacity);
 }
 
 bool TBWidget::InvokeEvent(TBWidgetEvent &ev)
