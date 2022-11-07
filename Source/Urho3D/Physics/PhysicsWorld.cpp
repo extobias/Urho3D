@@ -455,6 +455,8 @@ void PhysicsWorld::Raycast(PODVector<PhysicsRaycastResult>& result, const Ray& r
         newResult.normal_ = ToVector3(rayCallback.m_hitNormalWorld[i]);
         newResult.distance_ = (newResult.position_ - ray.origin_).Length();
         newResult.hitFraction_ = rayCallback.m_closestHitFraction;
+        newResult.shapePart_ = rayCallback.m_shapePart[i];
+        newResult.triangleIndex_ = rayCallback.m_triangleIndex[i];
         result.Push(newResult);
     }
 
@@ -482,6 +484,8 @@ void PhysicsWorld::RaycastSingle(PhysicsRaycastResult& result, const Ray& ray, f
         result.distance_ = (result.position_ - ray.origin_).Length();
         result.hitFraction_ = rayCallback.m_closestHitFraction;
         result.body_ = static_cast<RigidBody*>(rayCallback.m_collisionObject->getUserPointer());
+        result.shapePart_ = rayCallback.m_shapePart;
+        result.triangleIndex_ = rayCallback.m_triangleIndex;
     }
     else
     {
