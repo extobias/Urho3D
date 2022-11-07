@@ -123,7 +123,7 @@ TBFontGlyph::TBFontGlyph(const TBID &hash_id, UCS4 cp)
 
 TBFontGlyphCache::TBFontGlyphCache(TBCore* core)
     : core_(core)
-    , m_frag_manager(core)
+    , m_frag_manager(core->renderer_)
 {
 	// Only use one map for the font face. The glyph cache will start forgetting
 	// glyphs that haven't been used for a while if the map gets full.

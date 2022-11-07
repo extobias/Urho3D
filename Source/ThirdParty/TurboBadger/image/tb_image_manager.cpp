@@ -102,7 +102,7 @@ void TBImage::SetImageRep(TBImageRep *image_rep)
 
 TBImageManager::TBImageManager(TBCore *core)
     : core_(core)
-    , m_frag_manager(core)
+    , m_frag_manager(core->renderer_)
 {
     core_->renderer_->AddListener(this);
 }

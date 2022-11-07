@@ -159,8 +159,8 @@ void TBSpaceAllocator::FreeSpace(Space *space)
 
 // == TBBitmapFragmentMap ===================================================================================
 
-TBBitmapFragmentMap::TBBitmapFragmentMap(TBCore* core)
-    : core_(core)
+TBBitmapFragmentMap::TBBitmapFragmentMap(TBRenderer* renderer)
+    : renderer_(renderer)
     , m_bitmap_w(0)
 	, m_bitmap_h(0)
 	, m_bitmap_data(nullptr)
@@ -379,7 +379,8 @@ bool TBBitmapFragmentMap::ValidateBitmap()
 		if (m_bitmap)
 			m_bitmap->SetData(m_bitmap_data);
 		else
-            m_bitmap = core_->renderer_->CreateBitmap(m_bitmap_w, m_bitmap_h, m_bitmap_data);
+            // m_bitmap = core_->renderer_->CreateBitmap(m_bitmap_w, m_bitmap_h, m_bitmap_data);
+			m_bitmap = renderer_->CreateBitmap(m_bitmap_w, m_bitmap_h, m_bitmap_data);
 		m_need_update = false;
 	}
 	return m_bitmap ? true : false;
@@ -394,8 +395,8 @@ void TBBitmapFragmentMap::DeleteBitmap()
 
 // == TBBitmapFragmentManager =============================================================================
 
-TBBitmapFragmentManager::TBBitmapFragmentManager(TBCore* core)
-    : core_(core)
+TBBitmapFragmentManager::TBBitmapFragmentManager(TBRenderer* renderer)
+    : renderer_(renderer)
     , m_num_maps_limit(0)
 	, m_add_border(false)
 	, m_default_map_w(512)
@@ -415,7 +416,12 @@ TBBitmapFragment *TBBitmapFragmentManager::GetFragmentFromFile(const char *filen
 	// If we already have a fragment for this filename, return that
 	TBBitmapFragment *frag = m_fragments.Get(id);
 	if (frag)
+	{
+		TBStr info;
+		info.SetFormatted("Fragment name %s already loaded!\n", filename);
+		TBDebugOut(info);
 		return frag;
+	}
 
 	// Load the file
 	TBImageLoader *img = TBImageLoader::CreateFromFile(filename);
@@ -457,7 +463,7 @@ TBBitmapFragment *TBBitmapFragmentManager::CreateNewFragment(const TBID &id, boo
 			po2w = TBGetNearestPowerOfTwo(data_w);
 			po2h = TBGetNearestPowerOfTwo(data_h);
 		}
-        TBBitmapFragmentMap *fm = new TBBitmapFragmentMap(core_);
+        TBBitmapFragmentMap *fm = new TBBitmapFragmentMap(renderer_);
 		if (fm && fm->Init(po2w, po2h))
 		{
 			m_fragment_maps.Add(fm);
@@ -480,7 +486,7 @@ void TBBitmapFragmentManager::FreeFragment(TBBitmapFragment *frag)
 {
 	if (frag)
 	{
-        core_->renderer_->FlushBitmapFragment(frag);
+		renderer_->FlushBitmapFragment(frag);
 
 		TBBitmapFragmentMap *map = frag->m_map;
 		frag->m_map->FreeFragmentSpace(frag);
@@ -551,7 +557,8 @@ void TBBitmapFragmentManager::Debug()
 	{
 		TBBitmapFragmentMap *fm = m_fragment_maps[i];
 		if (TBBitmap *bitmap = fm->GetBitmap())
-            core_->renderer_->DrawBitmap(TBRect(x, 0, fm->m_bitmap_w, fm->m_bitmap_h), TBRect(0, 0, fm->m_bitmap_w, fm->m_bitmap_h), bitmap);
+            // core_->renderer_->DrawBitmap(TBRect(x, 0, fm->m_bitmap_w, fm->m_bitmap_h), TBRect(0, 0, fm->m_bitmap_w, fm->m_bitmap_h), bitmap);
+			renderer_->DrawBitmap(TBRect(x, 0, fm->m_bitmap_w, fm->m_bitmap_h), TBRect(0, 0, fm->m_bitmap_w, fm->m_bitmap_h), bitmap);
 		x += fm->m_bitmap_w + 5;
 	}
 }

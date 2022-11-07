@@ -389,17 +389,19 @@ public:
 #endif
 
 	/** Get the fragment manager. */
-	TBBitmapFragmentManager *GetFragmentManager() { return &m_frag_manager; }
+	TBBitmapFragmentManager *GetFragmentManager();
 
 	// Implementing TBRendererListener
 	virtual void OnContextLost();
 	virtual void OnContextRestored();
 private:
+	static unsigned m_frag_manager_count;
+	static TBBitmapFragmentManager* m_frag_manager; ///< Fragment manager
+
     TBCore* core_;
 	friend class TBSkinElement;
 	TBSkinListener *m_listener;
 	TBHashTableAutoDeleteOf<TBSkinElement> m_elements;	///< All skin elements for this skin.
-	TBBitmapFragmentManager m_frag_manager;				///< Fragment manager
 	TBDimensionConverter m_dim_conv;					///< Dimension converter
 	TBColor m_default_text_color;						///< Default text color for all skin elements
 	TBBitmapFragment *m_color_frag;						///< Used for painting single color.

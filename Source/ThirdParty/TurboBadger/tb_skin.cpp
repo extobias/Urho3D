@@ -24,6 +24,10 @@ namespace tb {
 	return state;
 }*/
 
+
+unsigned TBSkin::m_frag_manager_count = 0;
+TBBitmapFragmentManager* TBSkin::m_frag_manager = nullptr;
+
 SKIN_STATE StringToState(const char *state_str)
 {
 	SKIN_STATE state = SKIN_STATE_NONE;
@@ -114,7 +118,6 @@ bool TBSkinCondition::GetCondition(TBSkinConditionContext &context) const
 
 TBSkin::TBSkin(TBCore* core)
     : core_(core)
-    , m_frag_manager(core)
     , m_listener(nullptr)
 	, m_color_frag(nullptr)
 	, m_default_disabled_opacity(0.3f)
@@ -122,9 +125,32 @@ TBSkin::TBSkin(TBCore* core)
 	, m_default_spacing(0)
 {
     core_->renderer_->AddListener(this);
+	
+	m_frag_manager_count++;
+}
 
-	// Avoid filtering artifacts at edges when we draw fragments stretched.
-	m_frag_manager.SetAddBorder(true);
+TBSkin::~TBSkin()
+{
+	// FIXME
+    core_->renderer_->RemoveListener(this);
+
+	m_frag_manager_count--;
+	if (m_frag_manager_count == 0)
+	{
+		delete m_frag_manager;
+		m_frag_manager = nullptr;
+	}
+}
+
+TBBitmapFragmentManager *TBSkin::GetFragmentManager()
+{ 
+	if (!m_frag_manager)
+	{
+		m_frag_manager = new TBBitmapFragmentManager(core_->renderer_);
+		// Avoid filtering artifacts at edges when we draw fragments stretched.
+		m_frag_manager->SetAddBorder(true);
+	}
+	return m_frag_manager; 
 }
 
 bool TBSkin::Load(const char *skin_file, const char *override_skin_file)
@@ -232,8 +258,10 @@ void TBSkin::UnloadBitmaps()
 	while (TBSkinElement *element = it.GetNextContent())
 		element->bitmap = nullptr;
 
-	// Clear all fragments and bitmaps.
-	m_frag_manager.Clear();
+	// FIXME Clear all fragments and bitmaps.
+	// extobias: only frags for this skin
+	// GetFragmentManager()->Clear();
+
 	m_color_frag = nullptr;
 }
 
@@ -243,11 +271,11 @@ bool TBSkin::ReloadBitmaps()
 	bool success = ReloadBitmapsInternal();
 	// Create all bitmaps for the bitmap fragment maps
 	if (success)
-		success = m_frag_manager.ValidateBitmaps();
+		success = GetFragmentManager()->ValidateBitmaps();
 
 #ifdef TB_RUNTIME_DEBUG_INFO
 	TBStr info;
-	info.SetFormatted("Skin loaded using %d bitmaps.\n", m_frag_manager.GetNumMaps());
+	info.SetFormatted("Skin loaded using %d bitmaps.\n", GetFragmentManager()->GetNumMaps());
 	TBDebugOut(info);
 #endif
 	return success;
@@ -273,7 +301,7 @@ bool TBSkin::ReloadBitmapsInternal()
 			if (m_dim_conv.NeedConversion())
 			{
 				m_dim_conv.GetDstDPIFilename(element->bitmap_file, &filename_dst_DPI);
-				element->bitmap = m_frag_manager.GetFragmentFromFile(filename_dst_DPI.GetData(), dedicated_map);
+				element->bitmap = GetFragmentManager()->GetFragmentFromFile(filename_dst_DPI.GetData(), dedicated_map);
 				if (element->bitmap)
 					bitmap_dpi = m_dim_conv.GetDstDPI();
 			}
@@ -281,7 +309,7 @@ bool TBSkin::ReloadBitmapsInternal()
 
 			// If we still have no bitmap fragment, load from default file.
 			if (!element->bitmap)
-				element->bitmap = m_frag_manager.GetFragmentFromFile(element->bitmap_file, dedicated_map);
+				element->bitmap = GetFragmentManager()->GetFragmentFromFile(element->bitmap_file, dedicated_map);
 
 			if (!element->bitmap)
 				success = false;
@@ -295,14 +323,14 @@ bool TBSkin::ReloadBitmapsInternal()
 	// Create fragment used for color fills. Use 2x2px and inset source rect to center 0x0
 	// to avoid filtering artifacts.
 	uint32 data[4] = { 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff };
-	m_color_frag = m_frag_manager.CreateNewFragment(TBID((uint32)0), false, 2, 2, 2, data);
-	m_color_frag->m_rect = m_color_frag->m_rect.Shrink(1, 1);
+	// m_color_frag = GetFragmentManager()->CreateNewFragment(TBID((uint32)0), false, 2, 2, 2, data);
+	m_color_frag = GetFragmentManager()->GetFragment(TBID((uint32)0));
+	if (!m_color_frag)
+	{
+		m_color_frag = GetFragmentManager()->CreateNewFragment(TBID((uint32)0), false, 2, 2, 2, data);
+		m_color_frag->m_rect = m_color_frag->m_rect.Shrink(1, 1);
+	}
 	return success;
-}
-
-TBSkin::~TBSkin()
-{
-    core_->renderer_->RemoveListener(this);
 }
 
 TBSkinElement *TBSkin::GetSkinElement(const TBID &skin_id) const
@@ -593,7 +621,7 @@ void TBSkin::PaintElementStretchBox(const TBRect &dst_rect, TBSkinElement *eleme
 #ifdef TB_RUNTIME_DEBUG_INFO
 void TBSkin::Debug()
 {
-	m_frag_manager.Debug();
+	GetFragmentManager()->Debug();
 }
 #endif // TB_RUNTIME_DEBUG_INFO
 
