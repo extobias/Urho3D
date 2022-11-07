@@ -824,15 +824,18 @@ namespace imgui_addons
         {
             #ifdef OSWIN
             // If we are on Windows and current path is relative then get absolute path from dirent structure
-            if(current_dirlist.empty() && pathdir == "./")
+            if(current_dirlist.empty())
             {
-                const wchar_t* absolute_path = dir->wdirp->patt;
-                std::string current_directory = wStringToString(absolute_path);
-                std::replace(current_directory.begin(), current_directory.end(), '\\', '/');
+                if (pathdir == "./")
+                {
+                    const wchar_t* absolute_path = dir->wdirp->patt;
+                    std::string current_directory = wStringToString(absolute_path);
+                    std::replace(current_directory.begin(), current_directory.end(), '\\', '/');
 
-                //Remove trailing "*" returned by ** dir->wdirp->patt **
-                current_directory.pop_back();
-                current_path = current_directory;
+                    //Remove trailing "*" returned by ** dir->wdirp->patt **
+                    current_directory.pop_back();
+                    current_path = current_directory;
+                }
 
                 //Create a vector of each directory in the file path for the filepath bar. Not Necessary for linux as starting directory is "/"
                 parsePathTabs(current_path);

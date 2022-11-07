@@ -33,7 +33,7 @@ namespace imgui_addons
             std::string selected_path;
             std::string ext;    // Store the saved file extension
 
-
+            std::string current_path;
         private:
             struct Info
             {
@@ -108,7 +108,8 @@ namespace imgui_addons
             std::vector<std::string> current_dirlist;
             std::vector<Info> subdirs;
             std::vector<Info> subfiles;
-            std::string current_path, error_msg, error_title, invfile_modal_id, repfile_modal_id;
+            // std::string current_path, error_msg, error_title, invfile_modal_id, repfile_modal_id;
+            std::string error_msg, error_title, invfile_modal_id, repfile_modal_id;
 
             ImGuiTextFilter filter;
             std::string valid_types;
