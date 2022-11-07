@@ -96,9 +96,9 @@ public:
     virtual ~TBRendererUrho3D();
 
     // == TBRenderer ==
-    virtual void BeginPaint(int render_target_w, int render_target_h);
+    // virtual void BeginPaint(int render_target_w, int render_target_h);
 
-    virtual void EndPaint();
+    // virtual void EndPaint();
 
     virtual TBBitmap *CreateBitmap(int width, int height, uint32 *data);
 
@@ -193,6 +193,7 @@ public:
 
     TBRootWidget* GetRoot() { return root_; }
 
+    static TBRendererUrho3D* GetRenderer();
 private:
 
     MODIFIER_KEYS GetModifierKeys();
@@ -209,14 +210,16 @@ private:
 
     TBCore* core_;
 
-    TBRendererUrho3D* renderer_;
+    static TBRendererUrho3D* renderer_;
+    static int rendererInstances_;
 
     HashMap<int, int> mapKey_;
 
     HashMap<int, int> mapQual_;
 
-    // SharedPtr<TBRootWidget> root_;
     TBRootWidget* root_;
+    // renderer element offset
+    unsigned batchOffset_;
 
     int mouse_x = 0;
     int mouse_y = 0;
