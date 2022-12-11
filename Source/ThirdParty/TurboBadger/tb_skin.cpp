@@ -123,6 +123,7 @@ TBSkin::TBSkin(TBCore* core)
 	, m_default_disabled_opacity(0.3f)
 	, m_default_placeholder_opacity(0.2f)
 	, m_default_spacing(0)
+	, m_screenDPI(0)
 {
     core_->renderer_->AddListener(this);
 	
@@ -185,7 +186,7 @@ bool TBSkin::LoadInternal(const char *skin_file)
 			assert(supported_dpi_node->GetValue().IsArray() || supported_dpi_node->GetValue().GetInt() == base_dpi);
 			if (TBValueArray *arr = supported_dpi_node->GetValue().GetArray())
 			{
-				int screen_dpi = TBSystem::GetDPI();
+				int screen_dpi = m_screenDPI ? m_screenDPI : TBSystem::GetDPI();
 				int best_supported_dpi = 0;
 				for (int i = 0; i < arr->GetLength(); i++)
 				{

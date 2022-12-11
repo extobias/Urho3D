@@ -30,6 +30,8 @@ static const StringHash P_CONTROLLER_ID("controller_id");
 static const StringHash P_WIDGET_ID("widget_id");
 static const StringHash P_WIDGET_VALUE("widget_value");
 
+static const StringHash SCREEN_DPI("SCREEN_DPI");
+
 class NavMapping
 {
 public:

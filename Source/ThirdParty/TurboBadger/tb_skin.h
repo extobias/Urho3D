@@ -394,6 +394,8 @@ public:
 	// Implementing TBRendererListener
 	virtual void OnContextLost();
 	virtual void OnContextRestored();
+
+	void SetScreenDPI(int dpi) { m_screenDPI = dpi; }
 private:
 	static unsigned m_frag_manager_count;
 	static TBBitmapFragmentManager* m_frag_manager; ///< Fragment manager
@@ -408,6 +410,7 @@ private:
 	float m_default_disabled_opacity;					///< Disabled opacity
 	float m_default_placeholder_opacity;				///< Placeholder opacity
 	int16 m_default_spacing;							///< Default layout spacing
+	int m_screenDPI;
 	bool LoadInternal(const char *skin_file);
 	bool ReloadBitmapsInternal();
 	void PaintElement(const TBRect &dst_rect, TBSkinElement *element);

@@ -266,6 +266,12 @@ TBUIElement::TBUIElement(Context* context)
     root_->SetAutoFocusState(true);
     root_->SetZ(WIDGET_Z_TOP);
 
+    Variant screenDPI = context->GetGlobalVar(SCREEN_DPI);
+    if (!screenDPI.IsEmpty())
+    {
+        core_->tb_skin_->SetScreenDPI(screenDPI.GetInt());
+    }
+
     CreateKeyMap();
 
     SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(TBUIElement, HandlePostUpdate));
