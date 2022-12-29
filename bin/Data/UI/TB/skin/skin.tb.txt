@@ -452,16 +452,12 @@ elements
 	TBColorWheel
 		bitmap color_wheel.png
 		expand 0
-	TBProgressBar_bg
+	TBProgressBar_fg
 		bitmap yellow_button13.png
-		# background-color #0000ceff
-	TBProgressBar
-		# bitmap bg_tile.png
-		background-color #00ce00ff
-		padding 0
-	TBProgressBar2
-		# bitmap bg_tile.png
-		background-color #ce0000ff
+		type StretchBorder
+		cut 10
+	TBProgressBar_bg
+		background-color #cccccc22
 		padding 0
 
 	TBResizer

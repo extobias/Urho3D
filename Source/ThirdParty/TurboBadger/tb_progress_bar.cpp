@@ -30,7 +30,6 @@ void TBColorBar::SetValueDouble(double value)
 TBProgressBar::TBProgressBar(TBCore *core)
     : TBWidget (core)
     , m_layout(core)
-    // , m_imgColor(core)
     , m_layoutColor(core)
     , m_value(0.0)
     , m_lastValue(0.0)
@@ -39,26 +38,18 @@ TBProgressBar::TBProgressBar(TBCore *core)
     , m_clearBarOffset(2)
     , m_clearTotalTime(5)
 {
-    LayoutParams lp1;
-    lp1.min_h = 25;
-    lp1.max_h = 65;
-    lp1.min_w = 25;
-    lp1.max_w = 200;
-    lp1.pref_h = 45;
-    lp1.pref_w = 200;
-    // SetLayoutParams(lp1);
-    
+    SetSkinBg(TBIDC("TBProgressBar_bg"));
+
     m_layoutColor.SetID(TBID("layout-color"));
-    // m_layoutColor.SetLayoutParams(lp1);
     m_layoutColor.SetZ(WIDGET_Z_TOP);
     AddChild(&m_layoutColor);
-    
+
     m_layout.SetGravity(WIDGET_GRAVITY_ALL);
     m_layout.SetAxis(AXIS_X);
     m_layout.SetLayoutDistribution(LAYOUT_DISTRIBUTION_GRAVITY);
     m_layout.SetLayoutDistributionPosition(LAYOUT_DISTRIBUTION_POSITION_LEFT_TOP);
     m_layout.SetZ(WIDGET_Z_TOP);
-    m_layout.SetSkinBg(TBIDC("TBProgressBar_bg"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
+    m_layout.SetSkinBg(TBIDC("TBProgressBar_fg"), WIDGET_INVOKE_INFO_NO_CALLBACKS);
     AddChild(&m_layout);
 }
 
@@ -238,7 +229,7 @@ void TBProgressBar::UpdateColorBar(unsigned offset, TBColorBar* imgColor)
     float available_pixels = horizontal ? (float) GetRect().w : (float) GetRect().h;
         
     float percent = static_cast<float>(imgColor->GetValueDouble());
-    float pad = 5.0f;
+    float pad = 0.0f;
     imgRect.x = offset != 0 ? offset : static_cast<int>(pad);
     imgRect.w = static_cast<int>(available_pixels * percent);
     if (imgRect.x + imgRect.w > available_pixels)
@@ -246,7 +237,7 @@ void TBProgressBar::UpdateColorBar(unsigned offset, TBColorBar* imgColor)
         imgRect.w = static_cast<int>(available_pixels - pad) - imgRect.x;
     }
 
-    TBRect padRect = m_layout.GetPaddingRect();
+    // TBRect padRect = m_layout.GetPaddingRect();
     TBRect parentRect = GetRect();
     imgRect.h = layoutRect.h;
 
@@ -288,7 +279,7 @@ bool TBProgressBar::ClearColorBar(unsigned index)
     
     // 30 (de 1/30s) * 10s (tiempo total)
     int fact = 30 * m_clearTotalTime;
-    unsigned pad = 5;
+    unsigned pad = 0;
     int step = ((layRect.w - pad * 2) + fact - 1) / fact;
     m_clearBarOffset = MAX(step, 1);
 
