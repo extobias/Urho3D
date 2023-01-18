@@ -504,17 +504,6 @@ void Graphics::AdjustScreenMode(int& newWidth, int& newHeight, ScreenModeParams&
     if (params.monitor_ >= numMonitors || params.monitor_ < 0)
         params.monitor_ = 0; // this monitor is not present, use first monitor
 
-    // Fullscreen or Borderless can not be resizable and cannot be maximized
-    if (params.fullscreen_ || params.borderless_)
-    {
-        params.resizable_ = false;
-        maximize = false;
-    }
-
-    // Borderless cannot be fullscreen, they are mutually exclusive
-    if (params.borderless_)
-        params.fullscreen_ = false;
-
     // On iOS window needs to be resizable to handle orientation changes properly
 #ifdef IOS
     if (!externalWindow_)
