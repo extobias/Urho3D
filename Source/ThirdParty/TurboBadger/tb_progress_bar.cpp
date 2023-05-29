@@ -7,7 +7,7 @@
 
 namespace tb {
 
-const uint32 msg_delay = 1000 / 30;
+const uint32 msg_delay = 1000 / 60;
 
 TBColorBar::TBColorBar(TBCore* core)
     : TBWidget (core)
@@ -34,7 +34,12 @@ TBProgressBar::TBProgressBar(TBCore *core)
     , m_value(0.0)
     , m_lastValue(0.0)
     , m_step(0.02)
-    , m_clearIndex(0)
+    , m_elapsedTime(0.0)
+    , m_lastTime(0.0)
+    , m_totalTime(0.0)
+    , m_wastedTime(0.0)
+    , m_currentTime(0.0)
+    , m_currentStep(0.0)
     , m_clearBarOffset(2)
     , m_clearTotalTime(5)
 {
@@ -131,12 +136,29 @@ void TBProgressBar::OnMessageReceived(TBMessage *msg)
             TBMessageData *data = new TBMessageData();
             data->v1.SetInt(index);
 
-            PostMessageDelayed(TBID("pg_clear"), data, msg_delay);
+            TBRect layRect = m_layoutColor.GetRect();
+            TBSkinElement* skin = m_layout.GetSkinBgElement();
+            
+            double totalTimeMS = m_clearTotalTime * 1000;
+            double msNeedxPx = totalTimeMS / (layRect.w - skin->cut);
+            msNeedxPx = 1.0;
+
+            // TBStr info2;
+        	// info2.SetFormatted("TBProgressBar::OnMessageReceived: total <%lf> elapsed <%lf> width <%i> msNeedxPx <%lf>\n", 
+            //     m_totalTime, m_elapsedTime, (layRect.w - skin->cut), msNeedxPx);
+	        // TBDebugOut(info2);
+
+
+            PostMessageDelayed(TBID("pg_clear"), data, (uint32)msNeedxPx);
         }
         else
         {
             // if (TBMessage *msg = GetMessageByID(TBID("pg_clear")))
 			    // DeleteMessage(msg);
+
+            TBStr info2;
+            info2.SetFormatted("TBProgressBar::ClearColorBar: total <%lf> elapsed  <%lf>\n", m_totalTime, m_elapsedTime);
+            TBDebugOut(info2);
 
             TBWidgetEvent ev(EVENT_TYPE_CHANGED);
             InvokeEvent(ev);
@@ -148,6 +170,10 @@ void TBProgressBar::UpdateBar()
 {
     int offset = 0;
     unsigned childNumber = 0;
+
+    TBSkinElement* skin = m_layout.GetSkinBgElement();
+    offset += m_layoutColor.GetFirstChild() ? 0 : skin->cut;
+
     for (TBWidget *child = m_layoutColor.GetFirstChild(); child; child = child->GetNext())
     {
         UpdateColorBar(offset, (TBColorBar*)child);
@@ -160,6 +186,9 @@ void TBProgressBar::UpdateBar()
 
 bool TBProgressBar::NextOffset(int& offset, unsigned& childNumber)
 {
+    TBSkinElement* skin = m_layout.GetSkinBgElement();
+    offset += m_layoutColor.GetFirstChild() ? 0 : skin->cut;
+
     for (TBWidget *child = m_layoutColor.GetFirstChild(); child; child = child->GetNext())
     {
         TBRect rect = child->GetRect();
@@ -227,6 +256,9 @@ void TBProgressBar::UpdateColorBar(unsigned offset, TBColorBar* imgColor)
 
     bool horizontal = true;
     float available_pixels = horizontal ? (float) GetRect().w : (float) GetRect().h;
+
+    TBSkinElement* skin = m_layout.GetSkinBgElement();
+    available_pixels -= skin->cut;
         
     float percent = static_cast<float>(imgColor->GetValueDouble());
     float pad = 0.0f;
@@ -239,7 +271,9 @@ void TBProgressBar::UpdateColorBar(unsigned offset, TBColorBar* imgColor)
 
     // TBRect padRect = m_layout.GetPaddingRect();
     TBRect parentRect = GetRect();
-    imgRect.h = layoutRect.h;
+    int heightPad = skin->cut ? skin->cut * 2 : 0;
+    imgRect.h = layoutRect.h - heightPad;
+    imgRect.y = skin->cut;
 
     imgColor->SetRect(imgRect);
 
@@ -276,16 +310,41 @@ bool TBProgressBar::ClearColorBar(unsigned index)
 
     TBRect rect = child->GetRect();
     TBRect layRect = m_layoutColor.GetRect();
+
+    double totalTimeMS = m_clearTotalTime * 1000;
+    double msNeedxPx = totalTimeMS / layRect.w;
+    msNeedxPx = 1.0;
     
-    // 30 (de 1/30s) * 10s (tiempo total)
-    int fact = 30 * m_clearTotalTime;
-    unsigned pad = 0;
-    int step = ((layRect.w - pad * 2) + fact - 1) / fact;
-    m_clearBarOffset = MAX(step, 1);
+    double currentTime = TBSystem::GetTimeMS();
+    m_elapsedTime += currentTime - m_currentTime;
+    TBSkinElement* skin = m_layout.GetSkinBgElement();
+    
+    m_currentStep += (currentTime - m_currentTime) * (layRect.w - skin->cut) / totalTimeMS;
+    m_currentTime = currentTime;
 
-    rect.w -= m_clearBarOffset;
-    child->SetRect(rect);
+    // TBStr info2;
+	// info2.SetFormatted("TBProgressBar::ClearColorBar: total <%lf> elapsed  <%lf>\n", m_totalTime, m_elapsedTime);
+	// TBDebugOut(info2);
 
+    // if (m_elapsedTime > msNeedxPx)
+    if (m_currentStep > 1.0)
+    {
+        // m_currentStep -= 1.0;
+        m_totalTime += m_elapsedTime;
+        m_wastedTime += m_elapsedTime - msNeedxPx;
+        m_elapsedTime = 0.0;
+
+        int step = (int)m_currentStep;
+        rect.w -= step;
+        m_currentStep = m_currentStep - step;
+
+        // TBStr info2;
+        // info2.SetFormatted("TBProgressBar::ClearColorBar: total <%lf> elapsed  <%lf> step <%i> remain <%lf>\n", m_totalTime, m_elapsedTime, step, m_currentStep);
+        // TBDebugOut(info2);
+
+        child->SetRect(rect);
+    }
+    
     return (rect.w <= 0);
 }
 
@@ -298,22 +357,42 @@ void TBProgressBar::Clear()
     m_layoutColor.DeleteAllChildren();
 }
 
-void TBProgressBar::ClearProgressBar(unsigned index)
+int TBProgressBar::ClearProgressBar(unsigned index)
 {
-    if (!GetMessageByID(TBID("pg_clear")))
+    if (GetMessageByID(TBID("pg_clear")))
     {
-        int offset = 0;
-        unsigned childNumber = 0;
-        NextOffset(offset, childNumber);
-        m_clearIndex = childNumber;
-
-        if ((index + 1) > childNumber)
-            return;
-        
-        TBMessageData *data = new TBMessageData();
-        data->v1.SetInt(index);
-        PostMessageDelayed(TBID("pg_clear"), data, msg_delay);
+        return 0;
     }
+    int offset = 0;
+    unsigned childNumber = 0;
+    NextOffset(offset, childNumber);
+
+    if ((index + 1) > childNumber)
+        return 0;
+
+    TBRect layRect = m_layoutColor.GetRect();
+    TBSkinElement* skin = m_layout.GetSkinBgElement();
+    
+    double totalTimeMS = m_clearTotalTime * 1000;
+    double msNeedxPx = totalTimeMS / (layRect.w - skin->cut);
+
+    m_currentTime = TBSystem::GetTimeMS();
+    int w = 0;
+    TBWidget* child = m_layoutColor.GetChildFromIndex(index);
+    if (child)
+    {
+        TBRect rect = child->GetRect();
+        // TBStr info2;
+        // info2.SetFormatted("TBProgressBar::ClearProgressBar: width  <%i> total <%i>\n", rect.w, layRect.w);
+        // TBDebugOut(info2);
+        w = int(msNeedxPx * rect.w);
+    }
+    
+    TBMessageData *data = new TBMessageData();
+    data->v1.SetInt(index);
+    PostMessageDelayed(TBID("pg_clear"), data, (uint32)msNeedxPx);
+
+    return w;
 }
 
 }

@@ -59,7 +59,7 @@ public:
 	void RemoveColorValue(unsigned index);
 
 	void Clear();
-	void ClearProgressBar(unsigned index);
+	int ClearProgressBar(unsigned index);
 	
 protected:
 
@@ -80,8 +80,13 @@ protected:
 	double m_value;
 	double m_lastValue;
 	double m_step;
+	double m_elapsedTime;
+	double m_lastTime;
+	double m_totalTime;
+	double m_wastedTime;
+	double m_currentTime;
+	double m_currentStep;
 
-	unsigned m_clearIndex;
 	unsigned m_clearBarOffset;
 	unsigned m_clearTotalTime;
 };
