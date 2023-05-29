@@ -198,6 +198,7 @@ bool TBSkin::LoadInternal(const char *skin_file)
 			}
 		}
 		m_dim_conv.SetDPI(base_dpi, supported_dpi);
+		// m_dim_conv.SetDPI(base_dpi, TBSystem::GetDPI());
 	}
 
 	// Read skin constants
@@ -540,9 +541,14 @@ void TBSkin::PaintElementBGColor(const TBRect &dst_rect, TBSkinElement *element)
 		return;
 	
 	if (element->bg_color_blend == 0)
-		PaintRectFill(dst_rect, element->bg_color);
+	{
+		TBRect rect = dst_rect.Shrink(element->cut, element->cut);
+		PaintRectFill(rect, element->bg_color);
+	}
 	else
+	{
 		PaintRectFillBlend(dst_rect, element->bg_color, element->bg_color_blend);
+	}
 }
 
 void TBSkin::PaintElementImage(const TBRect &dst_rect, TBSkinElement *element)
