@@ -475,6 +475,8 @@ const char* SDL_Android_GetFilesDir()
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 extern AAssetManager *g_pManager;
+extern float g_xdpi;
+extern float g_ydpi;
 
 JNIEXPORT void JNICALL SDL_JAVA_INTERFACE(setupAssetManager)(JNIEnv* env, jclass cls, jobject assetManager)
 {
@@ -1813,6 +1815,9 @@ int Android_JNI_GetDisplayDPI(float *ddpi, float *xdpi, float *ydpi)
     if (ydpi) {
         *ydpi = nativeYdpi;
     }
+
+    g_xdpi = nativeXdpi;
+    g_ydpi = nativeYdpi;
 
     return 0;
 }

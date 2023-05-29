@@ -417,9 +417,7 @@ TBBitmapFragment *TBBitmapFragmentManager::GetFragmentFromFile(const char *filen
 	TBBitmapFragment *frag = m_fragments.Get(id);
 	if (frag)
 	{
-		TBStr info;
-		info.SetFormatted("Fragment name %s already loaded!\n", filename);
-		TBDebugOut(info);
+		TBDebugPrint("Fragment name %s already loaded!\n", filename);
 		return frag;
 	}
 

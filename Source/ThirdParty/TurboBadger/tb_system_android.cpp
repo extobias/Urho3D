@@ -31,7 +31,7 @@ void TBDebugOut(const char *str)
 #endif // TB_RUNTIME_DEBUG_INFO
 
 AAssetManager *g_pManager = NULL;
-// 
+float g_xdpi, g_ydpi;
 void SetAssetManager(AAssetManager *pManager)
 {
 	g_pManager = pManager;
@@ -69,14 +69,15 @@ int TBSystem::GetPixelsPerLine()
 
 int TBSystem::GetDPI()
 {
-    // LOGE("GetDPI: manager <%p>", g_pManager);
 	AConfiguration *config = AConfiguration_new();
 	AConfiguration_fromAssetManager(config, g_pManager);
 	int32_t density = AConfiguration_getDensity(config);
 	AConfiguration_delete(config);
+	TBDebugPrint("GetDPI: manager <%i> dpi <%f, %f>", density, g_xdpi, g_ydpi);
 	if (density == 0 || density == ACONFIGURATION_DENSITY_NONE)
 		return 120;
-	return density;
+    //return density;
+	return (int)g_xdpi;
 }
 
 // == TBFile =====================================
