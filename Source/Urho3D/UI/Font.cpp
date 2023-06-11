@@ -57,7 +57,8 @@ Font::Font(Context* context) :
     absoluteOffset_(IntVector2::ZERO),
     scaledOffset_(Vector2::ZERO),
     fontType_(FONT_NONE),
-    sdfFont_(false)
+    sdfFont_(false),
+    calcSize_(false)
 {
 }
 
@@ -147,7 +148,11 @@ FontFace* Font::GetFace(float pointSize)
     if (fontType_ == FONT_BITMAP)
         pointSize = 0;
     else
-        pointSize = Clamp(pointSize, MIN_POINT_SIZE, MAX_POINT_SIZE);
+    {
+        if (!calcSize_)
+            pointSize = Clamp(pointSize, MIN_POINT_SIZE, MAX_POINT_SIZE);
+    }
+        
 
     // For outline fonts, we return the nearest size in 1/64th increments, as that's what FreeType supports.
     int key = FloatToFixed(pointSize);
@@ -223,6 +228,7 @@ void Font::LoadParameters()
 FontFace* Font::GetFaceFreeType(float pointSize)
 {
     SharedPtr<FontFace> newFace(new FontFaceFreeType(this));
+    newFace->SetCalcSize(calcSize_);
     if (!newFace->Load(&fontData_[0], fontDataSize_, pointSize))
         return nullptr;
 

@@ -35,7 +35,8 @@ namespace Urho3D
 {
 
 FontFace::FontFace(Font* font) :
-    font_(font)
+    font_(font),
+    calcSize_(false)
 {
 }
 

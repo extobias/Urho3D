@@ -92,6 +92,8 @@ public:
     /// Release font faces and recreate them next time when requested. Called when font textures lost or global font properties change.
     void ReleaseFaces();
 
+    void SetCalcSize(bool calc) { calcSize_ = calc; }
+
 private:
     /// Load font glyph offset parameters from an optional XML file. Called internally when loading TrueType fonts.
     void LoadParameters();
@@ -114,6 +116,8 @@ private:
     FontType fontType_;
     /// Signed distance field font flag.
     bool sdfFont_;
+    /// Calculate point size
+    bool calcSize_;
 };
 
 }

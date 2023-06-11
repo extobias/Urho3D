@@ -93,6 +93,8 @@ public:
     /// Return textures.
     const Vector<SharedPtr<Texture2D> >& GetTextures() const { return textures_; }
 
+    void SetCalcSize(bool csize) { calcSize_ = csize; }
+
 protected:
     friend class FontFaceBitmap;
     /// Create a texture for font rendering.
@@ -112,6 +114,8 @@ protected:
     float pointSize_{};
     /// Row height.
     float rowHeight_{};
+    /// Calculate point size
+    bool calcSize_;
 };
 
 }

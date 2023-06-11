@@ -131,7 +131,17 @@ bool FontFaceFreeType::Load(const unsigned char* fontData, unsigned fontDataSize
         URHO3D_LOGERROR("Could not create font face");
         return false;
     }
-    error = FT_Set_Char_Size(face, 0, pointSize * 64, oversampling_ * FONT_DPI, FONT_DPI);
+    if (calcSize_)
+    {
+        float f = float(face->bbox.xMax - face->bbox.xMin) / face->units_per_EM;
+        // URHO3D_LOGERRORF("FontFaceFreeType::Load: pointSize <%f> f <%f>", pointSize, f);
+        error = FT_Set_Pixel_Sizes(face, 0, pointSize / f);
+    }
+    else
+    {
+        error = FT_Set_Char_Size(face, 0, pointSize * 64, oversampling_ * FONT_DPI, FONT_DPI);
+    }
+
     if (error)
     {
         FT_Done_Face(face);
