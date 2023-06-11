@@ -131,7 +131,7 @@ bool FreetypeFontRenderer::Load(FreetypeFace *face, int size)
 	m_face = face;
 	if (FT_New_Size(m_face->m_face, &m_size) ||
 		FT_Activate_Size(m_size) ||
-		FT_Set_Pixel_Sizes(m_face->m_face, 0, size))
+		FT_Set_Char_Size(m_face->m_face, size * 64, 0, TBSystem::GetDPI(), TBSystem::GetDPI()))
 		return false;
 	return true;
 }
