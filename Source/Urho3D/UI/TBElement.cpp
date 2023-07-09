@@ -5,6 +5,7 @@
 #include "../Graphics/Graphics.h"
 #include "../Graphics/GraphicsEvents.h"
 #include "../Graphics/Texture2D.h"
+#include "../Graphics/Material.h"
 #include "../IO/File.h"
 #include "../IO/FileSystem.h"
 #include "../IO/Log.h"
@@ -25,6 +26,7 @@
 #include "tb_system.h"
 #include "tb_widgets.h"
 #include "tb_widgets_reader.h"
+#include "tb_str.h"
 
 #include <SDL/SDL.h>
 
@@ -37,6 +39,7 @@ static const int KEY_QUAL_OFFSET = 0x8000;
  - crear tantas texturas tampoco es buena idea.
  - el teclado tiene que andar en android
 - la solucion es medio chota (en gral)
+// #define VER_COL(r, g, b, a) (((a) << 24) + ((b) << 16) + ((g) << 8) + r)
  */
 
 // Register tbbf font renderer
@@ -251,7 +254,8 @@ int TBUIElement::rendererInstances_ = 0;
 
 /*------------ TBElement ------------*/
 TBUIElement::TBUIElement(Context* context)
-    : UIElement(context)
+    : UIElement(context),
+    customMaterial_(nullptr)
 {
     SetName("TBUIElement");
 
@@ -283,6 +287,9 @@ TBUIElement::TBUIElement(Context* context)
     SubscribeToEvent(E_SDLRAWINPUT, URHO3D_HANDLER(TBUIElement, HandleRawEvent));
 
     SubscribeToEvent(E_SCREENMODE, URHO3D_HANDLER(TBUIElement, HandleScreenMode));
+
+    TBWidgetListener::AddGlobalListener(core_, root_);
+    TBWidgetsAnimationManager::Init(core_);
 }
 
 TBUIElement::~TBUIElement()
@@ -390,7 +397,8 @@ void TBUIElement::LoadResources()
     // Set the default font description for widgets to one of the fonts we just added
     TBFontDescription fd;
     fd.SetID(TBIDC("Kenney"));
-    fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(20));
+    // fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(40));
+    fd.SetSize(12);
     core_->font_manager_->SetDefaultFontDescription(fd);
 
     // Create the font now.
@@ -398,34 +406,73 @@ void TBUIElement::LoadResources()
 
     // Give the root widget a background skin
     // root_->SetSkinBg("background_solid");
-
     TBWidgetsAnimationManager::Init(core_);
 }
 
-void TBUIElement::LoadLanguage(const String& langFile)
+bool TBUIElement::LoadLanguage(const String& langFile)
 {
     if (!core_->tb_lng_->Load(langFile.CString()))
     {
         URHO3D_LOGERRORF("TBUIElement::LoadLanguage: cannot load lang <%s>", langFile.CString());
+        return false;
     }
+    return true;    
+}
+
+bool TBUIElement::LoadSkin(const String& skinFile, const String& overrideSkinFile)
+{
+    // Load the default skin, and override skin that contains the graphics specific to the demo.
+    if (!core_->tb_skin_->Load(skinFile.CString(), overrideSkinFile.Empty() ? nullptr : overrideSkinFile.CString()))
+    {
+        URHO3D_LOGERRORF("cannot load skin");
+        return false;
+    }
+    return true;
+}
+
+bool TBUIElement::LoadFont(const String& fontFile, int fontSize)
+{
+#ifdef TB_FONT_RENDERER_TBBF
+    register_tbbf_font_renderer(core_);
+#endif
+
+#ifdef TB_FONT_RENDERER_FREETYPE
+    register_freetype_font_renderer(core_);
+#endif
+
+    core_->font_manager_->AddFontInfo(fontFile.CString(), "Kenney");
+    
+    TBFontDescription fd;
+    fd.SetID(TBIDC("Kenney"));
+    // fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(40));
+    fd.SetSize(fontSize);
+    core_->font_manager_->SetDefaultFontDescription(fd);
+
+    // Create the font now.
+    TBFontFace* fontFace = core_->font_manager_->CreateFontFace(core_->font_manager_->GetDefaultFontDescription());
+    if (!fontFace)
+        return false;
+
+    return true;
 }
 
 void TBUIElement::Clear() 
 { 
+    SetSize(0, 0);
     GetRenderer()->Clear();
     root_->GetContentRoot()->DeleteAllChildren(); 
 }
 
 void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData, const IntRect& currentScissor)
 {
-    float colorStep = 359.0f / GetRenderer()->GetBatchSize();
-    Color color;
-
     unsigned batchSize = GetRenderer()->GetBatchSize();
-    for (unsigned i = batchOffset_; i < batchSize; i++)
+    for (unsigned i = batchOffset_; i < batchCount_; i++)
     {
         UIBatch& batch = GetRenderer()->GetBatch(i);
         batch.element_ = this;
+        if (customMaterial_)
+            batch.customMaterial_ = customMaterial_;
+        // batch.texture_ = nullptr;
 
         unsigned batchStart = batch.vertexStart_;
         unsigned batchEnd = batch.vertexEnd_;
@@ -442,14 +489,7 @@ void TBUIElement::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vert
         batch.vertexStart_ = begin;
         batch.vertexEnd_ = newSize;
 
-        //        // float* src = &(batch.vertexData_->At(batchStart));
-        //        // PODVector<float>* ptrVec = batch.vertexData_;
-        //        // URHO3D_LOGERRORF(" src <%p> pointer <%p>", src, &(*batch.vertexData_)[batchStart]);
-        //        memcpy(&vertexData[begin], &(*batch.vertexData_)[batchStart], batchSize * sizeof(float));
-        //        //memcpy(dest, src, batchSize * sizeof(float));
-
-        unsigned offset = 0;
-#define VER_COL(r, g, b, a) (((a) << 24) + ((b) << 16) + ((g) << 8) + r)
+        unsigned offset = 0;       
         for (unsigned j = batchStart; j < batchEnd; j += VERTEX_SIZE)
         {
             float v = batch.vertexData_->At(j + 0);
@@ -628,7 +668,26 @@ void TBUIElement::HandlePostUpdate(StringHash eventType, VariantMap& eventData)
     {
         root_->Invalidate();
     }
+
+    frameCounter_++;
+	frameCounterTotal_++;
+
+	// Update the FPS counter
+	double time = TBSystem::GetTimeMS();
+	if (time > frameCounterResetTime_ + 1000)
+	{
+		fps_ = (int) ((frameCounter_ / (time - frameCounterResetTime_)) * 1000);
+		frameCounterResetTime_ = time;
+		frameCounter_ = 0;
+	}
+#ifdef DEBUG
+    TBStr str;
+	str.SetFormatted("FPS: %d Frame %d time %lf", fps_, frameCounterTotal_, time);
+    root_->GetFont()->DrawString(5, 5, TBColor(255, 255, 255), str);
+#endif
     GetRenderer()->EndPaint();
+
+    batchCount_ = GetRenderer()->GetBatchSize();
 }
 
 void TBUIElement::HandleBeginFrame(StringHash eventType, VariantMap& eventData)
@@ -725,9 +784,9 @@ void TBUIElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
     int width = eventData[P_WIDTH].GetInt();
     int height = eventData[P_HEIGHT].GetInt();
 
-    root_->SetSize(width, height);
+    // root_->SetSize(width, height);
 
-    MarkDirty();
+// /    MarkDirty();
 }
 
 void TBUIElement::SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap)

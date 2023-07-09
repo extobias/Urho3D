@@ -146,7 +146,11 @@ public:
 
     void LoadResources();
 
-    void LoadLanguage(const String& langFile);
+    bool LoadLanguage(const String& langFile);
+
+    bool LoadSkin(const String& skinFile, const String& overrideSkinFile = String::EMPTY);
+
+    bool LoadFont(const String& fontFile, int fontSize);
 
     void SetBoxSize(int width, int height);
 
@@ -193,6 +197,8 @@ public:
 
     bool IsClicked() const { return root_->clickDown_; }
 
+    void SetCustomMaterial(Material* material) { customMaterial_ = material; }
+
     TBRootWidget* GetRoot() { return root_; }
 
     static TBRendererUrho3D* GetRenderer();
@@ -222,6 +228,9 @@ private:
     TBRootWidget* root_;
     // renderer element offset
     unsigned batchOffset_;
+    unsigned batchCount_;
+
+    Material* customMaterial_{};
 
     int mouse_x = 0;
     int mouse_y = 0;
@@ -229,6 +238,11 @@ private:
     bool key_ctrl = false;
     bool key_shift = false;
     bool key_super = false;
+
+    int fps_ = 0;
+    uint32 frameCounterTotal_ = 0;
+    uint32 frameCounter_ = 0;
+    double frameCounterResetTime_ = 0;
 };
 
 
