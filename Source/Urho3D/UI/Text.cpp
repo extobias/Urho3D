@@ -181,6 +181,11 @@ void Text::GetBatches(PODVector<UIBatch>& batches, PODVector<float>& vertexData,
     {
         // One batch per texture/page
         UIBatch pageBatch(this, BLEND_ALPHA, currentScissor, textures[n], &vertexData);
+        if (customMaterial_)
+        {
+            pageBatch.customMaterial_ = customMaterial_;
+            pageBatch.customMaterial_->SetTexture(TU_DIFFUSE, textures[n]);
+        }
 
         const PODVector<GlyphLocation>& pageGlyphLocation = pageGlyphLocations_[n];
 

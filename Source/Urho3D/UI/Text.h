@@ -231,6 +231,7 @@ public:
     /// Return text attribute.
     String GetTextAttr() const;
 
+    void SetCustomMaterial(Material* material) { customMaterial_ = material; }
 protected:
     /// Filter implicit attributes in serialization process.
     bool FilterImplicitAttributes(XMLElement& dest) const override;
@@ -301,6 +302,8 @@ protected:
     void HandleChangeLanguage(StringHash eventType, VariantMap& eventData);
     /// UTF8 to Unicode.
     void DecodeToUnicode();
+
+    Material* customMaterial_{};
 };
 
 }
