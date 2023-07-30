@@ -39,6 +39,8 @@ public:
 	void SetHideAlpha(bool hide) { m_hideAlpha = hide; }
 	bool GetHideAlpha() const { return m_hideAlpha; }
 
+	void UpdateFromColor();
+
 	float m_valueColor;
 
 	uint32* m_data;
@@ -67,7 +69,6 @@ protected:
 	double m_to_pixel_factor;
 	
 	void UpdateHandle(int x, int y);
-	void UpdateFromColor();
 	void UpdateColor();
 	void UpdateValueColor();
 	void CreatePalette();

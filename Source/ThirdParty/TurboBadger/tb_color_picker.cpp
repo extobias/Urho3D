@@ -447,8 +447,6 @@ void TBColorPicker::OnResized(int old_w, int old_h)
     sliderXRect.w = size;
     m_sliderX.SetRect(sliderXRect);
     m_sliderX.SetVisibility(m_hideAlpha ? WIDGET_VISIBILITY_INVISIBLE : WIDGET_VISIBILITY_VISIBLE);
-    
-    UpdateFromColor();
 }
 
 void TBColorPicker::OnPaint(const PaintProps &paint_props) 
