@@ -639,6 +639,11 @@ void TBCaret::SetGlobalOfs(int32 gofs, bool allow_snap, bool snap_forward)
 
 // == TBTextProps =======================================================================
 
+TBTextProps::~TBTextProps()
+{
+	list.DeleteAll();
+}
+
 void TBTextProps::Reset(const TBFontDescription &font_desc, const TBColor &text_color)
 {
 	next_index = 0;

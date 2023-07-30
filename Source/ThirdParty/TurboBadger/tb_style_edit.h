@@ -152,6 +152,7 @@ public:
 		bool underline;
 	};
     TBTextProps(TBCore* core) : core_(core) {}
+	~TBTextProps();
 
 	void Reset(const TBFontDescription &font_desc, const TBColor &text_color);
 	Data *Push();
