@@ -253,7 +253,7 @@ bool TBSkin::LoadInternal(const char *skin_file)
 	return true;
 }
 
-void TBSkin::UnloadBitmaps()
+void TBSkin::UnloadBitmaps(bool clearFragments)
 {
 	// Unset all bitmap pointers.
 	TBHashTableIteratorOf<TBSkinElement> it(&m_elements);
@@ -262,7 +262,8 @@ void TBSkin::UnloadBitmaps()
 
 	// FIXME Clear all fragments and bitmaps.
 	// extobias: only frags for this skin
-	// GetFragmentManager()->Clear();
+	if (clearFragments)
+		GetFragmentManager()->Clear();
 
 	m_color_frag = nullptr;
 }
@@ -638,7 +639,7 @@ void TBSkin::OnContextLost()
 	// would be recreated automatically when needed. But because it's easy,
 	// we unload everything so we save some memory (by not keeping any image
 	// data around).
-	UnloadBitmaps();
+	UnloadBitmaps(true);
 }
 
 void TBSkin::OnContextRestored()

@@ -784,9 +784,8 @@ void TBUIElement::HandleScreenMode(StringHash eventType, VariantMap& eventData)
     int width = eventData[P_WIDTH].GetInt();
     int height = eventData[P_HEIGHT].GetInt();
 
-    // root_->SetSize(width, height);
-
-// /    MarkDirty();
+    renderer_->InvokeContextLost();
+    renderer_->InvokeContextRestored();
 }
 
 void TBUIElement::SetNavMapping(const NavMapping& keyMap, const NavMapping& qualMap)

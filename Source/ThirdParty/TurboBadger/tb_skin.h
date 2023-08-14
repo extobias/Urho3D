@@ -302,7 +302,7 @@ public:
 	bool Load(const char *skin_file, const char *override_skin_file = nullptr);
 
 	/** Unload all bitmaps used in this skin. */
-	void UnloadBitmaps();
+	void UnloadBitmaps(bool clearFragments = false);
 
 	/** Reload all bitmaps used in this skin. Calls UnloadBitmaps first to ensure no bitmaps
 		are loaded before loading new ones. */
