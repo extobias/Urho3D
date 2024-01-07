@@ -1033,8 +1033,8 @@ void UI::Render(VertexBuffer* buffer, const PODVector<UIBatch>& batches, unsigne
         graphics_->SetCullMode(CULL_CW);
     else
 #endif
-    graphics_->SetCullMode(CULL_NONE);
-    // graphics_->SetCullMode(CULL_CCW);
+    // graphics_->SetCullMode(CULL_NONE);
+    graphics_->SetCullMode(CULL_CCW);
     graphics_->SetDepthTest(CMP_ALWAYS);
     graphics_->SetDepthWrite(false);
     graphics_->SetFillMode(FILL_SOLID);
@@ -1076,7 +1076,8 @@ void UI::Render(VertexBuffer* buffer, const PODVector<UIBatch>& batches, unsigne
                 else
                     ps = diffTexturePS;
             }
-        } else
+        } 
+        else
         {
             vs = diffTextureVS;
             ps = diffTexturePS;
@@ -1149,6 +1150,19 @@ void UI::Render(VertexBuffer* buffer, const PODVector<UIBatch>& batches, unsigne
             {
                 graphics_->SetTexture(it->first_, it->second_);
             }
+        }
+
+        // Vertex transform
+        StringHash param("VertexTransform");
+        StringHash param2("CenterTransform");
+        if (batch.vertexTransform_)
+        {
+            graphics_->SetShaderParameter(param2, Vector2(batch.centerTransform_.x_, batch.centerTransform_.y_));
+            graphics_->SetShaderParameter(param, batch.vertexTransform_);
+        }
+        else
+        {
+            graphics_->SetShaderParameter(param, 0);
         }
 
         graphics_->Draw(TRIANGLE_LIST, batch.vertexStart_ / UI_VERTEX_SIZE,

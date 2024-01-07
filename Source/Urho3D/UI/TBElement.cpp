@@ -210,6 +210,8 @@ void TBRendererUrho3D::RenderBatch(TBRendererBatcher::Batch* batch)
 
     IntRect scissor(clipRect_.x, clipRect_.y, clipRect_.x + clipRect_.w, clipRect_.y + clipRect_.h);
     UIBatch uiBatch(nullptr, BLEND_ALPHA, scissor, texture, &vertexData_);
+    uiBatch.vertexTransform_ = batch->vertex_transform;
+    uiBatch.centerTransform_ = IntVector2(batch->vertex_center.x, batch->vertex_center.y);
 
     // color 4 unsigned byte (o 1 float)
     // uv coord 2 float
@@ -444,7 +446,7 @@ bool TBUIElement::LoadFont(const String& fontFile, int fontSize)
     
     TBFontDescription fd;
     fd.SetID(TBIDC("Kenney"));
-    // fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(40));
+    // fd.SetSize(core_->tb_skin_->GetDimensionConverter()->DpToPx(fontSize));
     fd.SetSize(fontSize);
     core_->font_manager_->SetDefaultFontDescription(fd);
 
@@ -615,7 +617,6 @@ void TBUIElement::OnPositionSet(const IntVector2& newPosition)
 void TBUIElement::OnResize(const IntVector2& newSize, const IntVector2& delta)
 {
     root_->SetSize(newSize.x_, newSize.y_);
-
     MarkDirty();
 }
 

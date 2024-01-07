@@ -95,7 +95,9 @@ public:
     bool useGradient_{};
     /// Custom material.
     Material* customMaterial_{};
-
+    /// Vertex transform
+    int vertexTransform_{};
+    IntVector2 centerTransform_;
     /// Position adjustment vector for pixel-perfect rendering. Initialized by UI.
     static Vector3 posAdjust;
 };

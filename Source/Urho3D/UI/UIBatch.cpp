@@ -46,7 +46,8 @@ UIBatch::UIBatch(UIElement* element, BlendMode blendMode, const IntRect& scissor
     invTextureSize_(texture ? Vector2(1.0f / (float)texture->GetWidth(), 1.0f / (float)texture->GetHeight()) : Vector2::ONE),
     vertexData_(vertexData),
     vertexStart_(vertexData->Size()),
-    vertexEnd_(vertexData->Size())
+    vertexEnd_(vertexData->Size()),
+    vertexTransform_(0)
 {
     SetDefaultColor();
 }
@@ -408,7 +409,8 @@ bool UIBatch::Merge(const UIBatch& batch)
         batch.scissor_ != scissor_ ||
         batch.texture_ != texture_ ||
         batch.vertexData_ != vertexData_ ||
-        batch.vertexStart_ != vertexEnd_)
+        batch.vertexStart_ != vertexEnd_ ||
+        batch.vertexTransform_ != vertexTransform_)
         return false;
 
     vertexEnd_ = batch.vertexEnd_;
