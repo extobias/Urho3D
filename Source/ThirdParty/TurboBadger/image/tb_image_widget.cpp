@@ -6,6 +6,7 @@
 #include "image/tb_image_widget.h"
 #include "tb_widgets_reader.h"
 #include "tb_node_tree.h"
+#include "tb_str.h"
 
 #ifdef TB_IMAGE
 
@@ -19,7 +20,9 @@ PreferredSize TBImageWidget::OnCalculatePreferredContentSize(const SizeConstrain
 void TBImageWidget::OnPaint(const PaintProps &paint_props)
 {
 	if (TBBitmapFragment *fragment = m_image.GetBitmap())
-        core_->renderer_->DrawBitmap(GetPaddingRect(), TBRect(0, 0, m_image.Width(), m_image.Height()), fragment);
+	{
+		core_->renderer_->DrawBitmap(GetPaddingRect(), TBRect(0, 0, m_image.Width(), m_image.Height()), fragment, m_transform);
+	}
 }
 
 } // namespace tb

@@ -24,10 +24,12 @@ public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBImageWidget, TBWidget);
 
-    TBImageWidget(TBCore* core) : TBWidget(core) {}
+    TBImageWidget(TBCore* core) : TBWidget(core), m_transform(0) {}
 
 	void SetImage(const TBImage &image) { m_image = image; }
     void SetImage(const char *filename) { m_image = core_->image_manager_->GetImage(filename); }
+
+	void SetTransform(int transform) { m_transform = transform; }
 
     virtual PreferredSize OnCalculatePreferredContentSize(const SizeConstraints &constraints) override;
 
@@ -35,6 +37,7 @@ public:
     virtual void OnPaint(const PaintProps &paint_props) override;
 private:
 	TBImage m_image;
+	int m_transform;
 };
 
 } // namespace tb
