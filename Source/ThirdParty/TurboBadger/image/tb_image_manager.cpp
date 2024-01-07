@@ -125,6 +125,7 @@ TBImage TBImageManager::GetImage(const char *filename)
 {
 	uint32 hash_key = TBGetHash(filename);
 	TBImageRep *image_rep = m_image_rep_hash.Get(hash_key);
+	TBStr info2;
 	if (!image_rep)
 	{
 		// Load a fragment. Load a destination DPI bitmap if available.
@@ -134,6 +135,16 @@ TBImage TBImageManager::GetImage(const char *filename)
 			TBTempBuffer filename_dst_DPI;
             core_->tb_skin_->GetDimensionConverter()->GetDstDPIFilename(filename, &filename_dst_DPI);
 			fragment = m_frag_manager.GetFragmentFromFile(filename_dst_DPI.GetData(), false);
+			if (!fragment)
+			{
+				info2.SetFormatted("TBImageManager - Loaded <%s> without conversion.\n", filename_dst_DPI.GetData());
+				TBDebugOut(info2);	
+			}
+		}
+		else
+		{
+			info2.SetFormatted("TBImageManager - Loaded <%s> without conversion.\n", filename);
+			TBDebugOut(info2);
 		}
 		if (!fragment)
 			fragment = m_frag_manager.GetFragmentFromFile(filename, false);
@@ -145,8 +156,17 @@ TBImage TBImageManager::GetImage(const char *filename)
 			m_frag_manager.FreeFragment(fragment);
 			image_rep = nullptr;
 		}
-		TBDebugOut(image_rep ? "TBImageManager - Loaded new image.\n" : "TBImageManager - Loading image failed.\n");
+		info2.SetFormatted(image_rep ?  "TBImageManager - Loaded2 <%s> without conversion.\n": "TBImageManager - Loading image <%s> failed.\n", filename);
 	}
+	else
+	{
+		info2.SetFormatted("TBImageManager - Loaded already <%s>.\n", filename);
+		TBDebugOut(info2);
+	}
+
+	if (!info2.IsEmpty())
+		TBDebugOut(info2);
+
 	return TBImage(image_rep);
 }
 
