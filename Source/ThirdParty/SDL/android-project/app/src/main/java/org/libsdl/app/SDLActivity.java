@@ -84,7 +84,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     protected static SDLSurface mSurface;
     protected static View mTextEdit;
     protected static boolean mScreenKeyboardShown;
-    protected static ViewGroup mLayout;
+//    protected static ViewGroup mLayout;
+    protected static LinearLayout mLayout;
     protected static SDLClipboardHandler mClipboardHandler;
     protected static Hashtable<Integer, PointerIcon> mCursors;
     protected static int mLastCursorID;
@@ -246,7 +247,14 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         // Set up the surface
         mSurface = new SDLSurface(getApplication());
 
-        mLayout = new RelativeLayout(this);
+//        mLayout = new RelativeLayout(this);
+
+        mLayout = new LinearLayout(this);
+        mLayout.setOrientation(LinearLayout.VERTICAL);
+
+//        mLayout.setLayoutMode();
+//        mLayout.setLayoutParams(layoutParams);
+
         mLayout.addView(mSurface);
 
         // Get our current screen orientation and pass it down.
@@ -497,6 +505,19 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             return false;
         }
         return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        if(newConfig.orientation==Configuration.ORIENTATION_LANDSCAPE){
+            Log.e("On Config Change","LANDSCAPE");
+        }
+        else{
+            Log.e("On Config Change","PORTRAIT");
+        }
+
     }
 
     /* Transition to next state */
@@ -832,6 +853,8 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
         } else if (hint.contains("PortraitUpsideDown")) {
             orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+        } else if (hint.contains("FullSensor")) {
+            orientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR;
         }
 
         /* no valid hint */
@@ -1751,6 +1774,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         boolean skip = false;
         int requestedOrientation = SDLActivity.mSingleton.getRequestedOrientation();
 
+        Log.v("SDL", "Requested orientation: " + requestedOrientation);
         if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
         {
             // Accept any
@@ -1805,6 +1829,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
     // Key events
     @Override
+
     public boolean onKey(View  v, int keyCode, KeyEvent event) {
 
         int deviceId = event.getDeviceId();
@@ -1964,9 +1989,9 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
     public void enableSensor(int sensortype, boolean enabled) {
         // TODO: This uses getDefaultSensor - what if we have >1 accels?
         if (enabled) {
-            mSensorManager.registerListener(this,
-                            mSensorManager.getDefaultSensor(sensortype),
-                            SensorManager.SENSOR_DELAY_GAME, null);
+//           mSensorManager.registerListener(this,
+//                           mSensorManager.getDefaultSensor(sensortype),
+//                           SensorManager.SENSOR_DELAY_GAME, null);
         } else {
             mSensorManager.unregisterListener(this,
                             mSensorManager.getDefaultSensor(sensortype));
@@ -2010,6 +2035,8 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                     break;
             }
 
+            Log.v("SDL", "New: " + newOrientation + " Cur " + SDLActivity.mCurrentOrientation
+              + " Rot " + mDisplay.getRotation() + " x " + x + " y " + y);
             if (newOrientation != SDLActivity.mCurrentOrientation) {
                 SDLActivity.mCurrentOrientation = newOrientation;
                 SDLActivity.onNativeOrientationChanged(newOrientation);
