@@ -117,7 +117,7 @@ void TBAnimationManager::Update()
 		obj->InvokeOnAnimationUpdate(progress);
 
 		// Remove completed animations
-		if (progress == 1.0f)
+		if (!obj->animation_eternal && progress == 1.0f)
 		{
 			animating_objects.Remove(obj);
 			obj->InvokeOnAnimationStop(false);
@@ -133,7 +133,8 @@ bool TBAnimationManager::HasAnimationsRunning()
 }
 
 //static
-void TBAnimationManager::StartAnimation(TBAnimationObject *obj, ANIMATION_CURVE animation_curve, double animation_duration, ANIMATION_TIME animation_time)
+void TBAnimationManager::StartAnimation(TBAnimationObject *obj, ANIMATION_CURVE animation_curve, 
+										double animation_duration, ANIMATION_TIME animation_time, bool animation_eternal)
 {
 	if (obj->IsAnimating())
 		AbortAnimation(obj, false);
@@ -143,6 +144,7 @@ void TBAnimationManager::StartAnimation(TBAnimationObject *obj, ANIMATION_CURVE 
 	obj->animation_start_time = TBSystem::GetTimeMS();
 	obj->animation_duration = MAX(animation_duration, 0.0);
 	obj->animation_curve = animation_curve;
+	obj->animation_eternal = animation_eternal;
 	animating_objects.AddLast(obj);
 	obj->InvokeOnAnimationStart();
 }

@@ -81,6 +81,41 @@ private:
 	MODE m_mode;
 };
 
+class TBWidgetAnimationRotate : public TBWidgetAnimationObject
+{
+public:
+	// For safe typecasting
+	TBOBJECT_SUBCLASS(TBWidgetAnimationRotate, TBWidgetAnimationObject);
+
+	enum MODE {
+		/** Animate from source to dest. */
+		MODE_SRC_TO_DST,
+		/** Animate from current + delta to current. */
+		MODE_DELTA_IN,
+		/** Animate from current to current + delta. */
+		MODE_DELTA_OUT
+	};
+	/** Animate the widget between the given source and dest rectangle. */
+	TBWidgetAnimationRotate(TBWidget *widget, float velocity);
+	/** Animate the widget between rectangles based on the current widget
+		rectangle and a delta. The reference rectangle will be taken from
+		the target widget on the first OnAnimationUpdate. */
+	// TBWidgetAnimationRotate(TBWidget *widget, const TBRect &delta_rect, MODE mode);
+
+    virtual void OnAnimationStart() override;
+    virtual void OnAnimationUpdate(float progress) override;
+    virtual void OnAnimationStop(bool aborted) override;
+private:
+	// TBRect m_src_rect;
+	// TBRect m_dst_rect;
+	// TBRect m_delta_rect;
+	TBRect m_orig_rect;
+	MODE m_mode;
+	float m_velocity;
+	int m_count;
+	bool m_shrink;
+};
+
 class TBWidgetsAnimationManager : public TBWidgetListener
 {
 public:

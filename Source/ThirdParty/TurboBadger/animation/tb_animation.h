@@ -76,6 +76,7 @@ public:
 	double animation_start_time;
 	double animation_duration;
 	bool adjust_start_time;
+	bool animation_eternal;
 public:
 	// For safe typecasting
 	TBOBJECT_SUBCLASS(TBAnimationObject, TBTypedObject);
@@ -127,7 +128,8 @@ public:
 	static void StartAnimation(TBAnimationObject *obj,
 								ANIMATION_CURVE animation_curve = ANIMATION_DEFAULT_CURVE,
 								double animation_duration = ANIMATION_DEFAULT_DURATION,
-								ANIMATION_TIME animation_time = ANIMATION_TIME_FIRST_UPDATE);
+								ANIMATION_TIME animation_time = ANIMATION_TIME_FIRST_UPDATE,
+								bool animation_eternal = false);
 	/** Abort the animation. If delete_animation is true, the animation will be deleted in
 		this call after running callbacks and listeners callbacks. In rare situations,
 		you might want to keep the animation around and delete it later (or start it

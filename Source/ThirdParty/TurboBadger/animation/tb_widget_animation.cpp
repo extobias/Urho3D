@@ -140,6 +140,58 @@ void TBWidgetAnimationRect::OnAnimationStop(bool aborted)
 		m_widget->SetRect(m_dst_rect);
 }
 
+// == TBWidgetAnimationRotate ===============================================================
+
+TBWidgetAnimationRotate::TBWidgetAnimationRotate(TBWidget *widget, float velocity)
+	: TBWidgetAnimationObject(widget)
+	, m_velocity(velocity)
+	, m_mode(MODE_SRC_TO_DST)
+	, m_count(0)
+	, m_shrink(false)
+{
+}
+
+void TBWidgetAnimationRotate::OnAnimationStart()
+{
+	// Make sure we don't stay idle if nothing is scheduled (hack).
+	// FIX: fix this properly
+	m_widget->Invalidate();
+
+	m_orig_rect = m_widget->GetRect();
+}
+
+void TBWidgetAnimationRotate::OnAnimationUpdate(float progress)
+{
+	// return p * mat2(cos(theta), -sin(theta), sin(theta), cos(theta));
+	// float angle = progress / 360.0f;
+	m_count++;
+
+	if (m_count % 20 == 0)
+	{
+		int factor = 1;
+		TBRect rect = m_widget->GetRect();
+
+		if (m_shrink)
+			rect = rect.Shrink(1, 1);
+		else
+			rect = rect.Expand(1, 1);
+
+		if (rect.w > m_orig_rect.w || rect.h > m_orig_rect.h)
+		{
+			m_shrink = true;
+		}
+		else if (rect.w < 0 || rect.h < 0)
+		{
+			m_shrink = false;
+		}
+		m_widget->SetRect(rect);
+	}
+}
+
+void TBWidgetAnimationRotate::OnAnimationStop(bool aborted)
+{
+}
+
 // == TBWidgetsAnimationManager =====================================================
 
 // TBWidgetsAnimationManager widgets_animation_manager;
