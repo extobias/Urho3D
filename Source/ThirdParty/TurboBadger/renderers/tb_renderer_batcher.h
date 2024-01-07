@@ -35,7 +35,7 @@ public:
 	class Batch
 	{
 	public:
-		Batch() : vertex_count(0), bitmap(nullptr), fragment(nullptr), batch_id(0), is_flushing(false) {}
+		Batch() : vertex_count(0), bitmap(nullptr), fragment(nullptr), vertex_transform(0), batch_id(0), is_flushing(false) {}
 		void Flush(TBRendererBatcher *batch_renderer);
 		Vertex *Reserve(TBRendererBatcher *batch_renderer, int count);
 
@@ -44,6 +44,9 @@ public:
 
 		TBBitmap *bitmap;
 		TBBitmapFragment *fragment;
+
+		int vertex_transform;
+		TBPoint vertex_center;
 
 		uint32 batch_id;
 		bool is_flushing;
@@ -64,6 +67,7 @@ public:
 	virtual TBRect GetClipRect();
 
 	virtual void DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmapFragment *bitmap_fragment);
+	virtual void DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmapFragment *bitmap_fragment, int transform);
 	virtual void DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmap *bitmap);
 	virtual void DrawBitmapColored(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, TBBitmapFragment *bitmap_fragment);
 	virtual void DrawBitmapColoredBlend(const TBRect &dst_rect, const TBRect &src_rect, const TBColor &color, const TBColor &color_blend, TBBitmapFragment *bitmap_fragment);
@@ -90,6 +94,7 @@ protected:
 	Batch batch; ///< The one and only batch. this should be improved.
 
 	void AddQuadInternal(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, TBBitmap *bitmap, TBBitmapFragment *fragment);
+	void AddQuadInternal2(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, TBBitmap *bitmap, TBBitmapFragment *fragment, int transform);
 	void AddBlendQuadInternal(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, uint32 color_blend, TBBitmap *bitmap, TBBitmapFragment *fragment);
 	void FlushAllInternal();
 };

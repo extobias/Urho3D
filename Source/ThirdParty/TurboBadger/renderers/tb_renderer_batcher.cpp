@@ -65,6 +65,7 @@ void TBRendererBatcher::Batch::Flush(TBRendererBatcher *batch_renderer)
 
     vertex_count = 0;
 
+    vertex_transform = 0;   
     batch_id++; // Will overflow eventually, but that doesn't really matter.
 
     is_flushing = false;
@@ -168,6 +169,14 @@ void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rec
                         VER_COL_OPACITY(m_opacity), bitmap, bitmap_fragment);
 }
 
+void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmapFragment *bitmap_fragment, int transform)
+{
+    if (TBBitmap *bitmap = bitmap_fragment->GetBitmap(TB_VALIDATE_FIRST_TIME))
+        AddQuadInternal2(dst_rect.Offset(m_translation_x, m_translation_y),
+                        src_rect.Offset(bitmap_fragment->m_rect.x, bitmap_fragment->m_rect.y),
+                        VER_COL_OPACITY(m_opacity), bitmap, bitmap_fragment, transform);
+}
+
 void TBRendererBatcher::DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmap *bitmap)
 {
     AddQuadInternal(dst_rect.Offset(m_translation_x, m_translation_y), src_rect, VER_COL_OPACITY(m_opacity), bitmap, nullptr);
@@ -224,6 +233,74 @@ void TBRendererBatcher::AddQuadInternal(const TBRect &dst_rect, const TBRect &sr
         batch.bitmap = bitmap;
     }
     batch.fragment = fragment;
+    batch.vertex_transform = 0;
+
+//#if defined(URHO3D_OPENGL) || defined(URHO3D_D3D11) || defined(__linux__)
+#if defined(TB_RENDERER_GL)
+    float uvOffset = 0.0f;
+#else
+    float uvOffset = 0.5f;
+#endif
+
+    const int bitmap_w = bitmap->Width();
+    const int bitmap_h = bitmap->Height();
+    m_u = (float) (src_rect.x + uvOffset) / bitmap_w;
+    m_v = (float) (src_rect.y + uvOffset) / bitmap_h;
+    m_uu = (float) (src_rect.x + uvOffset + src_rect.w) / bitmap_w;
+    m_vv = (float) (src_rect.y + uvOffset + src_rect.h) / bitmap_h;
+
+    Vertex *ver = batch.Reserve(this, 6);
+    ver[0].x = (float) dst_rect.x;
+    ver[0].y = (float) (dst_rect.y + dst_rect.h);
+    ver[0].u = m_u;
+    ver[0].v = m_vv;
+    ver[0].col = color;
+
+    ver[2].x = (float) (dst_rect.x + dst_rect.w);
+    ver[2].y = (float) (dst_rect.y + dst_rect.h);
+    ver[2].u = m_uu;
+    ver[2].v = m_vv;
+    ver[2].col = color;
+
+    ver[1].x = (float) dst_rect.x;
+    ver[1].y = (float) dst_rect.y;
+    ver[1].u = m_u;
+    ver[1].v = m_v;
+    ver[1].col = color;
+
+    ver[3].x = (float) dst_rect.x;
+    ver[3].y = (float) dst_rect.y;
+    ver[3].u = m_u;
+    ver[3].v = m_v;
+    ver[3].col = color;
+
+    ver[5].x = (float) (dst_rect.x + dst_rect.w);
+    ver[5].y = (float) (dst_rect.y + dst_rect.h);
+    ver[5].u = m_uu;
+    ver[5].v = m_vv;
+    ver[5].col = color;
+
+    ver[4].x = (float) (dst_rect.x + dst_rect.w);
+    ver[4].y = (float) dst_rect.y;
+    ver[4].u = m_uu;
+    ver[4].v = m_v;
+    ver[4].col = color;
+
+    // Update fragments batch id (See FlushBitmapFragment)
+    if (fragment)
+        fragment->m_batch_id = batch.batch_id;
+}
+
+void TBRendererBatcher::AddQuadInternal2(const TBRect &dst_rect, const TBRect &src_rect, uint32 color, TBBitmap *bitmap, TBBitmapFragment *fragment, int transform)
+{
+    if (batch.bitmap != bitmap || batch.vertex_transform != transform)
+    {
+        batch.Flush(this);
+        batch.bitmap = bitmap;
+    }
+    batch.fragment = fragment;
+    batch.vertex_transform = transform;
+    batch.vertex_center = TBPoint(dst_rect.x + (dst_rect.w / 2), dst_rect.y + (dst_rect.h / 2));
 
 //#if defined(URHO3D_OPENGL) || defined(URHO3D_D3D11) || defined(__linux__)
 #if defined(TB_RENDERER_GL)
@@ -289,6 +366,7 @@ void TBRendererBatcher::AddBlendQuadInternal(const TBRect &dst_rect, const TBRec
         batch.bitmap = bitmap;
     }
     batch.fragment = fragment;
+    batch.vertex_transform = 0;
 
 //#if defined(URHO3D_OPENGL) || defined(URHO3D_D3D11) || defined(__linux__)
 #if defined(TB_RENDERER_GL)
