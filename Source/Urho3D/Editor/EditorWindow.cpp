@@ -649,6 +649,9 @@ void EditorWindow::SetVisible(bool visible)
 
     if (guizmo_)
         guizmo_->SetVisible(visible);
+
+    if (cameraNode_)
+        cameraNode_->SetEnabled(visible);
 }
 
 void EditorWindow::SetPlotVar(int index, float value, float min, float max)
@@ -1192,7 +1195,10 @@ void EditorWindow::AttributeEdit(Serializable* c)
         Variant attVariant = c->GetAttribute(info.name_);
 
         if(VariantEdit(c, info, info.name_, attVariant))
+        {
             c->SetAttribute(info.name_, attVariant);
+            c->ApplyAttributes();
+        }
     }
 }
 // FIXME sometimes info.name isnt name
@@ -2372,8 +2378,12 @@ void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
 
 bool EditorWindow::ImportFBX(const String& name, const String& path)
 {
+#if !defined(__ANDROID__) && !defined(IOS) && !defined(TVOS)
     EditorImport import(context_);
     return import.ImportModel(path);
+#else
+    return false;
+#endif
 }
 
 void EditorWindow::DebugModelSubPart()
