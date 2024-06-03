@@ -21,6 +21,8 @@
 //
 // Basically c&p Tools/AssetImporter
 
+#if !defined(__ANDROID__) && !defined(IOS) && !defined(TVOS)
+
 #include "../Editor/EditorImport.h"
 
 #include "../Core/Context.h"
@@ -2021,5 +2023,6 @@ void EditorImport::ExpandAnimatedChannelKeys(aiAnimation* anim, unsigned mainCha
     }
 }
 
-
 }
+
+#endif

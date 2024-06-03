@@ -4,6 +4,8 @@
 #include "../Container/HashSet.h"
 #include "../Math/BoundingBox.h"
 
+#if !defined(__ANDROID__) && !defined(IOS) && !defined(TVOS)
+
 #include "assimp/config.h"
 #include "assimp/cimport.h"
 #include "assimp/scene.h"
@@ -155,3 +157,5 @@ private:
 };
 
 }
+
+#endif
