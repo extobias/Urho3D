@@ -101,7 +101,7 @@ EditorBrush::EditorBrush(Context *context)
     : Component(context)
 {
     selectionImage_ = new BorderImage(context_);
-    selectionImage_->SetSize(size_, size_);
+    selectionImage_->SetSize(static_cast<int>(size_), static_cast<int>(size_));
     selectionImage_->SetBorder(IntRect(3, 3, 3, 3));
     selectionImage_->SetImageBorder(IntRect(10, 10, 10, 10));
     selectionImage_->SetPosition(0, 0);
@@ -165,7 +165,7 @@ void EditorBrush::Update(StaticModel* model, const IntVector2& position, float r
     customGeometry_->BeginGeometry(0, LINE_STRIP);
     for (unsigned i = 0; i < 364; i += 4)
     {
-      float angle = i * M_PI / 180.0f;
+      float angle = static_cast<float>(i * M_PI) / 180.0f;
       float x = radius * Cos(angle / 0.0174532925f);
       float z = radius * Sin(angle / 0.0174532925f);
       float y = 0.01f;
@@ -241,7 +241,7 @@ IntRect EditorBrush::GetScreenRect()
 {
     // return selectionImage_->GetImageRect();
     IntVector2 position = selectionImage_->GetPosition();
-    return IntRect(position, position + IntVector2(size_, size_));
+    return IntRect(position, position + IntVector2(static_cast<int>(size_), static_cast<int>(size_)));
 }
 
 void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
@@ -249,7 +249,7 @@ void EditorBrush::HandleWheelMouse(StringHash eventType, VariantMap& eventData)
     using namespace MouseWheel;
     int delta = eventData[P_WHEEL].GetInt();
     size_ += delta / 10.0f;
-    selectionImage_->SetSize(size_, size_);
+    selectionImage_->SetSize(static_cast<int>(size_), static_cast<int>(size_));
 }
 
 struct ComponentBufferEdit : public ImCurveEdit::Delegate
@@ -292,7 +292,7 @@ struct ComponentBufferEdit : public ImCurveEdit::Delegate
 
     size_t GetPointCount(size_t curveIndex)
     {
-        return vertices_[curveIndex].Size();
+        return static_cast<size_t>(vertices_[static_cast<unsigned int>(curveIndex)].Size());
     }
 
     uint32_t GetCurveColor(size_t curveIndex)
@@ -303,7 +303,7 @@ struct ComponentBufferEdit : public ImCurveEdit::Delegate
 
     ImVec2* GetPoints(size_t curveIndex)
     {
-        return (ImVec2*)vertices_[curveIndex].Buffer();
+        return (ImVec2*)vertices_[static_cast<unsigned int>(curveIndex)].Buffer();
     }
 
     virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const
@@ -314,16 +314,17 @@ struct ComponentBufferEdit : public ImCurveEdit::Delegate
     virtual int EditPoint(size_t curveIndex, int pointIndex, ImVec2 value)
     {
         // URHO3D_LOGERRORF("EditPoint point index <%i> value <%f, %f>", value.x, value.y);
-        vertices_[curveIndex][pointIndex] = Vector2(value.x, value.y);
+        unsigned int index = static_cast<unsigned int>(curveIndex);
+        vertices_[index][pointIndex] = Vector2(value.x, value.y);
 
         VectorBuffer ret;
-        for (unsigned i = 0; i < vertices_[curveIndex].Size(); ++i)
-            ret.WriteVector2(vertices_[curveIndex][i]);
+        for (unsigned i = 0; i < vertices_[index].Size(); ++i)
+            ret.WriteVector2(vertices_[index][i]);
 
         PODVector<CollisionPolygon2D*> dest;
         node_->GetComponents(dest);
 
-        dest.At(curveIndex)->SetAttribute("Vertices", ret.GetBuffer());
+        dest.At(index)->SetAttribute("Vertices", ret.GetBuffer());
 
         return pointIndex;
     }
@@ -501,7 +502,7 @@ void EditorGuizmo::Render(float timeStep)
 
     ImGuizmo::BeginFrame();
     // resize fullscreen for UIElement events
-    ImGuizmo::SetRect(0, 0, g->GetWidth(), g->GetHeight());
+    ImGuizmo::SetRect(0, 0, static_cast<float>(g->GetWidth()), static_cast<float>(g->GetHeight()));
     SetPosition(0, 0);
     SetSize(g->GetWidth(), g->GetHeight());
 
@@ -795,7 +796,7 @@ Ray EditorGuizmo::GetCameraRay()
 //    float y = float(cursorPos.y_ - rect.Top()) / rect.Height();
     IntVector2 screenPos = GetScreenPosition();
     // URHO3D_LOGERRORF("editorgizmo.getcameraray: pos <%f, %f>", x, y);
-    return camera->GetScreenRay(screenPos.x_, screenPos.y_);
+    return camera->GetScreenRay(static_cast<float>(screenPos.x_), static_cast<float>(screenPos.y_));
 }
 
 Vector3 EditorGuizmo::GetWorldPosition()
@@ -831,7 +832,7 @@ RayQueryResult EditorGuizmo::SelectObject(const IntVector2& position)
 
     Octree* octree = scene_->GetComponent<Octree>();
     Renderer* renderer = GetSubsystem<Renderer>();
-    Viewport* v0 = renderer->GetViewport(0);
+    Viewport* v0 = renderer->GetViewport(1);
     IntVector2 mousePos = position;
     ray_ = v0->GetScreenRay(mousePos.x_, mousePos.y_);
 
@@ -842,7 +843,7 @@ RayQueryResult EditorGuizmo::SelectObject(const IntVector2& position)
     if (result.Size())
     {
         hitPositions_.Clear();
-        for (int i = 0; i < result.Size(); i++)
+        for (unsigned int i = 0; i < result.Size(); i++)
         {
             RayQueryResult r = result[i];
             Node* hitNode = r.drawable_->GetNode();
@@ -974,7 +975,7 @@ bool EditorGuizmo::SelectVertex(const IntVector2& position, PODVector<IntVector2
     if (result.Size())
     {
         hitPositions_.Clear();
-        for (int i = 0; i < result.Size(); i++)
+        for (unsigned int i = 0; i < result.Size(); i++)
         {
             RayQueryResult r = result[i];
             Node* hitNode = r.drawable_->GetNode();
@@ -1088,8 +1089,9 @@ void EditorGuizmo::RenderVerticesPoint(Node *node)
 
     ComponentBufferEdit buffer(node);
     ImVector<ImCurveEdit::EditPoint> selectedPoints;
+    ImVec2 vec2(static_cast<float>(g->GetWidth()), static_cast<float>(g->GetHeight()));
 
-    editPointHover_ = ImCurveEdit::EditPolygon(&view.m00_, &projection.m00_, &transform.m00_, buffer, ImVec2(g->GetWidth(), g->GetHeight()), NULL, &selectedPoints);
+    editPointHover_ = ImCurveEdit::EditPolygon(&view.m00_, &projection.m00_, &transform.m00_, buffer, vec2, NULL, &selectedPoints);
 
     // URHO3D_LOGERRORF("EditorGuizmo: point edited <%i> selected <%i>", pointEdited_, selectedPoints.size());
 
