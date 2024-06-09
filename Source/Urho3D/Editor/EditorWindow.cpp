@@ -57,7 +57,8 @@ EditorWindow::EditorWindow(Context* context) :
     camDistance_(10.0f),
     sceneLoading_(false),
     fullscreen_(false),
-    importPath_("")
+    importPath_(""),
+    showAnotherWindow_(false)
 {
     for (int i = 0; i < 4; i++)
     {
@@ -606,14 +607,14 @@ void EditorWindow::LoadResources()
 
     for(ResourceContainer& rc: resourcesContainer_)
     {
-        StringVector keys = rc.resources_.Keys();
+        // StringVector keys = rc.resources_.Keys();
         // URHO3D_LOGERRORF("Container Name: <%s> Size <%i>", rc.name_.CString(), rc.resources_.Size());
 
-        for(String key: keys)
-        {
-            ResourceFile rf = rc.resources_[key];
-            // URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
-        }
+        // for(String key: keys)
+        // {
+        //     ResourceFile rf = rc.resources_[key];
+        //     URHO3D_LOGERRORF("  resource: key <%s> file <%s>", key.CString(), rf.name.CString());
+        // }
 
         rc.resourcesString_.Join(rc.resources_.Keys(), "@");
         rc.resourcesString_.Replace('@', '\0');
@@ -652,14 +653,25 @@ void EditorWindow::SetVisible(bool visible)
 
     if (cameraNode_)
         cameraNode_->SetEnabled(visible);
+
+    Input* input = GetSubsystem<Input>();
+    if (visible)
+    {
+        input->SetMouseVisible(true);
+        input->SetMouseMode(MM_FREE);
+    }
+    else
+    {
+        input->SetMouseMode(MM_RELATIVE);
+    }
 }
 
 void EditorWindow::SetPlotVar(int index, float value, float min, float max)
 {
     plotVars_[index][plotVarsOffset_[index]] = value;
     plotVarsOffset_[index] = (plotVarsOffset_[index] + 1) % (int)(sizeof(plotVars_[index])/sizeof(*plotVars_[index]));
-    plotVarsRange_[index][0] = (float)min;
-    plotVarsRange_[index][1] = float(max);
+    plotVarsRange_[index][0] = static_cast<int>(min);
+    plotVarsRange_[index][1] = static_cast<int>(max);
 }
 
 void EditorWindow::SetScene(Scene* scene)
@@ -699,7 +711,6 @@ void EditorWindow::SetCameraEnabled(bool enable)
 
 void EditorWindow::AttachCamera()
 {
-    // editor_->SetCameraNode(gCameraNode);
     Graphics* graphics = GetSubsystem<Graphics>();
 
     cameraNode_->SetParent(scene_);
@@ -852,7 +863,6 @@ void EditorWindow::Render(float timeStep)
         if (ImGui::Button("Pause"))
             scene_->SetUpdateEnabled(false);
 
-
         SaveScene();
 
         if (LoadScene())
@@ -936,14 +946,14 @@ void EditorWindow::Render(float timeStep)
             int curIndex = (plotVarsOffset_[i] - 1) % (int)(sizeof(plotVars_[i])/sizeof(*plotVars_[i]));
             sprintf(buf, "var <%i> <%.4f>", i, plotVars_[i][curIndex]);
     //        URHO3D_LOGERRORF("editor-render timestep <%f> value <%f>", timeStep, plotVars_[i][curIndex]);
-            ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, plotVarsRange_[i][0], plotVarsRange_[i][1], ImVec2(0, 60));
+            ImGui::PlotLines(buf, plotVars_[i], IM_ARRAYSIZE(plotVars_[i]), plotVarsOffset_[i], NULL, float(plotVarsRange_[i][0]), float(plotVarsRange_[i][1]), ImVec2(0, 60));
         }
     }
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
     ImVec2 windowPos = ImGui::GetWindowPos();
-    SetPosition(windowPos.x, windowPos.y);
+    SetPosition(static_cast<int>(windowPos.x), static_cast<int>(windowPos.y));
 
     if (fullscreen_)
     {
@@ -954,10 +964,20 @@ void EditorWindow::Render(float timeStep)
     else
     {
         ImVec2 windowSize = ImGui::GetWindowSize();
-        SetSize(windowSize.x, windowSize.y);
+        SetSize(static_cast<int>(windowSize.x), static_cast<int>(windowSize.y));
     }
 
     ImGui::End();
+
+    if (showAnotherWindow_)
+    {
+        // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        // ImGui::Begin("Another Window", &showAnotherWindow_);   
+        // ImGui::Text("Hello from another window!");
+        // if (ImGui::Button("Close Me"))
+        //     showAnotherWindow_ = false;
+        // ImGui::End();
+    }
 }
 
 void EditorWindow::DrawChild(Node* node, int& i)
@@ -1090,7 +1110,7 @@ void EditorWindow::DrawNodeSelected()
     if (!importPath_.Empty() && file_dialog.current_path == "./")
         file_dialog.current_path = importPath_.CString();
 
-    if (file_dialog.showFileDialog("Import FBX", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(800, 450), ".fbx"))
+    if (file_dialog.showFileDialog("Import FBX", imgui_addons::ImGuiFileBrowser::DialogMode::OPEN, ImVec2(800, 450), "*.*"))
     {
         String prefix, name, ext;
         SplitPath(file_dialog.selected_path.c_str(), prefix, name, ext);
@@ -1127,6 +1147,7 @@ void EditorWindow::DrawNodeSelected()
         {
             AttributeEdit(c);
 
+            // FIXME this below its not mean to be here
             EditorModelDebug* modelDebug = dynamic_cast<EditorModelDebug*>(c);
             EditModelDebug(modelDebug);
 
@@ -1495,11 +1516,11 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
             int index = rc.FindResourceIndex(resRef.name_);
             if (ImGui::Combo(hideLabel, &index, rc.resourcesString_.CString()))
             {
-                    ResourceFile resource = rc.resources_.Values().At(index);
-                    resRef.name_ = resource.path + resource.name;
+                ResourceFile resource = rc.resources_.Values().At(index);
+                resRef.name_ = resource.path + resource.name;
 
-                    value = resRef;
-                    ret = true;
+                value = resRef;
+                ret = true;
             }
 
             if (resRef.type_ == StringHash("ParticleEffect2D"))
@@ -1521,56 +1542,14 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
             ResourceContainer rc;
             FindContainer(resRef.type_, rc);
 
-//                static int lines = 1;
-//                ImGui::SliderInt("Lines", &lines, 1, 15);
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 2.0f));
-            ImGui::BeginChild("scrolling", ImVec2(0, ImGui::GetFrameHeightWithSpacing() + 50), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-            float btnWidth = 32.0f;
-            float btnHeight = 32.0f;
-            unsigned i = 0;
-            Vector<ResourceFile> values = rc.resources_.Values();
-
-            for (ResourceFile& resource: values)
+            ImGui::Checkbox("Another Window", &showAnotherWindow_);
+            if (showAnotherWindow_)
             {
-                // const ResourceFile& resource = .At(i);
-                if (resource.ext == "scml" || resource.ext == "pex" || resource.ext == "txt" || resource.ext == "tmx" || resource.ext == "xml")
-                    continue;
-
-                ImGui::PushID(i);
-                // SharedPtr<Texture2D> texture1(cache->GetResource<Texture2D>(resource.path + resource.name));
-                Texture2D* texture1 = cache->GetResource<Texture2D>(resource.path + resource.name);
-
-                int frame_padding = -1;     // -1 = uses default padding
-                // float texWidth = (float)texture1->GetWidth();
-                // float texHeight = (float)texture1->GetHeight();
-                ImVec4 bg_col(0.0f, 0.0f, 0.0f, 1.0f);
-                ImVec4 tint_col(0.0f, 1.0f, 0.0f, 1.0f);
-
-                if (resource.name == resRef.name_)
-                    bg_col.x = 1.0f;
-
-                // ImGui::Text("name <%s>", resource.name.CString());
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{1.0f, 0.0f, 0.0f, 1.0f});
-                if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1), frame_padding, bg_col))
+                if (ResourceWindow(rc, value))
                 {
-                    resRef.name_ = resource.path + resource.name;
                     ret = true;
-                    // c->SetAttribute(info.name_, v);
                 }
-                ImGui::PopStyleColor(1);
-
-                // delete texture1;
-
-                ImGui::SameLine();
-                ImGui::PopID();
-
-                i++;
             }
-
-            ImGui::EndChild();
-            ImGui::PopStyleVar(2);
         }
         ImGui::PopID();
     }
@@ -1578,21 +1557,31 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
     case VAR_RESOURCEREFLIST:
     {
         ResourceRefList v = value.GetResourceRefList();
+        
+        ImGui::SetNextItemWidth(halfWidth);
+        static ImGuiTextFilter filter;
+        // ImGui::Text("Filter usage:\n");
+        filter.Draw();
+
         for (unsigned int i = 0; i < v.names_.Size(); i++)
         {
             if (v.type_ == StringHash("Material"))
             {
-                ImGui::PushID((name + v.names_.At(i)).CString());
+                String pushId(name + String(i));
+                ImGui::PushID(pushId.CString());
                 ImGui::SetCursorPosX(halfWidth);
                 ImGui::SetNextItemWidth(halfWidth);
 
                 ResourceContainer rc;
                 FindContainer(v.type_, rc);
 
-                int index = rc.FindResourceIndex(v.names_.At(i));
-                if (ImGui::Combo(hideLabel_, &index, rc.resourcesString_.CString()))
+                ResourceContainer rcFilter;
+                rc.Filter(v.names_.At(i), &(filter.InputBuf[0]), rcFilter);
+
+                int index = rcFilter.FindResourceIndex(v.names_.At(i));
+                if (ImGui::Combo(hideLabel_, &index, rcFilter.GetResourceString().CString()))
                 {
-                    ResourceFile resource = rc.resources_.Values().At(index);
+                    ResourceFile resource = rcFilter.resources_.Values().At(index);
                     v.names_[i] = resource.path + resource.name;
 
                     value = v;
@@ -1781,6 +1770,78 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
     }
     break;
     }
+
+    return ret;
+}
+
+bool EditorWindow::ResourceWindow(const ResourceContainer& rc, Variant& value)
+{
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+    ImGui::Begin("Another Window", &showAnotherWindow_);   
+    ImGui::Text("Hello from another window!");
+    if (ImGui::Button("Close Me"))
+        showAnotherWindow_ = false;
+
+    // Filtering
+    static ImGuiTextFilter filter;
+    ImGui::Text("Filter usage:\n");
+    filter.Draw();
+
+    // Draw resources
+    float btnWidth = 64.0f;
+    float btnHeight = 64.0f;
+    int i = 0;
+    Vector<ResourceFile> values = rc.resources_.Values();
+    int window_visible_x2 = static_cast<int>(ImGui::GetWindowPos().x) + static_cast<int>(ImGui::GetWindowContentRegionMax().x);
+    ImGuiStyle& style = ImGui::GetStyle();
+    int buttons_count = values.Size();
+
+    ResourceRef resRef = value.GetResourceRef();
+    
+    bool ret = false;
+    for (ResourceFile& resource: values)
+    {
+        if (resource.ext == "scml" || resource.ext == "pex" || resource.ext == "txt" || resource.ext == "tmx" || resource.ext == "xml")
+            continue;
+
+        if (!filter.PassFilter(resource.name.CString()))
+            continue;
+
+        ImGui::PushID(i);
+        // SharedPtr<Texture2D> texture1(cache->GetResource<Texture2D>(resource.path + resource.name));
+        Texture2D* texture1 = cache->GetResource<Texture2D>(resource.path + resource.name);
+
+        int frame_padding = -1;     // -1 = uses default padding
+        ImVec4 bg_col(0.0f, 0.0f, 0.0f, 1.0f);
+        ImVec4 tint_col(0.0f, 1.0f, 0.0f, 1.0f);
+
+        if (resource.name == resRef.name_)
+            bg_col.x = 1.0f;
+
+        // ImGui::Text("name <%s>", resource.name.CString());
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{1.0f, 0.0f, 0.0f, 1.0f});
+        if (ImGui::ImageButton((ImTextureID)texture1, ImVec2(btnWidth, btnHeight), ImVec2(0,0), ImVec2(1, 1), frame_padding, bg_col))
+        {
+            resRef.name_ = resource.path + resource.name;
+            value = resRef;
+            ret = true;
+        }
+        int last_button_x2 = static_cast<int>(ImGui::GetItemRectMax().x);
+        int next_button_x2 = last_button_x2 + static_cast<int>(style.ItemSpacing.x);// + button_sz.x; // Expected position if next button was on same line
+        if (i + 1 < buttons_count && next_button_x2 < window_visible_x2)
+            ImGui::SameLine();
+
+        ImGui::PopStyleColor(1);
+
+        // delete texture1;
+
+        ImGui::PopID();
+
+        i++;
+    }
+
+    ImGui::End();
 
     return ret;
 }
@@ -2289,7 +2350,7 @@ void EditorWindow::EditModelDebug(EditorModelDebug *modelDebug)
                         ve.index_, ve.offset_, ve.semantic_, ve.type_);
             ImGui::SameLine();
             char label[8];
-            sprintf(label,"\+##%i", j);
+            sprintf(label,"\x2B##%i", j);
             if(ImGui::Button(label))
             {
                 vertexIndex = i;
@@ -2457,7 +2518,7 @@ static void EditorSettingsHandler_WriteAll(ImGuiContext* ctx, ImGuiSettingsHandl
     sprintf(strbuf, "[%s][%s]\n", handler->TypeName, "Import");
 
     // Write to text buffer
-    buf->reserve(buf->size() + strlen(strbuf)); // ballpark reserve
+    buf->reserve(buf->size() + static_cast<int>(strlen(strbuf))); // ballpark reserve
     buf->appendf("%s", strbuf);
 
     EditorWindow* ew = reinterpret_cast<EditorWindow*>(handler->UserData);

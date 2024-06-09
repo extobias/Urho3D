@@ -73,6 +73,36 @@ struct ResourceContainer
         return -1;
     }
 
+    void Filter(const String& name, const char* filterText, ResourceContainer& rcFilter)
+    {
+        ResourceMap resources;
+        Vector<ResourceFile> values = resources_.Values();
+        for (ResourceFile& resource: values)
+        {
+            if (strlen(filterText) == 0)
+            {
+                rcFilter.resources_[resource.name] = resource;
+            }
+            else
+            {
+                if (resource.name == name || resource.name.Contains(filterText, false))
+                {
+                    rcFilter.resources_[resource.name] = resource;
+                }
+            }
+        }
+    }
+
+    String GetResourceString()
+    {
+        String res;
+        res.Join(resources_.Keys(), "@");
+        res.Replace('@', '\0');
+        res.Append('\0');
+
+        return res;
+    }
+
     ResourceMap resources_;
 
     String resourcesString_;
@@ -213,6 +243,8 @@ private:
 
     void InitSettingHandler();
 
+    bool ResourceWindow(const ResourceContainer& rc, Variant& value);
+
     SharedPtr<Node> cameraNode_;
 
     SharedPtr<EditorSelection> selection_;
@@ -252,6 +284,8 @@ private:
     const char* hideLabel_ {"##hidelabel"};
 
     float timeStep_;
+
+    bool showAnotherWindow_;
 };
 
 }
