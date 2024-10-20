@@ -144,8 +144,8 @@ void PS()
     roughness = clamp(roughness, ROUGHNESS_FLOOR, 1.0);
     metalness = clamp(metalness, METALNESS_FLOOR, 1.0);
 
-    vec3 specColor = mix(0.08 * cMatSpecColor.rgb, diffColor.rgb, metalness);
-    diffColor.rgb = diffColor.rgb - diffColor.rgb * metalness;
+    vec3 specColor = mix(cMatSpecColor.rgb, diffColor.rgb, metalness);
+    // diffColor.rgb = diffColor.rgb - diffColor.rgb * metalness;
 
     // Get normal
     #if defined(NORMALMAP) || defined(DIRBILLBOARD)

@@ -67,8 +67,8 @@ int TBSystem::GetDPI()
 	int diag_pixels = sqrt(width_res * width_res + height_res * height_res);
 	int diag_inches = MM_TO_INCH * sqrt(width_mm * width_mm + height_mm * height_mm);
 
-	TBDebugPrint("TBSystem::GetDPI: mm <%i, %i> res <%i, %i> dpi <%i>\n", 
-	 		width_mm, height_mm, width_res, height_res, (int)diag_pixels / diag_inches);
+	// TBDebugPrint("TBSystem::GetDPI: mm <%i, %i> res <%i, %i> dpi <%i>\n", 
+	 		// width_mm, height_mm, width_res, height_res, (int)diag_pixels / diag_inches);
 	ReleaseDC(nullptr, hdc);
 #if 0 // TEST CODE!
 	DPI_x *= 2;

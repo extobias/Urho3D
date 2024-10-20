@@ -453,7 +453,7 @@ bool File::OpenInternal(const String& fileName, FileMode mode, bool fromPackage)
         assetHandle_ = SDL_RWFromFile(URHO3D_ASSET(fileName), "rb");
         if (!assetHandle_)
         {
-            URHO3D_LOGERRORF("Could not open Android asset file %s", fileName.CString());
+            // URHO3D_LOGERRORF("Could not open Android asset file %s", fileName.CString());
             return false;
         }
         else

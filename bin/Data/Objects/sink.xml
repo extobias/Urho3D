@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<node id="16777217">
+	<attribute name="Is Enabled" value="true" />
+	<attribute name="Name" value="" />
+	<attribute name="Tags" />
+	<attribute name="Position" value="-0.0579656 -0.938972 0" />
+	<attribute name="Rotation" value="1 0 0 0" />
+	<attribute name="Scale" value="0.6 0.6 0.6" />
+	<attribute name="Variables">
+		<variant hash="2151804570" type="String" value="Sink" />
+		<variant hash="686753347" type="Int" value="2" />
+	</attribute>
+	<component type="Sinkhole" id="16777218" />
+	<component type="RigidBody2D" id="16777219" />
+	<component type="StaticSprite2D" id="16777220">
+		<attribute name="Sprite" value="Sprite2D;Urho2D/Aster.png" />
+		<attribute name="Draw Rectangle" value="-0.32 -0.32 0.32 0.32" />
+		<attribute name="Texture Rectangle" value="7.8125e-07 0.999999 0.999999 7.8125e-07" />
+	</component>
+	<component type="CollisionBox2D" id="16777221">
+		<attribute name="Is Enabled" value="false" />
+		<attribute name="Size" value="0.32 0.32" />
+		<attribute name="Category Bits" value="1" />
+		<attribute name="Mask Bits" value="65535" />
+		<attribute name="Density" value="1" />
+		<attribute name="Friction" value="0.5" />
+		<attribute name="Restitution" value="0.1" />
+	</component>
+	<component type="CollisionCircle2D" id="16777222">
+		<attribute name="Radius" value="0.32" />
+		<attribute name="Category Bits" value="1" />
+		<attribute name="Mask Bits" value="65535" />
+		<attribute name="Density" value="1" />
+		<attribute name="Friction" value="0.5" />
+		<attribute name="Restitution" value="0.1" />
+	</component>
+</node>

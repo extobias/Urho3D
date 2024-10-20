@@ -381,6 +381,7 @@ Input::Input(Context* context) :
 {
     // FIXME
     context_->RequireSDL(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_SENSOR);
+    // context_->RequireSDL(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 
     for (int i = 0; i < TOUCHID_MAX; i++)
         availableTouchIDs_.Push(i);
@@ -2427,6 +2428,12 @@ void Input::HandleSDLEvent(void* sdlEvent)
 
             default: break;
             }
+        }
+        break;
+    
+    case SDL_DISPLAYEVENT:
+        {
+            URHO3D_LOGERRORF("Input::HandleSDLEvent: SDL_DISPLAYEVENT_ORIENTATION");
         }
         break;
 

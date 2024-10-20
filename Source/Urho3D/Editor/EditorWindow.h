@@ -167,6 +167,8 @@ public:
 
     void SetCameraPosition(const Vector3& position);
 
+    Vector3 GetCameraPosition() const { return cameraNode_->GetPosition(); };
+
     void SetCameraRotation(const Quaternion& rotation);
 
     void SetCameraEnabled(bool enable);
@@ -257,7 +259,7 @@ private:
 
     EditorMode mode_ { SELECT_OBJECT };
 
-    EditorNavMode navMode_ { NAV_LOOK_AT };
+    EditorNavMode navMode_ { NAV_FPS };
 
     ResourceDir resources_;
 

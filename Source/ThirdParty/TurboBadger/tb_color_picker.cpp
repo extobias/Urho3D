@@ -38,40 +38,61 @@ TBColorPicker::TBColorPicker(TBCore *core)
 {
     SetIsFocusable(true);
 
+    LayoutParams lp1;
+    lp1.min_h = 100;
+    lp1.min_w = 100;
+    lp1.max_h = 100;
+    lp1.max_w = 100;
+    // SetLayoutParams(lp1);
+    const TBDimensionConverter *dc = core_->tb_skin_->GetDimensionConverter();
+
     AddChild(&m_layout);
     
     m_layout.SetRect(GetPaddingRect());
     m_layout.SetGravity(WIDGET_GRAVITY_ALL);
     m_layout.SetAxis(AXIS_Y);
-    m_layout.SetLayoutDistribution(LAYOUT_DISTRIBUTION_GRAVITY);
+    // m_layout.SetSize()
+    m_layout.SetLayoutDistribution(LAYOUT_DISTRIBUTION_PREFERRED);
 
     // FIXME replace this fixed values
-    m_imgColor.SetGravity(WIDGET_GRAVITY_ALL);
-    m_imgColor.SetRect(TBRect(0, 0, 100, 100));
+    // m_imgColor.SetGravity(WIDGET_GRAVITY_ALL);
+    // m_imgColor.SetRect(TBRect(0, 0, 100, 100));
     LayoutParams lp;
-    lp.min_h = 20;
-    lp.max_h = 20;
+    lp.min_h = dc->GetPxFromString("10dp", LayoutParams::UNSPECIFIED);
+    lp.min_w = dc->GetPxFromString("120dp", LayoutParams::UNSPECIFIED);
+    // lp.max_w = 20;
+    // lp.max_h = 20;
     m_imgColor.SetLayoutParams(lp);
     m_layout.AddChild(&m_imgColor);
  
     m_layout0.SetAxis(AXIS_X);
-    m_layout0.SetGravity(WIDGET_GRAVITY_ALL);
-    m_layout0.SetLayoutDistribution(LAYOUT_DISTRIBUTION_GRAVITY);
-    m_layout0.SetLayoutPosition(LAYOUT_POSITION_CENTER);
+    m_layout0.SetSpacing(0);
+    // m_layout0.SetGravity(WIDGET_GRAVITY_ALL);
+    // m_layout0.SetLayoutDistribution(LAYOUT_DISTRIBUTION_PREFERRED);
+    // m_layout0.SetLayoutPosition(LAYOUT_POSITION_CENTER);
     m_layout.AddChild(&m_layout0);
 
     m_layout1.SetAxis(AXIS_Y);
-    m_layout1.SetGravity(WIDGET_GRAVITY_ALL);
-    m_layout1.SetLayoutDistribution(LAYOUT_DISTRIBUTION_GRAVITY);
-    m_layout1.SetLayoutDistributionPosition(LAYOUT_DISTRIBUTION_POSITION_LEFT_TOP);
-    m_layout1.SetLayoutPosition(LAYOUT_POSITION_LEFT_TOP);
+    m_layout1.SetSpacing(0);
+    // m_layout1.SetGravity(WIDGET_GRAVITY_ALL);
+    m_layout1.SetLayoutDistribution(LAYOUT_DISTRIBUTION_PREFERRED);
+    // m_layout1.SetLayoutDistributionPosition(LAYOUT_DISTRIBUTION_POSITION_LEFT_TOP);
+    // m_layout1.SetLayoutPosition(LAYOUT_POSITION_LEFT_TOP);
+    LayoutParams lp2;
+    lp2.min_h = dc->GetPxFromString("100dp", LayoutParams::UNSPECIFIED);
+    lp2.min_w = dc->GetPxFromString("100dp", LayoutParams::UNSPECIFIED);
+
+    TBDebugPrint("TBColorPicker::TBColorPicker: lp <%i, %i>\n", lp2.min_w, lp2.min_h);
+
+    // m_layout1.SetLayoutParams(lp2);
     m_layout0.AddChild(&m_layout1);
 
-    m_colorWheel.SetGravity(WIDGET_GRAVITY_ALL);
+    m_colorWheel.SetLayoutParams(lp2);
+    // m_colorWheel.SetGravity(WIDGET_GRAVITY_ALL);
     m_layout1.AddChild(&m_colorWheel);
 
     m_sliderX.SetAxis(AXIS_X);
-    m_sliderX.SetGravity(WIDGET_GRAVITY_ALL);
+    // m_sliderX.SetGravity(WIDGET_GRAVITY_ALL);
     m_sliderX.SetLimits(0, 100);
     m_sliderX.SetValue(100);
     m_layout1.AddChild(&m_sliderX);
@@ -265,7 +286,8 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         int dx = ev.target_x - core_->pointer_down_widget_x;
         int dy = ev.target_y - core_->pointer_down_widget_y;
 
-        TBRect rectLay = m_layout0.GetRect();
+        TBRect lay0 = m_layout0.GetRect();
+        TBRect lay1 = m_layout1.GetRect();
         TBRect p = m_colorWheel.GetRect();
         TBRect handleRect = m_handle.GetRect();
         PreferredSize handlePS = m_handle.GetPreferredSize();
@@ -273,8 +295,9 @@ bool TBColorPicker::OnEvent(const TBWidgetEvent &ev)
         int x = handleRect.x + dx;
         int y = handleRect.y + dy;
 
-        int centerx = (p.w / 2) - (handlePS.pref_w / 2);
-        int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
+        // int centerx = (p.w / 2) + p.x - (handlePS.pref_w / 2);
+        int centerx = (p.w / 2) + lay0.x - (handlePS.pref_w / 2);
+        int centery = (p.h / 2) + lay0.y - (handlePS.pref_h / 2);
 
         int a = x - centerx;
         int b = centery - y;
@@ -333,7 +356,7 @@ void TBColorPicker::UpdateColor()
 
     // int centerx = (p.w / 2) - (handlePS.pref_w / 2);
     // int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
-    int centerx = (p.w / 2);
+    int centerx = (p.w / 2) + rectLay.x;
     int centery = (p.h / 2) + rectLay.y;
 
     int a = x - centerx;
@@ -401,7 +424,7 @@ void TBColorPicker::UpdateFromColor()
     
     TBRect rectLay = m_layout0.GetRect();
     PreferredSize handlePS = m_handle.GetPreferredSize();
-    int centerx = (p.w / 2) - (handlePS.pref_w / 2);
+    int centerx = (p.w / 2) + rectLay.x - (handlePS.pref_w / 2);
     int centery = (p.h / 2) + rectLay.y - (handlePS.pref_h / 2);
 
     int x = a + centerx;
@@ -420,6 +443,8 @@ void TBColorPicker::UpdateHandle(int x, int y)
     int w = ps.pref_w;
     int h = ps.pref_h;
 
+    TBDebugPrint("TBColorPicker::UpdateHandle: update <%i, %i>\n", x, y);
+
     TBRect rect(x, y, w, h);
     m_handle.SetRect(rect);
 }
@@ -428,52 +453,45 @@ void TBColorPicker::OnResized(int old_w, int old_h)
 {
     TBWidget::OnResized(old_w, old_h);
 
-    TBRect rectLay = m_layout0.GetRect();
-    TBRect rectWheel = m_colorWheel.GetRect();
+    TBRect lay0 = m_layout0.GetRect();
+    TBRect wheelRect = m_colorWheel.GetRect();
     TBRect handleRect = m_handle.GetRect();
-    TBRect sliderRect = m_sliderY.GetRect();
+    TBRect imgColorRect = m_imgColor.GetRect();
     PreferredSize handlePS = m_handle.GetPreferredSize();
-    PreferredSize imgPS = m_imgColor.GetPreferredSize();
 
-    int size = rectWheel.w > rectWheel.h ? rectWheel.h : rectWheel.w;
-    rectWheel.w = rectWheel.h = size;
-    m_colorWheel.SetRect(rectWheel);
+TBDebugPrint("TBColorPicker::OnResized: rectWheel <%i, %i, %i, %i>\n", 
+	 		lay0.x, lay0.y, imgColorRect.w, imgColorRect.h);
 
-    sliderRect.h = size;
-    m_sliderY.SetRect(sliderRect);
-
-    TBRect sliderXRect = m_sliderX.GetRect();
-    sliderXRect.y = rectWheel.y + rectWheel.h;
-    sliderXRect.w = size;
-    m_sliderX.SetRect(sliderXRect);
     m_sliderX.SetVisibility(m_hideAlpha ? WIDGET_VISIBILITY_INVISIBLE : WIDGET_VISIBILITY_VISIBLE);
+
+    // update handle on center
+    int centerx = wheelRect.x + (wheelRect.w / 2) + lay0.x - (handlePS.pref_w / 2);
+    int centery = wheelRect.y + (wheelRect.h / 2) + lay0.y - (handlePS.pref_h / 2);
+
+    // UpdateHandle(centerx, centery);
+    // UpdateColor();
+    UpdateFromColor();
 }
 
 void TBColorPicker::OnPaint(const PaintProps &paint_props) 
 {
     TBWidget::OnPaint(paint_props);
 
-    TBRect rectLay = m_layout0.GetRect();
+    TBRect rectLay0 = m_layout0.GetRect();
+    TBRect rectLay1 = m_layout1.GetRect();
     TBRect rect = m_colorWheel.GetRect();
-    TBRect p = m_colorWheel.GetRect();
     
     TBWidgetSkinConditionContext context(this);
     WIDGET_STATE state = GetAutoState();
 
-    int trns_x = rectLay.x, trns_y = rectLay.y;
+    int trns_x = rectLay0.x + rectLay1.x; 
+    int trns_y = rectLay0.y + rectLay1.y;
     core_->renderer_->Translate(trns_x, trns_y);
     core_->tb_skin_->PaintSkin(rect, m_skinElement, static_cast<SKIN_STATE>(state), context);
     core_->renderer_->Translate(-trns_x, -trns_y);
 
-    TBRect colorRect(0, 0, rectLay.w, rectLay.y);
+    TBRect colorRect = m_imgColor.GetRect();
     core_->tb_skin_->PaintRectFill(colorRect, m_color);
-
-    // int size = 10;
-    // PreferredSize handlePS = m_handle.GetPreferredSize();
-    // int centerx = (p.w / 2);
-    // int centery = (p.h / 2) + rectLay.y;
-    // TBRect colorRect2(centerx - size / 2, centery - size / 2, size, size);
-    // core_->tb_skin_->PaintRectFill(colorRect2, m_color);
 }
 
 void TBColorPicker::OnSkinChanged()

@@ -137,7 +137,9 @@ if (NOT ANDROID AND NOT ARM AND NOT WEB)
     endif ()
 endif ()
 
+if (NOT ANDROID)
 add_subdirectory (ThirdParty/Assimp)
+endif ()
 
 add_subdirectory (Urho3D)
 
@@ -147,7 +149,7 @@ endif ()
 
 # In order to get clean module segregation, always exclude player/samples from AAR
 if (NOT ANDROID)
-    add_subdirectory (Tools)
+    # add_subdirectory (Tools)
     add_subdirectory (Samples)
 endif ()
 

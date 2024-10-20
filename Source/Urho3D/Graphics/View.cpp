@@ -1489,9 +1489,9 @@ void View::ExecuteRenderPathCommands()
             if (!actualView->IsNecessary(command))
                 continue;
 
-            String debugMsg = command.pass_ + command.tag_;
-            debugMsg.AppendWithFormat(" %i", command.passIndex_);
-            graphics_->PushDebugMark(debugMsg);
+            // String debugMsg = command.pass_ + command.tag_;
+            // debugMsg.AppendWithFormat(" %i", command.passIndex_);
+            // graphics_->PushDebugMark(debugMsg);
 
             bool viewportRead = actualView->CheckViewportRead(command);
             bool viewportWrite = actualView->CheckViewportWrite(command);
@@ -1742,7 +1742,7 @@ void View::ExecuteRenderPathCommands()
                 break;
             }
 
-            graphics_->PopDebugMark();
+            // graphics_->PopDebugMark();
             // If current command output to the viewport, mark it modified
             if (viewportWrite)
                 viewportModified = true;
@@ -2193,11 +2193,11 @@ void View::DrawFullscreenQuad(bool setIdentityProjection)
     graphics_->SetCullMode(CULL_NONE);
     graphics_->ClearTransformSources();
 
-    graphics_->PushDebugMark("fullquad");
+    // graphics_->PushDebugMark("fullquad");
 
     geometry->Draw(graphics_);
 
-    graphics_->PopDebugMark();
+    // graphics_->PopDebugMark();
 }
 
 void View::UpdateOccluders(PODVector<Drawable*>& occluders, Camera* camera)

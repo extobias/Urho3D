@@ -30,7 +30,10 @@
 #include <Urho3D/Graphics/Material.h>
 #include <Urho3D/Graphics/Octree.h>
 #include <Urho3D/Graphics/Renderer.h>
+#include <Urho3D/Graphics/RenderPath.h>
+#include <Urho3D/Graphics/Viewport.h>
 #include <Urho3D/Graphics/Zone.h>
+#include <Urho3D/Graphics/Skybox.h>
 #include <Urho3D/Input/Controls.h>
 #include <Urho3D/Input/Input.h>
 #include <Urho3D/IO/FileSystem.h>
@@ -42,6 +45,7 @@
 #include <Urho3D/UI/Font.h>
 #include <Urho3D/UI/Text.h>
 #include <Urho3D/UI/UI.h>
+#include <Urho3D/Urho2D/StaticSprite2D.h>
 
 #include "Character.h"
 #include "CharacterDemo.h"
@@ -87,6 +91,7 @@ void CharacterDemo::Start()
 void CharacterDemo::CreateScene()
 {
     auto* cache = GetSubsystem<ResourceCache>();
+    cache->SetAutoReloadResources(true);
 
     scene_ = new Scene(context_);
 
@@ -96,10 +101,30 @@ void CharacterDemo::CreateScene()
 
     // Create camera and define viewport. We will be doing load / save, so it's convenient to create the camera outside the scene,
     // so that it won't be destroyed and recreated, and we don't have to redefine the viewport on load
-    cameraNode_ = new Node(context_);
+    // cameraNode_ = new Node(context_);
+    cameraNode_ = scene_->CreateChild("Camera");
     auto* camera = cameraNode_->CreateComponent<Camera>();
     camera->SetFarClip(300.0f);
-    GetSubsystem<Renderer>()->SetViewport(0, new Viewport(context_, scene_, camera));
+
+    Renderer* renderer = GetSubsystem<Renderer>();
+    // Set up a viewport to the Renderer subsystem so that the 3D scene can be seen
+    SharedPtr<Viewport> viewport(new Viewport(context_, scene_, camera));
+    effectRenderPath_ = viewport->GetRenderPath()->Clone();
+    effectRenderPath_->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/PBRDeferred.xml"));
+    // effectRenderPath_->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/ForwardDepth.xml"));
+    // effectRenderPath_->Load(cache->GetResource<XMLFile>("CoreData/RenderPaths/Forward.xml"));
+    viewport->SetRenderPath(effectRenderPath_);
+
+    // effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Blur.xml"));
+    // effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
+    effectRenderPath_->Append(cache->GetResource<XMLFile>("PostProcess/FXAA2.xml"));
+    effectRenderPath_->Append(cache->GetResource<XMLFile>("PostProcess/GammaCorrection.xml"));
+
+    // effectRenderPath->SetEnabled("Blur", true);
+    effectRenderPath_->SetEnabled("FXAA2", true);
+    effectRenderPath_->SetEnabled("GammaCorrection", true);
+
+    GetSubsystem<Renderer>()->SetViewport(0, viewport);
 
     // Create static scene content. First create a zone for ambient lighting and fog control
     Node* zoneNode = scene_->CreateChild("Zone");
@@ -109,6 +134,7 @@ void CharacterDemo::CreateScene()
     zone->SetFogStart(100.0f);
     zone->SetFogEnd(300.0f);
     zone->SetBoundingBox(BoundingBox(-1000.0f, 1000.0f));
+    zone->SetZoneTexture(cache->GetResource<Texture>("Textures/Skybox2.xml"));
 
     // Create a directional light with cascaded shadow mapping
     Node* lightNode = scene_->CreateChild("DirectionalLight");
@@ -119,6 +145,13 @@ void CharacterDemo::CreateScene()
     light->SetShadowBias(BiasParameters(0.00025f, 0.5f));
     light->SetShadowCascade(CascadeParameters(10.0f, 50.0f, 200.0f, 0.0f, 0.8f));
     light->SetSpecularIntensity(0.5f);
+    light->SetBrightness(1200.0f);
+    light->SetUsePhysicalValues(true);
+
+    Node* skyNode = scene_->CreateChild("Sky");
+    auto* object2 = skyNode->CreateComponent<Skybox>();
+    object2->SetModel(cache->GetResource<Model>("Models/Sphere.mdl"));
+    object2->SetMaterial(cache->GetResource<Material>("Materials/Skybox2.xml"));
 
     // Create the floor object
     Node* floorNode = scene_->CreateChild("Floor");
@@ -136,26 +169,29 @@ void CharacterDemo::CreateScene()
     shape->SetBox(Vector3::ONE);
 
     // Create mushrooms of varying sizes
-    const unsigned NUM_MUSHROOMS = 60;
+    const unsigned NUM_MUSHROOMS = 600;
     for (unsigned i = 0; i < NUM_MUSHROOMS; ++i)
     {
         Node* objectNode = scene_->CreateChild("Mushroom");
-        objectNode->SetPosition(Vector3(Random(180.0f) - 90.0f, 0.0f, Random(180.0f) - 90.0f));
+        objectNode->SetPosition(Vector3(Random(180.0f) - 90.0f, 2.0f, Random(180.0f) - 90.0f));
         objectNode->SetRotation(Quaternion(0.0f, Random(360.0f), 0.0f));
-        objectNode->SetScale(2.0f + Random(5.0f));
+        // objectNode->SetScale(2.0f + Random(5.0f));
         auto* object = objectNode->CreateComponent<StaticModel>();
-        object->SetModel(cache->GetResource<Model>("Models/Mushroom.mdl"));
-        object->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
-        object->SetCastShadows(true);
+        object->SetModel(cache->GetResource<Model>("Models/my-suzzane.mdl"));
+        // object->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+        // object->SetMaterial(cache->GetResource<Material>("Materials/PBR/BridgeMetallic.xml"));
+        object->SetMaterial(2, cache->GetResource<Material>("Materials/face.xml"));
+        object->SetMaterial(3, cache->GetResource<Material>("Materials/head.xml"));
+        // object->SetCastShadows(true);
 
-        auto* body = objectNode->CreateComponent<RigidBody>();
-        body->SetCollisionLayer(2);
-        auto* shape = objectNode->CreateComponent<CollisionShape>();
-        shape->SetTriangleMesh(object->GetModel(), 0);
+        // auto* body = objectNode->CreateComponent<RigidBody>();
+        // body->SetCollisionLayer(2);
+        // auto* shape = objectNode->CreateComponent<CollisionShape>();
+        // shape->SetTriangleMesh(object->GetModel(), 0);
     }
 
     // Create movable boxes. Let them fall from the sky at first
-    const unsigned NUM_BOXES = 100;
+    const unsigned NUM_BOXES = 400;
     for (unsigned i = 0; i < NUM_BOXES; ++i)
     {
         float scale = Random(2.0f) + 0.5f;
@@ -163,11 +199,13 @@ void CharacterDemo::CreateScene()
         Node* objectNode = scene_->CreateChild("Box");
         objectNode->SetPosition(Vector3(Random(180.0f) - 90.0f, Random(10.0f) + 10.0f, Random(180.0f) - 90.0f));
         objectNode->SetRotation(Quaternion(Random(360.0f), Random(360.0f), Random(360.0f)));
-        objectNode->SetScale(scale);
+        // objectNode->SetScale(scale);
         auto* object = objectNode->CreateComponent<StaticModel>();
-        object->SetModel(cache->GetResource<Model>("Models/Box.mdl"));
-        object->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
-        object->SetCastShadows(true);
+        object->SetModel(cache->GetResource<Model>("Models/my-suzzane.mdl"));
+        // object->SetMaterial(cache->GetResource<Material>("Materials/Stone.xml"));
+        object->SetMaterial(2, cache->GetResource<Material>("Materials/face.xml"));
+        object->SetMaterial(3, cache->GetResource<Material>("Materials/head.xml"));
+        // object->SetCastShadows(true);
 
         auto* body = objectNode->CreateComponent<RigidBody>();
         body->SetCollisionLayer(2);
@@ -176,6 +214,15 @@ void CharacterDemo::CreateScene()
         auto* shape = objectNode->CreateComponent<CollisionShape>();
         shape->SetBox(Vector3::ONE);
     }
+
+    Node* objectNode = scene_->CreateChild("Suzzane");
+    objectNode->SetPosition(Vector3(0.0f, 3.6f, 0.0f));
+    object = objectNode->CreateComponent<StaticModel>();
+    object->SetModel(cache->GetResource<Model>("Models/my-suzzane.mdl"));
+    // object->SetMaterial(cache->GetResource<Material>("Materials/Mushroom.xml"));
+    object->SetMaterial(2, cache->GetResource<Material>("Materials/face.xml"));
+    object->SetMaterial(3, cache->GetResource<Material>("Materials/head.xml"));
+    // object->SetCastShadows(true);
 }
 
 void CharacterDemo::CreateCharacter()
@@ -185,6 +232,7 @@ void CharacterDemo::CreateCharacter()
     Node* objectNode = scene_->CreateChild("Jack");
     objectNode->SetPosition(Vector3(0.0f, 1.0f, 0.0f));
 
+    StaticSprite2D* sprite = objectNode->CreateComponent<StaticSprite2D>();
     // spin node
     Node* adjustNode = objectNode->CreateChild("AdjNode");
     adjustNode->SetRotation( Quaternion(180, Vector3(0,1,0) ) );
@@ -245,6 +293,7 @@ void CharacterDemo::CreateInstructions()
 
 void CharacterDemo::SubscribeToEvents()
 {
+    SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(CharacterDemo, HandleRenderUpdate));
     // Subscribe to Update event for setting the character controls before physics simulation
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(CharacterDemo, HandleUpdate));
 
@@ -255,11 +304,56 @@ void CharacterDemo::SubscribeToEvents()
     UnsubscribeFromEvent(E_SCENEUPDATE);
 }
 
+void CharacterDemo::HandleKeyPress()
+{
+    auto* input = GetSubsystem<Input>();
+    // Switch between 1st and 3rd person
+    if (input->GetKeyPress(KEY_F))
+        firstPerson_ = !firstPerson_;
+
+    // Turn on/off gyroscope on mobile platform
+    if (touch_ && input->GetKeyPress(KEY_G))
+        touch_->useGyroscope_ = !touch_->useGyroscope_;
+
+    if (input->GetKeyPress(KEY_F4))
+    {
+        if (!editor_)
+        {
+            CreateEditor();
+        }
+    }
+
+    // Check for loading / saving the scene
+    if (input->GetKeyPress(KEY_F5))
+    {
+        File saveFile(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/CharacterDemo.xml", FILE_WRITE);
+        scene_->SaveXML(saveFile);
+    }
+    if (input->GetKeyPress(KEY_F7))
+    {
+        File loadFile(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/CharacterDemo.xml", FILE_READ);
+        scene_->LoadXML(loadFile);
+        // After loading we have to reacquire the weak pointer to the Character component, as it has been recreated
+        // Simply find the character's scene node by name as there's only one of them
+        Node* characterNode = scene_->GetChild("Jack", true);
+        if (characterNode)
+            character_ = characterNode->GetComponent<Character>();
+    }
+}
+
 void CharacterDemo::HandleUpdate(StringHash eventType, VariantMap& eventData)
 {
     using namespace Update;
 
     auto* input = GetSubsystem<Input>();
+
+    HandleKeyPress();
+
+    if (editor_)
+    {
+        if (editor_->IsVisible())
+            return;
+    }
 
     if (character_)
     {
@@ -310,31 +404,6 @@ void CharacterDemo::HandleUpdate(StringHash eventType, VariantMap& eventData)
             character_->controls_.pitch_ = Clamp(character_->controls_.pitch_, -80.0f, 80.0f);
             // Set rotation already here so that it's updated every rendering frame instead of every physics frame
             character_->GetNode()->SetRotation(Quaternion(character_->controls_.yaw_, Vector3::UP));
-
-            // Switch between 1st and 3rd person
-            if (input->GetKeyPress(KEY_F))
-                firstPerson_ = !firstPerson_;
-
-            // Turn on/off gyroscope on mobile platform
-            if (touch_ && input->GetKeyPress(KEY_G))
-                touch_->useGyroscope_ = !touch_->useGyroscope_;
-
-            // Check for loading / saving the scene
-            if (input->GetKeyPress(KEY_F5))
-            {
-                File saveFile(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/CharacterDemo.xml", FILE_WRITE);
-                scene_->SaveXML(saveFile);
-            }
-            if (input->GetKeyPress(KEY_F7))
-            {
-                File loadFile(context_, GetSubsystem<FileSystem>()->GetProgramDir() + "Data/Scenes/CharacterDemo.xml", FILE_READ);
-                scene_->LoadXML(loadFile);
-                // After loading we have to reacquire the weak pointer to the Character component, as it has been recreated
-                // Simply find the character's scene node by name as there's only one of them
-                Node* characterNode = scene_->GetChild("Jack", true);
-                if (characterNode)
-                    character_ = characterNode->GetComponent<Character>();
-            }
         }
     }
 }
@@ -380,4 +449,21 @@ void CharacterDemo::HandlePostUpdate(StringHash eventType, VariantMap& eventData
         cameraNode_->SetPosition(aimPoint + rayDir * rayDistance);
         cameraNode_->SetRotation(dir);
     }
+}
+
+void CharacterDemo::HandleRenderUpdate(StringHash eventType, VariantMap& eventData)
+{
+    using namespace RenderUpdate;
+
+    auto* camera = cameraNode_->GetComponent<Camera>();
+    Matrix4 projection = camera->GetProjection();
+    float tanHalfFovX = 1.0f/projection.m00_;
+    float tanHalfFovY = 1.0f/projection.m11_;
+    Vector4 projInfo;
+    projInfo.x_ = tanHalfFovX * 2.0f;
+    projInfo.y_ = tanHalfFovY *-2.0f;
+    projInfo.z_ =-tanHalfFovX;
+    projInfo.w_ = tanHalfFovY;
+
+    effectRenderPath_->SetShaderParameter("ProjInfo", projInfo);
 }

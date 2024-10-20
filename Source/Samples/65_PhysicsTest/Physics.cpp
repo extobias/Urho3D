@@ -137,7 +137,7 @@ void Physics::CreateScene()
     // Finally, create a DebugRenderer component so that we can draw physics debug geometry
     scene_->CreateComponent<Octree>();
     PhysicsWorld* pw = scene_->CreateComponent<PhysicsWorld>();
-    pw->SetFps(60.0f);
+    pw->SetFps(60);
     scene_->CreateComponent<DebugRenderer>();
 
     // Create a Zone component for ambient lighting & fog control

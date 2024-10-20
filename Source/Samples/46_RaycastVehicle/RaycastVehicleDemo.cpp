@@ -294,5 +294,5 @@ void RaycastVehicleDemo::HandleRenderPostUpdate(StringHash eventType, VariantMap
 {
 	// URHO3D_LOGDEBUG("HandleRenderPostUpdate");
 	PhysicsWorld *pw = scene_->GetComponent<PhysicsWorld>();
-	// pw->DrawDebugGeometry(true);
+	pw->DrawDebugGeometry(true);
 }

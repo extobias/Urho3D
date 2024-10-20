@@ -1,0 +1,301 @@
+<?xml version="1.0"?>
+<node id="1">
+	<attribute name="Name" value="" />
+	<attribute name="Time Scale" value="1" />
+	<attribute name="Smoothing Constant" value="50" />
+	<attribute name="Snap Threshold" value="5" />
+	<attribute name="Elapsed Time" value="4.75862" />
+	<attribute name="Update Enabled" value="true" />
+	<attribute name="Next Replicated Node ID" value="16" />
+	<attribute name="Next Replicated Component ID" value="36" />
+	<attribute name="Next Local Node ID" value="16777217" />
+	<attribute name="Next Local Component ID" value="16777218" />
+	<attribute name="Variables" />
+	<attribute name="Variable Names" value="" />
+	<component type="Octree" id="1" />
+	<component type="DebugRenderer" id="2" />
+	<component type="PhysicsWorld2D" id="4">
+		<attribute name="Draw Shape" value="true" />
+		<attribute name="Draw Joint" value="true" />
+		<attribute name="Allow Sleeping" value="true" />
+		<attribute name="Warm Starting" value="true" />
+		<attribute name="Gravity" value="0 0" />
+		<attribute name="Auto Clear Forces" value="true" />
+	</component>
+	<component type="Renderer2D" id="16" />
+	<node id="2">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Camera" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 -10" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="Camera" id="3">
+			<attribute name="Near Clip" value="0" />
+			<attribute name="Aspect Ratio" value="1.88791" />
+			<attribute name="Orthographic" value="true" />
+			<attribute name="Orthographic Size" value="10.17" />
+		</component>
+	</node>
+	<node id="3">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="VerticalEdge" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="RigidBody2D" id="5" />
+		<component type="CollisionEdge2D" id="6">
+			<attribute name="Vertex 1" value="-1.44 -3.136" />
+			<attribute name="Vertex 2" value="-1.44 3.136" />
+			<attribute name="Category Bits" value="1" />
+			<attribute name="Mask Bits" value="65535" />
+			<attribute name="Friction" value="0.5" />
+		</component>
+		<component type="RigidBody2D" id="7" />
+	</node>
+	<node id="4">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="VerticalEdge" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="RigidBody2D" id="8" />
+		<component type="CollisionEdge2D" id="9">
+			<attribute name="Vertex 1" value="1.44 -3.136" />
+			<attribute name="Vertex 2" value="1.44 3.136" />
+			<attribute name="Category Bits" value="1" />
+			<attribute name="Mask Bits" value="65535" />
+			<attribute name="Friction" value="0.5" />
+		</component>
+	</node>
+	<node id="5">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="VerticalEdge" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="RigidBody2D" id="10" />
+		<component type="CollisionEdge2D" id="11">
+			<attribute name="Vertex 1" value="-1.44 3.136" />
+			<attribute name="Vertex 2" value="1.44 3.136" />
+			<attribute name="Category Bits" value="1" />
+			<attribute name="Mask Bits" value="65535" />
+			<attribute name="Friction" value="0.5" />
+		</component>
+	</node>
+	<node id="6">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="VerticalEdge" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="RigidBody2D" id="12" />
+		<component type="CollisionEdge2D" id="13">
+			<attribute name="Vertex 1" value="-1.44 -3.136" />
+			<attribute name="Vertex 2" value="1.44 -3.136" />
+			<attribute name="Category Bits" value="1" />
+			<attribute name="Mask Bits" value="65535" />
+			<attribute name="Friction" value="0.5" />
+		</component>
+	</node>
+	<node id="7">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Sink" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="-0.883284 1.93642 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="0.6 0.6 0.6" />
+		<attribute name="Variables">
+			<variant hash="2151804570" type="String" value="Sink" />
+			<variant hash="686753347" type="Int" value="1" />
+		</attribute>
+		<component type="Sinkhole" id="19" />
+		<node id="8">
+			<attribute name="Is Enabled" value="true" />
+			<attribute name="Name" value="TextNode" />
+			<attribute name="Tags" />
+			<attribute name="Position" value="-0.15 0.3 0" />
+			<attribute name="Rotation" value="1 0 0 0" />
+			<attribute name="Scale" value="1 1 1" />
+			<attribute name="Variables" />
+			<component type="Text3D" id="18">
+				<attribute name="Font" value="Font;Fonts/BarcadeBrawlRegular-plYD.ttf" />
+				<attribute name="Font Size" value="10" />
+				<attribute name="Text" value="0.3" />
+				<attribute name="Width" value="36" />
+			</component>
+		</node>
+	</node>
+	<node id="9">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Balls" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<node id="12">
+			<attribute name="Is Enabled" value="true" />
+			<attribute name="Name" value="Ball" />
+			<attribute name="Tags" />
+			<attribute name="Position" value="-0.165639 -1.21251 0" />
+			<attribute name="Rotation" value="0.731337 0 0 0.682017" />
+			<attribute name="Scale" value="0.6 0.6 0.6" />
+			<attribute name="Variables">
+				<variant hash="2151804570" type="String" value="Ball" />
+				<variant hash="686753347" type="Int" value="2" />
+			</attribute>
+			<component type="Ball2D" id="23" />
+			<component type="RigidBody2D" id="20">
+				<attribute name="Body Type" value="Dynamic" />
+				<attribute name="Mass" value="0.0289529" />
+				<attribute name="Inertia" value="0.000133415" />
+				<attribute name="Linear Velocity" value="0.345438 -0.30341" />
+				<attribute name="Angular Velocity" value="-3.2559" />
+			</component>
+			<component type="StaticSprite2D" id="21">
+				<attribute name="Sprite" value="Sprite2D;Urho2D/Ball.png" />
+				<attribute name="Color" value="0 0 1 1" />
+				<attribute name="Draw Rectangle" value="-0.16 -0.16 0.16 0.16" />
+				<attribute name="Texture Rectangle" value="1.5625e-06 0.999998 0.999998 1.5625e-06" />
+			</component>
+			<component type="CollisionCircle2D" id="22">
+				<attribute name="Radius" value="0.16" />
+				<attribute name="Category Bits" value="1" />
+				<attribute name="Mask Bits" value="65535" />
+				<attribute name="Density" value="1" />
+				<attribute name="Friction" value="0.5" />
+				<attribute name="Restitution" value="0.1" />
+			</component>
+		</node>
+		<node id="13">
+			<attribute name="Is Enabled" value="true" />
+			<attribute name="Name" value="Ball" />
+			<attribute name="Tags" />
+			<attribute name="Position" value="-1.1651 1.47881 0" />
+			<attribute name="Rotation" value="0.89924 0 0 0.437455" />
+			<attribute name="Scale" value="0.6 0.6 0.6" />
+			<attribute name="Variables">
+				<variant hash="2151804570" type="String" value="Ball" />
+				<variant hash="686753347" type="Int" value="0" />
+			</attribute>
+			<component type="Ball2D" id="27" />
+			<component type="RigidBody2D" id="24">
+				<attribute name="Body Type" value="Dynamic" />
+				<attribute name="Mass" value="0.0289529" />
+				<attribute name="Inertia" value="0.000133415" />
+				<attribute name="Linear Velocity" value="0.187764 -0.968264" />
+				<attribute name="Angular Velocity" value="-10.3905" />
+			</component>
+			<component type="StaticSprite2D" id="25">
+				<attribute name="Sprite" value="Sprite2D;Urho2D/Ball.png" />
+				<attribute name="Color" value="1 0 0 1" />
+				<attribute name="Draw Rectangle" value="-0.16 -0.16 0.16 0.16" />
+				<attribute name="Texture Rectangle" value="1.5625e-06 0.999998 0.999998 1.5625e-06" />
+			</component>
+			<component type="CollisionCircle2D" id="26">
+				<attribute name="Radius" value="0.16" />
+				<attribute name="Category Bits" value="1" />
+				<attribute name="Mask Bits" value="65535" />
+				<attribute name="Density" value="1" />
+				<attribute name="Friction" value="0.5" />
+				<attribute name="Restitution" value="0.1" />
+			</component>
+		</node>
+		<node id="14">
+			<attribute name="Is Enabled" value="true" />
+			<attribute name="Name" value="Ball" />
+			<attribute name="Tags" />
+			<attribute name="Position" value="-1.22522 2.26927 0" />
+			<attribute name="Rotation" value="0.611564 0 0 -0.791195" />
+			<attribute name="Scale" value="0.6 0.6 0.6" />
+			<attribute name="Variables">
+				<variant hash="2151804570" type="String" value="Ball" />
+				<variant hash="686753347" type="Int" value="1" />
+			</attribute>
+			<component type="Ball2D" id="31" />
+			<component type="RigidBody2D" id="28">
+				<attribute name="Body Type" value="Dynamic" />
+				<attribute name="Mass" value="0.0289529" />
+				<attribute name="Inertia" value="0.000133415" />
+				<attribute name="Linear Velocity" value="-1.82969 -0.560791" />
+				<attribute name="Angular Velocity" value="-19.6345" />
+			</component>
+			<component type="StaticSprite2D" id="29">
+				<attribute name="Sprite" value="Sprite2D;Urho2D/Ball.png" />
+				<attribute name="Color" value="0 1 0 1" />
+				<attribute name="Draw Rectangle" value="-0.16 -0.16 0.16 0.16" />
+				<attribute name="Texture Rectangle" value="1.5625e-06 0.999998 0.999998 1.5625e-06" />
+			</component>
+			<component type="CollisionCircle2D" id="30">
+				<attribute name="Radius" value="0.16" />
+				<attribute name="Category Bits" value="1" />
+				<attribute name="Mask Bits" value="65535" />
+				<attribute name="Density" value="1" />
+				<attribute name="Friction" value="0.5" />
+				<attribute name="Restitution" value="0.1" />
+			</component>
+		</node>
+		<node id="15">
+			<attribute name="Is Enabled" value="true" />
+			<attribute name="Name" value="Ball" />
+			<attribute name="Tags" />
+			<attribute name="Position" value="-0.60846 -2.47559 0" />
+			<attribute name="Rotation" value="0.595417 0 0 -0.803416" />
+			<attribute name="Scale" value="0.6 0.6 0.6" />
+			<attribute name="Variables">
+				<variant hash="2151804570" type="String" value="Ball" />
+				<variant hash="686753347" type="Int" value="0" />
+			</attribute>
+			<component type="Ball2D" id="35" />
+			<component type="RigidBody2D" id="32">
+				<attribute name="Body Type" value="Dynamic" />
+				<attribute name="Mass" value="0.0289529" />
+				<attribute name="Inertia" value="0.000133415" />
+				<attribute name="Linear Velocity" value="1.12474 -2.96955" />
+				<attribute name="Angular Velocity" value="-31.8664" />
+			</component>
+			<component type="StaticSprite2D" id="33">
+				<attribute name="Sprite" value="Sprite2D;Urho2D/Ball.png" />
+				<attribute name="Color" value="1 0 0 1" />
+				<attribute name="Draw Rectangle" value="-0.16 -0.16 0.16 0.16" />
+				<attribute name="Texture Rectangle" value="1.5625e-06 0.999998 0.999998 1.5625e-06" />
+			</component>
+			<component type="CollisionCircle2D" id="34">
+				<attribute name="Radius" value="0.16" />
+				<attribute name="Category Bits" value="1" />
+				<attribute name="Mask Bits" value="65535" />
+				<attribute name="Density" value="1" />
+				<attribute name="Friction" value="0.5" />
+				<attribute name="Restitution" value="0.1" />
+			</component>
+		</node>
+	</node>
+	<node id="10">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Suckers" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+	</node>
+	<node id="11">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Rackets" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+	</node>
+</node>

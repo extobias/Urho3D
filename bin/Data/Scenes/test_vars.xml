@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<scene id="1">
+	<attribute name="Name" value="" />
+	<attribute name="Time Scale" value="1" />
+	<attribute name="Smoothing Constant" value="50" />
+	<attribute name="Snap Threshold" value="5" />
+	<attribute name="Elapsed Time" value="0" />
+	<attribute name="Update Enabled" value="true" />
+	<attribute name="Next Replicated Node ID" value="1" />
+	<attribute name="Next Replicated Component ID" value="3" />
+	<attribute name="Next Local Node ID" value="16777217" />
+	<attribute name="Next Local Component ID" value="16777228" />
+	<attribute name="Variables">
+		<variant hash="832710500" type="Bool" value="false" />
+		<variant hash="1582019021" type="Vector3" value="0 0 0" />
+		<variant hash="100" type="Int" value="0" />
+	</attribute>
+	<attribute name="Variable Names" value="ddd;ddd1;d" />
+	<component type="Octree" id="1" />
+	<component type="DebugRenderer" id="2" />
+</scene>

@@ -16,6 +16,7 @@
 #include "tb_color_picker.h"
 #include "tb_progress_bar.h"
 #include "image/tb_image_widget.h"
+#include "image/tb_multiple_image.h"
 #include "tb_system.h" // REMOVE
 
 namespace tb {
@@ -439,6 +440,14 @@ void TBToggleContainer::OnInflate(const INFLATE_INFO &info)
 
 TB_WIDGET_FACTORY(TBImageWidget, TBValue::TYPE_NULL, WIDGET_Z_TOP) {}
 void TBImageWidget::OnInflate(const INFLATE_INFO &info)
+{
+	if (const char *filename = info.node->GetValueString("filename", nullptr))
+		SetImage(filename);
+	TBWidget::OnInflate(info);
+}
+
+TB_WIDGET_FACTORY(TBMultipleImage, TBValue::TYPE_NULL, WIDGET_Z_TOP) {}
+void TBMultipleImage::OnInflate(const INFLATE_INFO &info)
 {
 	if (const char *filename = info.node->GetValueString("filename", nullptr))
 		SetImage(filename);

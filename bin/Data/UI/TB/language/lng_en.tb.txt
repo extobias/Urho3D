@@ -1,7 +1,7 @@
 cut Cut
 copy Copy
 paste Paste
-delete Delete
+delete Delete2
 selectall Select all
 undo Undo
 redo Redo
@@ -14,3 +14,4 @@ new New
 save Save
 close Close
 search Search
+dialog_select <color #000000>LALALLALALAALAA</color>

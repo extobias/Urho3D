@@ -455,6 +455,7 @@ btCollisionShape* CreateCollisionGeometryDataShape(ShapeType shapeType, Collisio
     case SHAPE_TRIANGLEMESH:
         {
 			auto* triMesh = static_cast<MaterialTriangleMeshData*>(geometry);
+            // auto* triMesh = static_cast<TriangleMeshData*>(geometry);
             return new btScaledBvhTriangleMeshShape(triMesh->shape_.Get(), ToBtVector3(scale));
         }
     case SHAPE_CONVEXHULL:

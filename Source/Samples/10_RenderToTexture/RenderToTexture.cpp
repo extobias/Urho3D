@@ -260,6 +260,8 @@ void RenderToTexture::MoveCamera(float timeStep)
     // Construct new orientation for the camera scene node from yaw and pitch. Roll is fixed to zero
     cameraNode_->SetRotation(Quaternion(pitch_, yaw_, 0.0f));
 
+    rttCameraNode_->SetRotation(Quaternion(-pitch_ * 0.1f, -yaw_ * 0.1f, 0.0f));
+
     // Read WASD keys and move the camera scene node to the corresponding direction if they are pressed
     if (input->GetKeyDown(KEY_W))
         cameraNode_->Translate(Vector3::FORWARD * MOVE_SPEED * timeStep);

@@ -117,6 +117,11 @@ private:
     /// Handle application post-update. Update camera position after character has moved.
     void HandlePostUpdate(StringHash eventType, VariantMap& eventData);
 
+    void HandleKeyPress();
+
+    void HandleRenderUpdate(StringHash eventType, VariantMap& eventData);
+
+    SharedPtr<RenderPath> effectRenderPath_;
     /// Touch utility object.
     SharedPtr<Touch> touch_;
     /// The controllable character component.

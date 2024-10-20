@@ -453,12 +453,13 @@ elements
 		bitmap color_wheel.png
 		expand 0
 	TBProgressBar_fg
-		bitmap yellow_button13.png
-		type StretchBorder
+		type Stretch Image
+		bitmap progress_bar2.png
+		# bitmap icon128.png
 		cut 10
 	TBProgressBar_bg
-		background-color #cccccc22
-		padding 0
+		background-color #5c5c5caa
+		cut 10
 
 	TBResizer
 		bitmap resizer.png

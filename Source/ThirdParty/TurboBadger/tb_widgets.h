@@ -204,6 +204,20 @@ enum WIDGET_GRAVITY {
 };
 MAKE_ENUM_FLAG_COMBO(WIDGET_GRAVITY);
 
+enum WIDGET_VERTICAL_ALIGN {
+    TB_VA_TOP = 0,
+    TB_VA_CENTER,
+    TB_VA_BOTTOM,
+    TB_VA_CUSTOM
+};
+
+enum WIDGET_HORIZONTAL_ALIGN {
+	TB_HA_LEFT = 0,
+    TB_HA_CENTER,
+    TB_HA_RIGHT,
+    TB_HA_CUSTOM
+};
+
 enum AXIS {
 	AXIS_X, ///< Horizontal layout
 	AXIS_Y, ///< Vertical layout
@@ -501,6 +515,11 @@ public:
 		placed at the top in the parent (Above previously added widget). SetZ can be used to change the order. */
 	void SetZ(WIDGET_Z z);
 
+	void SetVerticalAlignment(WIDGET_VERTICAL_ALIGN vAlign);
+	void SetHorizontalAlignment(WIDGET_HORIZONTAL_ALIGN hAlign);
+	void SetAlignment(WIDGET_VERTICAL_ALIGN vAlign, WIDGET_HORIZONTAL_ALIGN hAlign);
+	TBPoint GetAlignmentOffset(const TBRect& rect);
+
 	/** Set the z order in which children are added during resource loading. */
 	void SetZInflate(WIDGET_Z z) { m_packed.inflate_child_z = z; }
 	WIDGET_Z GetZInflate() const { return (WIDGET_Z) m_packed.inflate_child_z; }
@@ -643,6 +662,10 @@ public:
 		available. This callback is called for all widgets before OnProcess if
 		something has called InvalidateStates().*/
 	virtual void OnProcessStates() {}
+
+	virtual void OnAnimationStart() {}
+	virtual void OnAnimationUpdate(float progress) {}
+	virtual void OnAnimationStop(bool aborted) {}
 
 	/** PaintProps contains properties needed for painting a widget.
 		Properties may be inherited from the parent widget if not specified
@@ -1016,6 +1039,8 @@ private:
 	float m_opacity;				///< Opacity 0-1. See SetOpacity.
 	WIDGET_STATE m_state;			///< The widget state (excluding any auto states)
 	WIDGET_GRAVITY m_gravity;		///< The layout gravity setting.
+	WIDGET_VERTICAL_ALIGN m_vAlign;
+	WIDGET_HORIZONTAL_ALIGN m_hAlign;
 	TBFontDescription m_font_desc;	///< The font description.
 	PreferredSize m_cached_ps;		///< Cached preferred size.
 	SizeConstraints m_cached_sc;	///< Cached size constraints.

@@ -50,6 +50,7 @@ public:
 
     /// Setup after engine initialization and before running the main loop.
     void Start() override;
+    void Stop() override;
 
 protected:
     /// Return XML patch instructions for screen joystick layout for a specific sample app, if any.
@@ -63,6 +64,9 @@ protected:
 
 private:
     void CreateScene();
+    void CreateTBElement();
+    void CreateModalElement();
+    void CreateModalElement2();
 
     void SetupViewport();
     /// Handle drag begin for the fish button.
@@ -89,8 +93,9 @@ private:
     /// Remembered drag begin position.
     IntVector2 dragBeginPosition_;
     
-    TBUIElement* tbelement;
-    TBUIElement* tbelement2;
+    TBUIElement* tbelement_;
+    TBUIElement* modalElement_;
+    TBUIElement* modalElement2_;
     TBUIElement* animTest_;
 };
 

@@ -75,6 +75,8 @@ protected:
     void InitMouseMode(MouseMode mode);
     /// Control logo visibility.
     void SetLogoVisible(bool enable);
+    /// Create editor
+    virtual void CreateEditor();
 
     /// Logo sprite.
     SharedPtr<Sprite> logoSprite_;
@@ -92,7 +94,6 @@ protected:
     MouseMode useMouseMode_;
 
     void HandleKeyDown(StringHash eventType, VariantMap& eventData);
-
     /// Editor
     SharedPtr<EditorWindow> editor_;
 

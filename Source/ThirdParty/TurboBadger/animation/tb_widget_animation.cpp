@@ -192,6 +192,33 @@ void TBWidgetAnimationRotate::OnAnimationStop(bool aborted)
 {
 }
 
+// == TBWidgetsAnimationCustom =====================================================
+TBWidgetAnimationCustom::TBWidgetAnimationCustom(TBWidget *widget)
+	: TBWidgetAnimationObject(widget)
+	, m_count(0)
+	, m_shrink(false)
+{
+}
+
+void TBWidgetAnimationCustom::OnAnimationStart()
+{
+	// Make sure we don't stay idle if nothing is scheduled (hack).
+	// FIX: fix this properly
+	m_widget->Invalidate();
+
+	m_orig_rect = m_widget->GetRect();
+	m_widget->OnAnimationStart();
+}
+
+void TBWidgetAnimationCustom::OnAnimationUpdate(float progress)
+{
+	m_widget->OnAnimationUpdate(progress);
+}
+
+void TBWidgetAnimationCustom::OnAnimationStop(bool aborted)
+{
+}
+
 // == TBWidgetsAnimationManager =====================================================
 
 // TBWidgetsAnimationManager widgets_animation_manager;

@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<scene id="1">
+	<attribute name="Name" value="" />
+	<attribute name="Time Scale" value="1" />
+	<attribute name="Smoothing Constant" value="50" />
+	<attribute name="Snap Threshold" value="5" />
+	<attribute name="Elapsed Time" value="37411.7" />
+	<attribute name="Next Replicated Node ID" value="5" />
+	<attribute name="Next Replicated Component ID" value="7" />
+	<attribute name="Next Local Node ID" value="16777218" />
+	<attribute name="Next Local Component ID" value="16777240" />
+	<attribute name="Variables">
+		<variant hash="2706235083" type="Vector3" value="0 1.5 0" />
+		<variant hash="3728386944" type="Vector3" value="0 90 0" />
+		<variant hash="825236131" type="String" value="0 4 0.909116;0.842205 0 -0.539158 0;0.326304 0.646574 0.707895" />
+		<variant hash="825236132" type="String" value="17.9464 4 17.2192;0.992018 0 -0.126097 0;19.9126 -1.04141 13.5277" />
+		<variant hash="825236133" type="String" value="50.3321 4.10763 14.2576;0.999965 0 0.00834732 0;50.47 0 14.0875" />
+		<variant hash="825236134" type="String" value="72.7804 4.27542 23.9437;0.930034 0 -0.367474 0;73.8629 1.29641 22.8319" />
+		<variant hash="825236135" type="String" value="82.6876 1.69839 45.463;0.670351 0 -0.742044 0;83.2119 0 46.6927" />
+		<variant hash="825236136" type="String" value="67.4925 2.09382 63.0076;-0.0450545 0 -0.998984 0;66.8778 0 66.0586" />
+		<variant hash="825236137" type="String" value="47.114 2.76257 56.2236;-0.0450545 0 -0.998984 0;47.3977 0 53.351" />
+		<variant hash="825236138" type="String" value="17.6319 2.19255 59.8186;0.0971449 0 -0.99527 0;17.7142 0 60.7757" />
+		<variant hash="825236139" type="String" value="-22.1824 3.88453 56.6904;-0.124261 0 -0.992249 0;-22.7855 0 59.7866" />
+		<variant hash="825236140" type="String" value="-46.2749 3.40837 39.2927;-0.481734 0 -0.876316 0;-49.1324 0 41.5689" />
+		<variant hash="897224332" type="String" value="-61.7004 3.10918 5.70718;-0.660557 -0.002987 -0.750643 -0.0137437;-61.2424 0.850441 5.59127" />
+		<variant hash="897224333" type="String" value="-56.3709 3.02391 -15.8684;0.930808 -0.0352155 0.358518 -0.0618096;-59.8085 0.57368 -19.7138" />
+		<variant hash="897224334" type="String" value="-25.4778 3.08531 -9.31357;0.871825 -0.0370763 -0.488394 0.00441332;-20.9786 1.38865 -12.0244" />
+		<variant hash="897224335" type="String" value="-21.5751 4.18046 12.1716;0.650569 0.00268128 -0.759262 0.0165234;-27.6504 0.540917 11.4033" />
+		<variant hash="897224336" type="String" value="-36.7959 3.53434 34.9731;0.339367 0 -0.940654 0;-40.2409 0 29.9607" />
+		<variant hash="897224337" type="String" value="-68.144 4.49806 39.5645;-0.144307 0 -0.989533 0;-65.9193 0 34.2176" />
+		<variant hash="897224338" type="String" value="-85.5249 4.49806 19.7728;-0.580791 0 -0.814053 0;-91.2789 0.933952 21.5878" />
+		<variant hash="897224339" type="String" value="-87.4973 4.49806 -5.84544;-0.758823 0 -0.651297 0;-92.2076 0.978256 -6.74476" />
+		<variant hash="897224340" type="String" value="-73.8294 4.49806 -29.1578;-0.942912 0 -0.333041 0;-76.9118 0.831068 -32.7604" />
+		<variant hash="897224341" type="String" value="-53.5418 2.68892 -42.3282;-0.970781 0 -0.239966 0;-51.9323 1.13158 -39.2986" />
+		<variant hash="897289931" type="String" value="-26.2484 2.84883 -47.8215;-0.996458 0 0.0840903 0;-25.0266 1.0225 -54.1513" />
+		<variant hash="897289932" type="String" value="-5.31589 4.49806 -29.5088;-0.741854 0 0.670561 0;0.198798 1.60381 -30.2668" />
+		<variant hash="2810909481" type="Int" value="22" />
+		<variant hash="720458018" type="Vector3" value="1 8 16" />
+	</attribute>
+	<attribute name="Variable Names" value="" />
+	<component type="Octree" id="1" />
+	<component type="DebugRenderer" id="2" />
+	<node id="2">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 1.49915 0" />
+		<attribute name="Rotation" value="0.938387 0.345586 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="Light" id="3">
+			<attribute name="Light Type" value="Directional" />
+			<attribute name="Specular Intensity" value="10" />
+			<attribute name="Brightness Multiplier" value="2000" />
+			<attribute name="Temperature" value="7590" />
+			<attribute name="Use Physical Values" value="true" />
+		</component>
+	</node>
+	<node id="3">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="10 1 10" />
+		<attribute name="Variables" />
+		<component type="StaticModel" id="5">
+			<attribute name="Model" value="Model;Models/Plane.mdl" />
+			<attribute name="Material" value="Material;Materials/PBR/DiamonPlate.xml" />
+		</component>
+	</node>
+	<node id="4">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="-0.859013 0.745601 -1.09539" />
+		<attribute name="Rotation" value="0.899312 0 0.437309 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="StaticModel" id="6">
+			<attribute name="Model" value="Model;Models/Sphere.mdl" />
+			<attribute name="Material" value="Material;Materials/PBREmissive.xml" />
+		</component>
+	</node>
+</scene>

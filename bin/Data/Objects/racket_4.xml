@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<node id="16777232">
+	<attribute name="Is Enabled" value="true" />
+	<attribute name="Name" value="" />
+	<attribute name="Tags" />
+	<attribute name="Position" value="0 0 0" />
+	<attribute name="Rotation" value="0.999977 0 0 0.00683932" />
+	<attribute name="Scale" value="0.6 0.6 0.6" />
+	<attribute name="Variables" />
+	<component type="BallRacket" id="16777284" />
+	<component type="RigidBody2D" id="16777285" />
+	<component type="StaticSprite2D" id="16777286">
+		<attribute name="Sprite" value="Sprite2D;Urho2D/Racket.png" />
+		<attribute name="Use Hot Spot" value="true" />
+		<attribute name="Draw Rectangle" value="-1.15 -0.16 1.15 0.16" />
+		<attribute name="Texture Rectangle" value="0.5 0.999998 1 1.5625e-06" />
+		<attribute name="Use Texture Rectangle" value="true" />
+	</component>
+	<component type="CollisionBox2D" id="16777287">
+		<attribute name="Size" value="2.28 0.32" />
+		<attribute name="Category Bits" value="1" />
+		<attribute name="Mask Bits" value="65535" />
+		<attribute name="Density" value="1" />
+		<attribute name="Friction" value="0.5" />
+		<attribute name="Restitution" value="0.1" />
+	</component>
+	<component type="CollisionCircle2D" id="16777288">
+		<attribute name="Radius" value="0.32" />
+		<attribute name="Category Bits" value="1" />
+		<attribute name="Mask Bits" value="65535" />
+		<attribute name="Density" value="1" />
+		<attribute name="Friction" value="0.5" />
+		<attribute name="Restitution" value="0.1" />
+	</component>
+	<component type="StaticSprite2D" id="16777289">
+		<attribute name="Sprite" value="Sprite2D;Urho2D/GoldIcon/1.png" />
+		<attribute name="Use Hot Spot" value="true" />
+		<attribute name="Draw Rectangle" value="-0.32 -0.32 0.32 0.32" />
+		<attribute name="Texture Rectangle" value="7.8125e-07 0.999999 0.999999 7.8125e-07" />
+	</component>
+</node>

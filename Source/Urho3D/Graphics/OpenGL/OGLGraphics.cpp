@@ -332,7 +332,8 @@ Graphics::~Graphics()
 bool Graphics::SetScreenMode(int width, int height, const ScreenModeParams& params, bool maximize)
 {
     URHO3D_PROFILE(SetScreenMode);
-    // SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+    // FIXME descomentar para opengles
+    SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
 
     // Ensure that parameters are properly filled
     ScreenModeParams newParams = params;

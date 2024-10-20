@@ -105,6 +105,8 @@
     float Distribution(float NdotH, float roughness)
     {
         return GGXDistribution(NdotH, roughness);
+        return BeckmannDistribution(NdotH, roughness);
+        // return BlinnPhongDistribution(NdotH, roughness);
     }
 
     // Lambertian Diffuse
@@ -155,9 +157,9 @@
     // VdotH        = the camera view direction dot with the half vector
     vec3 Diffuse(vec3 diffuseColor, float roughness, float NdotV, float NdotL, float VdotH)
     {
-        //return LambertianDiffuse(diffuseColor);
-        return CustomLambertianDiffuse(diffuseColor, NdotV, roughness);
-        //return BurleyDiffuse(diffuseColor, roughness, NdotV, NdotL, VdotH);
+        // return LambertianDiffuse(diffuseColor);
+        // return CustomLambertianDiffuse(diffuseColor, NdotV, roughness);
+        return BurleyDiffuse(diffuseColor, roughness, NdotV, NdotL, VdotH);
     }
 
   #endif

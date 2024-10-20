@@ -82,6 +82,9 @@ void StaticScene::Start()
 
     // Set the mouse mode to use in the sample
     Sample::InitMouseMode(MM_FREE);
+
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+    cache->SetAutoReloadResources(true);
 }
 
 void StaticScene::CreateScene()
@@ -92,7 +95,7 @@ void StaticScene::CreateScene()
     scene_->CreateComponent<Octree>();
     scene_->CreateComponent<DebugRenderer>();
 
-    engine_->SetMaxFps(60.0f);
+    // engine_->SetMaxFps(60.0f);
 
     // zone
     Node* zoneNode = scene_->CreateChild("Zone");
@@ -173,15 +176,15 @@ void StaticScene::CreateScene()
 //    riderObject->SetCastShadows(true);
 //    riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
 
-//    Node* meshNode = scene_->CreateChild("Mesh");
-//    meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
+   Node* meshNode = scene_->CreateChild("Mesh");
+   meshNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
 //    meshNode->SetScale(0.005f);
-//    StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
-////    // Model* meshModel = cache->GetResource<Model>("Models/plane-collision-mod.mdl");
-//    Model* meshModel = cache->GetResource<Model>("Models/Mesh.mdl");
-//    meshObject->SetModel(meshModel);
-//    meshObject->SetCastShadows(true);
-//////     meshObject->SetMaterial(cache->GetResource<Material>("Materials/PBR/Check.xml"));
+
+   StaticModel* meshObject = meshNode->CreateComponent<StaticModel>();
+   Model* meshModel = cache->GetResource<Model>("Models/Plane.mdl");
+   meshObject->SetModel(meshModel);
+   meshObject->SetCastShadows(true);
+   meshObject->SetMaterial(cache->GetResource<Material>("Materials/DeferredDecal.xml"));
 
 //    editorModel_ = meshNode->CreateComponent<EditorModelDebug>();
 //    editorModel_->SetModel(meshModel);
@@ -205,33 +208,10 @@ void StaticScene::CreateScene()
     // Set an initial position for the front camera scene node above the plane
     cameraNode_->SetPosition(Vector3(-2.0f, 2.0f, -2.0f));
 
+    CreateDepthTexture();
+    
     Graphics* graphics = GetSubsystem<Graphics>();
-//    graphics->Maximize();
-
-    rearCameraNode_ = scene_->CreateChild("RearCamera");
-    rearCameraNode_->SetPosition(Vector3(0.0f, 5.0f, 0.0f));
-    rearCameraNode_->SetRotation(Quaternion(-90.0f, Vector3::LEFT));
-    // rearCameraNode_->Rotate(Quaternion(180.0f, Vector3::UP));
-    auto* rearCamera = rearCameraNode_->CreateComponent<Camera>();
-    rearCamera->SetFarClip(300.0f);
-
-    // Because the rear viewport is rather small, disable occlusion culling from it. Use the camera's
-    // "view override flags" for this. We could also disable eg. shadows or force low material quality
-    // if we wanted
-    rearCamera->SetViewOverrideFlags(VO_DISABLE_OCCLUSION);
-
-    //SharedPtr<RenderSurface> surface(renderTexture->GetRenderSurface());
-    //SharedPtr<Viewport> rttViewport(new Viewport(context_, scene_, camera));
-    //surface->SetViewport(0, rttViewport);
-    //surface->SetUpdateMode(SURFACE_UPDATEALWAYS);
-
-    Node* polygonNode = scene_->CreateChild("Polygon");
-    polygonNode->SetPosition(Vector3(0.0f, 0.0f, 0.0f));
-
-    CollisionPolygon2D* polygonCol = polygonNode->CreateComponent<CollisionPolygon2D>();
-    // riderObject->SetModel(cache->GetResource<Model>("Models/retro_car_B3D.mdl"));
-    // riderObject->SetCastShadows(true);
-    // riderObject->SetMaterial(0, cache->GetResource<Material>("Materials/Mushroom.xml"));
+    graphics->Maximize();
 }
 
 void StaticScene::CreateInstructions()
@@ -279,7 +259,8 @@ void StaticScene::SetupViewport()
 
     SharedPtr<RenderPath> effectRenderPath = viewport->GetRenderPath()->Clone();
     // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/DeferredHWDepth.xml"));
-    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardDepth.xml"));
+    // effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/ForwardDepth.xml"));
+    effectRenderPath->Load(cache->GetResource<XMLFile>("RenderPaths/Deferred.xml"));
 
 //    effectRenderPath->Append(cache->GetResource<XMLFile>("PostProcess/Bloom.xml"));
     //effectRenderPath->SetShaderParameter("BloomMix", Vector2(0.9f, 1.9f));
@@ -302,7 +283,7 @@ void StaticScene::SetupViewport()
 
 //    Graphics* graphics = GetSubsystem<Graphics>();
 //    SharedPtr<Viewport> rearViewport(new Viewport(context_, scene_, rearCameraNode_->GetComponent<Camera>(),
-//        IntRect(graphics->GetWidth() * 2 / 3, 32, graphics->GetWidth() - 32, graphics->GetHeight() / 3)));
+    //    IntRect(graphics->GetWidth() * 2 / 3, 32, graphics->GetWidth() - 32, graphics->GetHeight() / 3)));
 //    renderer->SetViewport(1, rearViewport);
 }
 
@@ -396,6 +377,33 @@ void StaticScene::SubscribeToEvents()
     SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(StaticScene, HandleKeyDown));
 
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(StaticScene, HandlePostRenderUpdate));
+}
+
+void StaticScene::CreateDepthTexture()
+{
+    Graphics* graphics = GetSubsystem<Graphics>();
+    ResourceCache* cache = GetSubsystem<ResourceCache>();
+
+    URHO3D_LOGERRORF("> > > > > > depth support <%u>", graphics->GetReadableDepthSupport());
+    // depth buffer texture
+    SharedPtr<Texture2D> renderTexture(new Texture2D(context_));
+    int div = 2;
+    renderTexture->SetSize(graphics->GetWidth() / div, graphics->GetHeight() / div, Graphics::GetRGBFormat(), TEXTURE_RENDERTARGET);
+    // renderTexture->SetFilterMode(FILTER_BILINEAR);
+    renderTexture->SetName("DepthBuffer");
+
+    cache->AddManualResource(renderTexture);
+
+    UI* ui = GetSubsystem<UI>();
+    Sprite* textSprite = ui->GetRoot()->CreateChild<Sprite>();
+
+    // textSprite->SetScale(256.0f / renderTexture->GetWidth());
+    textSprite->SetTexture(renderTexture);
+    textSprite->SetSize(renderTexture->GetWidth(), renderTexture->GetHeight());
+    textSprite->SetHotSpot(renderTexture->GetWidth(), renderTexture->GetHeight());
+    textSprite->SetAlignment(HA_RIGHT, VA_BOTTOM);
+    textSprite->SetOpacity(1.0f);
+    textSprite->SetVisible(true);
 }
 
 void StaticScene::HandleUpdate(StringHash eventType, VariantMap& eventData)

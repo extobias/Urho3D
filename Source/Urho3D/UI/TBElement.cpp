@@ -16,6 +16,7 @@
 #include "animation/tb_animation.h"
 #include "animation/tb_widget_animation.h"
 #include "image/tb_image_widget.h"
+#include "image/tb_multiple_image.h"
 #include "tb_core.h"
 #include "tb_editfield.h"
 #include "tb_font_renderer.h"
@@ -89,7 +90,9 @@ bool TBRootWidget::OnEvent(const TBWidgetEvent& ev)
     {
         TBButton* btn = TBSafeCast<TBButton>(ev.target);
         TBImageWidget* imgWidget = TBSafeCast<TBImageWidget>(ev.target);
-        if (!btn && !imgWidget)
+        TBMultipleImage* imgMulWidget = TBSafeCast<TBMultipleImage>(ev.target);
+        TBEditField* editFieldWidget = TBSafeCast<TBEditField>(ev.target);
+        if (!btn && !imgWidget && !imgMulWidget && !editFieldWidget)
         {
             return false;
         }
@@ -169,8 +172,12 @@ void TBBitmapUrho3D::SetData(uint32* data)
     if (!texture_->SetData(0, 0, 0, width_, height_, data))
         URHO3D_LOGINFOF("TBBitmapUrho3D::SetData: tex <%p> error setdata!", texture_.Get());
 
-    texture_->SetAddressMode(COORD_U, ADDRESS_WRAP);
-    texture_->SetAddressMode(COORD_V, ADDRESS_WRAP);
+    // texture_->SetAddressMode(COORD_U, ADDRESS_WRAP);
+    // texture_->SetAddressMode(COORD_V, ADDRESS_WRAP);
+    texture_->SetAddressMode(COORD_U, ADDRESS_BORDER);
+    texture_->SetAddressMode(COORD_V, ADDRESS_BORDER);
+    texture_->SetBorderColor(Color(Color::BLACK, 0.0f));
+    texture_->SetFilterMode(FILTER_NEAREST);
 }
 
 /*------------ TBRendererUrho3D ------------*/

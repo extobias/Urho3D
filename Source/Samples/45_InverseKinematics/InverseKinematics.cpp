@@ -72,7 +72,7 @@ void InverseKinematics::Start()
     SubscribeToEvents();
 
     // Set the mouse mode to use in the sample
-    Sample::InitMouseMode(MM_RELATIVE);
+    Sample::InitMouseMode(MM_FREE);
 
     GetSubsystem<Input>()->SetMouseVisible(true);
 }
@@ -86,7 +86,8 @@ void InverseKinematics::CreateScene()
     // Create octree, use default volume (-1000, -1000, -1000) to (1000, 1000, 1000)
     scene_->CreateComponent<Octree>();
     scene_->CreateComponent<DebugRenderer>();
-    scene_->CreateComponent<PhysicsWorld>();
+    PhysicsWorld* pw = scene_->CreateComponent<PhysicsWorld>();
+    pw->SetGravity(Vector3::ZERO);
 
     // Create scene node & StaticModel component for showing a static plane
     floorNode_ = scene_->CreateChild("Plane");
@@ -98,7 +99,7 @@ void InverseKinematics::CreateScene()
     // Set up collision, we need to raycast to determine foot height
     floorNode_->CreateComponent<RigidBody>();
     auto* col = floorNode_->CreateComponent<CollisionShape>();
-    col->SetBox(Vector3(1, 0, 1));
+    col->SetBox(Vector3(1, 1, 1));
 
     // Create a directional light to the world.
     Node* lightNode = scene_->CreateChild("DirectionalLight");
@@ -122,34 +123,41 @@ void InverseKinematics::CreateScene()
     jackAnimCtrl_ = jackNode_->CreateComponent<AnimationController>();
     jackAnimCtrl_->PlayExclusive("Models/Jack_Walk.ani", 0, true, 0.0f);
 
+
+    RigidBody* rb = jackNode_->CreateComponent<RigidBody>();
+    rb->SetMass(0.0f);
+    CollisionShape* shape = jackNode_->CreateComponent<CollisionShape>();
+    shape->SetTriangleMesh(cache->GetResource<Model>("Models/Jack.mdl"));
+    // shape->SetModel(cache->GetResource<Model>("Models/Jack.mdl"));
+
     // We need to attach two inverse kinematic effectors to Jack's feet to
     // control the grounding.
     leftFoot_  = jackNode_->GetChild("Bip01_L_Foot", true);
     rightFoot_ = jackNode_->GetChild("Bip01_R_Foot", true);
-    leftEffector_  = leftFoot_->CreateComponent<IKEffector>();
-    rightEffector_ = rightFoot_->CreateComponent<IKEffector>();
+    // leftEffector_  = leftFoot_->CreateComponent<IKEffector>();
+    // rightEffector_ = rightFoot_->CreateComponent<IKEffector>();
     // Control 2 segments up to the hips
-    leftEffector_->SetChainLength(2);
-    rightEffector_->SetChainLength(2);
+    // leftEffector_->SetChainLength(2);
+    // rightEffector_->SetChainLength(2);
 
     // For the effectors to work, an IKSolver needs to be attached to one of
     // the parent nodes. Typically, you want to place the solver as close as
     // possible to the effectors for optimal performance. Since in this case
     // we're solving the legs only, we can place the solver at the spine.
-    Node* spine = jackNode_->GetChild("Bip01_Spine", true);
-    solver_ = spine->CreateComponent<IKSolver>();
+    // Node* spine = jackNode_->GetChild("Bip01_Spine", true);
+    // solver_ = spine->CreateComponent<IKSolver>();
 
     // Two-bone solver is more efficient and more stable than FABRIK (but only
     // works for two bones, obviously).
-    solver_->SetAlgorithm(IKSolver::TWO_BONE);
+    // solver_->SetAlgorithm(IKSolver::TWO_BONE);
 
     // Disable auto-solving, which means we need to call Solve() manually
-    solver_->SetFeature(IKSolver::AUTO_SOLVE, false);
+    // solver_->SetFeature(IKSolver::AUTO_SOLVE, false);
 
     // Only enable this so the debug draw shows us the pose before solving.
     // This should NOT be enabled for any other reason (it does nothing and is
     // a waste of performance).
-    solver_->SetFeature(IKSolver::UPDATE_ORIGINAL_POSE, true);
+    // solver_->SetFeature(IKSolver::UPDATE_ORIGINAL_POSE, true);
 
     // Create the camera.
     cameraRotateNode_ = scene_->CreateChild("CameraRotate");
@@ -157,8 +165,9 @@ void InverseKinematics::CreateScene()
     cameraNode_->CreateComponent<Camera>();
 
     // Set an initial position for the camera scene node above the plane
-    cameraNode_->SetPosition(Vector3(0, 0, -4));
-    cameraRotateNode_->SetPosition(Vector3(0, 0.4, 0));
+    cameraNode_->SetPosition(Vector3(2.0f, 5.0f, 2.0f));
+    cameraNode_->LookAt(Vector3::ZERO);
+    // cameraRotateNode_->SetPosition(Vector3(0.0f, 0.4f, 0.0f));
     pitch_ = 20;
     yaw_ = 50;
 }
@@ -243,7 +252,7 @@ void InverseKinematics::SubscribeToEvents()
     // Subscribe HandleUpdate() function for processing update events
     SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(InverseKinematics, HandleUpdate));
     SubscribeToEvent(E_POSTRENDERUPDATE, URHO3D_HANDLER(InverseKinematics, HandlePostRenderUpdate));
-    SubscribeToEvent(E_SCENEDRAWABLEUPDATEFINISHED, URHO3D_HANDLER(InverseKinematics, HandleSceneDrawableUpdateFinished));
+    // SubscribeToEvent(E_SCENEDRAWABLEUPDATEFINISHED, URHO3D_HANDLER(InverseKinematics, HandleSceneDrawableUpdateFinished));
 }
 
 void InverseKinematics::HandleUpdate(StringHash /*eventType*/, VariantMap& eventData)
@@ -254,13 +263,37 @@ void InverseKinematics::HandleUpdate(StringHash /*eventType*/, VariantMap& event
     float timeStep = eventData[P_TIMESTEP].GetFloat();
 
     // Move the camera, scale movement with time step
-    UpdateCameraAndFloor(timeStep);
+    // UpdateCameraAndFloor(timeStep);
+
+    URHO3D_LOGERRORF("HandleUpdate: rot <%s>", cameraNode_->GetRotation().ToString().CString());
 }
 
 void InverseKinematics::HandlePostRenderUpdate(StringHash /*eventType*/, VariantMap& eventData)
 {
-    if (drawDebug_)
-        solver_->DrawDebugGeometry(false);
+    // if (drawDebug_)
+        // solver_->DrawDebugGeometry(false);
+
+    UI* ui = GetSubsystem<UI>();
+    Input* input = GetSubsystem<Input>();
+    if (input->GetMouseButtonPress(MOUSEB_LEFT))
+    {
+        IntVector2 pos = ui->GetCursorPosition();
+    
+        Graphics* graphics = GetSubsystem<Graphics>();
+        Camera* camera = cameraNode_->GetComponent<Camera>();
+
+        Ray cameraRay = camera->GetScreenRay((float)pos.x_ / graphics->GetWidth(), (float)pos.y_ / graphics->GetHeight());
+        
+        PODVector<PhysicsRaycastResult> result;
+        PhysicsWorld* phyWorld = scene_->GetComponent<PhysicsWorld>();
+        phyWorld->Raycast(result, cameraRay, 250.0f);
+
+        for (unsigned i = 0; i < result.Size(); i++)
+        {
+            PhysicsRaycastResult& r = result.At(i);
+            URHO3D_LOGERRORF("Raycast: name <%s>", r.body_->GetNode()->GetName().CString());
+        }
+    }
 }
 
 void InverseKinematics::HandleSceneDrawableUpdateFinished(StringHash /*eventType*/, VariantMap& eventData)

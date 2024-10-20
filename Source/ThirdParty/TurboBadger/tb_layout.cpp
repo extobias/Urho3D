@@ -435,12 +435,12 @@ void TBLayout::OnPaintChildren(const PaintProps &paint_props)
 		TBRect clip_rect = padding_rect;
 		const int fluff = 100;
 
-		if (m_axis == AXIS_X)
-			clip_rect = clip_rect.Expand(m_overflow_scroll == 0 ? fluff : 0, fluff,
-										m_overflow_scroll == m_overflow ? fluff : 0, fluff);
-		else
-			clip_rect = clip_rect.Expand(fluff, m_overflow_scroll == 0 ? fluff : 0,
-										fluff, m_overflow_scroll == m_overflow ? fluff : 0);
+		// if (m_axis == AXIS_X)
+		// 	clip_rect = clip_rect.Expand(m_overflow_scroll == 0 ? fluff : 0, fluff,
+		// 								m_overflow_scroll == m_overflow ? fluff : 0, fluff);
+		// else
+		// 	clip_rect = clip_rect.Expand(fluff, m_overflow_scroll == 0 ? fluff : 0,
+		// 								fluff, m_overflow_scroll == m_overflow ? fluff : 0);
 
         old_clip_rect = core_->renderer_->SetClipRect(clip_rect, true);
 

@@ -1,0 +1,9 @@
+<cubemap>
+    <face name="CloudyCrown_Sunset_Left.dds" />
+    <face name="CloudyCrown_Sunset_Right.dds" />
+    <face name="CloudyCrown_Sunset_Up.dds" />
+    <face name="CloudyCrown_Sunset_Down.dds" />
+    <face name="CloudyCrown_Sunset_Front.dds" />
+    <face name="CloudyCrown_Sunset_Back.dds" />
+    <quality low="0" />
+</cubemap>

@@ -1,26 +1,36 @@
 TBLayout
 	axis y
 	distribution gravity
+	id layout_ppal
 	TBImageWidget
 		gravity all
 		filename Data/UI/TB/skin/special_button.png
 		skin ImageFrame
 		id "category1"
 		# TBTextField: skin: "ImageCaption", text: @cat_scenery, gravity: bottom left right
-	TBContainer
-		skin TBPopupWindow
-		TBLayout
-			axis y
-			spacing 30
-			distribution gravity
-			size available
-			TBTextField
-				gravity all
-				# text @delete
-			TBProgressBar
-				id progress_bar
-				value 0.5
-			TBColorPicker
-				gravity all
-				id color_picker
-				value 0.5
+	#TBLayout
+		# skin TBPopupWindow
+	TBLayout
+		axis y
+		# spacing 30
+		distribution gravity
+		size available
+		id "layout_007"
+		TBButton
+#			gravity all
+			text @delete
+		TBButton
+#			gravity all
+			text delete
+#		TBColorPicker
+#			gravity all
+#			id color_picker
+##			value 0.5
+#			hide-alpha 1
+#		TBProgressBar
+#			id progress_bar
+#			value 0.0
+#			TBColorPicker
+#				gravity all
+#				id color_picker
+#				value 0.5

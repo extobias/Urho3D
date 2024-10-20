@@ -133,7 +133,7 @@ private:
     bool noTextures_ { false };
     bool noMaterialDiffuseColor_ { false };
     bool noEmptyNodes_ { false };
-    bool saveMaterialList_ { false };
+    bool saveMaterialList_ { true };
     bool includeNonSkinningBones_ { false };
     bool verboseLog_ { false };
     bool emissiveAO_ { false };

@@ -14,6 +14,7 @@
 namespace tb {
 
 class TBBitmapFragment;
+class TBStr;
 
 /** TBRendererListener is a listener for TBRenderer. */
 class TBRendererListener : public TBLinkOf<TBRendererListener>
@@ -82,6 +83,8 @@ public:
 	/** Draw the src_rect part of the fragment stretched to dst_rect.
 		dst_rect or src_rect can have negative width and height to achieve horizontal and vertical flip. */
 	virtual void DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmapFragment *bitmap_fragment) = 0;
+
+	virtual void DrawBitmap(const TBRect &dst_rect, const TBRect &src_rect, TBBitmapFragment *bitmap_fragment, int transform) = 0;
 
 	/** Draw the src_rect part of the bitmap stretched to dst_rect.
 		dst_rect or src_rect can have negative width and height to achieve horizontal and vertical flip. */

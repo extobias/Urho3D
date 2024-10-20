@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<scene id="1">
+	<attribute name="Name" value="" />
+	<attribute name="Time Scale" value="1" />
+	<attribute name="Smoothing Constant" value="50" />
+	<attribute name="Snap Threshold" value="5" />
+	<attribute name="Elapsed Time" value="122.172" />
+	<attribute name="Update Enabled" value="true" />
+	<attribute name="Next Replicated Node ID" value="106" />
+	<attribute name="Next Replicated Component ID" value="341" />
+	<attribute name="Next Local Node ID" value="16777227" />
+	<attribute name="Next Local Component ID" value="16777257" />
+	<attribute name="Variables">
+		<variant hash="2965288736" type="String" value="5;5;5" />
+	</attribute>
+	<attribute name="Variable Names" value="hola;goals" />
+	<component type="Octree" id="1" />
+	<component type="DebugRenderer" id="2" />
+	<component type="InputManager" id="3" />
+	<component type="PhysicsWorld2D" id="5">
+		<attribute name="Draw Shape" value="true" />
+		<attribute name="Allow Sleeping" value="true" />
+		<attribute name="Warm Starting" value="true" />
+		<attribute name="Gravity" value="0 0" />
+		<attribute name="Auto Clear Forces" value="true" />
+	</component>
+	<component type="Renderer2D" id="15" />
+	<node id="16777217">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Sink" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="-1.20156 1.04349 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="0.6 0.6 0.6" />
+		<attribute name="Variables">
+			<variant hash="2151804570" type="String" value="Sink" />
+			<variant hash="686753347" type="Int" value="1" />
+		</attribute>
+		<component type="Sinkhole" id="16777218">
+			<attribute name="Started" value="true" />
+		</component>
+	</node>
+	<node id="16777219">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Pumper" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="-0.00928003 -0.436165 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+		<component type="Pumper" id="16777223" />
+	</node>
+	<node id="16777221">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="Rackets" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="0 0 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Variables" />
+	</node>
+</scene>

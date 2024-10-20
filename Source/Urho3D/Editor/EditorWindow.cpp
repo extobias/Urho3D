@@ -42,6 +42,19 @@
 namespace Urho3D
 {
 
+static const char* commandTypeNames[] =
+{
+    "none",
+    "clear",
+    "scenepass",
+    "quad",
+    "forwardlights",
+    "lightvolumes",
+    "renderui",
+    "sendevent",
+    nullptr
+};
+
 extern const char* UI_CATEGORY;
 
 EditorWindow::EditorWindow(Context* context) :
@@ -72,6 +85,7 @@ EditorWindow::EditorWindow(Context* context) :
     // camera->SetOrthographic(true);
     camera->SetFarClip(10000.0f);
     // camera->SetNearClip(0.0f);
+    cameraNode_->SetEnabledRecursive(false);
 
     LoadResources();
 
@@ -160,6 +174,18 @@ void EditorWindow::MoveCamera(float timeStep)
         mouseSensitivity = 0.5f;
     }
 
+    const Vector<SharedPtr<Node> >& s = selection_->GetSelectedNodes();
+    Vector3 selectedPos(Vector3::ZERO);
+    if (s.Size() == 1)
+    {
+        Node* node = s.At(0);
+        if (node)
+        {
+            selectedPos = node->GetPosition();
+        }
+    }
+
+
     // Use this frame's mouse motion to adjust camera node yaw and pitch. Clamp the pitch between -90 and 90 degrees
     if (input->GetMouseButtonDown(MOUSEB_MIDDLE))
     {
@@ -190,8 +216,9 @@ void EditorWindow::MoveCamera(float timeStep)
             float y = camDistance_ * cos(phi_ * M_DEGTORAD);
             float z = camDistance_ * cos(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
 
-            cameraNode_->SetPosition(Vector3(x, y, z));
-            cameraNode_->LookAt(Vector3::ZERO);
+            // cameraNode_->SetPosition(Vector3(x, y, z));
+            // cameraNode_->SetPosition(selectedPos);
+            // cameraNode_->LookAt(selectedPos);
         }
     }
     else
@@ -239,8 +266,9 @@ void EditorWindow::MoveCamera(float timeStep)
         float y = camDistance_ * cos(phi_ * M_DEGTORAD);
         float z = camDistance_ * cos(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
 
-        cameraNode_->SetPosition(Vector3(x, y, z));
-        cameraNode_->LookAt(Vector3::ZERO);
+
+        cameraNode_->LookAt(selectedPos);
+        cameraNode_->SetPosition(selectedPos + Vector3(x, y, z));
     }
 
     // Mouse input
@@ -289,8 +317,8 @@ void EditorWindow::MoveCamera(float timeStep)
             float y = camDistance_ * cos(phi_ * M_DEGTORAD);
             float z = camDistance_ * cos(theta_ * M_DEGTORAD) * sin(phi_ * M_DEGTORAD);
 
-            cameraNode_->SetPosition(Vector3(x, y, z));
-            cameraNode_->LookAt(Vector3::ZERO);
+            cameraNode_->LookAt(selectedPos);
+            cameraNode_->SetPosition(selectedPos + Vector3(x, y, z));
         }
     }
 }
@@ -753,6 +781,7 @@ void EditorWindow::Render(float timeStep)
     static const char* modeTypes[] = { "Object", "Mesh Vertex", "Polygon Vertex" };
 
     ImGuiTreeNodeFlags headerFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_DefaultOpen;
+    ImGuiTreeNodeFlags viewportFlags = ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_OpenOnArrow;
     if (ImGui::CollapsingHeader("Options", NULL, headerFlags))
     {
         // const char* hideLabel = "##hidelabel";
@@ -836,7 +865,7 @@ void EditorWindow::Render(float timeStep)
         guizmoBtn = guizmo_->buttons_;
     }
 
-    if (ImGui::CollapsingHeader("Viewport", NULL, headerFlags))
+    if (ImGui::CollapsingHeader("Viewport", NULL, viewportFlags))
     {
         Renderer* renderer = GetSubsystem<Renderer>();
         unsigned numViewports = renderer->GetNumViewports();
@@ -848,7 +877,11 @@ void EditorWindow::Render(float timeStep)
             {
                 RenderPath* renderPath = viewport->GetRenderPath();
 
-                ImGui::Text("\tviewports <%d> renderpath <%d>", i, renderPath->GetNumRenderTargets());
+                ImGui::Text("\tviewports <%d> renderpath <%d>", i, renderPath->GetNumCommands());
+                for(const RenderPathCommand& rp: renderPath->commands_)
+                {
+                    ImGui::Text("\t\tcommand  tag <%s> pass <%s> type <%s>", rp.tag_.CString(), rp.pass_.CString(), commandTypeNames[rp.type_]);
+                }
             }
         }
     }
@@ -1202,6 +1235,7 @@ void EditorWindow::AttributeEdit(Serializable* c)
         return;
 
     const char* hideLabel = "##hidelabel";
+    unsigned index = 0;
     for (auto var : (*attr))
     {
         const AttributeInfo& info = var;
@@ -1214,12 +1248,12 @@ void EditorWindow::AttributeEdit(Serializable* c)
         // ImGui::SameLine(width / 2.0f);
 
         Variant attVariant = c->GetAttribute(info.name_);
-
-        if(VariantEdit(c, info, info.name_, attVariant))
+        if(VariantEdit(c, info, info.name_, attVariant, index))
         {
             c->SetAttribute(info.name_, attVariant);
             c->ApplyAttributes();
         }
+        index++;
     }
 }
 // FIXME sometimes info.name isnt name
@@ -1534,6 +1568,16 @@ bool EditorWindow::VariantEdit(Serializable* c, const AttributeInfo& info, const
                 // ImGui::SetNextItemWidth(halfWidth);
                 ParticleEmitter* emitter = dynamic_cast<ParticleEmitter*>(c);
                 EditParticleEmitter(emitter);
+            }
+
+            if (resRef.type_ == StringHash("Model"))
+            {
+                // ImGui::SetNextItemWidth(halfWidth);
+                StaticModel* model = dynamic_cast<StaticModel*>(c);
+                if (model)
+                {
+                    model->ApplyMaterialList();
+                }
             }
         }
         else if (resRef.type_ == StringHash("Sprite2D"))

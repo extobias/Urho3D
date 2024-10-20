@@ -97,6 +97,8 @@ TBWidget::TBWidget(TBCore* core)
     , m_long_click_timer(nullptr)
     , m_packed_init(0)
     , debugLayoutBound_(0)
+    , m_vAlign(TB_VA_CUSTOM)
+    , m_hAlign(TB_HA_CUSTOM)
 {
 #ifdef TB_RUNTIME_DEBUG_INFO
     last_measure_time = 0;
@@ -384,7 +386,7 @@ void TBWidget::RemoveChild(TBWidget *child, WIDGET_INVOKE_INFO info)
     InvalidateLayout(INVALIDATE_LAYOUT_RECURSIVE);
     Invalidate();
     InvalidateSkinStates();
-}
+}   
 
 void TBWidget::DeleteAllChildren()
 {
@@ -406,6 +408,42 @@ void TBWidget::SetZ(WIDGET_Z z)
     TBWidget *parent = m_parent;
     parent->RemoveChild(this, WIDGET_INVOKE_INFO_NO_CALLBACKS);
     parent->AddChild(this, z, WIDGET_INVOKE_INFO_NO_CALLBACKS);
+}
+
+void TBWidget::SetVerticalAlignment(WIDGET_VERTICAL_ALIGN vAlign)
+{
+    m_vAlign = vAlign;
+}
+
+void TBWidget::SetHorizontalAlignment(WIDGET_HORIZONTAL_ALIGN hAlign)
+{
+    m_hAlign = hAlign;
+}
+
+void TBWidget::SetAlignment(WIDGET_VERTICAL_ALIGN vAlign, WIDGET_HORIZONTAL_ALIGN hAlign)
+{
+    SetVerticalAlignment(vAlign);
+    SetHorizontalAlignment(hAlign);
+}
+
+TBPoint TBWidget::GetAlignmentOffset(const TBRect& rect)
+{
+    TBPoint p(0, 0);
+
+    if (m_vAlign == TB_VA_CUSTOM && m_hAlign == TB_HA_CUSTOM)
+        return p;
+
+    if (m_vAlign == TB_VA_CENTER)
+    {
+        p.y = (rect.h / 2) - (m_rect.h / 2);
+    }
+
+    if (m_hAlign == TB_HA_CENTER)
+    {
+        p.x = (rect.w / 2) - (m_rect.w / 2);
+    }
+
+    return p;
 }
 
 void TBWidget::SetGravity(WIDGET_GRAVITY g)
@@ -824,7 +862,14 @@ void TBWidget::OnPaintChildren(const PaintProps &paint_props)
     for (TBWidget *child = GetFirstChild(); child; child = child->GetNext())
     {
         if (clip_rect.Intersects(child->m_rect))
+        {
+            TBRect rect = child->m_rect;
+            TBPoint offset = child->GetAlignmentOffset(m_rect);
+            
+            core_->renderer_->Translate(offset.x, offset.y);
             child->InvokePaint(paint_props);
+            core_->renderer_->Translate(-offset.x, -offset.y);
+        }
     }
 
     // Invoke paint of overlay elements on all children that are in the current visible rect.
@@ -982,6 +1027,12 @@ PreferredSize TBWidget::OnCalculatePreferredContentSize(const SizeConstraints &c
 PreferredSize TBWidget::OnCalculatePreferredSize(const SizeConstraints &constraints)
 {
     PreferredSize ps = OnCalculatePreferredContentSize(constraints);
+    if (ps.pref_w < ps.min_w)
+    {
+        TBDebugPrint("TBWidget::OnCalculatePreferredSize: name <%s> min <%i, %i> pref <%i, %i>\n",
+                     m_id.debug_string.CStr(), ps.min_w, ps.min_h, ps.pref_w, ps.pref_h);
+    }
+
     assert(ps.pref_w >= ps.min_w);
     assert(ps.pref_h >= ps.min_h);
 
@@ -1170,8 +1221,8 @@ float TBWidget::CalculateOpacityInternal(WIDGET_STATE state, TBSkinElement *skin
     float opacity = m_opacity;
     if (skin_element)
         opacity *= skin_element->opacity;
-    if (state & WIDGET_STATE_DISABLED)
-        opacity *= core_->tb_skin_->GetDefaultDisabledOpacity();
+    // if (state & WIDGET_STATE_DISABLED)
+    //     opacity *= core_->tb_skin_->GetDefaultDisabledOpacity();
     return Clamp(opacity, 0.f, 1.f);
 }
 

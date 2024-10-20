@@ -178,6 +178,7 @@ void PS()
         #else
             gl_FragColor = vec4(GetLitFog(finalColor, fogFactor), diffColor.a);
         #endif
+        
     #elif defined(PREPASS)
         // Fill light pre-pass G-Buffer
         float specPower = cMatSpecColor.a / 255.0;

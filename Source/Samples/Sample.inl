@@ -172,6 +172,25 @@ void Sample::SetLogoVisible(bool enable)
         logoSprite_->SetVisible(enable);
 }
 
+void Sample::CreateEditor()
+{
+    editor_ = new EditorWindow(context_);
+    editor_->SetName("editor");
+
+    UI* ui = GetSubsystem<UI>();
+    ui->SetNonFocusedMouseWheel(true);
+    ui->GetRootModalElement()->AddChild(editor_);
+
+    editor_->BringToFront();
+    editor_->SetPriority(100);
+    editor_->CreateGuizmo();
+    editor_->SetVisible(true);
+    editor_->SetScene(scene_);
+
+    Input* input = GetSubsystem<Input>();
+    input->SetMouseMode(MM_ABSOLUTE, true);
+}
+
 void Sample::CreateLogo()
 {
     // Get logo texture

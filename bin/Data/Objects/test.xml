@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<Node id="7">
+	<attribute name="Is Enabled" value="true" />
+	<attribute name="Name" value="Sink" />
+	<attribute name="Tags" />
+	<attribute name="Position" value="1.40695 -0.340618 0" />
+	<attribute name="Rotation" value="1 0 0 0" />
+	<attribute name="Scale" value="0.6 0.6 0.6" />
+	<attribute name="Prefab" value="XMLFile;" />
+	<attribute name="Variables">
+		<variant hash="2151804570" type="String" value="Sink" />
+		<variant hash="686753347" type="Int" value="0" />
+	</attribute>
+	<component type="Sinkhole" id="19" />
+	<component type="RigidBody2D" id="14" />
+	<component type="StaticSprite2D" id="15">
+		<attribute name="Sprite" value="Sprite2D;Urho2D/Box.png" />
+		<attribute name="Color" value="1 0 0 1" />
+		<attribute name="Draw Rectangle" value="-0.16 -0.16 0.16 0.16" />
+		<attribute name="Texture Rectangle" value="1.5625e-06 0.999998 0.999998 1.5625e-06" />
+	</component>
+	<component type="CollisionBox2D" id="17">
+		<attribute name="Size" value="0.32 0.32" />
+		<attribute name="Category Bits" value="1" />
+		<attribute name="Mask Bits" value="65535" />
+		<attribute name="Density" value="1" />
+		<attribute name="Friction" value="0.5" />
+		<attribute name="Restitution" value="0.1" />
+	</component>
+	<node id="8">
+		<attribute name="Is Enabled" value="true" />
+		<attribute name="Name" value="TextNode" />
+		<attribute name="Tags" />
+		<attribute name="Position" value="-0.15 0.3 0" />
+		<attribute name="Rotation" value="1 0 0 0" />
+		<attribute name="Scale" value="1 1 1" />
+		<attribute name="Prefab" value="XMLFile;" />
+		<attribute name="Variables" />
+		<component type="Text3D" id="18">
+			<attribute name="Font" value="Font;Fonts/BarcadeBrawlRegular-plYD.ttf" />
+			<attribute name="Font Size" value="10" />
+			<attribute name="Text" value="4.5" />
+			<attribute name="Width" value="36" />
+		</component>
+	</node>
+</Node>

@@ -363,13 +363,13 @@ public:
     /// Return inverse.
     Quaternion Inverse() const
     {
-#ifdef URHO3D_SSE
-        __m128 q = _mm_loadu_ps(&w_);
-        __m128 n = _mm_mul_ps(q, q);
-        n = _mm_add_ps(n, _mm_shuffle_ps(n, n, _MM_SHUFFLE(2, 3, 0, 1)));
-        n = _mm_add_ps(n, _mm_shuffle_ps(n, n, _MM_SHUFFLE(0, 1, 2, 3)));
-        return Quaternion(_mm_div_ps(_mm_xor_ps(q, _mm_castsi128_ps(_mm_set_epi32((int)0x80000000UL, (int)0x80000000UL, (int)0x80000000UL, 0))), n));
-#else
+// #ifdef URHO3D_SSE
+//         __m128 q = _mm_loadu_ps(&w_);
+//         __m128 n = _mm_mul_ps(q, q);
+//         n = _mm_add_ps(n, _mm_shuffle_ps(n, n, _MM_SHUFFLE(2, 3, 0, 1)));
+//         n = _mm_add_ps(n, _mm_shuffle_ps(n, n, _MM_SHUFFLE(0, 1, 2, 3)));
+//         return Quaternion(_mm_div_ps(_mm_xor_ps(q, _mm_castsi128_ps(_mm_set_epi32((int)0x80000000UL, (int)0x80000000UL, (int)0x80000000UL, 0))), n));
+// #else
         float lenSquared = LengthSquared();
         if (lenSquared == 1.0f)
             return Conjugate();
@@ -377,7 +377,7 @@ public:
             return Conjugate() * (1.0f / lenSquared);
         else
             return IDENTITY;
-#endif
+// #endif
     }
 
     /// Return squared length.

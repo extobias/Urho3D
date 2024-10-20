@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<node id="7">
+	<attribute name="Is Enabled" value="true" />
+	<attribute name="Name" value="Mushroom" />
+	<attribute name="Tags" />
+	<attribute name="Position" value="-3.62285 1.19209e-07 15.3017" />
+	<attribute name="Rotation" value="0.453175 0 0.891422 0" />
+	<attribute name="Scale" value="6.47981 6.47981 6.47981" />
+	<attribute name="Variables" />
+	<component type="StaticModel" id="12">
+		<attribute name="Model" value="Model;Models/Fld_Amida01_DV_Forklift.mdl" />
+		<attribute name="Material" value="Material;Materials/ForkliftBody.xml;Materials/ForkliftBody.xml;Materials/ForkliftBody.xml;Materials/ForkliftTire.xml;Materials/ForkliftBody.xml;Materials/ContainerBase_np.xml;Materials/ForkliftBody.xml" />
+		<attribute name="Cast Shadows" value="true" />
+	</component>
+	<component type="RigidBody" id="13">
+		<attribute name="Physics Rotation" value="0.453174 0 0.891422 0" />
+		<attribute name="Physics Position" value="-3.62285 0 15.3017" />
+		<attribute name="Collision Layer" value="2" />
+	</component>
+	<component type="CollisionShape" id="14">
+		<attribute name="Shape Type" value="TriangleMesh" />
+		<attribute name="Model" value="Model;Models/Mushroom.mdl" />
+	</component>
+</node>

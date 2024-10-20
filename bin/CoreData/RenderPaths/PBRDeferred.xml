@@ -1,4 +1,7 @@
 <renderpath>
+    <!-- <rendertarget name="specular" sizedivisor="1 1" format="rgba16f" />
+    <rendertarget name="albedo" sizedivisor="1 1" format="rgba16f" />
+    <rendertarget name="normal" sizedivisor="1 1" format="rgba16f" /> -->
     <rendertarget name="specular" sizedivisor="1 1" format="rgba16f" />
     <rendertarget name="albedo" sizedivisor="1 1" format="rgba16f" />
     <rendertarget name="normal" sizedivisor="1 1" format="rgba16f" />
@@ -15,13 +18,37 @@
         <output index="2" name="normal" />
         <output index="3" name="depth" />
     </command>
-    <command type="lightvolumes" vs="PBRDeferred" ps="PBRDeferred" psdefines="PBRDEFERRED PBR" vsdefines="PBR" output="viewport">
+
+    <rendertarget name="ao" tag="SSAO" sizedivisor="1 1" format="l" />
+    <rendertarget name="blur" tag="SSAO" sizedivisor="1 1" format="l" />
+    <command type="quad" tag="SSAO" vs="SSAO" ps="SSAO" psdefines="GEN_AO" output="ao">
+        <texture unit="0" name="Textures/Random.png" />
+        <texture unit="1" name="depth" />
+        <parameter name="NoiseScale" value="4 4" />
+        <parameter name="ProjInfo" />
+    </command>
+    <command type="quad" tag="SSAO" vs="SSAO" ps="SSAO" psdefines="GEN_BLUR" output="blur">
+        <texture unit="0" name="ao" />
+        <texture unit="1" name="depth" />
+        <parameter name="BlurDir" value="1 0" />
+    </command>
+    <command type="quad" tag="SSAO" vs="SSAO" ps="SSAO" psdefines="GEN_BLUR" output="ao">
+        <texture unit="0" name="blur" />
+        <texture unit="1" name="depth" />
+        <parameter name="BlurDir" value="0 1" />
+    </command>
+    <command type="quad" tag="SSAO" vs="SSAO" ps="SSAO" output="viewport" blend="multiply">
+        <texture unit="0" name="ao" />
+    </command>
+
+    <command type="lightvolumes" tag="ooo" vs="PBRDeferred" ps="PBRDeferred" psdefines="PBRDEFERRED PBR" vsdefines="PBR" output="viewport">
         <texture unit="specular" name="specular" />
         <texture unit="albedo" name="albedo" />
         <texture unit="normal" name="normal" />
         <texture unit="depth" name="depth" />
     </command>
-<!--     <command type="scenepass" pass="postopaque" /> -->
+
+    <command type="scenepass" pass="postopaque" />
     <command type="scenepass" pass="refract">
         <texture unit="environment" name="viewport" />
     </command>
