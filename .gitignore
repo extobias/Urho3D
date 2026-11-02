@@ -17,6 +17,7 @@ build-debug/
 build-ninja/
 /captures/
 .cxx/
+.cache/
 
 # Output files
 /Source/**/*.a
